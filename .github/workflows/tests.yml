@@ -1,0 +1,86 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Un push nuevo cancela la ejecución anterior de la misma rama.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: PHP 8.3 · PostgreSQL 16
+    runs-on: ubuntu-latest
+
+    # Mismo motor y misma versión que en desarrollo y en producción.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: laboratorio_simulacion
+          POSTGRES_USER: laboratorio
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U laboratorio -d laboratorio_simulacion"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, intl, zip, bcmath
+          coverage: none
+          tools: composer:v2
+
+      - name: Cachear las dependencias de Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-php8.3-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-php8.3-
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Preparar el entorno
+        run: |
+          cp .env.example .env
+          # En el runner PostgreSQL escucha en localhost, no en el servicio "db".
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          php artisan key:generate
+
+      - name: Crear la base de datos de pruebas
+        env:
+          PGPASSWORD: secret
+        run: |
+          psql -h 127.0.0.1 -U laboratorio -d laboratorio_simulacion \
+            -c 'CREATE DATABASE laboratorio_simulacion_testing;'
+
+      - name: Comprobar el estilo del código
+        run: ./vendor/bin/pint --test
+
+      - name: Ejecutar la suite
+        run: php artisan test
+
+      # Las migraciones y los seeders no los cubre la suite: los tests de
+      # Feature migran con RefreshDatabase, pero nadie ejecuta los seeders.
+      - name: Comprobar migraciones y seeders
+        run: php artisan migrate:fresh --seed --force
+
+      # El histórico depende de que los down() sigan funcionando.
+      - name: Comprobar la reversión de las migraciones
+        run: php artisan migrate:reset --force
