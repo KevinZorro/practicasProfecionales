@@ -31,6 +31,14 @@ class EvaluacionEstudianteFactory extends Factory
         ];
     }
 
+    /** Estado con el que nace un estudiante en la evaluación. */
+    public function sinResultado(): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'resultado' => null,
+        ]);
+    }
+
     public function noAprobado(): static
     {
         return $this->state(fn (array $atributos): array => [

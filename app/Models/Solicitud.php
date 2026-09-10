@@ -118,10 +118,37 @@ class Solicitud extends Model
         $consulta->where('estado', EstadoSolicitud::Aprobada);
     }
 
-    /** @param Builder<$this> $consulta */
-    public function scopePendientes(Builder $consulta): void
+    /**
+     * Esperando que un administrativo las revise.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopePendientesDeRevision(Builder $consulta): void
     {
         $consulta->where('estado', EstadoSolicitud::Pendiente);
+    }
+
+    /**
+     * Ya revisadas, esperando que el coordinador las resuelva.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopePendientesDeAprobacion(Builder $consulta): void
+    {
+        $consulta->where('estado', EstadoSolicitud::Revisada);
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopeDelDocente(Builder $consulta, User $docente): void
+    {
+        $consulta->where('docente_id', $docente->id);
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopeAprobadasEntre(Builder $consulta, string $desde, string $hasta): void
+    {
+        $consulta->where('estado', EstadoSolicitud::Aprobada)
+            ->whereBetween('fecha', [$desde, $hasta]);
     }
 
     /** @param Builder<$this> $consulta */

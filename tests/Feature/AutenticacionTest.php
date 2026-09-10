@@ -7,12 +7,12 @@ use Illuminate\Support\Facades\Route;
 /**
  * El RF18 establece que el inicio de sesión es únicamente por cuenta de
  * Google institucional. No debe existir ninguna vía de autenticación por
- * contraseña, ni siquiera alcanzable por accidente: Breeze está instalado
- * como dependencia de desarrollo y basta con ejecutar "breeze:install" para
- * que publique todas estas rutas de golpe.
+ * contraseña. Breeze ya se retiró del proyecto y la columna users.password
+ * se eliminó, pero estos tests se quedan como red de regresión: cualquier
+ * paquete de scaffolding publica estas rutas de golpe.
  */
 
-/** Rutas que publicaría Breeze y que no deben responder. */
+/** Rutas típicas de autenticación por contraseña que no deben responder. */
 dataset('rutas de contraseña', [
     'formulario de ingreso' => ['get', '/login'],
     'envío de credenciales' => ['post', '/login'],

@@ -9,7 +9,6 @@ use App\Enums\OrigenUsuario;
 use App\Enums\Rol;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -34,7 +33,6 @@ class UserFactory extends Factory
             'origen' => OrigenUsuario::Contratado,
             'ultima_sincronizacion' => now(),
             'email_verified_at' => now(),
-            'password' => Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
     }

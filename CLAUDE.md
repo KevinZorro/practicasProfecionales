@@ -65,7 +65,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 
 - `config.platform.php` está fijado en `8.3.0`. Producción corre PHP 8.3, así que ninguna dependencia puede exigir 8.4. Después de cualquier cambio en `composer.json`, verifica que el lock siga siendo instalable en 8.3.
 - Los roles y permisos los gestiona `spatie/laravel-permission` con sus propias tablas. **No crees tablas de roles propias** ni compruebes roles con condicionales sueltos.
-- `users.password` existe y es nullable como vestigio de Breeze. La autenticación es únicamente por Google (RF18): no añadas rutas de login, registro ni recuperación de contraseña. Hay tests que fallan si reaparecen.
+- La autenticación es únicamente por Google (RF18). No existe `users.password` ni el paquete Breeze: se retiraron por innecesarios. No añadas rutas de login, registro ni recuperación de contraseña; hay tests que fallan si reaparecen.
 
 ---
 
