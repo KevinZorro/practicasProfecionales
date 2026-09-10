@@ -46,7 +46,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 | Capa | Tecnología |
 |---|---|
 | Lenguaje | PHP 8.3 |
-| Framework | Laravel 11 |
+| Framework | Laravel 12 LTS |
 | Vistas | Blade |
 | Interactividad | Livewire 3 + Alpine.js |
 | Estilos | Tailwind CSS |
