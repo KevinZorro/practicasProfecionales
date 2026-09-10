@@ -41,6 +41,8 @@ use App\Models\TipoEvaluacion;
 use App\Models\TituloDocente;
 use App\Models\User;
 use App\Models\VideoInstitucional;
+use App\Services\DatosItemInventario;
+use App\Services\InventarioService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -59,13 +61,15 @@ class DatosPruebaSeeder extends Seeder
     public function run(): void
     {
         DB::transaction(function (): void {
+            // Los usuarios van primero: el nivel de fidelidad de los
+            // simuladores solo lo registra el ADMIN (RF39).
+            $usuarios = $this->crearUsuarios();
             $salas = $this->crearSalas();
             $materias = $this->crearMaterias();
             $capacidades = $this->crearCapacidades();
-            $inventario = $this->crearInventario();
+            $inventario = $this->crearInventario($usuarios['admin']);
             $casos = $this->crearCasosClinicos($materias, $capacidades, $inventario);
             $tipos = $this->crearTiposEvaluacion($materias);
-            $usuarios = $this->crearUsuarios();
 
             $this->crearConsentimientos($usuarios['admin'], $usuarios['estudiantes']);
             $this->crearSolicitudes($usuarios, $materias, $casos, $inventario, $salas);
@@ -133,7 +137,7 @@ class DatosPruebaSeeder extends Seeder
     }
 
     /** @return Collection<string, ItemInventario> */
-    private function crearInventario(): Collection
+    private function crearInventario(User $admin): Collection
     {
         $definicion = [
             // nombre => [tipo, nivel de fidelidad, cantidad, estado]
@@ -156,15 +160,18 @@ class DatosPruebaSeeder extends Seeder
             'Set de curación' => [TipoItemInventario::EquipoBasico, null, 120, EstadoItemInventario::Disponible],
         ];
 
-        return collect($definicion)->map(fn (array $datos, string $nombre): ItemInventario => ItemInventario::create([
-            'nombre' => $nombre,
-            'tipo' => $datos[0],
-            'nivel_fidelidad' => $datos[1],
-            'cantidad_total' => $datos[2],
-            'descripcion' => null,
-            'estado' => $datos[3],
-            'activo' => true,
-        ]));
+        $inventario = app(InventarioService::class);
+
+        return collect($definicion)->map(fn (array $datos, string $nombre): ItemInventario => $inventario->crear(
+            $admin,
+            new DatosItemInventario(
+                nombre: $nombre,
+                tipo: $datos[0],
+                cantidadTotal: $datos[2],
+                estado: $datos[3],
+                nivelFidelidad: $datos[1],
+            ),
+        ));
     }
 
     /**

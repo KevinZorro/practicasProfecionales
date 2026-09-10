@@ -136,9 +136,9 @@ final class PreparacionService
     }
 
     /**
-     * Otra preparación en la misma sala, el mismo día, con las franjas
-     * horarias pisándose. Dos franjas se solapan cuando cada una empieza
-     * antes de que la otra termine.
+     * Otra preparación en la misma sala con la franja pisándose. El criterio
+     * de solapamiento vive en el scope queSeSolapanCon de Solicitud, que
+     * comparte con el cálculo de disponibilidad de inventario.
      */
     private function preparacionSolapada(Preparacion $preparacion, Sala $sala): ?Preparacion
     {
@@ -147,10 +147,11 @@ final class PreparacionService
         return Preparacion::query()
             ->where('sala_id', $sala->id)
             ->whereKeyNot($preparacion->getKey())
-            ->whereHas('solicitud', static fn (Builder $consulta) => $consulta
-                ->whereDate('fecha', $solicitud->fecha)
-                ->where('hora_inicio', '<', $solicitud->hora_fin)
-                ->where('hora_fin', '>', $solicitud->hora_inicio))
+            ->whereHas('solicitud', static fn (Builder $consulta) => $consulta->queSeSolapanCon(
+                $solicitud->fecha->format('Y-m-d'),
+                $solicitud->hora_inicio,
+                $solicitud->hora_fin,
+            ))
             ->with('solicitud')
             ->first();
     }
