@@ -44,7 +44,6 @@ use App\Models\VideoInstitucional;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * Datos de prueba de un laboratorio de simulación clínica: estructura
@@ -397,7 +396,6 @@ class DatosPruebaSeeder extends Seeder
             'origen' => $origen,
             'ultima_sincronizacion' => now(),
             'email_verified_at' => now(),
-            'password' => Hash::make('password'),
         ]);
     }
 

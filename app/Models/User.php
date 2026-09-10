@@ -32,14 +32,12 @@ class User extends Authenticatable
         'estado',
         'origen',
         'ultima_sincronizacion',
-        'password',
     ];
 
     /**
      * @var list<string>
      */
     protected $hidden = [
-        'password',
         'remember_token',
     ];
 
@@ -51,7 +49,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'ultima_sincronizacion' => 'datetime',
-            'password' => 'hashed',
             'estado' => EstadoUsuario::class,
             'origen' => OrigenUsuario::class,
         ];
