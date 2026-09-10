@@ -46,20 +46,26 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 | Capa | Tecnología |
 |---|---|
 | Lenguaje | PHP 8.3 |
-| Framework | Laravel 12 LTS |
+| Framework | Laravel 12 LTS (12.60 o superior) |
 | Vistas | Blade |
 | Interactividad | Livewire 3 + Alpine.js |
 | Estilos | Tailwind CSS |
 | Panel de administración | Filament 3 |
 | Base de datos | PostgreSQL 16 |
 | Autenticación | Laravel Socialite (Google OAuth) |
-| Permisos | spatie/laravel-permission |
+| Permisos | spatie/laravel-permission ^7.1 |
 | Calendario | FullCalendar.js |
 | Exportación | barryvdh/laravel-dompdf, maatwebsite/excel |
 | Tests | Pest |
 | Contenedores | Docker + Docker Compose |
 
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
+
+**Restricciones de plataforma:**
+
+- `config.platform.php` está fijado en `8.3.0`. Producción corre PHP 8.3, así que ninguna dependencia puede exigir 8.4. Después de cualquier cambio en `composer.json`, verifica que el lock siga siendo instalable en 8.3.
+- Los roles y permisos los gestiona `spatie/laravel-permission` con sus propias tablas. **No crees tablas de roles propias** ni compruebes roles con condicionales sueltos.
+- `users.password` existe y es nullable como vestigio de Breeze. La autenticación es únicamente por Google (RF18): no añadas rutas de login, registro ni recuperación de contraseña. Hay tests que fallan si reaparecen.
 
 ---
 
@@ -235,3 +241,4 @@ No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 2. Estructura exacta de la vista de la base de datos institucional para la sincronización de usuarios.
 3. Cómo se entera hoy el docente de la sala asignada al llegar a clase.
 4. Volumen real de usuarios concurrentes; la cifra actual es una estimación.
+5. Valores posibles de `eventos.tipo`: el RF05 pide registrar el tipo pero no los enumera.
