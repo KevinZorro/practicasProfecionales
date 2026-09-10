@@ -84,3 +84,85 @@ jobs:
       # El histórico depende de que los down() sigan funcionando.
       - name: Comprobar la reversión de las migraciones
         run: php artisan migrate:reset --force
+
+  # Levanta el entorno real de docker-compose.yml. Es el único sitio donde se
+  # comprueba que la imagen construye, que nginx sirve la aplicación y que el
+  # "composer install" del paso 5 del README funciona dentro de php:8.3-fpm.
+  docker:
+    name: Docker · build y arranque
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Preparar el .env
+        run: |
+          cp .env.example .env
+          # El código se monta desde el host: el usuario del contenedor tiene
+          # que coincidir con el del runner o no podrá escribir en storage/.
+          sed -i "s/^UID=.*/UID=$(id -u)/;s/^GID=.*/GID=$(id -g)/" .env
+
+      - name: Construir la imagen de PHP
+        run: docker compose build app
+
+      - name: Levantar los cuatro servicios
+        run: docker compose up -d
+
+      - name: Comprobar que los cuatro servicios están arriba
+        run: |
+          docker compose ps
+          for servicio in app nginx db node; do
+            estado=$(docker compose ps --status running --services | grep -Fx "$servicio" || true)
+            if [ -z "$estado" ]; then
+              echo "::error::el servicio $servicio no está en ejecución"
+              exit 1
+            fi
+            echo "$servicio: en ejecución"
+          done
+
+      # Este es el paso que falló cuando el lock exigía PHP 8.4.
+      - name: Instalar dependencias dentro del contenedor
+        run: docker compose exec -T app composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generar la clave y migrar dentro del contenedor
+        run: |
+          docker compose exec -T app php artisan key:generate
+          docker compose exec -T app php artisan migrate --force
+          docker compose exec -T app php artisan --version
+
+      # La página de bienvenida usa @vite y public/build no está versionado,
+      # así que sin el servidor de desarrollo de Vite la respuesta sería un 500.
+      # public/hot aparece cuando el servicio node termina de arrancar.
+      - name: Esperar a que Vite esté listo
+        run: |
+          for _ in $(seq 1 60); do
+            [ -f public/hot ] && break
+            sleep 5
+          done
+          if [ ! -f public/hot ]; then
+            echo "::error::el servicio node no publicó public/hot"
+            docker compose logs node --tail=50
+            exit 1
+          fi
+          echo "Vite listo: $(cat public/hot)"
+
+      - name: Comprobar que nginx sirve la aplicación
+        run: |
+          codigo=$(curl -sS -o pagina.html -w '%{http_code}' \
+            --retry 12 --retry-delay 5 --retry-all-errors http://localhost)
+          echo "HTTP $codigo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::nginx respondió $codigo en lugar de 200"
+            head -40 pagina.html
+            exit 1
+          fi
+          grep -q '<title>' pagina.html
+
+      - name: Registros de los contenedores si algo falló
+        if: failure()
+        run: docker compose logs --tail=100
+
+      - name: Apagar el entorno
+        if: always()
+        run: docker compose down -v --remove-orphans

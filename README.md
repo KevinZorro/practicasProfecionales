@@ -18,11 +18,11 @@ en tu máquina.**
 | Capa | Tecnología |
 |---|---|
 | Lenguaje | PHP 8.3 |
-| Framework | Laravel 11 |
+| Framework | Laravel 12 LTS |
 | Vistas | Blade + Livewire 3 |
 | Estilos | Tailwind CSS 3 |
 | Base de datos | PostgreSQL 16 |
-| Permisos | spatie/laravel-permission |
+| Permisos | spatie/laravel-permission 7 |
 | Autenticación | Laravel Breeze (instalado, sin publicar todavía) |
 | Tests | Pest 3 |
 | Assets | Vite |
@@ -84,7 +84,7 @@ así que no hace falta ejecutar `npm install` a mano.
 # Los cuatro servicios en estado "Up"
 docker compose ps
 
-# Debe mostrar "Laravel Framework 11.x"
+# Debe mostrar "Laravel Framework 12.x"
 docker compose exec app php artisan --version
 
 # La suite de pruebas debe pasar en verde

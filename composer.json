@@ -7,10 +7,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "laravel/framework": "^11.31",
+        "laravel/framework": "^12.60",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.0",
-        "spatie/laravel-permission": "^6.0"
+        "spatie/laravel-permission": "^7.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
