@@ -174,6 +174,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - **Lógica de negocio en controladores, modelos o vistas.** Va en Services.
 - **Consultas N+1.** Usa `with()` siempre que recorras una relación.
 - **Comprobar roles con condicionales sueltos.** Usa Policies y Gates.
+- **Nombrar una Policy sin que coincida con su modelo.** Laravel las resuelve por convención: el modelo `ItemInventario` exige `ItemInventarioPolicy`, no `InventarioPolicy`. Un nombre que no coincide **no da error**: `Gate::getPolicyFor()` devuelve `null` y el Gate deniega en silencio, así que parece un problema de permisos. Ya ha pasado dos veces en este proyecto. Hay un test que recorre `app/Policies` y falla si alguna no se descubre.
 - **Números y textos mágicos.** Enums o constantes con nombre.
 - **`Model::all()`** sobre tablas que crecen. Pagina o filtra.
 - **Lógica duplicada entre pantalla, PDF y Excel.** Una sola consulta en el Service alimenta las tres salidas.
