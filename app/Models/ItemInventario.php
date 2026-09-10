@@ -21,12 +21,17 @@ class ItemInventario extends Model
     protected $table = 'items_inventario';
 
     /**
+     * nivel_fidelidad NO está aquí a propósito: el RF39 lo reserva al ADMIN.
+     * Al quedar fuera de fillable, ninguna asignación masiva puede tocarlo
+     * —ni create(), ni update(), ni fill() con lo que llegue de un
+     * formulario—, así que la restricción no se puede saltar por descuido.
+     * Solo InventarioService lo asigna, y antes consulta la Policy.
+     *
      * @var list<string>
      */
     protected $fillable = [
         'nombre',
         'tipo',
-        'nivel_fidelidad',
         'cantidad_total',
         'descripcion',
         'estado',

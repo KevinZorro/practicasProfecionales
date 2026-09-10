@@ -151,6 +151,23 @@ class Solicitud extends Model
             ->whereBetween('fecha', [$desde, $hasta]);
     }
 
+    /**
+     * Solicitudes cuya práctica se pisa con la franja dada.
+     *
+     * Dos franjas se solapan cuando cada una empieza antes de que la otra
+     * termine, así que dos prácticas contiguas no se solapan. Es el único
+     * sitio donde vive este criterio: lo usan la asignación de sala y el
+     * cálculo de disponibilidad de inventario.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeQueSeSolapanCon(Builder $consulta, string $fecha, string $horaInicio, string $horaFin): void
+    {
+        $consulta->whereDate($consulta->qualifyColumn('fecha'), $fecha)
+            ->where($consulta->qualifyColumn('hora_inicio'), '<', $horaFin)
+            ->where($consulta->qualifyColumn('hora_fin'), '>', $horaInicio);
+    }
+
     /** @param Builder<$this> $consulta */
     public function scopeDeEvaluacion(Builder $consulta): void
     {
