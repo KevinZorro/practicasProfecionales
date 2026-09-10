@@ -27,6 +27,7 @@ class ConsentimientoEstudiante extends Model
         'periodo_academico',
         'archivo_firmado_path',
         'estado',
+        'motivo_rechazo',
         'verificado_por',
         'verificado_at',
     ];
