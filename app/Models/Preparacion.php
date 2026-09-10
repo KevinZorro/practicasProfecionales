@@ -78,4 +78,21 @@ class Preparacion extends Model
     {
         $consulta->whereNull('sala_id');
     }
+
+    /**
+     * Preparaciones cuya práctica es ese día. La fecha vive en la solicitud,
+     * no en la preparación.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeDeLaFecha(Builder $consulta, string $fecha): void
+    {
+        $consulta->whereHas('solicitud', static fn (Builder $solicitudes) => $solicitudes->whereDate('fecha', $fecha));
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopePendientesDeLaFecha(Builder $consulta, string $fecha): void
+    {
+        $consulta->deLaFecha($fecha)->where('estado', EstadoPreparacion::Pendiente);
+    }
 }

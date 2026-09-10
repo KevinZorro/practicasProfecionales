@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\EstadoPreparacion;
 use App\Enums\EstadoSolicitud;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
@@ -21,6 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class SolicitudService
 {
+    public function __construct(private readonly PreparacionService $preparaciones) {}
+
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
         return DB::transaction(function () use ($docente, $datos): Solicitud {
@@ -62,7 +63,7 @@ final class SolicitudService
 
         DB::transaction(function () use ($solicitud, $coordinador): void {
             $solicitud->update($this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador));
-            $this->crearPreparacion($solicitud);
+            $this->preparaciones->crearDesdeSolicitud($solicitud);
         });
 
         // Fuera de la transacción: si algo la revierte, no debe salir correo.
@@ -157,16 +158,6 @@ final class SolicitudService
                 $item->id => (int) $item->pivot->cantidad,
             ])
             ->all();
-    }
-
-    private function crearPreparacion(Solicitud $solicitud): void
-    {
-        // La sala llega nula: la asigna el administrativo el día de la
-        // práctica, no el coordinador al aprobar (§4.5 del documento).
-        $solicitud->preparacion()->create([
-            'sala_id' => null,
-            'estado' => EstadoPreparacion::Pendiente,
-        ]);
     }
 
     private function garantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void
