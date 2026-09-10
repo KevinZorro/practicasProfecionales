@@ -676,7 +676,7 @@ class DatosPruebaSeeder extends Seeder
 
         $talleres = [
             ['Taller de reanimación cardiopulmonar', 'Urgencias', ModalidadTaller::Presencial],
-            ['Taller de atención inicial del trauma', 'Urgencias', ModalidadTaller::Mixta],
+            ['Taller de atención inicial del trauma', 'Urgencias', ModalidadTaller::Presencial],
             ['Taller de lactancia y cuidado neonatal', 'Materno perinatal', ModalidadTaller::Virtual],
         ];
 
