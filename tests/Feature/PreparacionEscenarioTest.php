@@ -164,10 +164,47 @@ it('no da por preparado un escenario sin sala asignada', function (): void {
     expect($preparacion->fresh()->estado)->toBe(EstadoPreparacion::EnPreparacion);
 });
 
+it('deja volver de preparado a en preparación', function (): void {
+    // Se monta con prisa minutos antes de clase: marcar preparado por error
+    // no puede dejar un estado sin salida.
+    $preparacion = preparacionEn('2026-04-10', '07:00:00', '09:00:00', Sala::factory()->create());
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::EnPreparacion, $this->administrativo);
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::Preparado, $this->administrativo);
+
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::EnPreparacion, $this->administrativo);
+
+    expect($preparacion->fresh()->estado)->toBe(EstadoPreparacion::EnPreparacion);
+});
+
+it('borra quién y cuándo terminó el montaje al volver atrás', function (): void {
+    $preparacion = preparacionEn('2026-04-10', '07:00:00', '09:00:00', Sala::factory()->create());
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::EnPreparacion, $this->administrativo);
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::Preparado, $this->administrativo);
+    expect($preparacion->fresh()->preparado_at)->not->toBeNull();
+
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::EnPreparacion, $this->administrativo);
+
+    expect($preparacion->fresh()->preparado_por)->toBeNull()
+        ->and($preparacion->fresh()->preparado_at)->toBeNull();
+});
+
+it('vuelve a registrar el montaje al darlo por preparado de nuevo', function (): void {
+    $otro = User::factory()->administrativo()->create();
+    $preparacion = preparacionEn('2026-04-10', '07:00:00', '09:00:00', Sala::factory()->create());
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::EnPreparacion, $this->administrativo);
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::Preparado, $this->administrativo);
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::EnPreparacion, $this->administrativo);
+
+    $this->servicio->cambiarEstado($preparacion, EstadoPreparacion::Preparado, $otro);
+
+    expect($preparacion->fresh()->estado)->toBe(EstadoPreparacion::Preparado)
+        ->and($preparacion->fresh()->preparado_por)->toBe($otro->id)
+        ->and($preparacion->fresh()->preparado_at)->not->toBeNull();
+});
+
 dataset('transiciones de montaje inválidas', [
     'saltarse en preparación' => [EstadoPreparacion::Pendiente, EstadoPreparacion::Preparado],
     'volver a pendiente' => [EstadoPreparacion::EnPreparacion, EstadoPreparacion::Pendiente],
-    'reabrir lo preparado' => [EstadoPreparacion::Preparado, EstadoPreparacion::EnPreparacion],
     'repetir pendiente' => [EstadoPreparacion::Pendiente, EstadoPreparacion::Pendiente],
 ]);
 

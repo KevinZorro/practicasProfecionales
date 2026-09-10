@@ -167,7 +167,13 @@ final class PreparacionService
     }
 
     /**
-     * El montaje solo avanza: pendiente -> en preparación -> preparado.
+     * El montaje va pendiente -> en preparación -> preparado, y puede
+     * volver de preparado a en preparación: se monta con prisa minutos
+     * antes de la clase y marcar preparado por error no debe dejar un
+     * estado sin salida. Es estado operativo interno, sin consecuencia
+     * administrativa.
+     *
+     * Lo que sigue prohibido es saltarse en preparación.
      *
      * @return array<string, list<EstadoPreparacion>>
      */
@@ -176,20 +182,21 @@ final class PreparacionService
         return [
             EstadoPreparacion::Pendiente->value => [EstadoPreparacion::EnPreparacion],
             EstadoPreparacion::EnPreparacion->value => [EstadoPreparacion::Preparado],
-            EstadoPreparacion::Preparado->value => [],
+            EstadoPreparacion::Preparado->value => [EstadoPreparacion::EnPreparacion],
         ];
     }
 
     /**
-     * Quién y cuándo terminó el montaje. Solo se registra al dar por
-     * preparado el escenario.
+     * Quién y cuándo terminó el montaje. Se registra al dar por preparado
+     * el escenario y se borra al volver atrás: si el montaje ya no está
+     * terminado, estos campos no deben seguir diciendo que sí.
      *
      * @return array<string, mixed>
      */
     private function marcasDeMontaje(EstadoPreparacion $destino, User $administrativo): array
     {
         if ($destino !== EstadoPreparacion::Preparado) {
-            return [];
+            return ['preparado_por' => null, 'preparado_at' => null];
         }
 
         return [
