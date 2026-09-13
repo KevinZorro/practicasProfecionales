@@ -1,7 +1,55 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
+use App\Http\Controllers\Auth\SalirController;
+use App\Http\Controllers\Panel\PanelController;
+use App\Http\Controllers\Panel\SelectorDeRolController;
+use App\Support\MenuDelPanel;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+Route::view('/', 'welcome')->name('inicio.publico');
+
+Route::post('salir', SalirController::class)->name('salir');
+
+/*
+|--------------------------------------------------------------------------
+| Panel interno
+|--------------------------------------------------------------------------
+|
+| Las rutas del panel salen del propio menú: una sección de la navegación es
+| una ruta, y no hay forma de que las dos listas se desincronicen. Cada una
+| apunta de momento a un marcador de posición; se irán reemplazando por la
+| pantalla de su módulo.
+|
+*/
+
+Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
+    foreach ((new MenuDelPanel)->todas() as $seccion) {
+        Route::get($seccion->clave === 'inicio' ? '/' : $seccion->clave, PanelController::class)
+            ->defaults('seccion', $seccion->clave)
+            ->name($seccion->clave);
+    }
+
+    Route::post('rol-activo', SelectorDeRolController::class)->name('rol-activo');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Acceso de desarrollo
+|--------------------------------------------------------------------------
+|
+| Provisional, hasta que lleguen las credenciales de Google OAuth (RF18).
+| Se registra solo en local, y además el middleware comprueba el entorno en
+| cada petición para que una caché de rutas generada en desarrollo no pueda
+| abrir esta puerta en producción.
+|
+*/
+
+if (app()->environment('local')) {
+    Route::middleware('solo.desarrollo')->prefix('desarrollo')->group(function (): void {
+        Route::get('acceso', [AccesoDeDesarrolloController::class, 'formulario'])->name('login');
+        Route::post('acceso', [AccesoDeDesarrolloController::class, 'entrar'])->name('desarrollo.entrar');
+    });
+}

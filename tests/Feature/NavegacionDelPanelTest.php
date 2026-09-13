@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Enums\Rol;
+use App\Models\User;
+use App\Support\MenuDelPanel;
+use Database\Seeders\RolSeeder;
+
+beforeEach(function (): void {
+    $this->seed(RolSeeder::class);
+});
+
+/** Claves de las secciones que el usuario ve con el rol dado. */
+function seccionesVisibles(Rol $rol): array
+{
+    $usuario = User::factory()->create();
+    $usuario->assignRole($rol->value);
+
+    return array_map(
+        static fn ($seccion): string => $seccion->clave,
+        (new MenuDelPanel)->visiblesPara($usuario->fresh()),
+    );
+}
+
+it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, array $esperadas): void {
+    expect(seccionesVisibles($rol))->toEqualCanonicalizing($esperadas);
+})->with([
+    'docente' => [Rol::Docente, ['inicio', 'calendario', 'solicitudes', 'evaluaciones']],
+    'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-consentimiento']],
+    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario']],
+    'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'consentimientos', 'reportes']],
+    'admin' => [Rol::Admin, ['inicio', 'calendario', 'evaluaciones', 'inventario', 'consentimientos', 'plantillas-consentimiento', 'reportes']],
+]);
+
+it('no enseña al docente el inventario ni los reportes', function (): void {
+    // RF40 y §6.1: disponibilidad de inventario y reportes agregados le
+    // están vedados, aunque use el laboratorio a diario.
+    expect(seccionesVisibles(Rol::Docente))
+        ->not->toContain('inventario')
+        ->not->toContain('reportes')
+        ->not->toContain('consentimientos');
+});
+
+it('no enseña los reportes ni los consentimientos al administrativo', function (): void {
+    // Las dos únicas funciones operativas donde no acompaña al coordinador.
+    expect(seccionesVisibles(Rol::Administrativo))
+        ->not->toContain('reportes')
+        ->not->toContain('consentimientos');
+});
+
+it('cierra también la ruta de una sección que el menú esconde', function (Rol $rol, string $ruta): void {
+    // Que el enlace no aparezca no basta: escribir la URL a mano tampoco
+    // puede funcionar.
+    $usuario = User::factory()->create();
+    $usuario->assignRole($rol->value);
+
+    $this->actingAs($usuario->fresh())->get(route($ruta))->assertForbidden();
+})->with([
+    'docente en inventario' => [Rol::Docente, 'panel.inventario'],
+    'docente en reportes' => [Rol::Docente, 'panel.reportes'],
+    'administrativo en reportes' => [Rol::Administrativo, 'panel.reportes'],
+    'administrativo en consentimientos' => [Rol::Administrativo, 'panel.consentimientos'],
+    'estudiante en solicitudes' => [Rol::Estudiante, 'panel.solicitudes'],
+    'coordinador en plantillas' => [Rol::Coordinador, 'panel.plantillas-consentimiento'],
+]);
+
+it('pinta en el menú lateral solo las secciones permitidas', function (): void {
+    $docente = User::factory()->create();
+    $docente->assignRole(Rol::Docente->value);
+
+    $this->actingAs($docente->fresh())->get(route('panel.inicio'))
+        ->assertOk()
+        ->assertSee('Solicitudes')
+        ->assertSee('Calendario')
+        ->assertDontSee('Inventario')
+        ->assertDontSee('Reportes');
+});
+
+it('no deja entrar al panel a quien no ha iniciado sesión', function (): void {
+    // En pruebas no hay ruta de acceso —la de desarrollo solo se registra en
+    // local y la de Google todavía no existe—, así que el invitado sale a la
+    // portada.
+    $this->get(route('panel.inicio'))->assertRedirect('/');
+});
+
+it('no deja entrar al panel a una cuenta sin ningún rol asignado', function (): void {
+    // La sincronización institucional puede crear la cuenta antes de que el
+    // ADMIN le asigne rol. Sin rol no hay navegación que pintar.
+    $this->actingAs(User::factory()->create())
+        ->get(route('panel.inicio'))
+        ->assertForbidden()
+        ->assertSee('no tiene ningún rol asignado');
+});
