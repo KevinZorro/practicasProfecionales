@@ -9,6 +9,7 @@ use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
 use App\Listeners\EnviarCorreoResultadoSolicitud;
 use App\Models\User;
+use App\Support\RolActivo;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -17,7 +18,9 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Una instancia por petición: cachea los roles asignados del usuario
+        // para no repetir la consulta en cada comprobación.
+        $this->app->scoped(RolActivo::class);
     }
 
     public function boot(): void
