@@ -164,6 +164,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 - Componentes Blade reutilizables para elementos repetidos (tarjetas de solicitud, etiquetas de estado, tablas).
 - Solo clases utilitarias de Tailwind; sin CSS suelto salvo que no haya alternativa.
+- En Tailwind, `border-gray-300` fija el **color** del borde, no su grosor. Sin `border` al lado, el borde no se ve. Es un fallo que se lee perfectamente en el código y solo aparece al abrir el navegador: lo correcto es `border border-gray-300`.
 - Móvil primero: los administrativos usan el sistema desde el celular mientras preparan escenarios.
 - La interfaz debe funcionar en conexiones lentas y equipos de gama baja: sin dependencias pesadas de JavaScript.
 
@@ -183,6 +184,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - **Migraciones editadas después de aplicadas.**
 - **`env()` fuera de los archivos de configuración.** Usa `config()`.
 - **Archivos de consentimiento en almacenamiento público.** Contienen datos personales: se sirven por ruta protegida con Policy.
+- **Correr dos suites de tests a la vez contra la misma base.** PostgreSQL detecta el interbloqueo entre las dos y aborta transacciones, así que saltan `QueryException` en tests que no tienen nada roto. Parece un fallo del código y no lo es. Ya ha pasado dos veces en este proyecto: una suite cada vez, y espera a que termine antes de lanzar la siguiente.
 
 ---
 
