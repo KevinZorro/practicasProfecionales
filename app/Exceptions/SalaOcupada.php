@@ -15,11 +15,18 @@ use DomainException;
  */
 final class SalaOcupada extends DomainException
 {
+    /**
+     * La preparación que ocupa la sala viaja con la excepción, no solo
+     * dentro del mensaje: la pantalla necesita enseñar el caso clínico y el
+     * docente del choque, y sacarlos de un texto ya armado sería peor.
+     */
+    public ?Preparacion $conflicto = null;
+
     public static function por(Sala $sala, Preparacion $conflicto): self
     {
         $solicitud = $conflicto->solicitud;
 
-        return new self(sprintf(
+        $excepcion = new self(sprintf(
             'La sala %s ya está ocupada el %s de %s a %s por la solicitud #%d.',
             $sala->nombre,
             $solicitud->fecha->format('d/m/Y'),
@@ -27,5 +34,9 @@ final class SalaOcupada extends DomainException
             $solicitud->hora_fin,
             $solicitud->id,
         ));
+
+        $excepcion->conflicto = $conflicto;
+
+        return $excepcion;
     }
 }

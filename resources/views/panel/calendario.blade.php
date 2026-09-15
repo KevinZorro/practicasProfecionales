@@ -4,13 +4,9 @@
 
 @section('contenido')
     <div class="space-y-4">
-        <p class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-            <span class="inline-flex items-center gap-2">
-                <span class="size-3 rounded-sm" style="background:#0369a1"></span> Práctica
-            </span>
-            <span class="inline-flex items-center gap-2">
-                <span class="size-3 rounded-sm" style="background:#7e22ce"></span> Evaluación
-            </span>
+        <p class="flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            <x-tipo-de-sesion :tipo="\App\Enums\TipoSesion::Practica" />
+            <x-tipo-de-sesion :tipo="\App\Enums\TipoSesion::Evaluacion" />
             <span class="text-gray-500">Solo se muestran los escenarios aprobados.</span>
         </p>
 
