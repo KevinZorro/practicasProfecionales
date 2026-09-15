@@ -58,7 +58,7 @@
                 @csrf
                 <label for="rol" class="sr-only">Cambiar de rol</label>
                 <select name="rol" id="rol"
-                        class="min-w-0 flex-1 rounded-md border-gray-300 py-1.5 pl-2 pr-8 text-sm focus:border-sky-600 focus:ring-sky-600 md:flex-none">
+                        class="min-w-0 flex-1 rounded-md border border-gray-300 py-1.5 pl-2 pr-8 text-sm focus:border-sky-600 focus:ring-sky-600 md:flex-none">
                     @foreach ($rolesDisponibles as $rol)
                         <option value="{{ $rol->value }}" @selected($rol === $rolActivo)>{{ $rol->etiqueta() }}</option>
                     @endforeach

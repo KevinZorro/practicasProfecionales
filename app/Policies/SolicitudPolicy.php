@@ -34,7 +34,13 @@ final class SolicitudPolicy
         return $usuario->hasRole(Rol::Docente->value);
     }
 
-    public function revisar(User $usuario, Solicitud $solicitud): bool
+    /**
+     * El modelo es opcional para poder preguntar también a nivel de clase,
+     * que es lo que necesita la navegación para decidir si enseña la bandeja
+     * antes de tener ninguna solicitud delante. Mismo patrón que
+     * ItemInventarioPolicy::editarNivelFidelidad().
+     */
+    public function revisar(User $usuario, ?Solicitud $solicitud = null): bool
     {
         return $this->revisaSolicitudes($usuario);
     }

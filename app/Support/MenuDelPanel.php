@@ -46,12 +46,22 @@ final class MenuDelPanel
                 permiso: 'verCalendario',
                 sobre: Solicitud::class,
             ),
+            // El docente y quien revisa ven pantallas distintas, así que son
+            // dos entradas con permisos distintos, no una con un condicional.
+            new SeccionDelPanel(
+                clave: 'mis-solicitudes',
+                etiqueta: 'Mis solicitudes',
+                ruta: 'panel.mis-solicitudes',
+                icono: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z',
+                permiso: 'create',
+                sobre: Solicitud::class,
+            ),
             new SeccionDelPanel(
                 clave: 'solicitudes',
                 etiqueta: 'Solicitudes',
                 ruta: 'panel.solicitudes',
-                icono: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z',
-                permiso: 'viewAny',
+                icono: 'M3 8h18M3 12h18M3 16h10',
+                permiso: 'revisar',
                 sobre: Solicitud::class,
             ),
             new SeccionDelPanel(
