@@ -115,8 +115,41 @@ final class PreparacionService
     {
         return Preparacion::query()
             ->deLaFecha($fecha)
+            // Hoy una preparación solo nace al aprobar, y aprobada es un
+            // estado terminal, así que este filtro no descarta nada. Se deja
+            // explícito para que el tablero garantice por sí mismo lo que el
+            // RF36 pide —solo escenarios aprobados— y no dependa de que esa
+            // regla siga viviendo en SolicitudService.
+            ->whereHas('solicitud', static fn (Builder $consulta) => $consulta->aprobadas())
             ->with(['solicitud.docente', 'solicitud.materia', 'solicitud.casoClinico', 'sala', 'items'])
             ->orderBy(Solicitud::select('hora_inicio')->whereColumn('solicitudes.id', 'preparaciones.solicitud_id'))
+            ->get();
+    }
+
+    /**
+     * Salas que quedan libres para esta preparación (RF37).
+     *
+     * El criterio de solapamiento no se repite aquí: es el mismo scope
+     * queSeSolapanCon de Solicitud que usan la validación de asignarSala y
+     * el cálculo de disponibilidad de inventario. Si el criterio cambia,
+     * cambia en los tres a la vez.
+     *
+     * @return Collection<int, Sala>
+     */
+    public function salasLibresPara(Preparacion $preparacion): Collection
+    {
+        $solicitud = $preparacion->solicitud;
+
+        return Sala::query()
+            ->activas()
+            ->whereDoesntHave('preparaciones', fn (Builder $consulta) => $consulta
+                ->whereKeyNot($preparacion->getKey())
+                ->whereHas('solicitud', static fn (Builder $suya) => $suya->queSeSolapanCon(
+                    $solicitud->fecha->format('Y-m-d'),
+                    $solicitud->hora_inicio,
+                    $solicitud->hora_fin,
+                )))
+            ->orderBy('nombre')
             ->get();
     }
 
@@ -152,7 +185,7 @@ final class PreparacionService
                 $solicitud->hora_inicio,
                 $solicitud->hora_fin,
             ))
-            ->with('solicitud')
+            ->with(['solicitud.docente', 'solicitud.casoClinico'])
             ->first();
     }
 
