@@ -36,7 +36,7 @@
                 <div>
                     <label for="usuario" class="mb-1 block text-sm font-medium text-gray-700">Entrar como</label>
                     <select name="usuario" id="usuario" required
-                            class="w-full rounded-md border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
+                            class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
                         @foreach ($usuarios as $usuario)
                             <option value="{{ $usuario->id }}">
                                 {{ $usuario->nombre }} — {{ $usuario->roles->pluck('name')->join(', ') ?: 'sin rol' }}

@@ -12,6 +12,8 @@ use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\Solicitud;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -42,6 +44,47 @@ final class SolicitudService
     public function itemsSugeridos(CasoClinico $casoClinico): Collection
     {
         return $casoClinico->items()->get();
+    }
+
+    /**
+     * Historial de un docente (RF35), listo para pintar: trae materia, caso
+     * clínico y la sala si el administrativo ya la asignó.
+     *
+     * @return LengthAwarePaginator<int, Solicitud>
+     */
+    public function historialDelDocente(User $docente, ?EstadoSolicitud $estado = null, int $porPagina = 15): LengthAwarePaginator
+    {
+        return Solicitud::query()
+            ->delDocente($docente)
+            ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
+            ->with(['materia', 'casoClinico', 'preparacion.sala'])
+            ->orderByDesc('fecha')
+            ->orderByDesc('hora_inicio')
+            ->paginate($porPagina);
+    }
+
+    /**
+     * Bandeja de revisión (RF31-RF33), ordenada por la fecha de la práctica:
+     * lo que ocurre antes se atiende antes.
+     *
+     * @return LengthAwarePaginator<int, Solicitud>
+     */
+    public function bandeja(?EstadoSolicitud $estado = null, int $porPagina = 15): LengthAwarePaginator
+    {
+        return Solicitud::query()
+            ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
+            ->with(['docente', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio')
+            ->paginate($porPagina);
+    }
+
+    /**
+     * Una solicitud con todo lo que el detalle de la bandeja enseña.
+     */
+    public function paraDetalle(Solicitud $solicitud): Solicitud
+    {
+        return $solicitud->load(['docente', 'materia', 'casoClinico', 'preparacion.sala', 'items']);
     }
 
     public function marcarRevisada(Solicitud $solicitud, User $administrativo): Solicitud

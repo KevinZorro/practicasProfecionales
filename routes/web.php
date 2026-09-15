@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
+use App\Http\Controllers\Panel\CalendarioController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\SelectorDeRolController;
+use App\Http\Controllers\Panel\SolicitudController;
 use App\Support\MenuDelPanel;
 use Illuminate\Support\Facades\Route;
 
@@ -26,7 +28,22 @@ Route::post('salir', SalirController::class)->name('salir');
 */
 
 Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
+    // Secciones ya construidas. Se declaran antes del marcador de posición
+    // para que este solo cubra las que aún no tienen pantalla.
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario'];
+
+    Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
+    Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
+    Route::get('solicitudes', [SolicitudController::class, 'bandeja'])->name('solicitudes');
+
+    Route::get('calendario', [CalendarioController::class, 'index'])->name('calendario');
+    Route::get('calendario/eventos', [CalendarioController::class, 'eventos'])->name('calendario.eventos');
+
     foreach ((new MenuDelPanel)->todas() as $seccion) {
+        if (in_array($seccion->clave, $construidas, true)) {
+            continue;
+        }
+
         Route::get($seccion->clave === 'inicio' ? '/' : $seccion->clave, PanelController::class)
             ->defaults('seccion', $seccion->clave)
             ->name($seccion->clave);

@@ -26,7 +26,7 @@ function seccionesVisibles(Rol $rol): array
 it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, array $esperadas): void {
     expect(seccionesVisibles($rol))->toEqualCanonicalizing($esperadas);
 })->with([
-    'docente' => [Rol::Docente, ['inicio', 'calendario', 'solicitudes', 'evaluaciones']],
+    'docente' => [Rol::Docente, ['inicio', 'calendario', 'mis-solicitudes', 'evaluaciones']],
     'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-consentimiento']],
     'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario']],
     'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'consentimientos', 'reportes']],
@@ -62,6 +62,8 @@ it('cierra también la ruta de una sección que el menú esconde', function (Rol
     'administrativo en reportes' => [Rol::Administrativo, 'panel.reportes'],
     'administrativo en consentimientos' => [Rol::Administrativo, 'panel.consentimientos'],
     'estudiante en solicitudes' => [Rol::Estudiante, 'panel.solicitudes'],
+    'docente en la bandeja' => [Rol::Docente, 'panel.solicitudes'],
+    'administrativo en mis solicitudes' => [Rol::Administrativo, 'panel.mis-solicitudes'],
     'coordinador en plantillas' => [Rol::Coordinador, 'panel.plantillas-consentimiento'],
 ]);
 
@@ -71,7 +73,7 @@ it('pinta en el menú lateral solo las secciones permitidas', function (): void 
 
     $this->actingAs($docente->fresh())->get(route('panel.inicio'))
         ->assertOk()
-        ->assertSee('Solicitudes')
+        ->assertSee('Mis solicitudes')
         ->assertSee('Calendario')
         ->assertDontSee('Inventario')
         ->assertDontSee('Reportes');
