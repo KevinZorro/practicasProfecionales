@@ -1,0 +1,118 @@
+<div class="space-y-4">
+
+    {{-- Filtros --}}
+    <x-tarjeta>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="sm:col-span-2">
+                <label for="busqueda" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Buscar por nombre</label>
+                <input type="search" wire:model.live.debounce.400ms="busqueda" id="busqueda"
+                       placeholder="Maniquí, monitor, camilla…"
+                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+            </div>
+
+            <div>
+                <label for="tipo" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Tipo</label>
+                <select wire:model.live="tipo" id="tipo"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    <option value="">Todos</option>
+                    @foreach ($tipos as $unTipo)
+                        <option value="{{ $unTipo->value }}">{{ $unTipo->etiqueta() }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="estado" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Estado</label>
+                <select wire:model.live="estado" id="estado"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    <option value="">Todos</option>
+                    @foreach ($estados as $unEstado)
+                        <option value="{{ $unEstado->value }}">{{ $unEstado->etiqueta() }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label for="fidelidad" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Fidelidad</label>
+                <select wire:model.live="fidelidad" id="fidelidad"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    <option value="">Todas</option>
+                    @foreach ($nivelesFidelidad as $nivel)
+                        <option value="{{ $nivel->value }}">{{ $nivel->etiqueta() }}</option>
+                    @endforeach
+                    {{-- Los simuladores que esperan que el ADMIN complete el dato. --}}
+                    <option value="{{ \App\Livewire\Inventario\ListadoInventario::SIN_ASIGNAR }}">Pendientes de asignar</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p class="text-sm text-gray-600">
+                {{ trans_choice(':count ítem|:count ítems', $items->total(), ['count' => $items->total()]) }}
+            </p>
+            <div class="flex flex-wrap gap-2">
+                <x-boton variante="secundario" type="button" wire:click="limpiarFiltros">Limpiar filtros</x-boton>
+                <x-boton variante="secundario" href="{{ route('panel.inventario.disponibilidad') }}">Disponibilidad</x-boton>
+                @can('create', \App\Models\ItemInventario::class)
+                    <x-boton href="{{ route('panel.inventario.nuevo') }}">Registrar ítem</x-boton>
+                @endcan
+            </div>
+        </div>
+    </x-tarjeta>
+
+    @if ($items->isEmpty())
+        <x-mensaje-vacio
+            titulo="No hay ítems que coincidan"
+            descripcion="Prueba a quitar algún filtro o a cambiar la búsqueda."
+        />
+    @else
+        {{-- Tarjetas en móvil: una tabla de seis columnas no se lee a 390 px. --}}
+        <ul class="space-y-3 lg:hidden">
+            @foreach ($items as $item)
+                <li wire:key="item-movil-{{ $item->id }}">
+                    <x-tarjeta @class(['opacity-75' => ! $item->activo])>
+                        <div class="flex flex-wrap items-start justify-between gap-2">
+                            <p class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900">{{ $item->nombre }}</p>
+                            <x-etiqueta-estado :estado="$item->estado" />
+                        </div>
+                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                            <x-tipo-de-item :tipo="$item->tipo" />
+                            <x-nivel-de-fidelidad :nivel="$item->nivel_fidelidad" :tipo="$item->tipo" />
+                        </div>
+                        <dl class="mt-3 grid grid-cols-2 gap-3">
+                            <x-dato etiqueta="Unidades">{{ $item->cantidad_total }}</x-dato>
+                            <x-dato etiqueta="Cuenta como disponible">
+                                @if ($item->activo && $item->estado === \App\Enums\EstadoItemInventario::Disponible)
+                                    Sí
+                                @else
+                                    <span class="text-amber-800">No</span>
+                                @endif
+                            </x-dato>
+                        </dl>
+                        @include('livewire.inventario.partes.acciones', ['item' => $item])
+                    </x-tarjeta>
+                </li>
+            @endforeach
+        </ul>
+
+        {{-- Tabla en pantalla ancha. --}}
+        <div class="hidden lg:block">
+            <x-tabla :encabezados="['Nombre', 'Tipo', 'Fidelidad', 'Unidades', 'Estado', '']">
+                @foreach ($items as $item)
+                    <tr wire:key="item-tabla-{{ $item->id }}" @class(['opacity-75' => ! $item->activo])>
+                        <td class="px-4 py-3 font-medium text-gray-900">{{ $item->nombre }}</td>
+                        <td class="px-4 py-3"><x-tipo-de-item :tipo="$item->tipo" /></td>
+                        <td class="px-4 py-3"><x-nivel-de-fidelidad :nivel="$item->nivel_fidelidad" :tipo="$item->tipo" /></td>
+                        <td class="px-4 py-3 tabular-nums">{{ $item->cantidad_total }}</td>
+                        <td class="px-4 py-3"><x-etiqueta-estado :estado="$item->estado" /></td>
+                        <td class="px-4 py-3">
+                            @include('livewire.inventario.partes.acciones', ['item' => $item, 'compacto' => true])
+                        </td>
+                    </tr>
+                @endforeach
+            </x-tabla>
+        </div>
+
+        <div>{{ $items->links() }}</div>
+    @endif
+</div>

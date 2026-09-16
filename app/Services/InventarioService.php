@@ -11,6 +11,8 @@ use App\Exceptions\InventarioInvalido;
 use App\Models\ItemInventario;
 use App\Models\Solicitud;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
@@ -24,6 +26,8 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class InventarioService
 {
+    public const POR_PAGINA = 15;
+
     public function crear(User $actor, DatosItemInventario $datos): ItemInventario
     {
         $this->garantizarFidelidadCoherente($datos->tipo, $datos->nivelFidelidad);
@@ -102,22 +106,37 @@ final class InventarioService
     }
 
     /**
-     * Listado filtrable del inventario.
+     * Listado filtrable del inventario (RF38).
      *
-     * @return Collection<int, ItemInventario>
+     * "soloSinFidelidad" busca los simuladores que todavía esperan que el
+     * ADMIN les asigne el nivel: un administrativo puede dar de alta el
+     * maniquí y el ADMIN completarlo después (RF39), así que ese estado
+     * intermedio hay que poder encontrarlo.
+     *
+     * @return LengthAwarePaginator<int, ItemInventario>
      */
     public function listar(
         ?TipoItemInventario $tipo = null,
         ?EstadoItemInventario $estado = null,
         ?NivelFidelidad $nivelFidelidad = null,
-    ): Collection {
+        ?string $busqueda = null,
+        bool $soloSinFidelidad = false,
+        int $porPagina = self::POR_PAGINA,
+    ): LengthAwarePaginator {
         return ItemInventario::query()
-            ->when($tipo instanceof TipoItemInventario, fn ($consulta) => $consulta->where('tipo', $tipo))
-            ->when($estado instanceof EstadoItemInventario, fn ($consulta) => $consulta->where('estado', $estado))
-            ->when($nivelFidelidad instanceof NivelFidelidad, fn ($consulta) => $consulta->where('nivel_fidelidad', $nivelFidelidad))
+            ->when($tipo instanceof TipoItemInventario, fn (Builder $c) => $c->where('tipo', $tipo))
+            ->when($estado instanceof EstadoItemInventario, fn (Builder $c) => $c->where('estado', $estado))
+            ->when($nivelFidelidad instanceof NivelFidelidad, fn (Builder $c) => $c->where('nivel_fidelidad', $nivelFidelidad))
+            ->when($soloSinFidelidad, fn (Builder $c) => $c
+                ->where('tipo', TipoItemInventario::Simulador)
+                ->whereNull('nivel_fidelidad'))
+            ->when(
+                is_string($busqueda) && trim($busqueda) !== '',
+                fn (Builder $c) => $c->whereRaw('LOWER(nombre) LIKE ?', ['%'.mb_strtolower(trim((string) $busqueda)).'%']),
+            )
             ->orderBy('tipo')
             ->orderBy('nombre')
-            ->get();
+            ->paginate($porPagina);
     }
 
     /**
