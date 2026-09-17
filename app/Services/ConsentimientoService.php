@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EstadoConsentimiento;
+use App\Enums\Rol;
 use App\Exceptions\ConsentimientoInvalido;
 use App\Models\ConsentimientoEstudiante;
 use App\Models\ConsentimientoPlantilla;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -29,6 +33,8 @@ use Illuminate\Support\Facades\Storage;
  */
 final class ConsentimientoService
 {
+    public const POR_PAGINA = 15;
+
     /**
      * Periodo académico vigente, en formato "2026-2".
      *
@@ -49,6 +55,83 @@ final class ConsentimientoService
         $hoy = now();
 
         return sprintf('%d-%d', $hoy->year, $hoy->month >= $corte ? 2 : 1);
+    }
+
+    /**
+     * Bandeja de verificación (RF52): lo que espera a que un coordinador o
+     * el ADMIN lo revise. Por defecto, los cargados del periodo vigente.
+     *
+     * @return LengthAwarePaginator<int, ConsentimientoEstudiante>
+     */
+    public function bandeja(
+        ?EstadoConsentimiento $estado = EstadoConsentimiento::Cargado,
+        ?string $periodo = null,
+        int $porPagina = self::POR_PAGINA,
+    ): LengthAwarePaginator {
+        return ConsentimientoEstudiante::query()
+            ->when($estado instanceof EstadoConsentimiento, fn (Builder $c) => $c->where('estado', $estado))
+            ->when($periodo !== null && $periodo !== '', fn (Builder $c) => $c->delPeriodo($periodo))
+            ->with(['estudiante:id,nombre,email,codigo_institucional', 'plantilla:id,nombre,version'])
+            ->orderBy('updated_at')
+            ->paginate($porPagina);
+    }
+
+    /**
+     * Quién tiene el consentimiento al día y quién no, en un periodo (RF52).
+     *
+     * Es la vista que deja saber a quién le falta antes de una práctica. Se
+     * listan los estudiantes, no las entregas: quien todavía no ha entregado
+     * nada no tiene fila en consentimientos_estudiante y es justo el que hay
+     * que ver.
+     *
+     * @return LengthAwarePaginator<int, User>
+     */
+    public function estadoDeLosEstudiantes(
+        ?string $periodo = null,
+        ?bool $soloSinVigente = null,
+        ?string $busqueda = null,
+        int $porPagina = self::POR_PAGINA,
+    ): LengthAwarePaginator {
+        $periodo ??= $this->periodoVigente();
+
+        // La restricción de un with() recibe la relación, no un Builder.
+        $delPeriodo = static fn (HasMany $relacion) => $relacion->delPeriodo($periodo);
+
+        return User::query()
+            ->role(Rol::Estudiante->value)
+            ->with(['consentimientos' => $delPeriodo, 'consentimientos.plantilla:id,nombre,version'])
+            ->when($soloSinVigente === true, fn (Builder $c) => $c->whereDoesntHave(
+                'consentimientos',
+                static fn (Builder $e) => $e->delPeriodo($periodo)->verificados(),
+            ))
+            ->when($soloSinVigente === false, fn (Builder $c) => $c->whereHas(
+                'consentimientos',
+                static fn (Builder $e) => $e->delPeriodo($periodo)->verificados(),
+            ))
+            ->when(
+                is_string($busqueda) && trim($busqueda) !== '',
+                fn (Builder $c) => $c->where(static function (Builder $o) use ($busqueda): void {
+                    $aguja = '%'.mb_strtolower(trim((string) $busqueda)).'%';
+                    $o->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
+                        ->orWhereRaw('LOWER(email) LIKE ?', [$aguja]);
+                }),
+            )
+            ->orderBy('nombre')
+            ->paginate($porPagina);
+    }
+
+    /**
+     * Historial de plantillas, la vigente primero (RF51).
+     *
+     * @return LengthAwarePaginator<int, ConsentimientoPlantilla>
+     */
+    public function plantillas(int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    {
+        return ConsentimientoPlantilla::query()
+            ->with('subidoPor:id,nombre')
+            ->orderByDesc('activo')
+            ->orderByDesc('id')
+            ->paginate($porPagina);
     }
 
     /**
@@ -261,10 +344,19 @@ final class ConsentimientoService
         }
     }
 
+    /**
+     * Se mira getMimeType(), no getClientMimeType().
+     *
+     * Por dos razones. La de corrección: los archivos temporales de Livewire
+     * pierden la cabecera del cliente y devuelven "application/octet-stream",
+     * así que con getClientMimeType() ninguna subida real pasaba. La de
+     * seguridad: la cabecera del cliente la escribe quien sube el archivo,
+     * mientras que getMimeType() sale del archivo guardado.
+     */
     private function garantizarPdf(UploadedFile $archivo): void
     {
-        if ($archivo->getClientMimeType() !== 'application/pdf') {
-            throw ConsentimientoInvalido::soloSeAceptaPdf($archivo->getClientMimeType());
+        if ($archivo->getMimeType() !== 'application/pdf') {
+            throw ConsentimientoInvalido::soloSeAceptaPdf((string) $archivo->getMimeType());
         }
 
         $maximoKb = (int) config('laboratorio.consentimiento.tamano_maximo_kb');
