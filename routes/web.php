@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\CalendarioController;
+use App\Http\Controllers\Panel\ConsentimientoController;
+use App\Http\Controllers\Panel\DescargaConsentimientoController;
 use App\Http\Controllers\Panel\InventarioController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PreparacionController;
@@ -32,7 +34,7 @@ Route::post('salir', SalirController::class)->name('salir');
 Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'consentimientos', 'mi-consentimiento', 'plantillas-consentimiento'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
@@ -44,6 +46,20 @@ Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->grou
     Route::get('inventario/disponibilidad', [InventarioController::class, 'disponibilidad'])->name('inventario.disponibilidad');
     Route::get('inventario/{item}/editar', [InventarioController::class, 'editar'])->name('inventario.editar');
     Route::get('inventario', [InventarioController::class, 'index'])->name('inventario');
+
+    /*
+     * Consentimiento informado. Los archivos no se sirven por enlace
+     * directo: las tres rutas de descarga leen del disco privado y solo
+     * después de que la Policy lo autorice (RNF07).
+     */
+    Route::get('mi-consentimiento', [ConsentimientoController::class, 'mio'])->name('mi-consentimiento');
+    Route::get('consentimientos', [ConsentimientoController::class, 'bandeja'])->name('consentimientos');
+    Route::get('consentimientos/estado', [ConsentimientoController::class, 'estado'])->name('consentimientos.estado');
+    Route::get('plantillas-consentimiento', [ConsentimientoController::class, 'plantillas'])->name('plantillas-consentimiento');
+
+    Route::get('consentimientos/plantilla', [DescargaConsentimientoController::class, 'plantilla'])->name('consentimientos.plantilla');
+    Route::get('consentimientos/plantilla/{plantilla}', [DescargaConsentimientoController::class, 'versionDePlantilla'])->name('consentimientos.version');
+    Route::get('consentimientos/{entrega}/documento', [DescargaConsentimientoController::class, 'firmado'])->name('consentimientos.firmado');
 
     Route::get('calendario', [CalendarioController::class, 'index'])->name('calendario');
     Route::get('calendario/eventos', [CalendarioController::class, 'eventos'])->name('calendario.eventos');
