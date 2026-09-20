@@ -36,7 +36,7 @@ final class SolicitudController extends Controller
     /** Bandeja de revisión y resolución (RF31-RF33). */
     public function bandeja(Request $peticion): View
     {
-        abort_unless($peticion->user()->can('revisar', Solicitud::class), 403);
+        abort_unless($peticion->user()->can('verBandeja', Solicitud::class), 403);
 
         return view('panel.solicitudes.bandeja');
     }

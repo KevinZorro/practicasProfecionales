@@ -127,11 +127,11 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 6. **El nivel de fidelidad del simulador solo lo edita el ADMIN.** Es el único campo del inventario con esa restricción; el resto lo editan administrativos y coordinadores. Restricción a nivel de campo, no de recurso.
 
-7. **El consentimiento se renueva cada semestre.** Índice único sobre (`estudiante_id`, `periodo_academico`). Lo verifican coordinadores y ADMIN, **no** los administrativos.
+7. **El consentimiento se renueva cada semestre.** Índice único sobre (`estudiante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
-9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador aprueba o rechaza → administrativo asigna sala y prepara. No inventes atajos entre estados.
+9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador (o el ADMIN, si coordinación no está) aprueba, o coordinador rechaza → administrativo asigna sala y prepara. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
 
 ---
 

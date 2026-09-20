@@ -61,7 +61,7 @@ final class MenuDelPanel
                 etiqueta: 'Solicitudes',
                 ruta: 'panel.solicitudes',
                 icono: 'M3 8h18M3 12h18M3 16h10',
-                permiso: 'revisar',
+                permiso: 'verBandeja',
                 sobre: Solicitud::class,
             ),
             new SeccionDelPanel(

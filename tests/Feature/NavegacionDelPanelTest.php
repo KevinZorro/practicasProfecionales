@@ -28,9 +28,9 @@ it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, ar
 })->with([
     'docente' => [Rol::Docente, ['inicio', 'calendario', 'mis-solicitudes', 'evaluaciones']],
     'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-consentimiento']],
-    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario']],
+    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario', 'consentimientos']],
     'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'consentimientos', 'reportes']],
-    'admin' => [Rol::Admin, ['inicio', 'calendario', 'evaluaciones', 'inventario', 'consentimientos', 'plantillas-consentimiento', 'reportes']],
+    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'consentimientos', 'plantillas-consentimiento', 'reportes']],
 ]);
 
 it('no enseña al docente el inventario ni los reportes', function (): void {
@@ -42,11 +42,19 @@ it('no enseña al docente el inventario ni los reportes', function (): void {
         ->not->toContain('consentimientos');
 });
 
-it('no enseña los reportes ni los consentimientos al administrativo', function (): void {
-    // Las dos únicas funciones operativas donde no acompaña al coordinador.
+it('no enseña los reportes al administrativo', function (): void {
+    // Única función del coordinador que no acompaña: los consentimientos sí
+    // los verifica él.
     expect(seccionesVisibles(Rol::Administrativo))
         ->not->toContain('reportes')
-        ->not->toContain('consentimientos');
+        ->toContain('consentimientos');
+});
+
+it('enseña la bandeja de solicitudes al ADMIN, que es donde aprueba', function (): void {
+    // Entra a aprobar en ausencia de la coordinadora, pero no revisa.
+    expect(seccionesVisibles(Rol::Admin))
+        ->toContain('solicitudes')
+        ->not->toContain('mis-solicitudes');
 });
 
 it('cierra también la ruta de una sección que el menú esconde', function (Rol $rol, string $ruta): void {
@@ -60,7 +68,6 @@ it('cierra también la ruta de una sección que el menú esconde', function (Rol
     'docente en inventario' => [Rol::Docente, 'panel.inventario'],
     'docente en reportes' => [Rol::Docente, 'panel.reportes'],
     'administrativo en reportes' => [Rol::Administrativo, 'panel.reportes'],
-    'administrativo en consentimientos' => [Rol::Administrativo, 'panel.consentimientos'],
     'estudiante en solicitudes' => [Rol::Estudiante, 'panel.solicitudes'],
     'docente en la bandeja' => [Rol::Docente, 'panel.solicitudes'],
     'administrativo en mis solicitudes' => [Rol::Administrativo, 'panel.mis-solicitudes'],

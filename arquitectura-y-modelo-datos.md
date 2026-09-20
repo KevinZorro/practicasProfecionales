@@ -460,19 +460,21 @@ Resume qué rol ejecuta cada acción sensible. El coordinador hereda todo lo del
 | Consultar disponibilidad de inventario | ✓ | ✓ | ✓ | | |
 | Solicitar escenario | | | | ✓ | |
 | Revisar solicitudes | | ✓ | ✓ | | |
-| Aprobar o rechazar solicitudes | | ✓ | | | |
+| Aprobar solicitudes revisadas | ✓ | ✓ | | | |
+| Rechazar solicitudes revisadas | | ✓ | | | |
 | Asignar sala y preparar escenario | | ✓ | ✓ | | |
 | Ver calendario de reservas aprobadas | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Crear y registrar evaluaciones | | | | ✓ | |
 | Consultar resultados propios | | | | | ✓ |
 | Cargar plantilla de consentimiento | ✓ | | | | |
-| Verificar consentimiento de estudiantes | ✓ | ✓ | | | |
+| Verificar consentimiento de estudiantes | ✓ | ✓ | ✓ | | |
 | Generar reportes | ✓ | ✓ | | | |
 
 Notas de implementación:
 
 - El **nivel de fidelidad** (RF39) es el único atributo del inventario reservado al ADMIN. Los administrativos y coordinadores editan el resto de campos, por lo que la restricción se aplica a nivel de campo dentro de la Policy de `ItemInventario`, no al recurso completo.
-- La **verificación del consentimiento** (RF53) queda fuera del alcance del administrativo, a diferencia del resto de sus funciones operativas.
+- La **verificación del consentimiento** (RF52) la ejerce el administrativo, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso para supervisar. Como el documento firmado lleva datos personales, quien verifica también lo descarga (RNF07).
+- La **aprobación de una solicitud** exige que esté en estado `revisada`: sin revisión administrativa previa no aprueba nadie. El ADMIN aprueba en ausencia de la coordinadora, pero no revisa, así que aprobador y revisor nunca son la misma persona.
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
 
 ---

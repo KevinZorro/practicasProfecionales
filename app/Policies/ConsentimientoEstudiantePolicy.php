@@ -15,15 +15,18 @@ use App\Models\User;
  *
  * | Acción                                  | ADMIN | Coordinador | Administrativo | Docente | Estudiante |
  * | Entregar el consentimiento firmado      |       |             |                |         |     ✓      |
- * | Verificar consentimiento de estudiantes |   ✓   |      ✓      |                |         |            |
+ * | Verificar consentimiento de estudiantes |   ✓   |      ✓      |       ✓        |         |            |
  *
- * El administrativo queda fuera de la verificación. Es la única función
- * operativa donde no acompaña al coordinador, así que no se resuelve con el
- * "hereda todo lo del administrativo" del resto del sistema: aquí la lista
- * es explícita.
+ * La verificación la ejerce el administrativo, que es quien recibe y revisa
+ * las entregas en la operación diaria. Coordinación y ADMIN conservan el
+ * permiso para supervisar, así que aquí vale la herencia habitual
+ * "coordinador hereda todo lo del administrativo" en lugar de una lista
+ * aparte. (Cliente, reunión del 2026-09; antes estaba al revés.)
  *
  * El archivo firmado lleva datos personales, así que su descarga la limitan
- * el dueño y quienes lo verifican, nunca un enlace público (RNF07).
+ * el dueño y quienes lo verifican, nunca un enlace público (RNF07). Como el
+ * administrativo ahora verifica, también lo descarga: no se puede aprobar un
+ * documento sin leerlo.
  *
  * El nombre importa: Laravel resuelve las Policies por modelo, así que la de
  * ConsentimientoEstudiante tiene que llamarse ConsentimientoEstudiantePolicy.
@@ -63,7 +66,7 @@ final class ConsentimientoEstudiantePolicy
         return $this->esSuyo($usuario, $entrega) || $this->verifica($usuario);
     }
 
-    /** RF52. Coordinador y ADMIN; el administrativo no. */
+    /** RF52. Administrativo, coordinador y ADMIN. */
     public function verificar(User $usuario, ConsentimientoEstudiante $entrega): bool
     {
         return $this->verifica($usuario);
@@ -82,6 +85,10 @@ final class ConsentimientoEstudiantePolicy
 
     private function verifica(User $usuario): bool
     {
-        return $usuario->hasAnyRole([Rol::Admin->value, Rol::Coordinador->value]);
+        return $usuario->hasAnyRole([
+            Rol::Administrativo->value,
+            Rol::Coordinador->value,
+            Rol::Admin->value,
+        ]);
     }
 }
