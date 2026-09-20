@@ -24,6 +24,13 @@ final class ConsentimientoInvalido extends DomainException
         return new self(sprintf('El archivo del consentimiento supera el máximo de %d KB.', $maximoKb));
     }
 
+    public static function yaSeRecibioEnFisico(): self
+    {
+        // No se pisa: el registro de quién recibió el papel y cuándo es
+        // justamente lo que hay que conservar (RF53).
+        return new self('La entrega en físico de este consentimiento ya estaba registrada.');
+    }
+
     public static function noEstaCargado(EstadoConsentimiento $estado): self
     {
         return new self(sprintf(

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire\Consentimiento;
 
+use App\Exceptions\ConsentimientoInvalido;
 use App\Models\ConsentimientoEstudiante;
+use App\Models\User;
 use App\Services\ConsentimientoService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -31,6 +34,8 @@ final class EstadoDeEstudiantes extends Component
     #[Url(as: 'situacion', keep: false)]
     public string $situacion = '';
 
+    public ?string $errorDeRegla = null;
+
     public function mount(ConsentimientoService $consentimientos): void
     {
         $this->authorize('viewAny', ConsentimientoEstudiante::class);
@@ -45,6 +50,26 @@ final class EstadoDeEstudiantes extends Component
         if (in_array($propiedad, ['busqueda', 'periodo', 'situacion'], true)) {
             $this->resetPage();
         }
+    }
+
+    /**
+     * RF53: la administrativa recibe el formato firmado en la puerta y lo
+     * registra para dejar entrar al estudiante. El escaneo llega después.
+     */
+    public function marcarEntregaFisica(int $estudianteId, ConsentimientoService $consentimientos): void
+    {
+        $this->authorize('marcarEntregaFisica', ConsentimientoEstudiante::class);
+        $this->errorDeRegla = null;
+
+        try {
+            $consentimientos->registrarEntregaFisica(User::findOrFail($estudianteId), Auth::user());
+        } catch (ConsentimientoInvalido $invalido) {
+            $this->errorDeRegla = $invalido->getMessage();
+
+            return;
+        }
+
+        session()->flash('estado', 'Entrega en físico registrada. El estudiante puede ingresar a la práctica.');
     }
 
     public function limpiarFiltros(): void

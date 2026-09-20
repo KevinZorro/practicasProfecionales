@@ -131,6 +131,10 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 7. **El consentimiento se renueva cada semestre.** Índice único sobre (`estudiante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
 
+   **La entrega en físico no es un estado del documento, es un hecho que convive con él (RF53).** El estudiante que no puede subir el escaneo entrega el formato firmado en la puerta; `recibido_fisico_at` y `recibido_fisico_por` registran cuándo y quién lo recibió, y esas columnas **no se borran nunca**: ni al subir el escaneo, ni al verificarlo, ni al devolvérselo. `estado` sigue describiendo solo el documento escaneado (`pendiente` → `cargado` → `verificado`). No metas la entrega física en ese enum: se pierde al avanzar de estado y no podrías responder quién entregó papel y todavía no escanea.
+
+   Dos preguntas parecidas que **no** son la misma: `puedeParticiparEnPracticas()` (verificado **o** entrega física) decide si entra a la práctica; `tieneConsentimientoVigente()` (solo verificado) dice si el trámite está cerrado.
+
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
 9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador (o el ADMIN, si coordinación no está) aprueba, o coordinador rechaza → administrativo asigna sala y prepara. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.

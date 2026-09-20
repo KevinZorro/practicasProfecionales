@@ -26,6 +26,8 @@ class ConsentimientoEstudiante extends Model
         'plantilla_id',
         'periodo_academico',
         'archivo_firmado_path',
+        'recibido_fisico_at',
+        'recibido_fisico_por',
         'estado',
         'motivo_rechazo',
         'verificado_por',
@@ -39,6 +41,7 @@ class ConsentimientoEstudiante extends Model
     {
         return [
             'estado' => EstadoConsentimiento::class,
+            'recibido_fisico_at' => 'datetime',
             'verificado_at' => 'datetime',
         ];
     }
@@ -61,6 +64,21 @@ class ConsentimientoEstudiante extends Model
         return $this->belongsTo(User::class, 'verificado_por');
     }
 
+    /** Quién recibió el formato firmado en la puerta del laboratorio (RF53). */
+    public function recibidoFisicoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recibido_fisico_por');
+    }
+
+    /**
+     * Si hubo entrega en físico. Convive con cualquier estado del documento
+     * escaneado, así que se pregunta aparte y no por el estado.
+     */
+    public function entregadoEnFisico(): bool
+    {
+        return $this->recibido_fisico_at !== null;
+    }
+
     /** @param Builder<$this> $consulta */
     public function scopeDelPeriodo(Builder $consulta, string $periodo): void
     {
@@ -77,5 +95,25 @@ class ConsentimientoEstudiante extends Model
     public function scopePendientes(Builder $consulta): void
     {
         $consulta->where('estado', EstadoConsentimiento::Pendiente);
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopeConEntregaFisica(Builder $consulta): void
+    {
+        $consulta->whereNotNull('recibido_fisico_at');
+    }
+
+    /**
+     * Lo que habilita el ingreso a prácticas (RF53): el documento verificado
+     * o el formato entregado en físico en la puerta.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeQueHabilitanPracticas(Builder $consulta): void
+    {
+        $consulta->where(static function (Builder $o): void {
+            $o->where('estado', EstadoConsentimiento::Verificado)
+                ->orWhereNotNull('recibido_fisico_at');
+        });
     }
 }

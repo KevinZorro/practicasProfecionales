@@ -72,6 +72,23 @@ final class ConsentimientoEstudiantePolicy
         return $this->verifica($usuario);
     }
 
+    /**
+     * RF53: marcar que el estudiante entregó el formato firmado en físico,
+     * en la puerta del laboratorio.
+     *
+     * El modelo es opcional para poder preguntar a nivel de clase, que es lo
+     * que necesita la pantalla antes de tener una entrega delante: un
+     * estudiante que nunca ha entregado nada todavía no tiene fila.
+     *
+     * Mismo grupo que verifica: el administrativo lo ejerce a diario y
+     * coordinación y ADMIN lo conservan. Lo que el RF excluye —y aquí queda
+     * excluido— es que el propio estudiante se la marque.
+     */
+    public function marcarEntregaFisica(User $usuario, ?ConsentimientoEstudiante $entrega = null): bool
+    {
+        return $this->verifica($usuario);
+    }
+
     /** Rechazar es la otra cara de verificar: la decide quien verifica. */
     public function rechazar(User $usuario, ConsentimientoEstudiante $entrega): bool
     {

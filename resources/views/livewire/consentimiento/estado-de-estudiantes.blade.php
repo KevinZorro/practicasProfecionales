@@ -1,5 +1,17 @@
 <div class="space-y-4">
 
+    @if (session('estado'))
+        <p class="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-inset ring-emerald-600/20" role="status">
+            {{ session('estado') }}
+        </p>
+    @endif
+
+    @if ($errorDeRegla)
+        <p class="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
+            {{ $errorDeRegla }}
+        </p>
+    @endif
+
     <x-tarjeta>
         <div class="grid gap-3 sm:grid-cols-3">
             <div class="sm:col-span-1">
@@ -44,16 +56,45 @@
                                 <p class="truncate text-sm font-semibold text-gray-900">{{ $estudiante->nombre }}</p>
                                 <p class="truncate text-sm text-gray-600">{{ $estudiante->email }}</p>
                             </div>
-                            @if ($entrega)
-                                <x-etiqueta-estado :estado="$entrega->estado" />
-                            @else
-                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-500/20">
-                                    Sin entregar
-                                </span>
-                            @endif
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                {{-- La entrega en físico no es un estado del documento: convive
+                                     con él, así que se pinta como etiqueta aparte (RF53). --}}
+                                @if ($entrega?->entregadoEnFisico())
+                                    <span class="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-600/20">
+                                        Entregado en físico
+                                    </span>
+                                @endif
+
+                                @if ($entrega)
+                                    <x-etiqueta-estado :estado="$entrega->estado" />
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-500/20">
+                                        Sin entregar
+                                    </span>
+                                @endif
+                            </div>
                         </div>
-                        @if ($entrega?->estado !== \App\Enums\EstadoConsentimiento::Verificado)
+
+                        @if ($entrega?->entregadoEnFisico())
+                            <p class="mt-2 text-sm text-gray-600">
+                                Recibido por {{ $entrega->recibidoFisicoPor?->nombre ?? 'el laboratorio' }}
+                                el {{ $entrega->recibido_fisico_at->format('d/m/Y') }}.
+                                @if ($entrega->estado !== \App\Enums\EstadoConsentimiento::Verificado)
+                                    Puede ingresar; falta que suba el escaneo.
+                                @endif
+                            </p>
+                        @elseif ($entrega?->estado !== \App\Enums\EstadoConsentimiento::Verificado)
                             <p class="mt-2 text-sm text-amber-800">No tiene el consentimiento al día para {{ $periodo }}.</p>
+
+                            @can('marcarEntregaFisica', \App\Models\ConsentimientoEstudiante::class)
+                                <div class="mt-3">
+                                    <x-boton variante="secundario" type="button"
+                                             wire:click="marcarEntregaFisica({{ $estudiante->id }})"
+                                             wire:loading.attr="disabled">
+                                        Recibí el formato en físico
+                                    </x-boton>
+                                </div>
+                            @endcan
                         @endif
                     </x-tarjeta>
                 </li>
