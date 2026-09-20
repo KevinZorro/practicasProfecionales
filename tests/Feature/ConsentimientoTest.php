@@ -150,10 +150,10 @@ it('reemplaza la entrega del mismo periodo en vez de crear una segunda', functio
 });
 
 // ---------------------------------------------------------------------
-// Verificación: coordinador y ADMIN, nunca el administrativo
+// Verificación: la ejerce el administrativo; coordinación y ADMIN supervisan
 // ---------------------------------------------------------------------
 
-it('deja verificar el consentimiento al coordinador y al ADMIN', function (string $quien): void {
+it('deja verificar el consentimiento a quien tiene el permiso', function (string $quien): void {
     $entrega = entregaCargada($this->estudiante);
 
     $verificada = $this->servicio->verificar($entrega, $this->$quien);
@@ -161,18 +161,7 @@ it('deja verificar el consentimiento al coordinador y al ADMIN', function (strin
     expect($verificada->estado)->toBe(EstadoConsentimiento::Verificado)
         ->and($verificada->verificado_por)->toBe($this->$quien->id)
         ->and($verificada->verificado_at)->not->toBeNull();
-})->with(['coordinadora', 'admin']);
-
-it('no deja al administrativo verificar consentimientos', function (): void {
-    // Única función operativa donde el administrativo no acompaña al
-    // coordinador (§6.1 del documento de arquitectura).
-    $entrega = entregaCargada($this->estudiante);
-
-    expect(fn () => $this->servicio->verificar($entrega, $this->administrativo))
-        ->toThrow(AuthorizationException::class);
-
-    expect($entrega->fresh()->estado)->toBe(EstadoConsentimiento::Cargado);
-});
+})->with(['administrativo', 'coordinadora', 'admin']);
 
 it('no deja verificar ni rechazar al docente ni al propio estudiante', function (string $rol): void {
     $entrega = entregaCargada($this->estudiante);

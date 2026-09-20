@@ -17,6 +17,7 @@ beforeEach(function (): void {
     $this->seed(RolSeeder::class);
     $this->administrativo = User::factory()->administrativo()->create();
     $this->coordinadora = User::factory()->coordinador()->create();
+    $this->admin = User::factory()->admin()->create();
 });
 
 afterEach(function (): void {
@@ -46,6 +47,26 @@ it('enseña al coordinador los tres controles', function (): void {
         ->assertSee('Marcar como revisada')
         ->assertSee('Aprobar')
         ->assertSee('Rechazar');
+});
+
+it('no enseña el control de aprobar mientras la solicitud no esté revisada', function (): void {
+    // Sin revisión administrativa previa no aprueba nadie, ni la coordinadora.
+    Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]);
+
+    Livewire::actingAs($this->coordinadora)
+        ->test(BandejaRevision::class)
+        ->assertSee('Marcar como revisada')
+        ->assertDontSee('Aprobar');
+});
+
+it('enseña al ADMIN el control de aprobar pero no el de revisar', function (): void {
+    Solicitud::factory()->revisada()->create();
+
+    Livewire::actingAs($this->admin)
+        ->test(BandejaRevision::class)
+        ->assertSee('Aprobar')
+        ->assertDontSee('Marcar como revisada')
+        ->assertDontSee('Rechazar');
 });
 
 it('no deja al administrativo aprobar aunque llame al método a mano', function (): void {
@@ -106,6 +127,28 @@ it('deja al coordinador aprobar y crea la preparación', function (): void {
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Aprobada)
         ->and($solicitud->fresh()->preparacion)->not->toBeNull();
 });
+
+it('deja al ADMIN aprobar una solicitud revisada cuando la coordinadora no está', function (): void {
+    $solicitud = Solicitud::factory()->revisada()->create();
+
+    Livewire::actingAs($this->admin)
+        ->test(BandejaRevision::class)
+        ->call('aprobar', $solicitud->id);
+
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Aprobada)
+        ->and($solicitud->fresh()->preparacion)->not->toBeNull();
+});
+
+it('no deja aprobar una solicitud sin revisar aunque llamen al método a mano', function (string $quien): void {
+    $solicitud = Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]);
+
+    Livewire::actingAs($this->$quien)
+        ->test(BandejaRevision::class)
+        ->call('aprobar', $solicitud->id)
+        ->assertForbidden();
+
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Pendiente);
+})->with(['coordinadora', 'admin']);
 
 it('pide el motivo antes de rechazar y lo guarda', function (): void {
     $solicitud = Solicitud::factory()->revisada()->create();

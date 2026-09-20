@@ -99,7 +99,11 @@ final class ConsentimientoService
 
         return User::query()
             ->role(Rol::Estudiante->value)
-            ->with(['consentimientos' => $delPeriodo, 'consentimientos.plantilla:id,nombre,version'])
+            ->with([
+                'consentimientos' => $delPeriodo,
+                'consentimientos.plantilla:id,nombre,version',
+                'consentimientos.recibidoFisicoPor:id,nombre',
+            ])
             ->when($soloSinVigente === true, fn (Builder $c) => $c->whereDoesntHave(
                 'consentimientos',
                 static fn (Builder $e) => $e->delPeriodo($periodo)->verificados(),
@@ -177,6 +181,46 @@ final class ConsentimientoService
     }
 
     /**
+     * El estudiante entrega el formato firmado en físico, en la puerta
+     * (RF53). La administrativa lo recibe, lo registra y lo deja entrar; el
+     * escaneo llega después.
+     *
+     * No toca el estado: el estado es del documento escaneado, que sigue sin
+     * llegar. Esto anota el hecho —cuándo y quién recibió el papel— al lado,
+     * y es lo que habilita el ingreso hasta que suba el archivo.
+     *
+     * Si el estudiante todavía no tenía fila del periodo, se crea: quien
+     * nunca entregó nada no tiene registro, y es justo el caso de la puerta.
+     */
+    public function registrarEntregaFisica(User $estudiante, User $administrativo): ConsentimientoEstudiante
+    {
+        $this->garantizarPermiso($administrativo, 'marcarEntregaFisica', ConsentimientoEstudiante::class);
+
+        return DB::transaction(function () use ($estudiante, $administrativo): ConsentimientoEstudiante {
+            $entrega = $this->entregaDelPeriodo($estudiante);
+
+            if ($entrega instanceof ConsentimientoEstudiante && $entrega->entregadoEnFisico()) {
+                throw ConsentimientoInvalido::yaSeRecibioEnFisico();
+            }
+
+            $entrega ??= new ConsentimientoEstudiante([
+                'estudiante_id' => $estudiante->id,
+                'plantilla_id' => $this->plantillaVigente()->id,
+                'periodo_academico' => $this->periodoVigente(),
+                'estado' => EstadoConsentimiento::Pendiente,
+            ]);
+
+            $entrega->fill([
+                'recibido_fisico_at' => now(),
+                'recibido_fisico_por' => $administrativo->id,
+            ]);
+            $entrega->save();
+
+            return $entrega;
+        });
+    }
+
+    /**
      * Solo coordinador o ADMIN (§6.1). El administrativo queda fuera: es la
      * única función operativa donde no acompaña al coordinador.
      */
@@ -223,6 +267,10 @@ final class ConsentimientoService
     /**
      * Verdadero solo si hay entrega verificada para el periodo que corre.
      * Lo entregado el semestre pasado no sirve para este (RF52).
+     *
+     * Una entrega en físico no cuenta aquí: habilita el ingreso
+     * (puedeParticiparEnPracticas) pero deja el trámite sin cerrar, y esta
+     * es la pregunta que dice qué falta por escanear y verificar.
      */
     public function tieneConsentimientoVigente(User $estudiante): bool
     {
@@ -237,6 +285,12 @@ final class ConsentimientoService
      * Punto único de verificación del RF53: si un estudiante puede entrar a
      * prácticas.
      *
+     * Dos caminos lo habilitan y no son el mismo: el documento verificado, o
+     * el formato entregado en físico en la puerta mientras llega el escaneo.
+     * Por eso no coincide con tieneConsentimientoVigente(), que sigue
+     * respondiendo si el documento está verificado y es lo que persigue la
+     * administrativa hasta cerrarlo.
+     *
      * Se engancha donde se decida bloquear —al agregarlo a una evaluación,
      * al pasar lista, o en un middleware de las vistas de estudiante—, pero
      * la comprobación vive aquí y no se repite.
@@ -247,7 +301,11 @@ final class ConsentimientoService
      */
     public function puedeParticiparEnPracticas(User $estudiante): bool
     {
-        return $this->tieneConsentimientoVigente($estudiante);
+        return ConsentimientoEstudiante::query()
+            ->where('estudiante_id', $estudiante->id)
+            ->delPeriodo($this->periodoVigente())
+            ->queHabilitanPracticas()
+            ->exists();
     }
 
     public function entregaDelPeriodo(User $estudiante, ?string $periodo = null): ?ConsentimientoEstudiante

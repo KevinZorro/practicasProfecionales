@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\CalendarioController;
+use App\Http\Controllers\Panel\CasoClinicoController;
 use App\Http\Controllers\Panel\ConsentimientoController;
 use App\Http\Controllers\Panel\DescargaConsentimientoController;
 use App\Http\Controllers\Panel\InventarioController;
@@ -34,13 +35,15 @@ Route::post('salir', SalirController::class)->name('salir');
 Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'consentimientos', 'mi-consentimiento', 'plantillas-consentimiento'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'consentimientos', 'mi-consentimiento', 'plantillas-consentimiento', 'casos-clinicos'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
     Route::get('solicitudes', [SolicitudController::class, 'bandeja'])->name('solicitudes');
 
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
+
+    Route::get('casos-clinicos', CasoClinicoController::class)->name('casos-clinicos');
 
     Route::get('inventario/nuevo', [InventarioController::class, 'nuevo'])->name('inventario.nuevo');
     Route::get('inventario/disponibilidad', [InventarioController::class, 'disponibilidad'])->name('inventario.disponibilidad');

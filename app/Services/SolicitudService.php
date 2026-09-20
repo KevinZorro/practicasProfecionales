@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\EstadoSolicitud;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
+use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
@@ -26,12 +27,35 @@ final class SolicitudService
 
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
+        $this->garantizarCapacidad($datos);
+
         return DB::transaction(function () use ($docente, $datos): Solicitud {
             $solicitud = Solicitud::create($this->atributosIniciales($docente, $datos));
             $solicitud->items()->attach($this->itemsAAdjuntar($datos));
 
             return $solicitud;
         });
+    }
+
+    /**
+     * RF74: ningún escenario admite más estudiantes de los que el ADMIN le
+     * registró.
+     *
+     * Un caso sin capacidad definida no bloquea: el dato es del ADMIN y
+     * todavía puede faltarle. Impedir la práctica por un campo que nadie ha
+     * llenado sería peor que no limitarla, y en pantalla se lee como
+     * "sin definir".
+     */
+    private function garantizarCapacidad(DatosNuevaSolicitud $datos): void
+    {
+        $caso = CasoClinico::findOrFail($datos->casoClinicoId);
+        $maximo = $caso->capacidad_maxima_estudiantes;
+
+        if ($maximo === null || $datos->cantidadEstudiantes <= $maximo) {
+            return;
+        }
+
+        throw CapacidadDeEstudiantesExcedida::para($caso, $datos->cantidadEstudiantes);
     }
 
     /**

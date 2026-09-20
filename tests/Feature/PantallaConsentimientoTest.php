@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\EstadoConsentimiento;
-use App\Enums\Rol;
 use App\Livewire\Consentimiento\BandejaVerificacion;
 use App\Livewire\Consentimiento\EstadoDeEstudiantes;
 use App\Livewire\Consentimiento\GestionDePlantilla;
@@ -144,7 +143,7 @@ it('enseña al estudiante el motivo del rechazo y le deja volver a subirlo', fun
 // Verificación
 // ---------------------------------------------------------------------
 
-it('deja verificar al coordinador y al ADMIN', function (string $quien): void {
+it('deja verificar a quien tiene el permiso', function (string $quien): void {
     $entrega = ConsentimientoEstudiante::factory()->cargado()->delPeriodo('2026-2')->create([
         'estudiante_id' => $this->estudiante->id,
     ]);
@@ -154,20 +153,21 @@ it('deja verificar al coordinador y al ADMIN', function (string $quien): void {
         ->call('verificar', $entrega->id);
 
     expect($entrega->fresh()->estado)->toBe(EstadoConsentimiento::Verificado);
-})->with(['coordinadora', 'admin']);
+})->with(['administrativo', 'coordinadora', 'admin']);
 
-it('no deja al administrativo entrar a la bandeja de verificación', function (): void {
-    // Única función operativa donde no acompaña al coordinador.
-    $this->actingAs($this->administrativo)->get(route('panel.consentimientos'))->assertForbidden();
-    $this->actingAs($this->administrativo)->get(route('panel.consentimientos.estado'))->assertForbidden();
+it('deja al administrativo entrar a la bandeja de verificación', function (): void {
+    // Es quien recibe y revisa las entregas en la operación diaria.
+    $this->actingAs($this->administrativo)->get(route('panel.consentimientos'))->assertOk();
+    $this->actingAs($this->administrativo)->get(route('panel.consentimientos.estado'))->assertOk();
 });
 
-it('no deja al administrativo verificar ni rechazar aunque llame al método', function (string $accion): void {
+it('no deja al docente verificar ni rechazar aunque llame al método', function (string $accion): void {
     $entrega = ConsentimientoEstudiante::factory()->cargado()->delPeriodo('2026-2')->create([
         'estudiante_id' => $this->estudiante->id,
     ]);
+    $docente = User::factory()->docente()->create();
 
-    Livewire::actingAs($this->administrativo)
+    Livewire::actingAs($docente)
         ->test(BandejaVerificacion::class)
         ->call($accion, $entrega->id)
         ->assertForbidden();
@@ -348,22 +348,21 @@ it('deja descargar el documento a quien lo verifica', function (string $quien): 
     $this->actingAs($this->$quien)
         ->get(route('panel.consentimientos.firmado', $entrega))
         ->assertOk();
-})->with(['coordinadora', 'admin']);
+})->with(['administrativo', 'coordinadora', 'admin']);
 
-it('no deja al administrativo ni a un docente descargar un documento firmado', function (Rol $rol): void {
+it('no deja a un docente descargar un documento firmado', function (): void {
     Storage::disk('local')->put('consentimientos/firmados/x.pdf', '%PDF-1.4');
     $entrega = ConsentimientoEstudiante::factory()->cargado()->delPeriodo('2026-2')->create([
         'estudiante_id' => $this->estudiante->id,
         'archivo_firmado_path' => 'consentimientos/firmados/x.pdf',
     ]);
 
-    $usuario = User::factory()->create();
-    $usuario->assignRole($rol->value);
+    $usuario = User::factory()->docente()->create();
 
     $this->actingAs($usuario->fresh())
         ->get(route('panel.consentimientos.firmado', $entrega))
         ->assertForbidden();
-})->with([Rol::Administrativo, Rol::Docente]);
+});
 
 it('no sirve el archivo firmado por enlace directo al disco', function (): void {
     // El disco es privado: la ruta pública de Laravel no lo entrega sin

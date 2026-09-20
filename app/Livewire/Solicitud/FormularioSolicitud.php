@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Enums\TipoSesion;
+use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\Materia;
@@ -55,12 +56,20 @@ final class FormularioSolicitud extends Component
     public ?int $itemAAgregar = null;
 
     /**
+     * Capacidad del escenario elegido (RF74). Se enseña bajo el campo para
+     * que el docente vea el tope antes de enviar, no después. Null mientras
+     * el ADMIN no la registre.
+     */
+    public ?int $capacidadDelCaso = null;
+
+    /**
      * Al elegir el caso clínico se precarga su inventario (RF29). Es un
      * punto de partida: a partir de aquí el docente ajusta.
      */
     public function updatedCasoClinicoId(mixed $valor): void
     {
         $caso = CasoClinico::find((int) $valor);
+        $this->capacidadDelCaso = $caso?->capacidad_maxima_estudiantes;
 
         $this->items = $caso instanceof CasoClinico
             ? app(SolicitudService::class)->itemsSugeridos($caso)
@@ -88,7 +97,16 @@ final class FormularioSolicitud extends Component
         $this->authorize('create', Solicitud::class);
         $datos = $this->validate();
 
-        $solicitudes->crear(Auth::user(), $this->comoDatos($datos));
+        try {
+            $solicitudes->crear(Auth::user(), $this->comoDatos($datos));
+        } catch (CapacidadDeEstudiantesExcedida $excedida) {
+            // La regla vive en el Service; aquí solo se traduce a un error
+            // del campo para que se lea junto al número, no como un fallo
+            // del servidor.
+            $this->addError('cantidadEstudiantes', $excedida->getMessage());
+
+            return;
+        }
 
         session()->flash('estado', 'Tu solicitud quedó registrada. El laboratorio la revisará antes de aprobarla.');
         $this->redirectRoute('panel.mis-solicitudes', navigate: true);

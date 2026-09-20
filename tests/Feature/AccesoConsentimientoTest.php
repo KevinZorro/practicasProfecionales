@@ -36,7 +36,7 @@ it('deja bajar la plantilla en blanco a cualquiera que vaya a firmarla', functio
     expect($usuario->can('descargar', ConsentimientoPlantilla::factory()->create()))->toBeTrue();
 })->with([Rol::Estudiante, Rol::Docente, Rol::Administrativo, Rol::Coordinador, Rol::Admin]);
 
-it('deja verificar solo al coordinador y al ADMIN', function (Rol $rol, bool $puede): void {
+it('deja verificar al administrativo, al coordinador y al ADMIN', function (Rol $rol, bool $puede): void {
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
 
@@ -45,7 +45,7 @@ it('deja verificar solo al coordinador y al ADMIN', function (Rol $rol, bool $pu
 })->with([
     'admin' => [Rol::Admin, true],
     'coordinador' => [Rol::Coordinador, true],
-    'administrativo' => [Rol::Administrativo, false],
+    'administrativo' => [Rol::Administrativo, true],
     'docente' => [Rol::Docente, false],
     'estudiante' => [Rol::Estudiante, false],
 ]);
@@ -64,17 +64,19 @@ it('no deja a un estudiante acercarse al consentimiento de otro', function (): v
         ->and($otro->can('update', $this->entrega))->toBeFalse();
 });
 
-it('no deja a un docente ni a un administrativo bajar el archivo firmado', function (Rol $rol): void {
+it('no deja a un docente bajar el archivo firmado', function (): void {
     // Lleva datos personales: solo el dueño y quien lo verifica (RNF07).
     $usuario = User::factory()->create();
-    $usuario->assignRole($rol->value);
+    $usuario->assignRole(Rol::Docente->value);
 
     expect($usuario->can('descargar', $this->entrega))->toBeFalse();
-})->with([Rol::Docente, Rol::Administrativo]);
+});
 
 it('deja bajar el archivo firmado a quien lo verifica', function (Rol $rol): void {
+    // El administrativo verifica, así que también lee el documento: no se
+    // aprueba lo que no se ha leído.
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
 
     expect($usuario->can('descargar', $this->entrega))->toBeTrue();
-})->with([Rol::Coordinador, Rol::Admin]);
+})->with([Rol::Administrativo, Rol::Coordinador, Rol::Admin]);

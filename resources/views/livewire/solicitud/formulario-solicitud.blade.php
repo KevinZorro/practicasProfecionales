@@ -45,7 +45,13 @@
             <div>
                 <label for="cantidadEstudiantes" class="mb-1 block text-sm font-medium text-gray-700">Cantidad de estudiantes</label>
                 <input type="number" min="1" wire:model="cantidadEstudiantes" id="cantidadEstudiantes" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                @error('cantidadEstudiantes') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @error('cantidadEstudiantes')
+                    <p class="mt-1 text-sm text-rose-700">{{ $message }}</p>
+                @else
+                    @if ($capacidadDelCaso !== null)
+                        <p class="mt-1 text-sm text-gray-500">Este escenario admite {{ $capacidadDelCaso }} estudiantes como máximo.</p>
+                    @endif
+                @enderror
             </div>
 
             <div>

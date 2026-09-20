@@ -253,8 +253,11 @@ it('filtra las aprobadas por rango de fechas', function (): void {
 
 it('permite a un docente que además coordina resolver, hasta que el cliente decida', function (): void {
     // PENDIENTE §11.1 de CLAUDE.md: sin decidir si puede aprobar la suya.
+    // La solicitud va revisada porque sin revisión previa no aprueba nadie,
+    // que es otra regla distinta de la que este test vigila.
     $ambosRoles = User::factory()->create();
     $ambosRoles->assignRole([Rol::Docente->value, Rol::Coordinador->value]);
+    $suya = Solicitud::factory()->revisada()->create(['docente_id' => $ambosRoles->id]);
 
-    expect($ambosRoles->can('aprobar', Solicitud::factory()->create()))->toBeTrue();
+    expect($ambosRoles->can('aprobar', $suya))->toBeTrue();
 });

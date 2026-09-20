@@ -27,6 +27,8 @@ class ConsentimientoEstudianteFactory extends Factory
             'plantilla_id' => ConsentimientoPlantilla::factory(),
             'periodo_academico' => '2026-2',
             'archivo_firmado_path' => null,
+            'recibido_fisico_at' => null,
+            'recibido_fisico_por' => null,
             'estado' => EstadoConsentimiento::Pendiente,
             'verificado_por' => null,
             'verificado_at' => null,
@@ -48,6 +50,19 @@ class ConsentimientoEstudianteFactory extends Factory
             'estado' => EstadoConsentimiento::Verificado,
             'verificado_por' => User::factory(),
             'verificado_at' => now(),
+        ]);
+    }
+
+    /**
+     * Entregado en físico en la puerta (RF53). Es un estado aparte del
+     * documento escaneado, así que se combina con los demás:
+     * ->entregadoEnFisico()->cargado() es un caso real.
+     */
+    public function entregadoEnFisico(): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'recibido_fisico_at' => now()->subDays(2),
+            'recibido_fisico_por' => User::factory()->administrativo(),
         ]);
     }
 
