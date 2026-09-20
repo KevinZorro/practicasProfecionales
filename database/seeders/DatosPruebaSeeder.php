@@ -184,36 +184,42 @@ class DatosPruebaSeeder extends Seeder
     {
         $definicion = [
             'Atención de parto normal' => [
+                'capacidad' => 7,
                 'descripcion' => 'Atención del trabajo de parto y del recién nacido inmediato, con acompañamiento de la madre.',
                 'materias' => ['ENF-201'],
                 'capacidades' => ['Sangrado', 'Llanto', 'Signos vitales'],
                 'items' => ['Maniquí de parto' => 1, 'Monitor de signos vitales' => 1, 'Guantes de nitrilo' => 20, 'Gasas estériles' => 15],
             ],
             'Herida por arma de fuego' => [
+                'capacidad' => 7,
                 'descripcion' => 'Atención inicial del trauma penetrante: control de hemorragia, vía aérea y traslado.',
                 'materias' => ['ENF-305'],
                 'capacidades' => ['Sangrado', 'Vía aérea', 'Pulso palpable'],
                 'items' => ['Simulador de trauma adulto' => 1, 'Camilla de traslado' => 1, 'Set de curación' => 4, 'Guantes de nitrilo' => 20],
             ],
             'Reanimación neonatal en incubadora' => [
+                'capacidad' => 7,
                 'descripcion' => 'Estabilización del recién nacido prematuro dentro de la incubadora.',
                 'materias' => ['ENF-402', 'ENF-201'],
                 'capacidades' => ['Llanto', 'Vía aérea', 'Signos vitales'],
                 'items' => ['Simulador neonatal' => 1, 'Incubadora neonatal' => 1, 'Monitor de signos vitales' => 1],
             ],
             'Paro cardiorrespiratorio en adulto' => [
+                'capacidad' => 15,
                 'descripcion' => 'Reanimación cardiopulmonar básica y avanzada con desfibrilación temprana.',
                 'materias' => ['ENF-305', 'ENF-210'],
                 'capacidades' => ['Pulso palpable', 'Vía aérea'],
                 'items' => ['Torso de RCP' => 2, 'Desfibrilador de entrenamiento' => 1, 'Guantes de nitrilo' => 10],
             ],
             'Crisis convulsiva' => [
+                'capacidad' => 7,
                 'descripcion' => 'Manejo de la crisis convulsiva y protección del paciente durante el episodio.',
                 'materias' => ['ENF-210'],
                 'capacidades' => ['Convulsión', 'Signos vitales'],
                 'items' => ['Simulador de trauma adulto' => 1, 'Monitor de signos vitales' => 1, 'Bomba de infusión' => 1],
             ],
             'Valoración cardiopulmonar' => [
+                'capacidad' => null,
                 'descripcion' => 'Examen físico completo del tórax con auscultación cardiaca y pulmonar.',
                 'materias' => ['MED-105'],
                 'capacidades' => ['Auscultación', 'Signos vitales'],
@@ -227,6 +233,10 @@ class DatosPruebaSeeder extends Seeder
             $caso = CasoClinico::create([
                 'nombre' => $nombre,
                 'descripcion' => $datos['descripcion'],
+                // RF74. "Valoración cardiopulmonar" queda sin capacidad a
+                // propósito: es el estado "sin definir" que el ADMIN todavía
+                // tiene que completar.
+                'capacidad_maxima_estudiantes' => $datos['capacidad'],
                 'imagen' => null,
                 'visible_publico' => true,
                 'orden' => $orden++,
@@ -457,7 +467,7 @@ class DatosPruebaSeeder extends Seeder
                 'tipo' => TipoSesion::Practica,
                 'fecha' => now()->addDays(4),
                 'hora' => '07:00',
-                'estudiantes' => 12,
+                'estudiantes' => 6,
                 'estado' => EstadoSolicitud::Pendiente,
             ],
             // Revisada: el administrativo ya la pasó a coordinación.
@@ -468,7 +478,7 @@ class DatosPruebaSeeder extends Seeder
                 'tipo' => TipoSesion::Practica,
                 'fecha' => now()->addDays(6),
                 'hora' => '09:00',
-                'estudiantes' => 18,
+                'estudiantes' => 7,
                 'estado' => EstadoSolicitud::Revisada,
             ],
             // Aprobada sin sala: la preparación existe pero falta asignar sala.
@@ -479,7 +489,7 @@ class DatosPruebaSeeder extends Seeder
                 'tipo' => TipoSesion::Practica,
                 'fecha' => now()->addDays(2),
                 'hora' => '14:00',
-                'estudiantes' => 8,
+                'estudiantes' => 5,
                 'estado' => EstadoSolicitud::Aprobada,
                 'preparacion' => 'sin_sala',
             ],
@@ -491,7 +501,7 @@ class DatosPruebaSeeder extends Seeder
                 'tipo' => TipoSesion::Practica,
                 'fecha' => now()->subDays(3),
                 'hora' => '10:00',
-                'estudiantes' => 20,
+                'estudiantes' => 14,
                 'estado' => EstadoSolicitud::Aprobada,
                 'preparacion' => 'preparada',
                 'sala' => 'SIM-02',
@@ -504,7 +514,7 @@ class DatosPruebaSeeder extends Seeder
                 'tipo' => TipoSesion::Practica,
                 'fecha' => now()->addDays(9),
                 'hora' => '16:00',
-                'estudiantes' => 15,
+                'estudiantes' => 7,
                 'estado' => EstadoSolicitud::Rechazada,
             ],
             // Evaluación aprobada y montada: es la que soporta la evaluación

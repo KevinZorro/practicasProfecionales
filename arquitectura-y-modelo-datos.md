@@ -475,6 +475,7 @@ Notas de implementación:
 - El **nivel de fidelidad** (RF39) es el único atributo del inventario reservado al ADMIN. Los administrativos y coordinadores editan el resto de campos, por lo que la restricción se aplica a nivel de campo dentro de la Policy de `ItemInventario`, no al recurso completo.
 - La **verificación del consentimiento** (RF52) la ejerce el administrativo, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso para supervisar. Como el documento firmado lleva datos personales, quien verifica también lo descarga (RNF07).
 - La **aprobación de una solicitud** exige que esté en estado `revisada`: sin revisión administrativa previa no aprueba nadie. El ADMIN aprueba en ausencia de la coordinadora, pero no revisa, así que aprobador y revisor nunca son la misma persona.
+- La **capacidad máxima de estudiantes** de un escenario (RF74) es parte de la gestión de casos clínicos, reservada al ADMIN. Se comprueba en `SolicitudService` al crear la solicitud. Un caso sin capacidad registrada no limita: `null` se lee como "sin definir".
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
 
 ---

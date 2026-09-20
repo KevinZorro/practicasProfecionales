@@ -29,11 +29,22 @@ class CasoClinicoFactory extends Factory
                 'Paro cardiorrespiratorio en adulto',
             ]),
             'descripcion' => $this->faker->paragraph(),
+            // Sin definir por defecto: es un dato que el ADMIN registra, y
+            // así un test que no hable de capacidad no queda limitado por
+            // un número que nadie eligió.
+            'capacidad_maxima_estudiantes' => null,
             'imagen' => null,
             'visible_publico' => $this->faker->boolean(70),
             'orden' => $this->faker->numberBetween(0, 20),
             'activo' => true,
         ];
+    }
+
+    public function conCapacidad(int $maximo): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'capacidad_maxima_estudiantes' => $maximo,
+        ]);
     }
 
     public function visibleEnPublico(): static

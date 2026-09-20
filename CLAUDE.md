@@ -39,6 +39,8 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 - **Checklist** — lista de ítems que el docente marca al evaluar.
 - **Intento** — número de vez que un estudiante presenta la misma evaluación.
 
+**Cuidado con "capacidad": en este dominio significa tres cosas distintas.** `capacidades` son las capacidades clínicas del simulador (sangrado, llanto, signos vitales); `salas.capacidad` es cuánta gente cabe en el espacio físico; `casos_clinicos.capacidad_maxima_estudiantes` es cuántos estudiantes admite el escenario (RF74). Escribe siempre el nombre largo del tercero: "capacidad" a secas ya está ocupado.
+
 ---
 
 ## 2. Stack
@@ -132,6 +134,8 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
 9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador (o el ADMIN, si coordinación no está) aprueba, o coordinador rechaza → administrativo asigna sala y prepara. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
+
+10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
 ---
 

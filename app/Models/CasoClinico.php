@@ -24,6 +24,7 @@ class CasoClinico extends Model
     protected $fillable = [
         'nombre',
         'descripcion',
+        'capacidad_maxima_estudiantes',
         'imagen',
         'visible_publico',
         'orden',
@@ -36,6 +37,7 @@ class CasoClinico extends Model
     protected function casts(): array
     {
         return [
+            'capacidad_maxima_estudiantes' => 'integer',
             'visible_publico' => 'boolean',
             'orden' => 'integer',
             'activo' => 'boolean',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Models\CasoClinico;
 use App\Models\ConsentimientoEstudiante;
 use App\Models\ConsentimientoPlantilla;
 use App\Models\Evaluacion;
@@ -111,6 +112,14 @@ final class MenuDelPanel
                 icono: 'M12 4v16m8-8H4',
                 permiso: 'create',
                 sobre: ConsentimientoPlantilla::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'casos-clinicos',
+                etiqueta: 'Capacidad de escenarios',
+                ruta: 'panel.casos-clinicos',
+                icono: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z',
+                permiso: 'viewAny',
+                sobre: CasoClinico::class,
             ),
             new SeccionDelPanel(
                 clave: 'reportes',
