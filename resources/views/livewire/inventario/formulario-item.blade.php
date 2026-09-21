@@ -34,14 +34,13 @@
             </div>
 
             <div>
-                <label for="estado" class="mb-1 block text-sm font-medium text-gray-700">Estado</label>
-                <select wire:model="estado" id="estado"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
-                    @foreach ($estados as $unEstado)
-                        <option value="{{ $unEstado->value }}">{{ $unEstado->etiqueta() }}</option>
-                    @endforeach
-                </select>
-                @error('estado') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                <span class="mb-1 block text-sm font-medium text-gray-700">Estado funcional</span>
+                @if ($item)
+                    <x-etiqueta-estado :estado="$item->estado" class="mt-2" />
+                    <p class="mt-1 text-xs text-gray-500">Se cambia desde el listado, con su motivo.</p>
+                @else
+                    <p class="mt-2 text-sm text-gray-600">Nace operativo.</p>
+                @endif
             </div>
 
             <div class="flex items-end">

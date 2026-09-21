@@ -35,7 +35,7 @@ class ItemInventarioFactory extends Factory
             'nivel_fidelidad' => null,
             'cantidad_total' => $this->faker->numberBetween(1, 30),
             'descripcion' => $this->faker->sentence(),
-            'estado' => EstadoItemInventario::Disponible,
+            'estado' => EstadoItemInventario::Operativo,
             'activo' => true,
         ];
     }
@@ -68,10 +68,25 @@ class ItemInventarioFactory extends Factory
         ]);
     }
 
-    public function enMantenimiento(): static
+    public function enRevision(): static
     {
         return $this->state(fn (array $atributos): array => [
-            'estado' => EstadoItemInventario::Mantenimiento,
+            'estado' => EstadoItemInventario::EnRevision,
+        ]);
+    }
+
+    public function defectuoso(): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'estado' => EstadoItemInventario::Defectuoso,
+        ]);
+    }
+
+    public function dadoDeBaja(): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'estado' => EstadoItemInventario::DadoDeBaja,
+            'activo' => false,
         ]);
     }
 }

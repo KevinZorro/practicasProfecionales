@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Livewire\Inventario;
 
-use App\Enums\EstadoItemInventario;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Exceptions\InventarioInvalido;
@@ -17,6 +16,9 @@ use Livewire\Component;
 
 /**
  * Alta y edición de un ítem del inventario (RF38-RF39).
+ *
+ * El estado funcional no se edita aquí: todo cambio necesita motivo y
+ * responsable, así que va por su propio flujo en el listado (RF66).
  *
  * El nivel de fidelidad se muestra siempre que el ítem sea un simulador,
  * pero solo es editable para el ADMIN: ocultarlo a los demás haría creer
@@ -39,9 +41,6 @@ final class FormularioItem extends Component
     #[Validate('nullable|string|max:1000')]
     public ?string $descripcion = null;
 
-    #[Validate('required|string')]
-    public string $estado = EstadoItemInventario::Disponible->value;
-
     public bool $activo = true;
 
     public string $nivelFidelidad = '';
@@ -61,7 +60,6 @@ final class FormularioItem extends Component
         $this->tipo = $item->tipo->value;
         $this->cantidadTotal = $item->cantidad_total;
         $this->descripcion = $item->descripcion;
-        $this->estado = $item->estado->value;
         $this->activo = $item->activo;
         $this->nivelFidelidad = $item->nivel_fidelidad?->value ?? '';
     }
@@ -98,7 +96,6 @@ final class FormularioItem extends Component
     {
         return view('livewire.inventario.formulario-item', [
             'tipos' => TipoItemInventario::cases(),
-            'estados' => EstadoItemInventario::cases(),
             'nivelesFidelidad' => NivelFidelidad::cases(),
             'esSimulador' => $this->esSimulador(),
             'puedeEditarFidelidad' => Auth::user()?->can('editarNivelFidelidad', $this->item ?? ItemInventario::class) ?? false,
@@ -127,7 +124,6 @@ final class FormularioItem extends Component
             tipo: TipoItemInventario::from($this->tipo),
             cantidadTotal: (int) $this->cantidadTotal,
             descripcion: $this->descripcion,
-            estado: EstadoItemInventario::from($this->estado),
             activo: $this->activo,
             nivelFidelidad: $this->esSimulador() ? $nivel : null,
         );

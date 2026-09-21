@@ -7,16 +7,19 @@ namespace App\Livewire\Inventario;
 use App\Enums\EstadoItemInventario;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
+use App\Exceptions\InventarioInvalido;
 use App\Models\ItemInventario;
 use App\Services\InventarioService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Listado del inventario (RF38).
+ * Listado del inventario (RF38) y cambio de estado funcional (RF66).
  *
- * Solo elige filtros; la consulta vive en InventarioService.
+ * Solo elige filtros y recoge el motivo; la consulta y las transiciones
+ * viven en InventarioService, y quién puede cada una lo decide la Policy.
  */
 final class ListadoInventario extends Component
 {
@@ -37,7 +40,14 @@ final class ListadoInventario extends Component
     #[Url(as: 'fidelidad', keep: false)]
     public string $fidelidad = '';
 
-    public ?int $bajaPendiente = null;
+    /** Ítem cuyo cambio de estado se está redactando. */
+    public ?int $cambiandoEstado = null;
+
+    public string $estadoDestino = '';
+
+    public string $motivo = '';
+
+    public ?string $errorDeRegla = null;
 
     public function updated(string $propiedad): void
     {
@@ -52,25 +62,46 @@ final class ListadoInventario extends Component
         $this->resetPage();
     }
 
-    public function pedirConfirmacionDeBaja(int $itemId): void
+    /**
+     * Abre el formulario de cambio de estado. El destino se propone, pero
+     * quien decide si la transición vale es el Service.
+     */
+    public function pedirCambioDeEstado(int $itemId, string $destino): void
     {
-        $this->authorize('darDeBaja', ItemInventario::findOrFail($itemId));
-        $this->bajaPendiente = $itemId;
+        $this->authorize('cambiarEstadoFuncional', ItemInventario::findOrFail($itemId));
+
+        $this->cambiandoEstado = $itemId;
+        $this->estadoDestino = $destino;
+        $this->motivo = '';
+        $this->errorDeRegla = null;
     }
 
-    public function cancelarBaja(): void
+    public function cancelarCambioDeEstado(): void
     {
-        $this->bajaPendiente = null;
+        $this->reset('cambiandoEstado', 'estadoDestino', 'motivo', 'errorDeRegla');
     }
 
-    public function darDeBaja(int $itemId, InventarioService $inventario): void
+    public function confirmarCambioDeEstado(InventarioService $inventario): void
     {
-        $item = ItemInventario::findOrFail($itemId);
-        $this->authorize('darDeBaja', $item);
+        $item = ItemInventario::findOrFail($this->cambiandoEstado);
+        $destino = EstadoItemInventario::from($this->estadoDestino);
 
-        $inventario->darDeBaja($item);
-        $this->bajaPendiente = null;
-        session()->flash('estado', "«{$item->nombre}» quedó dado de baja. El registro se conserva porque el histórico de solicitudes lo referencia.");
+        // La Policy vuelve a mirarse dentro del Service, que es donde vive la
+        // diferencia entre dar de baja y el resto de transiciones.
+        $this->authorize($destino->esDefinitivo() ? 'darDeBaja' : 'cambiarEstadoFuncional', $item);
+        $this->validate(['motivo' => 'required|string|min:5|max:1000']);
+        $this->errorDeRegla = null;
+
+        try {
+            $inventario->cambiarEstado(Auth::user(), $item, $destino, $this->motivo);
+        } catch (InventarioInvalido $invalido) {
+            $this->errorDeRegla = $invalido->getMessage();
+
+            return;
+        }
+
+        $this->cancelarCambioDeEstado();
+        session()->flash('estado', sprintf('«%s» queda en «%s».', $item->nombre, $destino->etiqueta()));
     }
 
     public function render(InventarioService $inventario): mixed

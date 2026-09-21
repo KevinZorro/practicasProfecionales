@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ItemInventario extends Model
 {
@@ -21,11 +22,14 @@ class ItemInventario extends Model
     protected $table = 'items_inventario';
 
     /**
-     * nivel_fidelidad NO está aquí a propósito: el RF39 lo reserva al ADMIN.
-     * Al quedar fuera de fillable, ninguna asignación masiva puede tocarlo
-     * —ni create(), ni update(), ni fill() con lo que llegue de un
-     * formulario—, así que la restricción no se puede saltar por descuido.
-     * Solo InventarioService lo asigna, y antes consulta la Policy.
+     * nivel_fidelidad y estado NO están aquí a propósito.
+     *
+     * El RF39 reserva el nivel de fidelidad al ADMIN, y el RF66 exige que
+     * todo cambio de estado funcional lleve motivo y responsable. Al quedar
+     * fuera de fillable, ninguna asignación masiva puede tocarlos —ni
+     * create(), ni update(), ni fill() con lo que llegue de un formulario—,
+     * así que las dos reglas no se pueden saltar por descuido. Solo
+     * InventarioService los asigna, y antes consulta la Policy.
      *
      * @var list<string>
      */
@@ -34,7 +38,6 @@ class ItemInventario extends Model
         'tipo',
         'cantidad_total',
         'descripcion',
-        'estado',
         'activo',
     ];
 
@@ -73,16 +76,32 @@ class ItemInventario extends Model
             ->withPivot('cantidad', 'alistado');
     }
 
+    /**
+     * Historial de estado funcional, del cambio más reciente al más antiguo
+     * (RF66).
+     *
+     * @return HasMany<CambioEstadoItem, $this>
+     */
+    public function cambiosDeEstado(): HasMany
+    {
+        return $this->hasMany(CambioEstadoItem::class, 'item_inventario_id')->masRecientesPrimero();
+    }
+
     /** @param Builder<$this> $consulta */
     public function scopeActivos(Builder $consulta): void
     {
         $consulta->where('activo', true);
     }
 
-    /** @param Builder<$this> $consulta */
+    /**
+     * Los que pueden comprometerse en una sesión: activos y operativos. Un
+     * ítem en revisión, defectuoso o de baja no cuenta (RF66).
+     *
+     * @param  Builder<$this>  $consulta
+     */
     public function scopeDisponibles(Builder $consulta): void
     {
-        $consulta->where('activo', true)->where('estado', EstadoItemInventario::Disponible);
+        $consulta->where('activo', true)->where('estado', EstadoItemInventario::Operativo);
     }
 
     /** @param Builder<$this> $consulta */

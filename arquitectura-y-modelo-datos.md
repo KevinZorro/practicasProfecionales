@@ -457,6 +457,8 @@ Resume qué rol ejecuta cada acción sensible. El coordinador hereda todo lo del
 | Gestionar materias, casos clínicos y tipos de evaluación | ✓ | | | | |
 | Registrar nivel de fidelidad de simuladores | ✓ | | | | |
 | Registrar y actualizar inventario | ✓ | ✓ | ✓ | | |
+| Cambiar el estado funcional de un ítem | ✓ | ✓ | ✓ | | |
+| Dar de baja un ítem | ✓ | ✓ | | | |
 | Consultar disponibilidad de inventario | ✓ | ✓ | ✓ | | |
 | Solicitar escenario | | | | ✓ | |
 | Revisar solicitudes | | ✓ | ✓ | | |
@@ -475,6 +477,7 @@ Notas de implementación:
 - El **nivel de fidelidad** (RF39) es el único atributo del inventario reservado al ADMIN. Los administrativos y coordinadores editan el resto de campos, por lo que la restricción se aplica a nivel de campo dentro de la Policy de `ItemInventario`, no al recurso completo.
 - La **verificación del consentimiento** (RF52) la ejerce el administrativo, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso para supervisar. Como el documento firmado lleva datos personales, quien verifica también lo descarga (RNF07).
 - La **aprobación de una solicitud** exige que esté en estado `revisada`: sin revisión administrativa previa no aprueba nadie. El ADMIN aprueba en ausencia de la coordinadora, pero no revisa, así que aprobador y revisor nunca son la misma persona.
+- El **estado funcional del inventario** (RF66) vive en `items_inventario.estado` y su historial en `cambios_estado_item`, con motivo y responsable por cambio. No se confunde con la disponibilidad, que no se almacena: se calcula por franja horaria. Un ítem que no esté `operativo` no cuenta como disponible. La baja es la única transición irreversible y la reserva la Policy a coordinación y ADMIN.
 - La **entrega en físico del consentimiento** (RF53) se modela como dos columnas de `consentimientos_estudiante` (`recibido_fisico_at`, `recibido_fisico_por`), no como un caso del enum `EstadoConsentimiento`. Son dos ejes distintos que se cruzan libremente: el estado describe el ciclo del documento escaneado y la entrega física describe un hecho del mundo que sobrevive a todas sus transiciones. Marcarla es del administrativo, y habilita el ingreso a prácticas igual que un documento verificado.
 - La **capacidad máxima de estudiantes** de un escenario (RF74) es parte de la gestión de casos clínicos, reservada al ADMIN. Se comprueba en `SolicitudService` al crear la solicitud. Un caso sin capacidad registrada no limita: `null` se lee como "sin definir".
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
