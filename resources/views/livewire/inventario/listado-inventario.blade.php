@@ -1,5 +1,11 @@
 <div class="space-y-4">
 
+    @if (session('estado'))
+        <p class="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-inset ring-emerald-600/20" role="status">
+            {{ session('estado') }}
+        </p>
+    @endif
+
     {{-- Filtros --}}
     <x-tarjeta>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -26,8 +32,10 @@
                 <select wire:model.live="estado" id="estado"
                         class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
                     <option value="">Todos</option>
+                    {{-- Lo que la administrativa busca cuando entra a mirar qué hay que revisar. --}}
+                    <option value="{{ \App\Livewire\Inventario\ListadoInventario::NO_OPERATIVAS }}">Con unidades no operativas</option>
                     @foreach ($estados as $unEstado)
-                        <option value="{{ $unEstado->value }}">{{ $unEstado->etiqueta() }}</option>
+                        <option value="{{ $unEstado->value }}">Con unidades {{ mb_strtolower($unEstado->etiqueta()) }}</option>
                     @endforeach
                 </select>
             </div>
@@ -71,9 +79,11 @@
             @foreach ($items as $item)
                 <li wire:key="item-movil-{{ $item->id }}">
                     <x-tarjeta @class(['opacity-75' => ! $item->activo])>
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <p class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900">{{ $item->nombre }}</p>
-                            <x-etiqueta-estado :estado="$item->estado" />
+                        {{-- En columna y no en fila: el desglose puede traer tres
+                             etiquetas, y a 390 px dejaban el nombre en «B..». --}}
+                        <div class="space-y-2">
+                            <p class="text-sm font-semibold text-gray-900">{{ $item->nombre }}</p>
+                            <x-desglose-de-unidades :item="$item" />
                         </div>
                         <div class="mt-2 flex flex-wrap items-center gap-2">
                             <x-tipo-de-item :tipo="$item->tipo" />
@@ -81,11 +91,11 @@
                         </div>
                         <dl class="mt-3 grid grid-cols-2 gap-3">
                             <x-dato etiqueta="Unidades">{{ $item->cantidad_total }}</x-dato>
-                            <x-dato etiqueta="Cuenta como disponible">
-                                @if ($item->activo && $item->estado->permiteUso())
-                                    Sí
+                            <x-dato etiqueta="Cuentan como disponibles">
+                                @if ($item->activo && $item->cantidad_operativa > 0)
+                                    {{ $item->cantidad_operativa }} de {{ $item->cantidad_total }}
                                 @else
-                                    <span class="text-amber-800">No</span>
+                                    <span class="text-amber-800">Ninguna</span>
                                 @endif
                             </x-dato>
                         </dl>
@@ -97,14 +107,14 @@
 
         {{-- Tabla en pantalla ancha. --}}
         <div class="hidden lg:block">
-            <x-tabla :encabezados="['Nombre', 'Tipo', 'Fidelidad', 'Unidades', 'Estado', '']">
+            <x-tabla :encabezados="['Nombre', 'Tipo', 'Fidelidad', 'Unidades', 'Desglose', '']">
                 @foreach ($items as $item)
                     <tr wire:key="item-tabla-{{ $item->id }}" @class(['opacity-75' => ! $item->activo])>
                         <td class="px-4 py-3 font-medium text-gray-900">{{ $item->nombre }}</td>
                         <td class="px-4 py-3"><x-tipo-de-item :tipo="$item->tipo" /></td>
                         <td class="px-4 py-3"><x-nivel-de-fidelidad :nivel="$item->nivel_fidelidad" :tipo="$item->tipo" /></td>
                         <td class="px-4 py-3 tabular-nums">{{ $item->cantidad_total }}</td>
-                        <td class="px-4 py-3"><x-etiqueta-estado :estado="$item->estado" /></td>
+                        <td class="px-4 py-3"><x-desglose-de-unidades :item="$item" /></td>
                         <td class="px-4 py-3">
                             @include('livewire.inventario.partes.acciones', ['item' => $item, 'compacto' => true])
                         </td>

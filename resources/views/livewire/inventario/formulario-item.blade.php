@@ -28,18 +28,27 @@
 
             <div>
                 <label for="cantidadTotal" class="mb-1 block text-sm font-medium text-gray-700">Unidades</label>
-                <input type="number" min="0" wire:model="cantidadTotal" id="cantidadTotal"
-                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
-                @error('cantidadTotal') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @if ($esAlta)
+                    <input type="number" min="0" wire:model="cantidadTotal" id="cantidadTotal"
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    @error('cantidadTotal') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                    <p class="mt-1 text-xs text-gray-500">Todas entran operativas.</p>
+                @else
+                    <p class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 text-base text-gray-900">
+                        {{ $item->cantidad_total }}
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500">
+                        Las unidades se mueven desde el listado, con su cantidad y su motivo.
+                    </p>
+                @endif
             </div>
 
             <div>
                 <span class="mb-1 block text-sm font-medium text-gray-700">Estado funcional</span>
-                @if ($item)
-                    <x-etiqueta-estado :estado="$item->estado" class="mt-2" />
-                    <p class="mt-1 text-xs text-gray-500">Se cambia desde el listado, con su motivo.</p>
+                @if ($esAlta)
+                    <p class="mt-2 text-sm text-gray-600">Todas nacen operativas.</p>
                 @else
-                    <p class="mt-2 text-sm text-gray-600">Nace operativo.</p>
+                    <x-desglose-de-unidades :item="$item" class="mt-2" />
                 @endif
             </div>
 

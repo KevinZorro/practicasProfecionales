@@ -11,6 +11,19 @@
         </select>
     </div>
 
+    @if ($sinCobertura !== [])
+        {{-- RF66: el inventario dejó de dar para prácticas ya aprobadas.
+             Solo se avisa: qué hacer con ellas lo decide el laboratorio. --}}
+        <p class="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
+            {{ trans_choice(
+                'Hay :count práctica aprobada sin unidades suficientes|Hay :count prácticas aprobadas sin unidades suficientes',
+                count($sinCobertura),
+                ['count' => count($sinCobertura)],
+            ) }}:
+            alguno de sus equipos dejó de estar operativo después de aprobarlas. Están marcadas abajo.
+        </p>
+    @endif
+
     @if ($solicitudes->isEmpty())
         <x-mensaje-vacio titulo="No hay solicitudes" descripcion="Cuando un docente pida un escenario aparecerá aquí." />
     @else
@@ -28,6 +41,13 @@
                                 <x-etiqueta-estado :estado="$solicitud->estado" />
                             </div>
                         </div>
+
+                        @if (in_array($solicitud->id, $sinCobertura, true))
+                            <p class="mt-2 text-sm text-rose-800">
+                                Sin unidades suficientes: alguno de los equipos de esta práctica dejó de
+                                estar operativo después de aprobarla.
+                            </p>
+                        @endif
 
                         <dl class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                             <x-dato etiqueta="Fecha">{{ $solicitud->fecha->format('d/m/Y') }}</x-dato>

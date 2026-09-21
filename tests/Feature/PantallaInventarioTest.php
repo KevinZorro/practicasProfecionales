@@ -78,13 +78,11 @@ it('deja a un administrativo editar el resto de campos del simulador', function 
     Livewire::actingAs($this->administrativo)
         ->test(FormularioItem::class, ['item' => $simulador])
         ->set('nombre', 'Maniquí de parto renovado')
-        ->set('cantidadTotal', 7)
         ->call('guardar')
         ->assertHasNoErrors();
 
     $simulador->refresh();
     expect($simulador->nombre)->toBe('Maniquí de parto renovado')
-        ->and($simulador->cantidad_total)->toBe(7)
         ->and($simulador->nivel_fidelidad)->toBe(NivelFidelidad::Alta);
 });
 
@@ -196,13 +194,13 @@ it('lee la fidelidad sin asignar como pendiente, no como dato vacío', function 
         ->assertSee('Pendiente de asignar');
 });
 
-it('marca los ítems que no cuentan como disponibles', function (EstadoItemInventario $estado): void {
-    ItemInventario::factory()->create(['estado' => $estado]);
+it('marca las unidades que no cuentan como disponibles', function (EstadoItemInventario $estado): void {
+    ItemInventario::factory()->conUnidadesEn($estado, 2)->create(['cantidad_total' => 5]);
 
     Livewire::actingAs($this->administrativo)
         ->test(ListadoInventario::class)
-        ->assertSee($estado->etiqueta());
-})->with([EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, EstadoItemInventario::DadoDeBaja]);
+        ->assertSee('2 '.mb_strtolower($estado->etiqueta()));
+})->with([EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso]);
 
 it('limpia todos los filtros de una vez', function (): void {
     ItemInventario::factory()->count(3)->create();
@@ -232,11 +230,11 @@ it('pide el motivo antes de dar de baja y explica que no se borra', function ():
 
     Livewire::actingAs($this->coordinadora)
         ->test(ListadoInventario::class)
-        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::DadoDeBaja->value)
-        ->assertSee('«Camilla» pasa a «Dado de baja»')
-        ->assertSee('El registro no se borra');
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Defectuoso->value, EstadoItemInventario::DadoDeBaja->value)
+        ->assertSee('«Camilla»')
+        ->assertSee('La baja es definitiva');
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Defectuoso);
+    expect($item->fresh()->cantidad_defectuosa)->toBe($item->cantidad_total);
 });
 
 it('da de baja sin romper las solicitudes históricas que lo referencian', function (): void {
@@ -246,12 +244,12 @@ it('da de baja sin romper las solicitudes históricas que lo referencian', funct
 
     Livewire::actingAs($this->coordinadora)
         ->test(ListadoInventario::class)
-        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::DadoDeBaja->value)
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Defectuoso->value, EstadoItemInventario::DadoDeBaja->value)
         ->set('motivo', 'El sensor está dañado y no hay repuesto.')
         ->call('confirmarCambioDeEstado');
 
     $item->refresh();
-    expect($item->estado)->toBe(EstadoItemInventario::DadoDeBaja)
+    expect($item->cantidad_total)->toBe(0)
         ->and($item->activo)->toBeFalse()
         ->and(ItemInventario::find($item->id))->not->toBeNull()
         ->and($solicitud->fresh()->items->firstWhere('id', $item->id)->pivot->cantidad)->toBe(2);
@@ -341,8 +339,8 @@ it('no deja a un docente cambiar el estado ni por el componente', function (): v
 
     Livewire::actingAs($docente)
         ->test(ListadoInventario::class)
-        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::EnRevision->value)
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Operativo->value, EstadoItemInventario::EnRevision->value)
         ->assertForbidden();
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo);
+    expect($item->fresh()->cantidad_operativa)->toBe($item->cantidad_total);
 });

@@ -75,9 +75,25 @@ it('deja a un administrativo editar el resto de campos del mismo ítem', functio
 
     $item = $item->fresh();
     expect($item->nombre)->toBe('Maniquí de parto renovado')
-        ->and($item->cantidad_total)->toBe(5)
         ->and($item->descripcion)->toBe('Repuesto en 2026')
         ->and($item->nivel_fidelidad)->toBe(NivelFidelidad::Media);
+});
+
+it('no cambia las cantidades al editar el ítem', function (): void {
+    // Las unidades solo se mueven por su propio flujo, con cantidad, motivo
+    // y responsable (RF66). Editar la ficha no las toca.
+    $item = $this->servicio->crear($this->admin, datosDeSimulador(NivelFidelidad::Media));
+    $antes = $item->cantidad_total;
+
+    $this->servicio->actualizar($this->administrativo, $item, new DatosItemInventario(
+        nombre: 'Otro nombre',
+        tipo: TipoItemInventario::Simulador,
+        cantidadTotal: $antes + 40,
+        nivelFidelidad: NivelFidelidad::Media,
+    ));
+
+    expect($item->fresh()->cantidad_total)->toBe($antes)
+        ->and($item->fresh()->cantidad_operativa)->toBe($antes);
 });
 
 it('no deja a un administrativo cambiar el nivel de fidelidad al actualizar', function (): void {
@@ -187,11 +203,12 @@ it('da de baja sin borrar el registro ni romper el histórico', function (): voi
     $solicitud = Solicitud::factory()->create();
     $solicitud->items()->attach($item->id, ['cantidad' => 2]);
 
-    $item = $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::EnRevision, 'Se atasca.');
-    $item = $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::Defectuoso, 'Sin reparación posible.');
-    $this->servicio->darDeBaja($this->coordinadora, $item, 'No hay repuesto en el país.');
+    $unidades = $item->cantidad_total;
+    $item = $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, $unidades, 'Se atasca.');
+    $item = $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, $unidades, 'Sin reparación posible.');
+    $this->servicio->darDeBaja($this->coordinadora, $item, $unidades, 'No hay repuesto en el país.');
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::DadoDeBaja)
+    expect($item->fresh()->cantidad_total)->toBe(0)
         ->and($item->fresh()->activo)->toBeFalse()
         ->and(ItemInventario::find($item->id))->not->toBeNull()
         ->and($solicitud->fresh()->items->firstWhere('id', $item->id)->pivot->cantidad)->toBe(2);

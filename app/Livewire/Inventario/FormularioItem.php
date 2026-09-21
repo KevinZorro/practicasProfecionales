@@ -17,8 +17,10 @@ use Livewire\Component;
 /**
  * Alta y edición de un ítem del inventario (RF38-RF39).
  *
- * El estado funcional no se edita aquí: todo cambio necesita motivo y
- * responsable, así que va por su propio flujo en el listado (RF66).
+ * Las unidades no se editan aquí. Al dar de alta se dice cuántas entran, y
+ * a partir de ahí cualquier movimiento —a revisión, de baja, reposición o
+ * una corrección de conteo— necesita cantidad, motivo y responsable, así
+ * que va por su propio flujo en el listado (RF66).
  *
  * El nivel de fidelidad se muestra siempre que el ítem sea un simulador,
  * pero solo es editable para el ADMIN: ocultarlo a los demás haría creer
@@ -98,6 +100,7 @@ final class FormularioItem extends Component
             'tipos' => TipoItemInventario::cases(),
             'nivelesFidelidad' => NivelFidelidad::cases(),
             'esSimulador' => $this->esSimulador(),
+            'esAlta' => ! $this->item instanceof ItemInventario,
             'puedeEditarFidelidad' => Auth::user()?->can('editarNivelFidelidad', $this->item ?? ItemInventario::class) ?? false,
         ]);
     }

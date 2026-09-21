@@ -4,15 +4,21 @@ declare(strict_types=1);
 
 use App\Enums\EstadoItemInventario;
 use App\Enums\Rol;
+use App\Enums\TipoItemInventario;
 use App\Exceptions\InventarioInvalido;
 use App\Livewire\Inventario\ListadoInventario;
 use App\Models\CambioEstadoItem;
 use App\Models\ItemInventario;
 use App\Models\User;
+use App\Services\DatosItemInventario;
 use App\Services\InventarioService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
+
+use function Pest\Laravel\assertDatabaseCount;
 
 beforeEach(function (): void {
     $this->seed(RolSeeder::class);
@@ -21,278 +27,426 @@ beforeEach(function (): void {
     $this->coordinadora = User::factory()->coordinador()->create();
 });
 
-/** Lleva el ítem hasta el estado pedido pasando por el flujo. */
-function llevarA(ItemInventario $item, EstadoItemInventario $destino, User $actor): ItemInventario
+/** Un ítem con ocho unidades, todas operativas, creado por el Service. */
+function ochoSondas(User $actor): ItemInventario
 {
-    $servicio = app(InventarioService::class);
+    return app(InventarioService::class)->crear($actor, new DatosItemInventario(
+        nombre: 'Sonda vesical',
+        tipo: TipoItemInventario::EquipoClinico,
+        cantidadTotal: 8,
+    ));
+}
 
-    $camino = match ($destino) {
-        EstadoItemInventario::EnRevision => [EstadoItemInventario::EnRevision],
-        EstadoItemInventario::Defectuoso => [EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso],
-        EstadoItemInventario::DadoDeBaja => [EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, EstadoItemInventario::DadoDeBaja],
-        EstadoItemInventario::Operativo => [],
-    };
+/** Reconstruye los contadores replicando el historial de un ítem. */
+function contadoresSegunElHistorial(ItemInventario $item): array
+{
+    $saldos = ['cantidad_operativa' => 0, 'cantidad_en_revision' => 0, 'cantidad_defectuosa' => 0];
 
-    foreach ($camino as $paso) {
-        $item = $servicio->cambiarEstado($actor, $item, $paso, 'Motivo de prueba para '.$paso->value);
+    foreach ($item->cambiosDeEstado()->get()->sortBy('id') as $cambio) {
+        $entra = $cambio->estado_nuevo->columnaDeCantidad();
+        $sale = $cambio->estado_anterior?->columnaDeCantidad();
+
+        if ($entra !== null) {
+            $saldos[$entra] += $cambio->cantidad;
+        }
+
+        if ($sale !== null) {
+            $saldos[$sale] -= $cambio->cantidad;
+        }
     }
 
-    return $item;
+    return $saldos + ['cantidad_total' => array_sum($saldos)];
 }
 
 // ---------------------------------------------------------------------
-// Transiciones válidas
+// El estado es de las unidades, no del ítem
 // ---------------------------------------------------------------------
 
-it('arranca operativo todo ítem nuevo', function (): void {
-    expect(ItemInventario::factory()->create()->estado)->toBe(EstadoItemInventario::Operativo);
-});
-
-it('no deja que una asignación masiva cambie el estado', function (): void {
-    // estado está fuera de fillable a propósito: si entrara por fill() se
-    // colaría un cambio sin motivo, sin responsable y sin respetar el flujo.
-    // Misma defensa que nivel_fidelidad con el RF39.
-    $item = ItemInventario::factory()->create();
-
-    $item->update(['estado' => EstadoItemInventario::DadoDeBaja]);
-
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo)
-        ->and(CambioEstadoItem::count())->toBe(0);
-});
-
-it('lleva un ítem de operativo a en revisión', function (): void {
-    $item = ItemInventario::factory()->create();
+it('manda unas pocas unidades a revisión y deja el resto disponible', function (): void {
+    // El caso que motivó el requerimiento: de ocho sondas fallan dos.
+    $item = ochoSondas($this->administrativo);
 
     $item = $this->servicio->cambiarEstado(
         $this->administrativo,
         $item,
+        EstadoItemInventario::Operativo,
         EstadoItemInventario::EnRevision,
-        'El balón de la sonda no infla.',
+        2,
+        'A dos sondas no les infla el balón.',
     );
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::EnRevision)
-        ->and($item->fresh()->activo)->toBeTrue();
+    expect($item->cantidad_operativa)->toBe(6)
+        ->and($item->cantidad_en_revision)->toBe(2)
+        ->and($item->cantidad_total)->toBe(8)
+        ->and($this->servicio->disponibilidadEnFranja($item, '2026-10-05', '07:00:00', '09:00:00'))->toBe(6);
 });
 
-it('confirma el defecto desde revisión', function (): void {
-    $item = llevarA(ItemInventario::factory()->create(), EstadoItemInventario::EnRevision, $this->administrativo);
+it('crea todo ítem con sus unidades operativas', function (): void {
+    $item = ochoSondas($this->administrativo);
 
-    $item = $this->servicio->cambiarEstado(
-        $this->administrativo,
-        $item,
-        EstadoItemInventario::Defectuoso,
-        'El filtro de la máscara de no reinhalación está roto.',
+    expect($item->cantidad_operativa)->toBe(8)
+        ->and($item->cantidad_total)->toBe(8)
+        ->and($item->cantidad_en_revision)->toBe(0);
+});
+
+it('confirma como defectuosas solo las que estaban en revisión', function (): void {
+    $item = ochoSondas($this->administrativo);
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 3, 'Fallan tres.');
+
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 2, 'Dos sin arreglo.');
+
+    expect($item->cantidad_operativa)->toBe(5)
+        ->and($item->cantidad_en_revision)->toBe(1)
+        ->and($item->cantidad_defectuosa)->toBe(2);
+});
+
+it('devuelve a operativas las que resultaron falsa alarma', function (): void {
+    $item = ochoSondas($this->administrativo);
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 3, 'Fallan tres.');
+
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Operativo, 3, 'Era el conector, ya están bien.');
+
+    expect($item->cantidad_operativa)->toBe(8)
+        ->and($item->cantidad_en_revision)->toBe(0);
+});
+
+// ---------------------------------------------------------------------
+// La invariante
+// ---------------------------------------------------------------------
+
+it('no deja mover más unidades de las que hay en el estado de origen', function (): void {
+    $item = ochoSondas($this->administrativo);
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 2, 'Fallan dos.');
+
+    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 3, 'Tres.'))
+        ->toThrow(InventarioInvalido::class, 'Solo hay 2 unidad(es) en "En revisión" y se pidió mover 3.');
+
+    expect($item->fresh()->cantidad_en_revision)->toBe(2);
+});
+
+it('no deja mover cero ni una cantidad negativa', function (int $cantidad): void {
+    $item = ochoSondas($this->administrativo);
+
+    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, $cantidad, 'Lo que sea.'))
+        ->toThrow(InventarioInvalido::class, 'al menos una unidad');
+})->with(['cero' => 0, 'negativa' => -3]);
+
+it('mantiene el total igual a la suma de los contadores en todo momento', function (): void {
+    $item = ochoSondas($this->administrativo);
+
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 4, 'Cuatro raras.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 3, 'Tres sin arreglo.');
+    $item = $this->servicio->darDeBaja($this->coordinadora, $item, 2, 'Sin repuesto.');
+
+    expect($item->cantidad_total)->toBe(
+        $item->cantidad_operativa + $item->cantidad_en_revision + $item->cantidad_defectuosa,
     );
-
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Defectuoso);
 });
 
-it('devuelve a operativo lo que resultó falsa alarma o se reparó', function (string $desde): void {
-    $item = llevarA(ItemInventario::factory()->create(), EstadoItemInventario::from($desde), $this->administrativo);
+it('reconstruye los contadores replicando el historial', function (): void {
+    // Es la garantía que daría derivarlo todo del historial, sin pagar una
+    // agregación en cada cálculo de disponibilidad.
+    $item = ochoSondas($this->administrativo);
 
-    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, 'Reparado en taller.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 5, 'Cinco a revisar.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 4, 'Cuatro malas.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Operativo, 1, 'Una era falsa alarma.');
+    $item = $this->servicio->darDeBaja($this->coordinadora, $item, 3, 'Tres al contenedor.');
+    $item = $this->servicio->reponerUnidades($this->administrativo, $item, 2, 'Llegaron dos de la compra.');
+    $item = $this->servicio->retirarUnidades($this->administrativo, $item, 1, 'Una se perdió en el traslado.');
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo)
-        ->and($item->fresh()->activo)->toBeTrue();
-})->with(['en_revision', 'defectuoso']);
+    $item->refresh();
 
-it('da de baja lo defectuoso sin arreglo y lo saca del catálogo', function (): void {
-    $item = llevarA(ItemInventario::factory()->create(), EstadoItemInventario::Defectuoso, $this->administrativo);
+    expect(contadoresSegunElHistorial($item))->toBe([
+        'cantidad_operativa' => $item->cantidad_operativa,
+        'cantidad_en_revision' => $item->cantidad_en_revision,
+        'cantidad_defectuosa' => $item->cantidad_defectuosa,
+        'cantidad_total' => $item->cantidad_total,
+    ]);
+});
 
-    $item = $this->servicio->darDeBaja($this->coordinadora, $item, 'No hay repuesto del sensor.');
+it('la base rechaza unos contadores que no sumen el total', function (): void {
+    // Última red, por debajo del Service: ni tinker, ni un seeder, ni una
+    // migración futura descuidada pueden dejar el ítem descuadrado.
+    $item = ochoSondas($this->administrativo);
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::DadoDeBaja)
-        ->and($item->fresh()->activo)->toBeFalse()
+    // No se comprueba nada después del fallo: PostgreSQL aborta la
+    // transacción del test y cualquier consulta posterior reventaría por eso
+    // y no por lo que se quiere probar.
+    expect(fn () => DB::table('items_inventario')
+        ->where('id', $item->id)
+        ->update(['cantidad_operativa' => 3]))
+        ->toThrow(QueryException::class, 'items_inventario_cantidades_cuadran');
+});
+
+it('no deja que una asignación masiva toque las cantidades', function (): void {
+    $item = ochoSondas($this->administrativo);
+
+    $item->update(['cantidad_total' => 99, 'cantidad_operativa' => 99]);
+
+    expect($item->fresh()->cantidad_total)->toBe(8)
+        ->and($item->fresh()->cantidad_operativa)->toBe(8);
+});
+
+// ---------------------------------------------------------------------
+// Entradas y salidas del inventario
+// ---------------------------------------------------------------------
+
+it('da de baja unas unidades y las descuenta del total para siempre', function (): void {
+    $item = ochoSondas($this->administrativo);
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 3, 'Tres raras.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 3, 'Tres malas.');
+
+    $item = $this->servicio->darDeBaja($this->coordinadora, $item, 2, 'Sin repuesto.');
+
+    expect($item->cantidad_total)->toBe(6)
+        ->and($item->cantidad_defectuosa)->toBe(1)
+        ->and($item->cantidad_operativa)->toBe(5)
+        ->and($item->activo)->toBeTrue();
+});
+
+it('saca el ítem del catálogo cuando se va la última unidad', function (): void {
+    $item = app(InventarioService::class)->crear($this->administrativo, new DatosItemInventario(
+        nombre: 'Simulador de auscultación',
+        tipo: TipoItemInventario::Simulador,
+        cantidadTotal: 1,
+    ));
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, 'No suena.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 1, 'La membrana está rota.');
+
+    $item = $this->servicio->darDeBaja($this->coordinadora, $item, 1, 'No se consigue repuesto.');
+
+    expect($item->cantidad_total)->toBe(0)
+        ->and($item->activo)->toBeFalse()
         ->and(ItemInventario::find($item->id))->not->toBeNull();
 });
 
-// ---------------------------------------------------------------------
-// Transiciones que el flujo no admite
-// ---------------------------------------------------------------------
+it('registra la salida de unidades que no son una avería', function (): void {
+    // Gasas gastadas en prácticas. No se modela el consumo como concepto,
+    // pero bajar el total nunca es silencioso.
+    $item = ochoSondas($this->administrativo);
 
-it('no deja saltarse la revisión para marcar un defecto', function (): void {
-    // El cliente lo dijo así: el defecto se confirma revisando.
-    $item = ItemInventario::factory()->create();
-
-    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Defectuoso, 'Está roto.'))
-        ->toThrow(InventarioInvalido::class);
-
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo);
-});
-
-it('no deja dar de baja un ítem operativo sin pasar por el flujo', function (): void {
-    $item = ItemInventario::factory()->create();
-
-    expect(fn () => $this->servicio->darDeBaja($this->coordinadora, $item, 'Ya no lo queremos.'))
-        ->toThrow(InventarioInvalido::class);
-});
-
-it('no deja resucitar un ítem dado de baja', function (): void {
-    $item = llevarA(ItemInventario::factory()->create(), EstadoItemInventario::DadoDeBaja, $this->coordinadora);
-
-    expect(fn () => $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::Operativo, 'Apareció uno nuevo.'))
-        ->toThrow(InventarioInvalido::class, 'no vuelve a cambiar de estado');
-});
-
-// ---------------------------------------------------------------------
-// Motivo y responsable
-// ---------------------------------------------------------------------
-
-it('registra motivo, responsable y estados del cambio', function (): void {
-    $item = ItemInventario::factory()->create();
-
-    $this->servicio->cambiarEstado(
-        $this->administrativo,
-        $item,
-        EstadoItemInventario::EnRevision,
-        'El balón de la sonda no infla.',
-    );
+    $item = $this->servicio->retirarUnidades($this->administrativo, $item, 3, 'Consumo de las prácticas de la semana.');
 
     $cambio = $item->cambiosDeEstado()->first();
 
-    expect($cambio->estado_anterior)->toBe(EstadoItemInventario::Operativo)
-        ->and($cambio->estado_nuevo)->toBe(EstadoItemInventario::EnRevision)
-        ->and($cambio->motivo)->toBe('El balón de la sonda no infla.')
+    expect($item->cantidad_total)->toBe(5)
+        ->and($item->cantidad_operativa)->toBe(5)
+        ->and($cambio->cantidad)->toBe(3)
+        ->and($cambio->estado_anterior)->toBe(EstadoItemInventario::Operativo)
+        ->and($cambio->estado_nuevo)->toBe(EstadoItemInventario::DadoDeBaja)
+        ->and($cambio->motivo)->toBe('Consumo de las prácticas de la semana.')
         ->and($cambio->registrado_por)->toBe($this->administrativo->id);
 });
 
-it('guarda un registro por cada cambio, no solo el último', function (): void {
-    // Es la razón de que el historial sea tabla y no columnas del ítem.
-    $item = llevarA(ItemInventario::factory()->create(), EstadoItemInventario::DadoDeBaja, $this->coordinadora);
+it('distingue en el historial la baja por avería de la salida sin avería', function (): void {
+    $item = ochoSondas($this->administrativo);
+    $item = $this->servicio->retirarUnidades($this->administrativo, $item, 1, 'Se perdió.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, 'Rara.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 1, 'Mala.');
+    $this->servicio->darDeBaja($this->coordinadora, $item, 1, 'Al contenedor.');
 
-    expect($item->cambiosDeEstado()->count())->toBe(3)
-        ->and($item->cambiosDeEstado()->pluck('estado_nuevo')->all())->toBe([
-            EstadoItemInventario::DadoDeBaja,
-            EstadoItemInventario::Defectuoso,
-            EstadoItemInventario::EnRevision,
-        ]);
+    $salidas = $item->cambiosDeEstado()->get()->filter->esSalida();
+
+    expect($salidas)->toHaveCount(2)
+        ->and($salidas->pluck('estado_anterior')->all())
+        ->toEqualCanonicalizing([EstadoItemInventario::Operativo, EstadoItemInventario::Defectuoso]);
 });
 
-it('conserva el historial de las idas y vueltas', function (): void {
-    $item = ItemInventario::factory()->create();
-    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, 'Hace un ruido raro.');
-    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, 'Falsa alarma: era el soporte.');
-    $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, 'Volvió a hacerlo.');
+it('repone unidades y las deja operativas', function (): void {
+    $item = ochoSondas($this->administrativo);
 
-    expect($item->cambiosDeEstado()->count())->toBe(3)
-        ->and($item->fresh()->estado)->toBe(EstadoItemInventario::EnRevision);
+    $item = $this->servicio->reponerUnidades($this->administrativo, $item, 4, 'Llegó la compra del semestre.');
+
+    expect($item->cantidad_total)->toBe(12)
+        ->and($item->cantidad_operativa)->toBe(12);
+});
+
+it('no deja reponer ni retirar sin motivo', function (string $metodo): void {
+    $item = ochoSondas($this->administrativo);
+
+    expect(fn () => $this->servicio->$metodo($this->administrativo, $item, 1, '   '))
+        ->toThrow(InventarioInvalido::class, 'necesita un motivo');
+})->with(['reponerUnidades', 'retirarUnidades']);
+
+// ---------------------------------------------------------------------
+// El flujo del RF66 sigue vigente
+// ---------------------------------------------------------------------
+
+it('no deja saltarse la revisión para marcar un defecto', function (): void {
+    $item = ochoSondas($this->administrativo);
+
+    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::Defectuoso, 1, 'Está rota.'))
+        ->toThrow(InventarioInvalido::class);
+});
+
+it('no deja dar de baja unidades operativas por la puerta del flujo', function (): void {
+    // Salen por retirarUnidades(), que es otra cosa y se registra distinto.
+    // Lo intenta la coordinadora, que sí tiene el permiso de baja: así lo
+    // que corta es el flujo y no la autorización.
+    $item = ochoSondas($this->administrativo);
+
+    expect(fn () => $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::Operativo, EstadoItemInventario::DadoDeBaja, 1, 'Fuera.'))
+        ->toThrow(InventarioInvalido::class);
+});
+
+it('no deja mover unidades desde la baja', function (): void {
+    $item = ochoSondas($this->administrativo);
+
+    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::DadoDeBaja, EstadoItemInventario::Operativo, 1, 'Volvieron.'))
+        ->toThrow(InventarioInvalido::class, 'no vuelve a cambiar de estado');
 });
 
 it('no deja cambiar el estado sin motivo', function (string $motivo): void {
-    $item = ItemInventario::factory()->create();
+    $item = ochoSondas($this->administrativo);
 
-    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, $motivo))
+    expect(fn () => $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, $motivo))
         ->toThrow(InventarioInvalido::class, 'necesita un motivo');
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo)
-        ->and(CambioEstadoItem::count())->toBe(0);
+    expect($item->fresh()->cantidad_operativa)->toBe(8);
 })->with(['vacío' => '', 'solo espacios' => '   ']);
 
 // ---------------------------------------------------------------------
-// Disponibilidad (RF66.3)
+// Piezas únicas
 // ---------------------------------------------------------------------
 
-it('deja de contar como disponible en cuanto entra en revisión', function (): void {
-    $item = ItemInventario::factory()->create(['cantidad_total' => 6]);
+it('trata una pieza única como un ítem de una sola unidad', function (): void {
+    // Sin caso especial: mover su única unidad la deja sin disponibilidad,
+    // que es el comportamiento de antes como caso particular.
+    $item = app(InventarioService::class)->crear($this->administrativo, new DatosItemInventario(
+        nombre: 'Maniquí de parto',
+        tipo: TipoItemInventario::Simulador,
+        cantidadTotal: 1,
+    ));
 
-    expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(6);
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, 'No dilata.');
 
-    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, 'No infla.');
-
-    expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(0);
-});
-
-it('no ofrece como disponible un ítem defectuoso ni uno dado de baja', function (string $estado): void {
-    $item = llevarA(ItemInventario::factory()->create(['cantidad_total' => 6]), EstadoItemInventario::from($estado), $this->coordinadora);
-
-    expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(0)
-        ->and(ItemInventario::disponibles()->pluck('id')->all())->not->toContain($item->id);
-})->with(['defectuoso', 'dado_de_baja']);
-
-it('vuelve a contar como disponible cuando se repara', function (): void {
-    $item = llevarA(ItemInventario::factory()->create(['cantidad_total' => 6]), EstadoItemInventario::Defectuoso, $this->administrativo);
-    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, 'Cambiada la pieza.');
-
-    expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(6);
+    expect($item->cantidad_operativa)->toBe(0)
+        ->and($this->servicio->disponibilidadEnFranja($item, '2026-10-05', '07:00:00', '09:00:00'))->toBe(0);
 });
 
 // ---------------------------------------------------------------------
 // Permisos (RF66.4)
 // ---------------------------------------------------------------------
 
-it('deja cambiar el estado a quien gestiona el inventario', function (string $quien): void {
-    $item = ItemInventario::factory()->create();
+it('deja mover unidades a quien gestiona el inventario', function (string $quien): void {
+    $item = ochoSondas($this->administrativo);
 
-    $item = $this->servicio->cambiarEstado($this->$quien, $item, EstadoItemInventario::EnRevision, 'Suena raro.');
+    $item = $this->servicio->cambiarEstado($this->$quien, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, 'Suena raro.');
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::EnRevision);
+    expect($item->cantidad_en_revision)->toBe(1);
 })->with(['administrativo', 'coordinadora']);
 
-it('no deja a un docente ni a un estudiante cambiar el estado', function (Rol $rol): void {
+it('no deja a un docente ni a un estudiante mover unidades', function (Rol $rol): void {
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
-    $item = ItemInventario::factory()->create();
+    $item = ochoSondas($this->administrativo);
+    $cambiosDelAlta = CambioEstadoItem::count();
 
-    expect(fn () => $this->servicio->cambiarEstado($usuario->fresh(), $item, EstadoItemInventario::EnRevision, 'Yo qué sé.'))
+    expect(fn () => $this->servicio->cambiarEstado($usuario->fresh(), $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, 'Yo qué sé.'))
         ->toThrow(AuthorizationException::class);
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo)
-        ->and(CambioEstadoItem::count())->toBe(0);
+    expect($item->fresh()->cantidad_operativa)->toBe(8)
+        ->and(CambioEstadoItem::count())->toBe($cambiosDelAlta);
 })->with([Rol::Docente, Rol::Estudiante]);
 
 it('no deja al administrativo dar de baja, que es lo único reservado', function (): void {
-    $item = llevarA(ItemInventario::factory()->create(), EstadoItemInventario::Defectuoso, $this->administrativo);
+    $item = ochoSondas($this->administrativo);
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 1, 'Rara.');
+    $item = $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 1, 'Mala.');
 
-    expect(fn () => $this->servicio->darDeBaja($this->administrativo, $item, 'Ya no sirve.'))
+    expect(fn () => $this->servicio->darDeBaja($this->administrativo, $item, 1, 'Al contenedor.'))
         ->toThrow(AuthorizationException::class);
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Defectuoso);
+    expect($item->fresh()->cantidad_defectuosa)->toBe(1);
 });
 
 // ---------------------------------------------------------------------
 // La pantalla
 // ---------------------------------------------------------------------
 
-it('deja al administrativo mandar un ítem a revisión desde el listado', function (): void {
-    $item = ItemInventario::factory()->create(['nombre' => 'Sonda vesical']);
+it('deja mandar unas unidades a revisión desde el listado', function (): void {
+    $item = ItemInventario::factory()->create(['nombre' => 'Sonda vesical', 'cantidad_total' => 8]);
 
     Livewire::actingAs($this->administrativo)
         ->test(ListadoInventario::class)
-        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::EnRevision->value)
-        ->set('motivo', 'El balón no infla.')
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Operativo->value, EstadoItemInventario::EnRevision->value)
+        ->set('cantidad', 2)
+        ->set('motivo', 'A dos no les infla el balón.')
         ->call('confirmarCambioDeEstado')
         ->assertHasNoErrors();
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::EnRevision);
+    expect($item->fresh()->cantidad_operativa)->toBe(6)
+        ->and($item->fresh()->cantidad_en_revision)->toBe(2);
 });
 
-it('exige el motivo en el formulario antes de guardar', function (): void {
-    $item = ItemInventario::factory()->create();
+it('exige cantidad y motivo en el formulario', function (): void {
+    $item = ItemInventario::factory()->create(['cantidad_total' => 8]);
 
     Livewire::actingAs($this->administrativo)
         ->test(ListadoInventario::class)
-        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::EnRevision->value)
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Operativo->value, EstadoItemInventario::EnRevision->value)
+        ->set('cantidad', 0)
         ->set('motivo', '')
         ->call('confirmarCambioDeEstado')
-        ->assertHasErrors('motivo');
+        ->assertHasErrors(['cantidad', 'motivo']);
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Operativo);
+    expect($item->fresh()->cantidad_operativa)->toBe(8);
 });
 
-it('no enseña al administrativo el control de dar de baja', function (): void {
-    ItemInventario::factory()->defectuoso()->create();
+it('avisa en pantalla cuando se piden más unidades de las que hay', function (): void {
+    $item = ItemInventario::factory()->enRevision(2)->create(['cantidad_total' => 8]);
 
     Livewire::actingAs($this->administrativo)
         ->test(ListadoInventario::class)
-        ->assertDontSee('Dar de baja');
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::EnRevision->value, EstadoItemInventario::Defectuoso->value)
+        ->set('cantidad', 5)
+        ->set('motivo', 'Cinco malas.')
+        ->call('confirmarCambioDeEstado')
+        ->assertSee('Solo hay 2 unidad(es)');
+
+    expect($item->fresh()->cantidad_en_revision)->toBe(2);
 });
 
-it('enseña el historial con su motivo y su responsable', function (): void {
-    $item = ItemInventario::factory()->create(['nombre' => 'Máscara de no reinhalación']);
-    $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::EnRevision, 'El filtro está dañado.');
+it('enseña el desglose por estado en vez de una etiqueta única', function (): void {
+    ItemInventario::factory()->enRevision(2)->create(['nombre' => 'Sonda vesical', 'cantidad_total' => 8]);
 
     Livewire::actingAs($this->administrativo)
         ->test(ListadoInventario::class)
-        ->assertSee('El filtro está dañado.')
-        ->assertSee($this->administrativo->nombre);
+        ->assertSee('6 operativo')
+        ->assertSee('2 en revisión');
+});
+
+it('filtra los ítems con unidades no operativas', function (): void {
+    ItemInventario::factory()->create(['nombre' => 'Todo bien', 'cantidad_total' => 4]);
+    ItemInventario::factory()->enRevision(1)->create(['nombre' => 'Algo raro', 'cantidad_total' => 4]);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(ListadoInventario::class)
+        ->set('estado', ListadoInventario::NO_OPERATIVAS)
+        ->assertSee('Algo raro')
+        ->assertDontSee('Todo bien');
+});
+
+it('enseña el historial con cuántas unidades, motivo y responsable', function (): void {
+    $item = ochoSondas($this->administrativo);
+    $this->servicio->cambiarEstado($this->administrativo, $item, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 2, 'A dos no les infla el balón.');
+
+    Livewire::actingAs($this->administrativo)
+        ->test(ListadoInventario::class)
+        ->assertSee('A dos no les infla el balón.')
+        ->assertSee($this->administrativo->nombre)
+        ->assertSee('2 ×');
+});
+
+it('anota el alta del ítem en el historial', function (): void {
+    ochoSondas($this->administrativo);
+
+    assertDatabaseCount('cambios_estado_item', 1);
+
+    $alta = CambioEstadoItem::first();
+
+    expect($alta->esEntrada())->toBeTrue()
+        ->and($alta->cantidad)->toBe(8)
+        ->and($alta->estado_nuevo)->toBe(EstadoItemInventario::Operativo);
 });
