@@ -7,9 +7,9 @@
 
 @php
     $tono = match ($estado->value) {
-        'aprobada', 'verificado', 'finalizada', 'preparado', 'disponible' => 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
-        'rechazada', 'no_aprobado', 'baja' => 'bg-rose-50 text-rose-800 ring-rose-600/20',
-        'en_preparacion', 'revisada', 'cargado', 'mantenimiento' => 'bg-amber-50 text-amber-800 ring-amber-600/20',
+        'aprobada', 'verificado', 'finalizada', 'preparado', 'operativo' => 'bg-emerald-50 text-emerald-800 ring-emerald-600/20',
+        'rechazada', 'no_aprobado', 'defectuoso', 'dado_de_baja' => 'bg-rose-50 text-rose-800 ring-rose-600/20',
+        'en_preparacion', 'revisada', 'cargado', 'en_revision' => 'bg-amber-50 text-amber-800 ring-amber-600/20',
         default => 'bg-gray-100 text-gray-700 ring-gray-500/20',
     };
 @endphp

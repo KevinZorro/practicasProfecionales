@@ -82,7 +82,7 @@
                         <dl class="mt-3 grid grid-cols-2 gap-3">
                             <x-dato etiqueta="Unidades">{{ $item->cantidad_total }}</x-dato>
                             <x-dato etiqueta="Cuenta como disponible">
-                                @if ($item->activo && $item->estado === \App\Enums\EstadoItemInventario::Disponible)
+                                @if ($item->activo && $item->estado->permiteUso())
                                     Sí
                                 @else
                                     <span class="text-amber-800">No</span>

@@ -141,6 +141,12 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
+11. **Estado funcional y disponibilidad son ejes distintos (RF66).** `items_inventario.estado` responde "¿sirve?" (`operativo` → `en_revision` → `defectuoso` → `dado_de_baja`); la disponibilidad responde "¿está libre para esta sesión?" y **no se almacena**: `InventarioService` la calcula por franja restando lo comprometido en solicitudes aprobadas. Un ítem operativo puede estar ocupado; uno que no esté operativo **nunca** cuenta como disponible.
+
+    Todo cambio de estado pasa por `InventarioService::cambiarEstado()` y **exige motivo y responsable**, que quedan en `cambios_estado_item`. El historial es de solo añadir. `estado` está fuera de `$fillable` justo para que no se pueda cambiar por asignación masiva, igual que `nivel_fidelidad`.
+
+    La baja es definitiva y la reserva la Policy a coordinación y ADMIN; el resto de transiciones las hace quien gestiona el inventario.
+
 ---
 
 ## 5. Convenciones de código

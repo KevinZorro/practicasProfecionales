@@ -153,8 +153,22 @@ it('deja gestionar el inventario a administrativo, coordinador y ADMIN', functio
 
     expect($usuario->can('viewAny', ItemInventario::class))->toBeTrue()
         ->and($usuario->can('update', $item))->toBeTrue()
-        ->and($usuario->can('darDeBaja', $item))->toBeTrue();
+        ->and($usuario->can('cambiarEstadoFuncional', $item))->toBeTrue();
 })->with([Rol::Administrativo, Rol::Coordinador, Rol::Admin]);
+
+it('reserva la baja a coordinación y al ADMIN', function (Rol $rol, bool $puede): void {
+    // RF66: es la única transición irreversible, y en la operación real el
+    // defecto ya se informa a la coordinadora.
+    $usuario = User::factory()->create();
+    $usuario->assignRole($rol->value);
+
+    expect($usuario->can('darDeBaja', ItemInventario::factory()->create()))->toBe($puede);
+})->with([
+    'coordinador' => [Rol::Coordinador, true],
+    'admin' => [Rol::Admin, true],
+    'administrativo' => [Rol::Administrativo, false],
+    'docente' => [Rol::Docente, false],
+]);
 
 it('reserva el nivel de fidelidad al ADMIN en la Policy', function (): void {
     $item = ItemInventario::factory()->simulador()->create();
@@ -173,9 +187,11 @@ it('da de baja sin borrar el registro ni romper el histórico', function (): voi
     $solicitud = Solicitud::factory()->create();
     $solicitud->items()->attach($item->id, ['cantidad' => 2]);
 
-    $this->servicio->darDeBaja($item);
+    $item = $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::EnRevision, 'Se atasca.');
+    $item = $this->servicio->cambiarEstado($this->coordinadora, $item, EstadoItemInventario::Defectuoso, 'Sin reparación posible.');
+    $this->servicio->darDeBaja($this->coordinadora, $item, 'No hay repuesto en el país.');
 
-    expect($item->fresh()->estado)->toBe(EstadoItemInventario::Baja)
+    expect($item->fresh()->estado)->toBe(EstadoItemInventario::DadoDeBaja)
         ->and($item->fresh()->activo)->toBeFalse()
         ->and(ItemInventario::find($item->id))->not->toBeNull()
         ->and($solicitud->fresh()->items->firstWhere('id', $item->id)->pivot->cantidad)->toBe(2);
@@ -188,17 +204,17 @@ it('da de baja sin borrar el registro ni romper el histórico', function (): voi
 it('filtra el listado por tipo, estado y nivel de fidelidad', function (): void {
     ItemInventario::factory()->simulador(NivelFidelidad::Alta)->create();
     ItemInventario::factory()->simulador(NivelFidelidad::Baja)->create();
-    ItemInventario::factory()->simulador(NivelFidelidad::Alta)->enMantenimiento()->create();
+    ItemInventario::factory()->simulador(NivelFidelidad::Alta)->enRevision()->create();
     ItemInventario::factory()->equipoBasico()->create();
 
     expect($this->servicio->listar())->toHaveCount(4)
         ->and($this->servicio->listar(tipo: TipoItemInventario::Simulador))->toHaveCount(3)
         ->and($this->servicio->listar(tipo: TipoItemInventario::EquipoBasico))->toHaveCount(1)
-        ->and($this->servicio->listar(estado: EstadoItemInventario::Mantenimiento))->toHaveCount(1)
+        ->and($this->servicio->listar(estado: EstadoItemInventario::EnRevision))->toHaveCount(1)
         ->and($this->servicio->listar(nivelFidelidad: NivelFidelidad::Alta))->toHaveCount(2)
         ->and($this->servicio->listar(
             tipo: TipoItemInventario::Simulador,
-            estado: EstadoItemInventario::Disponible,
+            estado: EstadoItemInventario::Operativo,
             nivelFidelidad: NivelFidelidad::Alta,
         ))->toHaveCount(1);
 });

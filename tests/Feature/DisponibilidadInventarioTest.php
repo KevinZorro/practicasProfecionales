@@ -83,13 +83,14 @@ it('no descuenta lo pedido en solicitudes que aún no se aprobaron ni en las rec
     'rechazada' => EstadoSolicitud::Rechazada,
 ]);
 
-it('no cuenta como disponible un ítem en mantenimiento o dado de baja', function (EstadoItemInventario $estado): void {
+it('no cuenta como disponible un ítem que no está operativo', function (EstadoItemInventario $estado): void {
     $item = ItemInventario::factory()->create(['cantidad_total' => 6, 'estado' => $estado]);
 
     expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(0);
 })->with([
-    'mantenimiento' => EstadoItemInventario::Mantenimiento,
-    'baja' => EstadoItemInventario::Baja,
+    'en revisión' => EstadoItemInventario::EnRevision,
+    'defectuoso' => EstadoItemInventario::Defectuoso,
+    'dado de baja' => EstadoItemInventario::DadoDeBaja,
 ]);
 
 it('no cuenta como disponible un ítem inactivo', function (): void {
@@ -119,16 +120,16 @@ it('no mezcla lo comprometido de un ítem con el de otro', function (): void {
 it('calcula la disponibilidad de varios ítems a la vez', function (): void {
     $maniqui = ItemInventario::factory()->create(['cantidad_total' => 4]);
     $monitor = ItemInventario::factory()->create(['cantidad_total' => 6]);
-    $enMantenimiento = ItemInventario::factory()->enMantenimiento()->create(['cantidad_total' => 9]);
+    $defectuoso = ItemInventario::factory()->defectuoso()->create(['cantidad_total' => 9]);
     comprometer($maniqui, 3, '2026-05-10', '07:00:00', '09:00:00');
     comprometer($monitor, 1, '2026-05-10', '08:00:00', '10:00:00');
 
-    $items = ItemInventario::whereIn('id', [$maniqui->id, $monitor->id, $enMantenimiento->id])->get();
+    $items = ItemInventario::whereIn('id', [$maniqui->id, $monitor->id, $defectuoso->id])->get();
     $disponibilidad = $this->servicio->disponibilidadDeVarios($items, '2026-05-10', '07:00:00', '09:00:00');
 
     expect($disponibilidad[$maniqui->id])->toBe(1)
         ->and($disponibilidad[$monitor->id])->toBe(5)
-        ->and($disponibilidad[$enMantenimiento->id])->toBe(0);
+        ->and($disponibilidad[$defectuoso->id])->toBe(0);
 });
 
 it('consulta la disponibilidad de varios ítems sin N+1', function (): void {

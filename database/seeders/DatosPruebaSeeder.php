@@ -141,37 +141,61 @@ class DatosPruebaSeeder extends Seeder
     {
         $definicion = [
             // nombre => [tipo, nivel de fidelidad, cantidad, estado]
-            'Maniquí de parto' => [TipoItemInventario::Simulador, NivelFidelidad::Alta, 2, EstadoItemInventario::Disponible],
-            'Simulador neonatal' => [TipoItemInventario::Simulador, NivelFidelidad::Alta, 2, EstadoItemInventario::Disponible],
-            'Simulador de trauma adulto' => [TipoItemInventario::Simulador, NivelFidelidad::Media, 3, EstadoItemInventario::Disponible],
-            'Torso de RCP' => [TipoItemInventario::Simulador, NivelFidelidad::Baja, 6, EstadoItemInventario::Disponible],
-            'Brazo de punción venosa' => [TipoItemInventario::Simulador, NivelFidelidad::Baja, 8, EstadoItemInventario::Disponible],
-            'Simulador de auscultación' => [TipoItemInventario::Simulador, NivelFidelidad::Media, 1, EstadoItemInventario::Mantenimiento],
-            'Incubadora neonatal' => [TipoItemInventario::EquipoClinico, null, 2, EstadoItemInventario::Disponible],
-            'Monitor de signos vitales' => [TipoItemInventario::EquipoClinico, null, 6, EstadoItemInventario::Disponible],
-            'Bomba de infusión' => [TipoItemInventario::EquipoClinico, null, 8, EstadoItemInventario::Disponible],
-            'Desfibrilador de entrenamiento' => [TipoItemInventario::EquipoClinico, null, 3, EstadoItemInventario::Disponible],
-            'Tensiómetro' => [TipoItemInventario::EquipoClinico, null, 15, EstadoItemInventario::Disponible],
-            'Fonendoscopio' => [TipoItemInventario::EquipoClinico, null, 20, EstadoItemInventario::Disponible],
-            'Camilla de traslado' => [TipoItemInventario::EquipoClinico, null, 4, EstadoItemInventario::Disponible],
-            'Guantes de nitrilo' => [TipoItemInventario::EquipoBasico, null, 500, EstadoItemInventario::Disponible],
-            'Gasas estériles' => [TipoItemInventario::EquipoBasico, null, 400, EstadoItemInventario::Disponible],
-            'Jeringas 10 ml' => [TipoItemInventario::EquipoBasico, null, 300, EstadoItemInventario::Disponible],
-            'Set de curación' => [TipoItemInventario::EquipoBasico, null, 120, EstadoItemInventario::Disponible],
+            'Maniquí de parto' => [TipoItemInventario::Simulador, NivelFidelidad::Alta, 2, EstadoItemInventario::Operativo],
+            'Simulador neonatal' => [TipoItemInventario::Simulador, NivelFidelidad::Alta, 2, EstadoItemInventario::Operativo],
+            'Simulador de trauma adulto' => [TipoItemInventario::Simulador, NivelFidelidad::Media, 3, EstadoItemInventario::Operativo],
+            'Torso de RCP' => [TipoItemInventario::Simulador, NivelFidelidad::Baja, 6, EstadoItemInventario::Operativo],
+            'Brazo de punción venosa' => [TipoItemInventario::Simulador, NivelFidelidad::Baja, 8, EstadoItemInventario::Operativo],
+            'Simulador de auscultación' => [TipoItemInventario::Simulador, NivelFidelidad::Media, 1, EstadoItemInventario::EnRevision],
+            'Incubadora neonatal' => [TipoItemInventario::EquipoClinico, null, 2, EstadoItemInventario::Operativo],
+            'Monitor de signos vitales' => [TipoItemInventario::EquipoClinico, null, 6, EstadoItemInventario::Operativo],
+            'Bomba de infusión' => [TipoItemInventario::EquipoClinico, null, 8, EstadoItemInventario::Operativo],
+            'Desfibrilador de entrenamiento' => [TipoItemInventario::EquipoClinico, null, 3, EstadoItemInventario::Operativo],
+            'Tensiómetro' => [TipoItemInventario::EquipoClinico, null, 15, EstadoItemInventario::Operativo],
+            'Fonendoscopio' => [TipoItemInventario::EquipoClinico, null, 20, EstadoItemInventario::Operativo],
+            'Camilla de traslado' => [TipoItemInventario::EquipoClinico, null, 4, EstadoItemInventario::Operativo],
+            'Guantes de nitrilo' => [TipoItemInventario::EquipoBasico, null, 500, EstadoItemInventario::Operativo],
+            'Gasas estériles' => [TipoItemInventario::EquipoBasico, null, 400, EstadoItemInventario::Operativo],
+            'Jeringas 10 ml' => [TipoItemInventario::EquipoBasico, null, 300, EstadoItemInventario::Operativo],
+            'Set de curación' => [TipoItemInventario::EquipoBasico, null, 120, EstadoItemInventario::Operativo],
         ];
 
         $inventario = app(InventarioService::class);
 
-        return collect($definicion)->map(fn (array $datos, string $nombre): ItemInventario => $inventario->crear(
+        $items = collect($definicion)->map(fn (array $datos, string $nombre): ItemInventario => $inventario->crear(
             $admin,
             new DatosItemInventario(
                 nombre: $nombre,
                 tipo: $datos[0],
                 cantidadTotal: $datos[2],
-                estado: $datos[3],
                 nivelFidelidad: $datos[1],
             ),
         ));
+
+        // Todo nace operativo (RF66). Lo que no lo está llega ahí por el
+        // flujo, para que el historial del demo tenga motivo y responsable
+        // como los tendrá en producción.
+        $inventario->cambiarEstado(
+            $admin,
+            $items['Simulador de auscultación'],
+            EstadoItemInventario::EnRevision,
+            'La membrana no transmite el sonido cardiaco.',
+        );
+
+        $inventario->cambiarEstado(
+            $admin,
+            $items['Bomba de infusión'],
+            EstadoItemInventario::EnRevision,
+            'Una de las bombas marca error de oclusión sin motivo.',
+        );
+        $inventario->cambiarEstado(
+            $admin,
+            $items['Bomba de infusión'],
+            EstadoItemInventario::Defectuoso,
+            'Revisada en taller: el sensor de presión está dañado y no hay repuesto.',
+        );
+
+        return $items;
     }
 
     /**
