@@ -40,10 +40,17 @@ final class ListadoInventario extends Component
     #[Url(as: 'fidelidad', keep: false)]
     public string $fidelidad = '';
 
-    /** Ítem cuyo cambio de estado se está redactando. */
+    /** Valor del filtro de estado que busca lo que hay que mirar. */
+    public const NO_OPERATIVAS = 'no_operativas';
+
+    /** Ítem cuyo movimiento de unidades se está redactando. */
     public ?int $cambiandoEstado = null;
 
+    public string $estadoOrigen = '';
+
     public string $estadoDestino = '';
+
+    public int $cantidad = 1;
 
     public string $motivo = '';
 
@@ -63,45 +70,61 @@ final class ListadoInventario extends Component
     }
 
     /**
-     * Abre el formulario de cambio de estado. El destino se propone, pero
+     * Abre el formulario de movimiento. Origen y destino se proponen, pero
      * quien decide si la transición vale es el Service.
      */
-    public function pedirCambioDeEstado(int $itemId, string $destino): void
+    public function pedirCambioDeEstado(int $itemId, string $origen, string $destino): void
     {
-        $this->authorize('cambiarEstadoFuncional', ItemInventario::findOrFail($itemId));
+        $item = ItemInventario::findOrFail($itemId);
+        $this->authorize('cambiarEstadoFuncional', $item);
 
         $this->cambiandoEstado = $itemId;
+        $this->estadoOrigen = $origen;
         $this->estadoDestino = $destino;
+        // Se propone mover todo lo que hay en el origen, que es el caso más
+        // común en una pieza única; con ocho sondas la administrativa
+        // corrige el número.
+        $this->cantidad = max(1, $item->cantidadEn(EstadoItemInventario::from($origen)));
         $this->motivo = '';
         $this->errorDeRegla = null;
     }
 
     public function cancelarCambioDeEstado(): void
     {
-        $this->reset('cambiandoEstado', 'estadoDestino', 'motivo', 'errorDeRegla');
+        $this->reset('cambiandoEstado', 'estadoOrigen', 'estadoDestino', 'cantidad', 'motivo', 'errorDeRegla');
     }
 
     public function confirmarCambioDeEstado(InventarioService $inventario): void
     {
         $item = ItemInventario::findOrFail($this->cambiandoEstado);
+        $origen = EstadoItemInventario::from($this->estadoOrigen);
         $destino = EstadoItemInventario::from($this->estadoDestino);
 
         // La Policy vuelve a mirarse dentro del Service, que es donde vive la
-        // diferencia entre dar de baja y el resto de transiciones.
+        // diferencia entre dar de baja y el resto de movimientos.
         $this->authorize($destino->esDefinitivo() ? 'darDeBaja' : 'cambiarEstadoFuncional', $item);
-        $this->validate(['motivo' => 'required|string|min:5|max:1000']);
+        $this->validate([
+            'cantidad' => 'required|integer|min:1',
+            'motivo' => 'required|string|min:5|max:1000',
+        ]);
         $this->errorDeRegla = null;
 
         try {
-            $inventario->cambiarEstado(Auth::user(), $item, $destino, $this->motivo);
+            $inventario->cambiarEstado(Auth::user(), $item, $origen, $destino, $this->cantidad, $this->motivo);
         } catch (InventarioInvalido $invalido) {
             $this->errorDeRegla = $invalido->getMessage();
 
             return;
         }
 
+        $cantidad = $this->cantidad;
         $this->cancelarCambioDeEstado();
-        session()->flash('estado', sprintf('«%s» queda en «%s».', $item->nombre, $destino->etiqueta()));
+        session()->flash('estado', sprintf(
+            '%d unidad(es) de «%s» pasan a «%s».',
+            $cantidad,
+            $item->nombre,
+            $destino->etiqueta(),
+        ));
     }
 
     public function render(InventarioService $inventario): mixed
@@ -113,6 +136,7 @@ final class ListadoInventario extends Component
                 nivelFidelidad: NivelFidelidad::tryFrom($this->fidelidad),
                 busqueda: $this->busqueda,
                 soloSinFidelidad: $this->fidelidad === self::SIN_ASIGNAR,
+                soloConUnidadesNoOperativas: $this->estado === self::NO_OPERATIVAS,
             ),
             'tipos' => TipoItemInventario::cases(),
             'estados' => EstadoItemInventario::cases(),

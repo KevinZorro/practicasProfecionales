@@ -8,7 +8,7 @@ Instrucciones permanentes para trabajar en este repositorio. Léelas antes de es
 
 Plataforma web de gestión del Laboratorio de Simulación Clínica de la Facultad de Ciencias de la Salud. Reemplaza procesos manuales de reserva de escenarios, evaluación de habilidades e inventario de simuladores.
 
-**Usuarios:** ~2.000 en total, con picos estimados de 300 concurrentes. Docentes, estudiantes, personal administrativo, coordinación y un administrador de la plataforma.
+**Usuarios:** ~700 estudiantes y ~150 docentes, más personal administrativo, coordinación y un administrador de la plataforma (RNF01, cifra confirmada con el cliente).
 
 **Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago.
 
@@ -141,11 +141,17 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
-11. **Estado funcional y disponibilidad son ejes distintos (RF66).** `items_inventario.estado` responde "¿sirve?" (`operativo` → `en_revision` → `defectuoso` → `dado_de_baja`); la disponibilidad responde "¿está libre para esta sesión?" y **no se almacena**: `InventarioService` la calcula por franja restando lo comprometido en solicitudes aprobadas. Un ítem operativo puede estar ocupado; uno que no esté operativo **nunca** cuenta como disponible.
+11. **El estado funcional es de las unidades, no del ítem (RF66).** De ocho sondas, dos pueden estar en revisión y seis seguir disponibles. Lo llevan tres contadores en `items_inventario` —`cantidad_operativa`, `cantidad_en_revision`, `cantidad_defectuosa`—, y la invariante es:
 
-    Todo cambio de estado pasa por `InventarioService::cambiarEstado()` y **exige motivo y responsable**, que quedan en `cambios_estado_item`. El historial es de solo añadir. `estado` está fuera de `$fillable` justo para que no se pueda cambiar por asignación masiva, igual que `nivel_fidelidad`.
+    **`cantidad_total = cantidad_operativa + cantidad_en_revision + cantidad_defectuosa`**
 
-    La baja es definitiva y la reserva la Policy a coordinación y ADMIN; el resto de transiciones las hace quien gestiona el inventario.
+    La garantiza un `CHECK` de PostgreSQL, que no se puede saltar ni desde tinker ni desde un seeder. No hay columna `estado`: un ítem con seis operativas y dos defectuosas no tiene "un estado".
+
+    **Estado funcional y disponibilidad siguen siendo ejes distintos.** La disponibilidad responde "¿cuántas quedan libres para esta sesión?" y **no se almacena**: `InventarioService` la calcula por franja como `cantidad_operativa` menos lo comprometido en solicitudes aprobadas.
+
+    Toda unidad que se mueve, entra o sale pasa por `InventarioService` (`cambiarEstado`, `retirarUnidades`, `reponerUnidades`) y **exige cantidad, motivo y responsable**, que quedan en `cambios_estado_item`. El historial es de solo añadir y reconstruye los contadores por sí solo; hay un test que lo comprueba. Las cantidades están fuera de `$fillable`, igual que `nivel_fidelidad`.
+
+    Dar de baja unidades defectuosas es definitivo, las descuenta del total y lo reserva la Policy a coordinación y ADMIN. Retirar unidades operativas —gasto, pérdida, corrección de conteo— lo hace quien gestiona el inventario; el historial las distingue por el estado de origen.
 
 ---
 
@@ -257,5 +263,5 @@ No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 1. Si un usuario con rol docente y coordinador debe poder aprobar su propia solicitud.
 2. Estructura exacta de la vista de la base de datos institucional para la sincronización de usuarios.
 3. Cómo se entera hoy el docente de la sala asignada al llegar a clase.
-4. Volumen real de usuarios concurrentes; la cifra actual es una estimación.
+4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
 5. Valores posibles de `eventos.tipo`: el RF05 pide registrar el tipo pero no los enumera.

@@ -97,6 +97,9 @@ final class BandejaRevision extends Component
             'estados' => EstadoSolicitud::cases(),
             'detalle' => $detalle,
             'faltantes' => $detalle === null ? [] : $this->faltantesDeInventario($detalle),
+            // RF66: prácticas ya aprobadas cuyo inventario dejó de dar.
+            // Solo se avisa; qué hacer con ellas lo decide el cliente.
+            'sinCobertura' => app(InventarioService::class)->solicitudesAprobadasSinCobertura(),
         ]);
     }
 

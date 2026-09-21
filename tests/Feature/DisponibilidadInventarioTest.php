@@ -83,15 +83,27 @@ it('no descuenta lo pedido en solicitudes que aún no se aprobaron ni en las rec
     'rechazada' => EstadoSolicitud::Rechazada,
 ]);
 
-it('no cuenta como disponible un ítem que no está operativo', function (EstadoItemInventario $estado): void {
-    $item = ItemInventario::factory()->create(['cantidad_total' => 6, 'estado' => $estado]);
+it('no cuenta las unidades que no están operativas', function (EstadoItemInventario $estado): void {
+    $item = ItemInventario::factory()->conUnidadesEn($estado)->create(['cantidad_total' => 6]);
 
     expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(0);
 })->with([
     'en revisión' => EstadoItemInventario::EnRevision,
     'defectuoso' => EstadoItemInventario::Defectuoso,
-    'dado de baja' => EstadoItemInventario::DadoDeBaja,
 ]);
+
+it('no cuenta como disponible un ítem sin unidades', function (): void {
+    $item = ItemInventario::factory()->dadoDeBaja()->create();
+
+    expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(0);
+});
+
+it('cuenta solo las unidades operativas cuando el ítem está partido', function (): void {
+    // Es el caso del RF66.2: de ocho sondas, dos en revisión y seis libres.
+    $item = ItemInventario::factory()->enRevision(2)->create(['cantidad_total' => 8]);
+
+    expect($this->servicio->disponibilidadEnFranja($item, '2026-05-10', '07:00:00', '09:00:00'))->toBe(6);
+});
 
 it('no cuenta como disponible un ítem inactivo', function (): void {
     $item = ItemInventario::factory()->create(['cantidad_total' => 6, 'activo' => false]);

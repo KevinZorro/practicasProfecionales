@@ -175,25 +175,26 @@ class DatosPruebaSeeder extends Seeder
         // Todo nace operativo (RF66). Lo que no lo está llega ahí por el
         // flujo, para que el historial del demo tenga motivo y responsable
         // como los tendrá en producción.
+        // El simulador de auscultación es pieza única: su unidad entera se va
+        // a revisión.
         $inventario->cambiarEstado(
             $admin,
             $items['Simulador de auscultación'],
+            EstadoItemInventario::Operativo,
             EstadoItemInventario::EnRevision,
+            1,
             'La membrana no transmite el sonido cardiaco.',
         );
 
-        $inventario->cambiarEstado(
-            $admin,
-            $items['Bomba de infusión'],
-            EstadoItemInventario::EnRevision,
-            'Una de las bombas marca error de oclusión sin motivo.',
-        );
-        $inventario->cambiarEstado(
-            $admin,
-            $items['Bomba de infusión'],
-            EstadoItemInventario::Defectuoso,
-            'Revisada en taller: el sensor de presión está dañado y no hay repuesto.',
-        );
+        // De las ocho bombas, dos fallan: las otras seis siguen disponibles.
+        // Es el caso que motivó el RF66.2.
+        $bombas = $items['Bomba de infusión'];
+        $inventario->cambiarEstado($admin, $bombas, EstadoItemInventario::Operativo, EstadoItemInventario::EnRevision, 2, 'Dos bombas marcan error de oclusión sin motivo.');
+        $inventario->cambiarEstado($admin, $bombas, EstadoItemInventario::EnRevision, EstadoItemInventario::Defectuoso, 2, 'Revisadas en taller: el sensor de presión está dañado.');
+        $inventario->darDeBaja($admin, $bombas, 1, 'Sin repuesto del sensor para esta unidad.');
+
+        // Gasas gastadas en prácticas: salen del total sin ser una avería.
+        $inventario->retirarUnidades($admin, $items['Gasas estériles'], 40, 'Consumo de las prácticas del semestre.');
 
         return $items;
     }

@@ -31,6 +31,21 @@ final class InventarioInvalido extends DomainException
         return new self('Todo cambio de estado funcional necesita un motivo.');
     }
 
+    public static function noHayTantasUnidades(EstadoItemInventario $estado, int $disponibles, int $pedidas): self
+    {
+        return new self(sprintf(
+            'Solo hay %d unidad(es) en "%s" y se pidió mover %d.',
+            $disponibles,
+            $estado->etiqueta(),
+            $pedidas,
+        ));
+    }
+
+    public static function laCantidadEsAlMenosUna(): self
+    {
+        return new self('Hay que mover al menos una unidad.');
+    }
+
     public static function laBajaEsDefinitiva(): self
     {
         return new self('Un ítem dado de baja no vuelve a cambiar de estado.');
