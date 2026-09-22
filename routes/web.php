@@ -14,6 +14,7 @@ use App\Http\Controllers\Panel\PreparacionController;
 use App\Http\Controllers\Panel\ReposicionController;
 use App\Http\Controllers\Panel\SelectorDeRolController;
 use App\Http\Controllers\Panel\SolicitudController;
+use App\Http\Controllers\Panel\UsuarioController;
 use App\Support\MenuDelPanel;
 use Illuminate\Support\Facades\Route;
 
@@ -36,7 +37,7 @@ Route::post('salir', SalirController::class)->name('salir');
 Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'casos-clinicos', 'reposicion'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'casos-clinicos', 'reposicion', 'usuarios'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
@@ -45,6 +46,9 @@ Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->grou
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
 
     Route::get('casos-clinicos', CasoClinicoController::class)->name('casos-clinicos');
+
+    /* Reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
+    Route::get('usuarios', [UsuarioController::class, 'roles'])->name('usuarios');
 
     /*
      * Lista de insumos por pedir (RF67). Las descargas solo existen para

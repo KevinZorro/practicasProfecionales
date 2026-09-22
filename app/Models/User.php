@@ -11,14 +11,25 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable;
+    use HasFactory, Notifiable;
+
+    /*
+     * roles() se sobrescribe abajo para filtrar por vigencia. El alias deja
+     * a mano la relación original de spatie, sin filtro: es sobre ella que
+     * se construye la filtrada.
+     */
+    use HasRoles {
+        roles as rolesSinFiltrarPorVigencia;
+    }
 
     /**
      * @var list<string>
@@ -52,6 +63,61 @@ class User extends Authenticatable
             'estado' => EstadoUsuario::class,
             'origen' => OrigenUsuario::class,
         ];
+    }
+
+    /**
+     * Roles vigentes hoy (RF63, RF64).
+     *
+     * El filtro va aquí, en la relación, y no en el middleware ni en un job,
+     * y esa decisión es el requisito, no una preferencia: así el vencimiento
+     * se aplica en SQL a TODOS los caminos de lectura —hasRole(), can(), las
+     * Policies, el scope role() de spatie, whereHas('roles') y el
+     * loadMissing('roles') que el paquete hace por dentro—, en peticiones
+     * HTTP, comandos, colas y tinker por igual. Si el rol vence a medianoche,
+     * la comparación cambia sola en la consulta siguiente.
+     *
+     * spatie no cachea model_has_roles —su caché guarda permisos y roles, no
+     * quién tiene cuál—, así que no hay nada que pueda quedar obsoleto.
+     *
+     * Nulo quiere decir "sin límite por ese lado": "hasta" nulo es un rol
+     * permanente y "desde" nulo es un rol que siempre ha valido —los que
+     * reparten los seeders, que no pasan por el Service—. "hasta" incluye el
+     * día completo, y el corte se hace por fecha en la zona de la aplicación
+     * (America/Bogota), igual que la frontera de las listas de reposición.
+     *
+     * Cuidado al asignar: assignRole() de spatie calcula lo que ya tiene
+     * leyendo esta relación filtrada, así que con un rol vencido en la tabla
+     * intentaría insertar una fila que ya existe y reventaría contra la
+     * llave primaria. Toda escritura pasa por AsignacionDeRolService.
+     *
+     * @return MorphToMany<Role, $this>
+     */
+    public function roles(): MorphToMany
+    {
+        $pivote = config('permission.table_names.model_has_roles');
+        $hoy = now()->toDateString();
+
+        return $this->rolesSinFiltrarPorVigencia()
+            ->using(VigenciaDeRol::class)
+            ->withPivot(['desde', 'hasta'])
+            ->where(static function (Builder $consulta) use ($pivote, $hoy): void {
+                $consulta->whereNull("{$pivote}.desde")
+                    ->orWhere("{$pivote}.desde", '<=', $hoy);
+            })
+            ->where(static function (Builder $consulta) use ($pivote, $hoy): void {
+                $consulta->whereNull("{$pivote}.hasta")
+                    ->orWhere("{$pivote}.hasta", '>=', $hoy);
+            });
+    }
+
+    /**
+     * Historial de asignaciones, vigentes y vencidas (RF63, RF64).
+     *
+     * @return HasMany<AsignacionDeRol, $this>
+     */
+    public function asignacionesDeRol(): HasMany
+    {
+        return $this->hasMany(AsignacionDeRol::class);
     }
 
     /** @return HasMany<Solicitud, $this> */
