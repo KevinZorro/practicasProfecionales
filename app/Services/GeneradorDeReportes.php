@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\Reporte;
 use App\Exports\EvaluacionesNoRegistradasExport;
+use App\Exports\ListaDeReposicionExport;
 use App\Exports\ReporteExport;
 use App\Exports\ResultadosDeEvaluacionExport;
 use App\Exports\UsoDeEscenariosExport;
@@ -43,6 +44,7 @@ final class GeneradorDeReportes
             Reporte::UsoDeEscenarios => $this->reportes->usoDeEscenarios($filtro),
             Reporte::ResultadosDeEvaluacion => $this->reportes->resultadosDeEvaluacion($filtro),
             Reporte::EvaluacionesNoRegistradas => $this->reportes->evaluacionesNoRegistradas($filtro),
+            Reporte::ListaDeReposicion => $this->reportes->listaDeReposicion($filtro),
         };
     }
 
@@ -54,6 +56,7 @@ final class GeneradorDeReportes
             Reporte::UsoDeEscenarios => new UsoDeEscenariosExport($consulta),
             Reporte::ResultadosDeEvaluacion => new ResultadosDeEvaluacionExport($consulta),
             Reporte::EvaluacionesNoRegistradas => new EvaluacionesNoRegistradasExport($consulta),
+            Reporte::ListaDeReposicion => new ListaDeReposicionExport($consulta),
         };
     }
 

@@ -109,6 +109,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `ConsentimientoService` | Periodo académico vigente, estado del consentimiento, bloqueo de prácticas |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
+| `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
 | `UsuarioSyncService` | Sincronización contra la vista institucional |
 
 ---
@@ -152,6 +153,12 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
     Toda unidad que se mueve, entra o sale pasa por `InventarioService` (`cambiarEstado`, `retirarUnidades`, `reponerUnidades`) y **exige cantidad, motivo y responsable**, que quedan en `cambios_estado_item`. El historial es de solo añadir y reconstruye los contadores por sí solo; hay un test que lo comprueba. Las cantidades están fuera de `$fillable`, igual que `nivel_fidelidad`.
 
     Dar de baja unidades defectuosas es definitivo, las descuenta del total y lo reserva la Policy a coordinación y ADMIN. Retirar unidades operativas —gasto, pérdida, corrección de conteo— lo hace quien gestiona el inventario; el historial las distingue por el estado de origen.
+
+12. **La lista de reposición es un documento que se cierra, no una vista (RF67).** Es el soporte de la carta de solicitud de compra que el laboratorio presenta una vez al semestre: en cuanto se entrega, sus cifras son las que se entregaron. En borrador no guarda nada y se calcula al vuelo; al cerrarla, las líneas —**incluida la descripción del ítem**— se congelan en `lineas_reposicion` y de ahí leen la pantalla y las exportaciones. Corregir un movimiento del historial después **no** puede cambiar una lista cerrada. Mismo criterio que los ítems del checklist de la regla 3.
+
+    Solo se descargan listas cerradas. Cerrar es irreversible y lo reserva la Policy a coordinación y ADMIN.
+
+    Lo que hizo falta y el historial no puede saber —lo que se pidió y no había— va en `necesidades_reposicion`, con `item_inventario_id` nulo cuando todavía no está en el catálogo. **No se crea un ítem con cero unidades para representarlo:** aparecería en la disponibilidad y en el formulario del docente como si el laboratorio lo tuviera.
 
 ---
 

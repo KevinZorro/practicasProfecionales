@@ -42,7 +42,9 @@ use App\Models\TituloDocente;
 use App\Models\User;
 use App\Models\VideoInstitucional;
 use App\Services\DatosItemInventario;
+use App\Services\DatosNecesidad;
 use App\Services\InventarioService;
+use App\Services\ReposicionService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -195,6 +197,14 @@ class DatosPruebaSeeder extends Seeder
 
         // Gasas gastadas en prácticas: salen del total sin ser una avería.
         $inventario->retirarUnidades($admin, $items['Gasas estériles'], 40, 'Consumo de las prácticas del semestre.');
+
+        // RF67: lo que se pidió y no había. No se crea un ítem del catálogo
+        // para esto, porque el laboratorio no lo tiene.
+        app(ReposicionService::class)->registrarNecesidad($admin, new DatosNecesidad(
+            cantidad: 2,
+            justificacion: 'Se pidió para la práctica de reanimación y no había.',
+            descripcion: 'Pila CR2032 para el control del desfibrilador',
+        ));
 
         return $items;
     }
