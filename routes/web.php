@@ -11,6 +11,7 @@ use App\Http\Controllers\Panel\DescargaConsentimientoController;
 use App\Http\Controllers\Panel\InventarioController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PreparacionController;
+use App\Http\Controllers\Panel\ReposicionController;
 use App\Http\Controllers\Panel\SelectorDeRolController;
 use App\Http\Controllers\Panel\SolicitudController;
 use App\Support\MenuDelPanel;
@@ -35,7 +36,7 @@ Route::post('salir', SalirController::class)->name('salir');
 Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'consentimientos', 'mi-consentimiento', 'plantillas-consentimiento', 'casos-clinicos'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'consentimientos', 'mi-consentimiento', 'plantillas-consentimiento', 'casos-clinicos', 'reposicion'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
@@ -44,6 +45,15 @@ Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->grou
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
 
     Route::get('casos-clinicos', CasoClinicoController::class)->name('casos-clinicos');
+
+    /*
+     * Lista de insumos por pedir (RF67). Las descargas solo existen para
+     * listas ya cerradas: el soporte de una solicitud de compra no puede
+     * cambiar después de entregarlo.
+     */
+    Route::get('reposicion', [ReposicionController::class, 'index'])->name('reposicion');
+    Route::get('reposicion/{lista}/excel', [ReposicionController::class, 'excel'])->name('reposicion.excel');
+    Route::get('reposicion/{lista}/pdf', [ReposicionController::class, 'pdf'])->name('reposicion.pdf');
 
     Route::get('inventario/nuevo', [InventarioController::class, 'nuevo'])->name('inventario.nuevo');
     Route::get('inventario/disponibilidad', [InventarioController::class, 'disponibilidad'])->name('inventario.disponibilidad');

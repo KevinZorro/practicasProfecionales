@@ -24,6 +24,9 @@ final readonly class FiltroReporte
         public ?int $docenteId = null,
         public ?int $materiaId = null,
         public ?int $salaId = null,
+        // RF67: la lista de reposición se exporta ya cerrada, así que el
+        // filtro no es un rango sino el documento concreto.
+        public ?int $listaDeReposicionId = null,
     ) {}
 
     public static function deObjetos(

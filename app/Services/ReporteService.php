@@ -8,6 +8,7 @@ use App\Enums\EstadoEvaluacion;
 use App\Enums\EstadoSolicitud;
 use App\Enums\TipoSesion;
 use App\Models\EvaluacionEstudiante;
+use App\Models\LineaDeReposicion;
 use App\Models\Solicitud;
 use Illuminate\Contracts\Database\Query\Builder as BuilderContract;
 use Illuminate\Database\Eloquent\Builder;
@@ -121,6 +122,22 @@ final class ReporteService
      *
      * @param  T  $consulta
      */
+    /**
+     * RF67. Las líneas congeladas de una lista de reposición ya cerrada.
+     *
+     * No agrega nada: la agregación se hizo al cerrar la lista, y volver a
+     * calcularla aquí sería justo lo que el documento existe para evitar.
+     *
+     * @return Builder<LineaDeReposicion>
+     */
+    public function listaDeReposicion(FiltroReporte $filtro): Builder
+    {
+        return LineaDeReposicion::query()
+            ->where('lista_reposicion_id', $filtro->listaDeReposicionId)
+            ->orderBy('motivo')
+            ->orderBy('descripcion');
+    }
+
     public function paginar(BuilderContract $consulta, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
     {
         return $consulta->paginate($porPagina);
