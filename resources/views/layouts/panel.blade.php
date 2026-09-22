@@ -45,6 +45,12 @@
         <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-semibold text-gray-900">{{ auth()->user()->nombre }}</p>
             <p class="truncate text-xs text-gray-500">{{ $rolActivo->etiqueta() }}</p>
+            {{-- Rol prestado: que no se descubra al fallar un permiso (RF63). --}}
+            @if ($vigenciaDelRolActivo)
+                <p class="truncate text-xs font-medium text-amber-700">
+                    Rol temporal · hasta el {{ $vigenciaDelRolActivo->format('d/m/Y') }}
+                </p>
+            @endif
         </div>
 
         @if (count($rolesDisponibles) > 1)
@@ -60,7 +66,10 @@
                 <select name="rol" id="rol"
                         class="min-w-0 flex-1 rounded-md border border-gray-300 py-1.5 pl-2 pr-8 text-sm focus:border-sky-600 focus:ring-sky-600 md:flex-none">
                     @foreach ($rolesDisponibles as $rol)
-                        <option value="{{ $rol->value }}" @selected($rol === $rolActivo)>{{ $rol->etiqueta() }}</option>
+                        @php($vigencia = $vigenciaDeLosRoles[$rol->value] ?? null)
+                        <option value="{{ $rol->value }}" @selected($rol === $rolActivo)>
+                            {{ $rol->etiqueta() }}@if ($vigencia) · temporal hasta {{ $vigencia->format('d/m/Y') }}@endif
+                        </option>
                     @endforeach
                 </select>
                 <x-boton variante="secundario" class="shrink-0 px-3 py-1.5">Cambiar</x-boton>

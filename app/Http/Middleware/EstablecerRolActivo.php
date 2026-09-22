@@ -8,6 +8,7 @@ use App\Enums\Rol;
 use App\Models\User;
 use App\Support\MenuDelPanel;
 use App\Support\RolActivo;
+use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
@@ -62,6 +63,23 @@ final class EstablecerRolActivo
     }
 
     /**
+     * Fecha de fin de cada rol disponible, para marcar los temporales en el
+     * selector. Null en los permanentes.
+     *
+     * @return array<string, ?CarbonImmutable>
+     */
+    private function vigenciaDeCadaRol(User $usuario): array
+    {
+        $vigencias = [];
+
+        foreach ($this->rolActivo->disponibles($usuario) as $disponible) {
+            $vigencias[$disponible->value] = $this->rolActivo->vigenciaDe($usuario, $disponible);
+        }
+
+        return $vigencias;
+    }
+
+    /**
      * La navegación se calcula aquí, ya con el rol aplicado, para que la
      * vista solo tenga que recorrer una lista y no consulte permisos por su
      * cuenta.
@@ -71,5 +89,10 @@ final class EstablecerRolActivo
         View::share('rolActivo', $rol);
         View::share('rolesDisponibles', $this->rolActivo->disponibles($usuario));
         View::share('seccionesDelMenu', $this->menu->visiblesPara($usuario));
+
+        // RF63-RF64: quien está usando un rol prestado tiene que saber que
+        // lo es y hasta cuándo, sin ir a buscarlo a otra pantalla.
+        View::share('vigenciaDelRolActivo', $this->rolActivo->vigenciaDe($usuario, $rol));
+        View::share('vigenciaDeLosRoles', $this->vigenciaDeCadaRol($usuario));
     }
 }

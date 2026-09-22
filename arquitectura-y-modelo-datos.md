@@ -79,6 +79,7 @@ Event ─────────────► Listener ──► Mail (notifi
 | `EvaluacionService` | Validar que exista solicitud aprobada de tipo evaluación, copiar ítems del checklist, calcular número de intento por estudiante |
 | `InventarioService` | Altas y bajas, cálculo de disponibilidad por fecha y franja horaria |
 | `ConfidencialidadService` | Determinar el periodo académico vigente, verificar si el firmante ya entregó el formato de confidencialidad en ese periodo, bloquear prácticas si está pendiente |
+| `AsignacionDeRolService` | Asignar y revocar roles con o sin vigencia, y registrar el rastro. Única puerta de escritura de roles |
 | `ReporteService` | Agregaciones de uso de escenarios y de resultados de evaluación, y generación de los archivos PDF y Excel |
 | `UsuarioSyncService` | Sincronizar contra la vista institucional, activar y desactivar usuarios |
 
@@ -393,6 +394,32 @@ Es el documento que el laboratorio rotula así en el Drive, e incluye la autoriz
 
 La columna se llama `firmante_id` y no `estudiante_id` porque lo firma todo el que entra a la práctica, docente incluido (RF51–RF52). Qué roles son esos lo dice `Rol::queFirmanElFormato()`, y de ahí leen la Policy y el Service.
 
+### 4.7.1 Roles con vigencia (RF63–RF64)
+
+El pivote de spatie gana dos columnas, y son las que se hacen cumplir:
+
+**`model_has_roles`** — `role_id`, `model_type`, `model_id`, **`desde`** (date, nullable), **`hasta`** (date, nullable)
+
+Nulo significa "sin límite por ese lado": `hasta` nulo es un rol permanente, `desde` nulo es un rol que siempre ha valido. `User::roles()` filtra por esas dos columnas en SQL, así que el vencimiento alcanza todos los caminos de lectura de permisos sin que corra ningún job.
+
+**`asignaciones_de_rol`** — el rastro, de solo añadir:
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | bigint PK | |
+| user_id | FK → users | a quién |
+| role_id | FK → roles | qué rol |
+| desde | date, nullable | |
+| hasta | date, nullable | nulo = permanente |
+| motivo | text, nullable | obligatorio al elevar a coordinador |
+| asignado_por | FK → users, nullable | nulo = anterior al historial |
+| revocada_at | timestamp, nullable | |
+| revocada_por | FK → users, nullable | |
+
+`CHECK (hasta IS NULL OR hasta >= desde)`.
+
+Hace falta aparte del pivote porque la llave primaria de este es (`role_id`, `model_id`, `model_type`): solo cabe una fila por usuario y rol, así que un segundo paso del mismo pasante pisaría las fechas del primero.
+
 ### 4.8 Contenido público (CMS)
 
 | Tabla | Campos principales | RF |
@@ -437,6 +464,8 @@ evaluaciones ──< evaluacion_estudiantes ──> users (estudiante)
 evaluacion_estudiantes ──< evaluacion_estudiante_item >── evaluacion_items
 
 users ──< formatos_confidencialidad >── plantillas_confidencialidad
+users ──< model_has_roles >── roles                (vigencia: desde / hasta)
+users ──< asignaciones_de_rol >── roles            (rastro, solo añadir)
 ```
 
 ---
@@ -481,6 +510,7 @@ Resume qué rol ejecuta cada acción sensible. El coordinador hereda todo lo del
 | Entregar el formato de confidencialidad firmado | | | | ✓ | ✓ |
 | Verificar un formato de confidencialidad entregado | ✓ | ✓ | ✓ | | |
 | Generar reportes | ✓ | ✓ | | | |
+| Asignar o revocar roles | ✓ | | | | |
 
 Notas de implementación:
 
@@ -492,6 +522,7 @@ Notas de implementación:
 - El **estado funcional del inventario** (RF66) es de las unidades, no del ítem: tres contadores en `items_inventario` y el historial de movimientos en `cambios_estado_item`, con cantidad, motivo y responsable. Un `CHECK` garantiza que los contadores sumen el total. No se confunde con la disponibilidad, que no se almacena: se calcula por franja horaria sobre las unidades operativas. La baja descuenta del total, es irreversible y la reserva la Policy a coordinación y ADMIN.
 - La **entrega en físico del formato** (RF53) se modela como dos columnas de `formatos_confidencialidad` (`recibido_fisico_at`, `recibido_fisico_por`), no como un caso del enum `EstadoFormatoConfidencialidad`. Son dos ejes distintos que se cruzan libremente: el estado describe el ciclo del documento escaneado y la entrega física describe un hecho del mundo que sobrevive a todas sus transiciones. Marcarla es del administrativo, y habilita el ingreso a prácticas igual que un documento verificado. Vale igual para un docente: llega a la misma puerta, con el mismo papel.
 - La **capacidad máxima de estudiantes** de un escenario (RF74) es parte de la gestión de casos clínicos, reservada al ADMIN. Se comprueba en `SolicitudService` al crear la solicitud. Un caso sin capacidad registrada no limita: `null` se lee como "sin definir".
+- Los **roles con vigencia** (RF63–RF64) se hacen cumplir en `User::roles()`, que filtra `desde`/`hasta` del pivote en SQL: el vencimiento alcanza `hasRole()`, `can()`, las Policies, el scope `role()` y el `loadMissing()` de spatie, sin ningún job de por medio. Revocar borra la fila del pivote en vez de acortar `hasta`, porque con vigencia por día acortarla dejaría el rol vivo hasta medianoche. Toda escritura pasa por `AsignacionDeRolService`: `assignRole()` de spatie revienta contra la llave primaria si queda una fila vencida. Asignar y revocar es solo del ADMIN, y elevar a coordinador exige motivo. El selector de rol (RF21) no ofrece roles vencidos y entra por el permanente, no por el temporal.
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
 
 ---

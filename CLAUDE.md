@@ -26,6 +26,8 @@ Plataforma web de gestión del Laboratorio de Simulación Clínica de la Faculta
 
 Un usuario puede tener varios roles a la vez (una coordinadora puede además ser docente). El rol activo se elige con un selector y vive en sesión.
 
+**Un rol puede tener fecha de fin (RF63, RF64):** el pasante hace el trabajo del administrativo pero se va antes de que terminen las clases, y la coordinadora delega su facultad de aprobar mientras está en consejo. Ver la regla 13.
+
 ### Vocabulario del dominio
 
 Usa estos términos exactos en código, base de datos e interfaz. No los traduzcas ni los inventes.
@@ -109,9 +111,12 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `ConfidencialidadService` | Periodo académico vigente, estado del formato de confidencialidad, bloqueo de prácticas |
+| `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
 | `UsuarioSyncService` | Sincronización contra la vista institucional. **Todavía no existe:** depende del pendiente 2, la estructura de la vista institucional. No lo invoques ni supongas que hay sincronización corriendo |
+
+**Cuando se construya `UsuarioSyncService`:** los roles **permanentes** se derivarán del tipo de vinculación institucional, pero la sincronización **no debe tocar las asignaciones temporales ni revocarlas**. Un pasante no figura como administrativo en la vista institucional —por eso se le da el rol a mano y con fecha—, así que una sincronización que reponga roles "según la vinculación" le borraría el suyo en la primera pasada del semestre. Solo son suyas las filas del pivote con `hasta` nulo; las que tienen fecha las reparte el ADMIN y solo él las quita.
 
 ---
 
@@ -168,6 +173,22 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
     **El historial es un flujo del periodo; las necesidades son un saldo pendiente.** Por eso no se filtran igual: una gasa gastada en julio no se vuelve a pedir en diciembre, así que los movimientos van por rango de fechas; pero si la pila no llegó, en el semestre siguiente sigue haciendo falta, así que las necesidades entran en todos los borradores hasta que alguien las marque como atendidas. Atenderlas **no repone unidades**: que entren unidades al inventario es otro acto, con su propia cantidad, motivo y responsable (regla 11).
 
     **Las listas no se pisan ni dejan huecos.** Cada una arranca el día siguiente al cierre de la anterior, y solo la primera elige su origen. `hasta` incluye el día completo y no puede ser futuro. El corte es por día sobre timestamps, y se calcula en la zona de la aplicación —`APP_TIMEZONE=America/Bogota`—: los `timestamp` se guardan en hora de pared, así que cortar en UTC movería la frontera cinco horas y un movimiento de las ocho de la noche caería en la lista equivocada. Hay un test que falla si esa variable se pierde.
+
+13. **Un rol puede tener fecha de fin, y vence solo (RF63, RF64).** El pasante hace el trabajo del administrativo y se retira dos semanas antes de que terminen las clases; la coordinadora delega su facultad de aprobar mientras está en consejo. Son la misma pieza: un rol con `hasta`.
+
+    **El vencimiento se hace cumplir en SQL, dentro de `User::roles()`, y esa decisión no es negociable.** La relación filtra por `desde`/`hasta` del pivote `model_has_roles`, así que el corte lo heredan todos los caminos de lectura —`hasRole()`, `can()`, las Policies, el scope `role()` de spatie, `whereHas('roles')` y el `loadMissing('roles')` que el paquete hace por dentro—, en peticiones HTTP, comandos, colas y tinker por igual. **No escribas un job ni un comando que caduque roles:** no hace falta, y si aparece, el vencimiento pasaría a depender de que corra. Hay un test que adelanta el reloj un día, no corre nada, y exige que la Policy deniegue.
+
+    `hasta` nulo es permanente; `desde` nulo es "siempre ha valido" (los roles que reparten los seeders con `assignRole()`). `hasta` **incluye el día completo**, y el corte se calcula por fecha en la zona de la aplicación, igual que la frontera de las listas de reposición de la regla 12.
+
+    **Revocar borra la fila del pivote; no acorta `hasta`.** Con vigencia por día, poner `hasta` = hoy dejaría el rol vivo hasta medianoche, que es justo lo que la revocación quiere evitar. El rastro no se pierde: vive en `asignaciones_de_rol`, que es de solo añadir y guarda quién asignó, a quién, qué rol, desde cuándo, hasta cuándo, con qué motivo y quién revocó. Hace falta aparte porque la llave primaria del pivote es (`role_id`, `model_id`, `model_type`) y solo cabe una fila por usuario y rol: si un pasante viene, se va y vuelve, sin la tabla se perdería la primera asignación.
+
+    **Toda escritura de roles pasa por `AsignacionDeRolService`. Nunca llames a `assignRole()`**, ni en código nuevo ni en un comando: calcula lo que el usuario ya tiene leyendo la relación **filtrada**, así que con una fila vencida en el pivote intenta insertar una que ya existe y revienta contra la llave primaria. Los `assignRole()` que quedan en seeders y factories son seguros porque solo reparten roles que el usuario no tiene.
+
+    Elevar a **coordinador** exige motivo escrito; los demás roles, no. Asignar y revocar es **solo del ADMIN**, sin herencia: si el coordinador pudiera, se ampliaría a sí mismo el rol que el RF63 reserva al administrador de la plataforma.
+
+    **Al entrar se ve el rol permanente, no el temporal**, aunque el enum lo ponga después: la elevación es excepcional y la persona sigue haciendo su trabajo de siempre. Quien está usando un rol prestado lo ve dicho en la cabecera, con la fecha.
+
+    **Lo que quedó a medias no se toca.** Una preparación de escenario sin terminar sigue donde estaba y la continúa otro administrativo: las Policies operativas son por rol, nunca por quién empezó la tarea (`preparado_por` registra quién la terminó, no quién la reclamó). Lo mismo con lo ya hecho: una solicitud aprobada por un coordinador temporal sigue aprobada cuando su delegación vence.
 
 ---
 
