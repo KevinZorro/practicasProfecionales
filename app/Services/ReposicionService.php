@@ -11,6 +11,7 @@ use App\Models\CambioEstadoItem;
 use App\Models\ListaDeReposicion;
 use App\Models\NecesidadDeReposicion;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -44,14 +45,35 @@ final class ReposicionService
      * el catálogo. Son decenas de filas, así que se juntan en PHP y se lee
      * sin adivinanzas.
      *
+     * **Y no se filtran igual.** El historial es un flujo del periodo: una
+     * gasa gastada en julio no se vuelve a pedir en diciembre, así que va
+     * por rango de fechas. Las necesidades son un saldo pendiente: si la
+     * pila no llegó, sigue haciendo falta, así que entran todas las que
+     * nadie ha atendido, se hayan anotado cuando se hayan anotado.
+     *
      * @return Collection<int, array{item_inventario_id: int|null, descripcion: string, motivo: MotivoReposicion, cantidad: int}>
      */
     public function previsualizar(string $desde, string $hasta): Collection
     {
         return $this->salidasDeInventario($desde, $hasta)
-            ->concat($this->necesidadesRegistradas($desde, $hasta))
+            ->concat($this->necesidadesPendientes())
             ->sortBy([['motivo', 'asc'], ['descripcion', 'asc']])
             ->values();
+    }
+
+    /**
+     * Desde qué día tiene que arrancar el siguiente borrador: el día
+     * siguiente al último día de la última lista cerrada.
+     *
+     * Null mientras no exista ninguna cerrada, y entonces el origen lo elige
+     * quien cierra la primera: el historial como libro mayor completo
+     * arranca en la migración del RF66.2, no en el primer movimiento.
+     */
+    public function origenDelSiguienteBorrador(): ?string
+    {
+        $ultima = ListaDeReposicion::query()->cerradas()->orderByDesc('hasta')->orderByDesc('id')->first();
+
+        return $ultima?->hasta->copy()->addDay()->toDateString();
     }
 
     /**
@@ -67,6 +89,8 @@ final class ReposicionService
         if ($lista->estaCerrada()) {
             throw ReposicionInvalida::laListaYaEstaCerrada();
         }
+
+        $this->garantizarLaFrontera($lista);
 
         $lineas = $this->previsualizar(
             $lista->desde->format('Y-m-d'),
@@ -84,6 +108,11 @@ final class ReposicionService
                 'motivo' => $linea['motivo'],
                 'cantidad' => $linea['cantidad'],
             ])->all());
+
+            // Queda constancia de qué necesidades entraron: una que se pide
+            // dos semestres seguidos sin llegar tiene dos listas detrás, y
+            // eso es el argumento para insistir.
+            $lista->necesidades()->sync($this->necesidadesPendientesEnCrudo()->modelKeys());
 
             $lista->observaciones = $observaciones;
             $lista->cerrada_por = $actor->id;
@@ -118,6 +147,34 @@ final class ReposicionService
         return $necesidad;
     }
 
+    /**
+     * La necesidad deja de pedirse: llegó, ya no hace falta, o se resolvió
+     * de otra forma.
+     *
+     * **No repone unidades.** Que entren unidades al inventario es otro acto
+     * y el RF66 le exige su propia cantidad, motivo y responsable; la
+     * pantalla ofrece el enlace, pero los dos actos no se encadenan.
+     */
+    public function atenderNecesidad(User $actor, NecesidadDeReposicion $necesidad, string $motivo): NecesidadDeReposicion
+    {
+        $this->garantizarPermisoDeNecesidad($actor, 'atender', $necesidad);
+
+        if ($necesidad->estaAtendida()) {
+            throw ReposicionInvalida::laNecesidadYaEstaAtendida();
+        }
+
+        if (trim($motivo) === '') {
+            throw ReposicionInvalida::elMotivoEsObligatorio();
+        }
+
+        $necesidad->atendida_at = now();
+        $necesidad->atendida_por = $actor->id;
+        $necesidad->motivo_atencion = trim($motivo);
+        $necesidad->save();
+
+        return $necesidad;
+    }
+
     /** @return LengthAwarePaginator<int, ListaDeReposicion> */
     public function listas(int $porPagina = self::POR_PAGINA): LengthAwarePaginator
     {
@@ -129,12 +186,17 @@ final class ReposicionService
             ->paginate($porPagina);
     }
 
-    /** @return LengthAwarePaginator<int, NecesidadDeReposicion> */
-    public function necesidades(string $desde, string $hasta, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    /**
+     * Lo que sigue pendiente, con cuántas cartas lleva pedido.
+     *
+     * @return LengthAwarePaginator<int, NecesidadDeReposicion>
+     */
+    public function necesidades(int $porPagina = self::POR_PAGINA): LengthAwarePaginator
     {
         return NecesidadDeReposicion::query()
-            ->entre($desde, $hasta)
+            ->pendientes()
             ->with(['item:id,nombre', 'registradaPor:id,nombre'])
+            ->withCount('listas')
             ->orderByDesc('fecha')
             ->orderByDesc('id')
             ->paginate($porPagina);
@@ -152,8 +214,7 @@ final class ReposicionService
         return CambioEstadoItem::query()
             ->join('items_inventario', 'items_inventario.id', '=', 'cambios_estado_item.item_inventario_id')
             ->where('cambios_estado_item.estado_nuevo', EstadoItemInventario::DadoDeBaja->value)
-            ->whereDate('cambios_estado_item.created_at', '>=', $desde)
-            ->whereDate('cambios_estado_item.created_at', '<=', $hasta)
+            ->whereBetween('cambios_estado_item.created_at', $this->limitesDelRango($desde, $hasta))
             ->groupBy('items_inventario.id', 'items_inventario.nombre', 'cambios_estado_item.estado_anterior')
             ->selectRaw('items_inventario.id as item_id, items_inventario.nombre as nombre, cambios_estado_item.estado_anterior as origen, SUM(cambios_estado_item.cantidad) as unidades')
             ->get()
@@ -166,18 +227,15 @@ final class ReposicionService
     }
 
     /**
-     * Lo anotado a mano en el rango, agrupado por lo que se pide. Se agrupa
-     * por descripción y no por ítem porque lo que no está en el catálogo no
-     * tiene id con el que agrupar.
+     * Lo anotado a mano que sigue pendiente, agrupado por lo que se pide. Se
+     * agrupa por descripción y no por ítem porque lo que no está en el
+     * catálogo no tiene id con el que agrupar.
      *
      * @return Collection<int, array{item_inventario_id: int|null, descripcion: string, motivo: MotivoReposicion, cantidad: int}>
      */
-    private function necesidadesRegistradas(string $desde, string $hasta): Collection
+    private function necesidadesPendientes(): Collection
     {
-        return NecesidadDeReposicion::query()
-            ->entre($desde, $hasta)
-            ->with('item:id,nombre')
-            ->get()
+        return $this->necesidadesPendientesEnCrudo()
             ->groupBy(static fn (NecesidadDeReposicion $necesidad): string => $necesidad->queSePide())
             ->map(static fn (Collection $grupo, string $queSePide): array => [
                 'item_inventario_id' => $grupo->first()->item_inventario_id,
@@ -186,6 +244,58 @@ final class ReposicionService
                 'cantidad' => (int) $grupo->sum('cantidad'),
             ])
             ->values();
+    }
+
+    /** @return \Illuminate\Database\Eloquent\Collection<int, NecesidadDeReposicion> */
+    private function necesidadesPendientesEnCrudo(): \Illuminate\Database\Eloquent\Collection
+    {
+        return NecesidadDeReposicion::query()->pendientes()->with('item:id,nombre')->get();
+    }
+
+    /**
+     * Los dos extremos del rango, con el día de "hasta" entero.
+     *
+     * El corte es por día y los movimientos llevan hora, así que sin esto
+     * uno registrado a las ocho de la noche del último día se caería de la
+     * lista. Las horas se calculan en la zona de la aplicación, que es la de
+     * Colombia: los timestamps se guardan en hora de pared, de modo que
+     * cortar en UTC movería la frontera cinco horas.
+     *
+     * @return array{0: CarbonImmutable, 1: CarbonImmutable}
+     */
+    private function limitesDelRango(string $desde, string $hasta): array
+    {
+        return [
+            CarbonImmutable::parse($desde)->startOfDay(),
+            CarbonImmutable::parse($hasta)->endOfDay(),
+        ];
+    }
+
+    /**
+     * Las listas no se pisan ni dejan huecos: cada una arranca donde
+     * terminó la anterior.
+     *
+     * Se comprueba aquí y no solo en la pantalla porque un rango mal puesto
+     * duplica o pierde cifras en una carta que ya no se puede reabrir.
+     */
+    private function garantizarLaFrontera(ListaDeReposicion $lista): void
+    {
+        $desde = $lista->desde->toDateString();
+        $hasta = $lista->hasta->toDateString();
+
+        if ($hasta < $desde) {
+            throw ReposicionInvalida::elRangoEstaAlReves();
+        }
+
+        if ($hasta > CarbonImmutable::now()->toDateString()) {
+            throw ReposicionInvalida::noSeCierraHastaUnDiaFuturo();
+        }
+
+        $origen = $this->origenDelSiguienteBorrador();
+
+        if ($origen !== null && $desde !== $origen) {
+            throw ReposicionInvalida::laListaNoEmpiezaDondeTerminaLaAnterior($origen);
+        }
     }
 
     private function garantizarQueSeSabeQueSePide(DatosNecesidad $datos): void
@@ -211,6 +321,14 @@ final class ReposicionService
     {
         if ($actor->cannot($accion, $sobre)) {
             throw new AuthorizationException('El usuario no tiene permiso para esta acción sobre la lista de reposición.');
+        }
+    }
+
+    /** @throws AuthorizationException */
+    private function garantizarPermisoDeNecesidad(User $actor, string $accion, NecesidadDeReposicion $necesidad): void
+    {
+        if ($actor->cannot($accion, $necesidad)) {
+            throw new AuthorizationException('El usuario no tiene permiso para esta acción sobre la necesidad.');
         }
     }
 }

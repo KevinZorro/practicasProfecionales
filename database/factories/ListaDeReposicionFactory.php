@@ -21,8 +21,10 @@ class ListaDeReposicionFactory extends Factory
     public function definition(): array
     {
         return [
-            'desde' => '2026-07-01',
-            'hasta' => '2026-12-15',
+            // Hasta hoy: no se cierra una lista hasta un día futuro, porque
+            // lo que pasara entre medias no cabría en ninguna.
+            'desde' => '2026-01-01',
+            'hasta' => now()->toDateString(),
             'observaciones' => null,
             'cerrada_por' => null,
             'cerrada_at' => null,

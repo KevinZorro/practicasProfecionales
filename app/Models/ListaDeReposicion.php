@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -54,6 +55,21 @@ class ListaDeReposicion extends Model
     public function lineas(): HasMany
     {
         return $this->hasMany(LineaDeReposicion::class, 'lista_reposicion_id');
+    }
+
+    /**
+     * Necesidades que esta lista incluyó cuando se cerró.
+     *
+     * @return BelongsToMany<NecesidadDeReposicion, $this>
+     */
+    public function necesidades(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            NecesidadDeReposicion::class,
+            'lista_reposicion_necesidad',
+            'lista_reposicion_id',
+            'necesidad_reposicion_id',
+        );
     }
 
     /** @return BelongsTo<User, $this> */

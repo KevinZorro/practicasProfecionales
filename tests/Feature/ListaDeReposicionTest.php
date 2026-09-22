@@ -127,21 +127,58 @@ it('deja fuera los movimientos posteriores al rango', function (): void {
     expect($this->reposicion->previsualizar('2026-07-01', '2026-12-15'))->toBeEmpty();
 });
 
-it('incluye los movimientos del primer y del último día del rango', function (string $dia): void {
+it('incluye los movimientos del primer y del último día del rango', function (string $momento): void {
+    // El corte es por día y los movimientos llevan hora: sin el día completo,
+    // lo registrado a las ocho de la noche del último día se caería de la
+    // lista y no cabría en ninguna, porque la siguiente arranca al día
+    // siguiente. Las horas son de Colombia, que es la zona de la aplicación.
     $gasas = itemCon('Gasas estériles', 100, $this->administrativo);
 
-    $this->travelTo($dia.' 10:00:00');
+    $this->travelTo($momento);
     $this->inventario->retirarUnidades($this->administrativo, $gasas, 7, 'Prácticas del día.');
     $this->travelBack();
 
     expect($this->reposicion->previsualizar('2026-07-01', '2026-12-15')->firstWhere('descripcion', 'Gasas estériles'))
         ->toMatchArray(['cantidad' => 7]);
-})->with(['primero' => '2026-07-01', 'último' => '2026-12-15']);
+})->with([
+    'primer segundo del primer día' => '2026-07-01 00:00:00',
+    'media mañana' => '2026-09-10 10:00:00',
+    'ocho de la noche del último día' => '2026-12-15 20:00:00',
+    'último segundo del último día' => '2026-12-15 23:59:59',
+]);
 
-it('deja fuera las necesidades anotadas fuera del rango', function (): void {
-    NecesidadDeReposicion::factory()->enLaFecha('2026-03-01')->create();
+it('corta las listas en la hora de Colombia', function (): void {
+    // De esto depende que un movimiento de las ocho de la noche caiga en la
+    // lista correcta: los timestamps se guardan en hora de pared, así que
+    // cortar en UTC movería la frontera cinco horas. Si un despliegue pierde
+    // APP_TIMEZONE, esto falla en vez de mover cifras en silencio.
+    expect(config('app.timezone'))->toBe('America/Bogota');
+});
+
+it('no mete en la lista un movimiento del día siguiente al cierre', function (): void {
+    $gasas = itemCon('Gasas estériles', 100, $this->administrativo);
+
+    $this->travelTo('2026-12-16 00:00:01');
+    $this->inventario->retirarUnidades($this->administrativo, $gasas, 7, 'Prácticas del día siguiente.');
+    $this->travelBack();
 
     expect($this->reposicion->previsualizar('2026-07-01', '2026-12-15'))->toBeEmpty();
+});
+
+it('sigue pidiendo una necesidad anotada antes del rango', function (): void {
+    // Las necesidades son un saldo pendiente, no un flujo del periodo: si la
+    // pila no llegó, en el semestre siguiente sigue haciendo falta.
+    NecesidadDeReposicion::factory()->enLaFecha('2026-03-01')->create();
+
+    expect($this->reposicion->previsualizar('2026-07-01', '2026-12-15'))->toHaveCount(1);
+});
+
+it('deja de pedir una necesidad atendida', function (): void {
+    $necesidad = NecesidadDeReposicion::factory()->enLaFecha('2026-03-01')->create();
+
+    $this->reposicion->atenderNecesidad($this->administrativo, $necesidad, 'Llegó en la compra de julio.');
+
+    expect($this->reposicion->previsualizar('2026-01-01', '2026-12-15'))->toBeEmpty();
 });
 
 // ---------------------------------------------------------------------
@@ -295,7 +332,8 @@ it('exporta la descripción congelada, no el nombre actual del ítem', function 
 });
 
 it('exporta solo las líneas de la lista pedida', function (): void {
-    $otra = ListaDeReposicion::factory()->cerrada()->create();
+    // Dos listas cerradas y contiguas, como en la operación real.
+    $otra = ListaDeReposicion::factory()->cerrada()->create(['desde' => '2026-01-01', 'hasta' => '2026-06-30']);
     LineaDeReposicion::factory()->count(3)->create([
         'lista_reposicion_id' => $otra->id,
         'descripcion' => 'De la otra lista',
@@ -305,7 +343,7 @@ it('exporta solo las líneas de la lista pedida', function (): void {
     $this->travelTo('2026-09-10');
     $this->inventario->retirarUnidades($this->administrativo, $gasas, 10, 'Prácticas.');
     $this->travelBack();
-    $lista = $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create());
+    $lista = $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create(['desde' => '2026-07-01']));
 
     $filas = app(GeneradorDeReportes::class)->filas(
         Reporte::ListaDeReposicion,
@@ -333,6 +371,166 @@ it('no deja cerrar dos veces la misma lista', function (): void {
 it('no deja cerrar una lista vacía', function (): void {
     expect(fn () => $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create()))
         ->toThrow(ReposicionInvalida::class, 'No hay nada que pedir');
+});
+
+// ---------------------------------------------------------------------
+// La frontera entre listas
+// ---------------------------------------------------------------------
+
+it('no fija origen mientras no haya ninguna lista cerrada', function (): void {
+    // La primera elige desde cuándo cuenta: el historial completo arranca
+    // con la migración del RF66.2, no con el primer movimiento.
+    expect($this->reposicion->origenDelSiguienteBorrador())->toBeNull();
+});
+
+it('arranca el siguiente borrador donde terminó la última lista cerrada', function (): void {
+    ListaDeReposicion::factory()->cerrada()->create(['desde' => '2026-01-01', 'hasta' => '2026-06-30']);
+
+    expect($this->reposicion->origenDelSiguienteBorrador())->toBe('2026-07-01');
+});
+
+it('no deja cerrar una lista que se pisa con la anterior', function (): void {
+    // Sin esto, los movimientos del solapamiento irían en dos cartas.
+    ListaDeReposicion::factory()->cerrada()->create(['desde' => '2026-01-01', 'hasta' => '2026-06-30']);
+
+    expect(fn () => $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create(['desde' => '2026-06-01'])))
+        ->toThrow(ReposicionInvalida::class, 'tiene que arrancar el 2026-07-01');
+});
+
+it('no deja cerrar una lista que deja un hueco con la anterior', function (): void {
+    // Los movimientos del hueco no cabrían en ninguna carta.
+    ListaDeReposicion::factory()->cerrada()->create(['desde' => '2026-01-01', 'hasta' => '2026-06-30']);
+
+    expect(fn () => $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create(['desde' => '2026-08-01'])))
+        ->toThrow(ReposicionInvalida::class, 'tiene que arrancar el 2026-07-01');
+});
+
+it('no deja cerrar con el rango al revés', function (): void {
+    $lista = ListaDeReposicion::factory()->create(['desde' => '2026-09-01', 'hasta' => '2026-08-01']);
+
+    expect(fn () => $this->reposicion->cerrar($this->coordinadora, $lista))
+        ->toThrow(ReposicionInvalida::class, 'no puede ser anterior');
+});
+
+it('no deja cerrar hasta un día que todavía no pasó', function (): void {
+    // Lo que ocurriera entre hoy y ese día no cabría en ninguna lista.
+    $lista = ListaDeReposicion::factory()->create(['hasta' => now()->addDays(5)->toDateString()]);
+
+    expect(fn () => $this->reposicion->cerrar($this->coordinadora, $lista))
+        ->toThrow(ReposicionInvalida::class, 'todavía no ha pasado');
+});
+
+it('avisa de que el periodo siguiente no ha empezado y no ofrece cerrarlo', function (): void {
+    // Cerrada una lista hasta hoy, la siguiente arranca mañana: no hay nada
+    // que cerrar todavía, y el rango no puede quedar al revés en pantalla.
+    ListaDeReposicion::factory()->cerrada()->create(['desde' => '2026-01-01', 'hasta' => now()->toDateString()]);
+
+    Livewire::actingAs($this->coordinadora)
+        ->test(Pantalla::class)
+        ->assertSet('periodoSinEmpezar', true)
+        ->assertSee('el periodo siguiente arranca mañana')
+        ->assertDontSee('Cerrar la lista del periodo');
+});
+
+it('no repite ni pierde un movimiento entre dos listas contiguas', function (): void {
+    $gasas = itemCon('Gasas estériles', 100, $this->administrativo);
+
+    $this->travelTo('2026-06-30 20:00:00');
+    $this->inventario->retirarUnidades($this->administrativo, $gasas, 5, 'Último día del primer periodo.');
+    $this->travelBack();
+    $this->travelTo('2026-07-01 08:00:00');
+    $this->inventario->retirarUnidades($this->administrativo, $gasas, 9, 'Primer día del segundo.');
+    $this->travelBack();
+
+    $primera = $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create([
+        'desde' => '2026-01-01', 'hasta' => '2026-06-30',
+    ]));
+    $segunda = $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create([
+        'desde' => $this->reposicion->origenDelSiguienteBorrador(),
+    ]));
+
+    expect($primera->lineas->firstWhere('descripcion', 'Gasas estériles')->cantidad)->toBe(5)
+        ->and($segunda->lineas->firstWhere('descripcion', 'Gasas estériles')->cantidad)->toBe(9);
+});
+
+// ---------------------------------------------------------------------
+// Las necesidades son un saldo pendiente
+// ---------------------------------------------------------------------
+
+it('sigue pidiendo en la lista siguiente lo que no llegó', function (): void {
+    NecesidadDeReposicion::factory()->enLaFecha('2026-03-01')->create();
+
+    $primera = $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create([
+        'desde' => '2026-01-01', 'hasta' => '2026-06-30',
+    ]));
+    $segunda = $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create([
+        'desde' => '2026-07-01',
+    ]));
+
+    expect($primera->lineas)->toHaveCount(1)
+        ->and($segunda->lineas)->toHaveCount(1)
+        ->and($segunda->lineas->first()->descripcion)->toContain('CR2032');
+});
+
+it('cuenta en cuántas cartas se pidió una necesidad que no llega', function (): void {
+    $necesidad = NecesidadDeReposicion::factory()->enLaFecha('2026-03-01')->create();
+
+    $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create([
+        'desde' => '2026-01-01', 'hasta' => '2026-06-30',
+    ]));
+    $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create(['desde' => '2026-07-01']));
+
+    expect($necesidad->fresh()->listas)->toHaveCount(2);
+});
+
+it('deja de pedirla en cuanto se da por atendida', function (): void {
+    $necesidad = NecesidadDeReposicion::factory()->enLaFecha('2026-03-01')->create();
+    $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create([
+        'desde' => '2026-01-01', 'hasta' => '2026-06-30',
+    ]));
+
+    $this->reposicion->atenderNecesidad($this->administrativo, $necesidad, 'Llegó en la compra de julio.');
+
+    expect(fn () => $this->reposicion->cerrar($this->coordinadora, ListaDeReposicion::factory()->create(['desde' => '2026-07-01'])))
+        ->toThrow(ReposicionInvalida::class, 'No hay nada que pedir');
+});
+
+it('registra quién la atendió, cuándo y por qué', function (): void {
+    $necesidad = NecesidadDeReposicion::factory()->create();
+
+    $necesidad = $this->reposicion->atenderNecesidad($this->administrativo, $necesidad, 'Llegó en la compra de julio.');
+
+    expect($necesidad->estaAtendida())->toBeTrue()
+        ->and($necesidad->atendida_por)->toBe($this->administrativo->id)
+        ->and($necesidad->motivo_atencion)->toBe('Llegó en la compra de julio.')
+        ->and($necesidad->atendida_at)->not->toBeNull();
+});
+
+it('no deja atender dos veces la misma necesidad', function (): void {
+    $necesidad = NecesidadDeReposicion::factory()->create();
+    $this->reposicion->atenderNecesidad($this->administrativo, $necesidad, 'Llegó.');
+
+    expect(fn () => $this->reposicion->atenderNecesidad($this->coordinadora, $necesidad, 'Otra vez.'))
+        ->toThrow(ReposicionInvalida::class, 'ya se dio por atendida');
+});
+
+it('exige decir por qué deja de pedirse', function (): void {
+    $necesidad = NecesidadDeReposicion::factory()->create();
+
+    expect(fn () => $this->reposicion->atenderNecesidad($this->administrativo, $necesidad, '   '))
+        ->toThrow(ReposicionInvalida::class, 'por qué se da por atendida');
+});
+
+it('no repone unidades al atender una necesidad', function (): void {
+    // Son dos actos distintos: que entren unidades tiene su propia cantidad,
+    // motivo y responsable (RF66).
+    $gasas = itemCon('Gasas estériles', 100, $this->administrativo);
+    $necesidad = NecesidadDeReposicion::factory()->deUnItem($gasas->id)->create(['cantidad' => 200]);
+
+    $this->reposicion->atenderNecesidad($this->administrativo, $necesidad, 'Llegaron.');
+
+    expect($gasas->fresh()->cantidad_total)->toBe(100)
+        ->and($gasas->fresh()->cantidad_operativa)->toBe(100);
 });
 
 // ---------------------------------------------------------------------
@@ -367,6 +565,23 @@ it('no deja a un docente anotar una necesidad ni llamando al Service', function 
     )))->toThrow(AuthorizationException::class);
 
     expect(NecesidadDeReposicion::count())->toBe(0);
+});
+
+it('deja atender una necesidad a los tres roles que la anotan', function (Rol $rol): void {
+    $usuario = User::factory()->create();
+    $usuario->assignRole($rol->value);
+
+    expect($usuario->can('atender', NecesidadDeReposicion::factory()->create()))->toBeTrue();
+})->with([Rol::Administrativo, Rol::Coordinador, Rol::Admin]);
+
+it('no deja a un docente atender una necesidad ni llamando al Service', function (): void {
+    $docente = User::factory()->docente()->create();
+    $necesidad = NecesidadDeReposicion::factory()->create();
+
+    expect(fn () => $this->reposicion->atenderNecesidad($docente, $necesidad, 'Ya llegó.'))
+        ->toThrow(AuthorizationException::class);
+
+    expect($necesidad->fresh()->estaAtendida())->toBeFalse();
 });
 
 it('reserva cerrar la lista a coordinación y al ADMIN', function (Rol $rol, bool $puede): void {

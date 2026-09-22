@@ -27,6 +27,16 @@ final class NecesidadDeReposicionPolicy
         return $this->anotaNecesidades($usuario);
     }
 
+    /**
+     * Dar por atendida: llegó, ya no hace falta, o se resolvió de otra
+     * forma. Lo hacen los mismos que la anotan, porque constatar que llegó
+     * la pila es trabajo diario del laboratorio.
+     */
+    public function atender(User $usuario, NecesidadDeReposicion $necesidad): bool
+    {
+        return $this->anotaNecesidades($usuario);
+    }
+
     public function delete(User $usuario, NecesidadDeReposicion $necesidad): bool
     {
         return $this->anotaNecesidades($usuario);

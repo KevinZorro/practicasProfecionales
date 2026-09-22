@@ -16,8 +16,16 @@
         <div class="grid gap-3 sm:grid-cols-2">
             <div>
                 <label for="desde" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Desde</label>
-                <input type="date" wire:model.live="desde" id="desde" @disabled($lista !== null)
-                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                @if ($origenFijado === null)
+                    <input type="date" wire:model.live="desde" id="desde" @disabled($lista !== null)
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    <p class="mt-1 text-xs text-gray-500">La primera lista elige desde cuándo cuenta. Después arranca sola.</p>
+                @else
+                    <p class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2.5 text-base text-gray-900">
+                        {{ \Illuminate\Support\Carbon::parse($desde)->format('d/m/Y') }}
+                    </p>
+                    <p class="mt-1 text-xs text-gray-500">Donde terminó la última lista cerrada: así ningún movimiento queda fuera ni por duplicado.</p>
+                @endif
             </div>
             <div>
                 <label for="hasta" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Hasta</label>
@@ -79,7 +87,14 @@
     @endif
 
     {{-- Cerrar --}}
-    @if (! $lista)
+    @if ($periodoSinEmpezar && ! $lista)
+        <p class="rounded-md bg-sky-50 px-4 py-3 text-sm text-sky-900 ring-1 ring-inset ring-sky-600/20" role="status">
+            La última lista llegó hasta hoy, así que el periodo siguiente arranca mañana.
+            Todavía no hay nada que cerrar.
+        </p>
+    @endif
+
+    @if (! $lista && ! $periodoSinEmpezar)
         @can('cerrar', new \App\Models\ListaDeReposicion(['desde' => $desde, 'hasta' => $hasta]))
             <x-tarjeta titulo="Cerrar la lista del periodo">
                 <p class="text-sm text-gray-600">
@@ -103,7 +118,8 @@
     <x-tarjeta titulo="Lo que se pidió y no había">
         <p class="text-sm text-gray-600">
             Lo que el historial no sabe: algo que hizo falta y no está en el inventario, o de lo
-            que hace falta más.
+            que hace falta más. Sigue pidiéndose en cada lista hasta que alguien la dé por
+            atendida: si no llegó, en el semestre siguiente sigue haciendo falta.
         </p>
 
         @can('create', \App\Models\NecesidadDeReposicion::class)
@@ -172,6 +188,55 @@
                                 · <span class="text-amber-800">no está en el inventario</span>
                             @endif
                         </p>
+
+                        @if ($necesidad->listas_count > 0)
+                            <p class="mt-0.5 text-xs text-rose-800">
+                                {{ trans_choice(
+                                    'Ya se pidió en :count carta anterior y no llegó|Ya se pidió en :count cartas anteriores y no llegó',
+                                    $necesidad->listas_count,
+                                    ['count' => $necesidad->listas_count],
+                                ) }}
+                            </p>
+                        @endif
+
+                        @can('atender', $necesidad)
+                            @if ($atendiendo === $necesidad->id)
+                                <div class="mt-2 space-y-2 rounded-md bg-gray-50 p-3 ring-1 ring-inset ring-gray-300">
+                                    <label for="atencion-{{ $necesidad->id }}" class="block text-sm font-medium text-gray-700">
+                                        Por qué deja de pedirse
+                                    </label>
+                                    <input type="text" wire:model="motivoAtencion" id="atencion-{{ $necesidad->id }}"
+                                           placeholder="Llegó en la compra de diciembre."
+                                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                                    @error('motivoAtencion') <p class="text-sm text-rose-700">{{ $message }}</p> @enderror
+
+                                    {{-- Atender y mover inventario son dos actos: el enlace
+                                         acompaña, pero no se encadenan (RF66). --}}
+                                    <p class="text-xs text-gray-600">
+                                        Dar por atendida no toca el inventario.
+                                        @if ($necesidad->item_inventario_id !== null)
+                                            <a href="{{ route('panel.inventario') }}" class="text-sky-800 underline">Reponer unidades</a>
+                                            es otro registro, con su cantidad y su motivo.
+                                        @else
+                                            Si por fin se compró, hay que
+                                            <a href="{{ route('panel.inventario.nuevo') }}" class="text-sky-800 underline">darlo de alta en el inventario</a>:
+                                            todavía no está en el catálogo.
+                                        @endif
+                                    </p>
+
+                                    <div class="flex flex-wrap gap-2">
+                                        <x-boton type="button" wire:click="atender" wire:loading.attr="disabled" class="px-3 py-2">Confirmar</x-boton>
+                                        <x-boton variante="secundario" type="button" wire:click="cancelarAtencion" class="px-3 py-2">Cancelar</x-boton>
+                                    </div>
+                                </div>
+                            @else
+                                <div class="mt-2">
+                                    <x-boton variante="secundario" type="button" wire:click="pedirAtencion({{ $necesidad->id }})" class="px-3 py-2">
+                                        Marcar como atendida
+                                    </x-boton>
+                                </div>
+                            @endif
+                        @endcan
                     </li>
                 @endforeach
             </ul>

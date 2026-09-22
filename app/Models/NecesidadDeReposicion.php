@@ -9,9 +9,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * Algo que hizo falta y no salía del historial (RF67).
+ *
+ * Es un **saldo pendiente**, no un hecho de un periodo: vive hasta que
+ * alguien la marca como atendida, y mientras tanto entra en todos los
+ * borradores. Los movimientos de inventario son lo contrario —un flujo del
+ * periodo— y por eso sí se filtran por rango de fechas.
  *
  * Dos casos, y el mismo registro sirve para los dos:
  *
@@ -55,6 +61,7 @@ class NecesidadDeReposicion extends Model
         return [
             'cantidad' => 'integer',
             'fecha' => 'date',
+            'atendida_at' => 'datetime',
         ];
     }
 
@@ -70,6 +77,28 @@ class NecesidadDeReposicion extends Model
         return $this->belongsTo(User::class, 'registrada_por');
     }
 
+    /** @return BelongsTo<User, $this> */
+    public function atendidaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'atendida_por');
+    }
+
+    /**
+     * Listas cerradas en las que se pidió. Más de una significa que se
+     * pidió y no llegó.
+     *
+     * @return BelongsToMany<ListaDeReposicion, $this>
+     */
+    public function listas(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ListaDeReposicion::class,
+            'lista_reposicion_necesidad',
+            'necesidad_reposicion_id',
+            'lista_reposicion_id',
+        );
+    }
+
     /** Qué hay que comprar: el nombre del ítem, o la descripción libre. */
     public function queSePide(): string
     {
@@ -80,6 +109,25 @@ class NecesidadDeReposicion extends Model
     public function esDeFueraDelCatalogo(): bool
     {
         return $this->item_inventario_id === null;
+    }
+
+    public function estaAtendida(): bool
+    {
+        return $this->atendida_at !== null;
+    }
+
+    /**
+     * Lo que sigue haciendo falta, sin importar cuándo se anotó.
+     *
+     * Las necesidades no se filtran por periodo como los movimientos de
+     * inventario: si la pila no llegó, el semestre siguiente sigue
+     * haciendo falta.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopePendientes(Builder $consulta): void
+    {
+        $consulta->whereNull('atendida_at');
     }
 
     /** @param Builder<$this> $consulta */
