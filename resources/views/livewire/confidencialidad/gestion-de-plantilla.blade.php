@@ -43,7 +43,7 @@
         @if ($plantillas->isEmpty())
             <x-mensaje-vacio
                 titulo="Todavía no hay ninguna plantilla"
-                descripcion="Hasta que cargues una, los estudiantes no podrán entregar su consentimiento."
+                descripcion="Hasta que cargues una, nadie podrá entregar su formato."
             />
         @else
             <ul class="space-y-2">
@@ -68,7 +68,7 @@
                                 </span>
                             @endif
                         </div>
-                        <x-boton variante="secundario" href="{{ route('panel.consentimientos.version', $plantilla) }}" class="mt-2 px-3 py-2">
+                        <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.version', $plantilla) }}" class="mt-2 px-3 py-2">
                             Descargar
                         </x-boton>
                     </li>

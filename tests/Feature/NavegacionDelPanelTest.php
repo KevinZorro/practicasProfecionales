@@ -26,11 +26,11 @@ function seccionesVisibles(Rol $rol): array
 it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, array $esperadas): void {
     expect(seccionesVisibles($rol))->toEqualCanonicalizing($esperadas);
 })->with([
-    'docente' => [Rol::Docente, ['inicio', 'calendario', 'mis-solicitudes', 'evaluaciones']],
-    'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-consentimiento']],
-    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario', 'reposicion', 'consentimientos']],
-    'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'consentimientos', 'reportes']],
-    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'consentimientos', 'plantillas-consentimiento', 'casos-clinicos', 'reportes']],
+    'docente' => [Rol::Docente, ['inicio', 'calendario', 'mis-solicitudes', 'evaluaciones', 'mi-formato']],
+    'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-formato']],
+    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario', 'reposicion', 'formatos-confidencialidad']],
+    'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'reportes']],
+    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'casos-clinicos', 'reportes']],
 ]);
 
 it('no enseña al docente el inventario ni los reportes', function (): void {
@@ -39,15 +39,15 @@ it('no enseña al docente el inventario ni los reportes', function (): void {
     expect(seccionesVisibles(Rol::Docente))
         ->not->toContain('inventario')
         ->not->toContain('reportes')
-        ->not->toContain('consentimientos');
+        ->not->toContain('formatos-confidencialidad');
 });
 
 it('no enseña los reportes al administrativo', function (): void {
-    // Única función del coordinador que no acompaña: los consentimientos sí
+    // Única función del coordinador que no acompaña: los formatos sí
     // los verifica él.
     expect(seccionesVisibles(Rol::Administrativo))
         ->not->toContain('reportes')
-        ->toContain('consentimientos');
+        ->toContain('formatos-confidencialidad');
 });
 
 it('enseña la bandeja de solicitudes al ADMIN, que es donde aprueba', function (): void {
@@ -71,7 +71,7 @@ it('cierra también la ruta de una sección que el menú esconde', function (Rol
     'estudiante en solicitudes' => [Rol::Estudiante, 'panel.solicitudes'],
     'docente en la bandeja' => [Rol::Docente, 'panel.solicitudes'],
     'administrativo en mis solicitudes' => [Rol::Administrativo, 'panel.mis-solicitudes'],
-    'coordinador en plantillas' => [Rol::Coordinador, 'panel.plantillas-consentimiento'],
+    'coordinador en plantillas' => [Rol::Coordinador, 'panel.plantillas-confidencialidad'],
 ]);
 
 it('pinta en el menú lateral solo las secciones permitidas', function (): void {

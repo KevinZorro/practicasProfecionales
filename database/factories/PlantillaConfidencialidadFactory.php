@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\ConsentimientoPlantilla;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ConsentimientoPlantilla>
+ * @extends Factory<PlantillaConfidencialidad>
  */
-class ConsentimientoPlantillaFactory extends Factory
+class PlantillaConfidencialidadFactory extends Factory
 {
-    protected $model = ConsentimientoPlantilla::class;
+    protected $model = PlantillaConfidencialidad::class;
 
     /**
      * @return array<string, mixed>
@@ -21,8 +21,8 @@ class ConsentimientoPlantillaFactory extends Factory
     public function definition(): array
     {
         return [
-            'nombre' => 'Consentimiento informado de prácticas de simulación',
-            'archivo_path' => 'consentimientos/plantillas/'.$this->faker->uuid().'.pdf',
+            'nombre' => 'Formato de confidencialidad y autorización de captación de imágenes',
+            'archivo_path' => 'confidencialidad/plantillas/'.$this->faker->uuid().'.pdf',
             'version' => $this->faker->numerify('#.#'),
             'activo' => true,
             'subido_por' => User::factory(),

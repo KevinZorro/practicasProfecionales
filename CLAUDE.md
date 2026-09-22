@@ -19,10 +19,10 @@ Plataforma web de gestión del Laboratorio de Simulación Clínica de la Faculta
 | Rol | Qué hace |
 |---|---|
 | `admin` | Administra la plataforma: contenido público, usuarios, materias, casos clínicos, tipos de evaluación, nivel de fidelidad del inventario |
-| `coordinador` | Aprueba o rechaza solicitudes de escenario, verifica consentimientos, genera reportes. **Hereda todos los permisos del administrativo** |
+| `coordinador` | Aprueba o rechaza solicitudes de escenario, verifica formatos de confidencialidad, genera reportes. **Hereda todos los permisos del administrativo** |
 | `administrativo` | Revisa solicitudes, asigna sala, prepara escenarios, gestiona inventario |
-| `docente` | Solicita escenarios y registra evaluaciones de habilidades |
-| `estudiante` | Consulta sus resultados y entrega el consentimiento informado |
+| `docente` | Solicita escenarios, registra evaluaciones de habilidades y entrega su formato de confidencialidad |
+| `estudiante` | Consulta sus resultados y entrega el formato de confidencialidad |
 
 Un usuario puede tener varios roles a la vez (una coordinadora puede además ser docente). El rol activo se elige con un selector y vive en sesión.
 
@@ -38,6 +38,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 - **Preparación** — el montaje físico del escenario, previo a la clase.
 - **Checklist** — lista de ítems que el docente marca al evaluar.
 - **Intento** — número de vez que un estudiante presenta la misma evaluación.
+- **Formato de confidencialidad** — el documento que se firma para entrar a las prácticas; incluye la autorización de captación de imágenes. Es como lo llama el laboratorio, y así está rotulada su carpeta en el Drive. **No lo llames "consentimiento informado"**: fue nuestro nombre, no el suyo, y se retiró del código. Lo firma todo el que entra a la práctica —estudiantes y docentes—, por eso la columna es `firmante_id` y no `estudiante_id`.
 
 **Cuidado con "capacidad": en este dominio significa tres cosas distintas.** `capacidades` son las capacidades clínicas del simulador (sangrado, llanto, signos vitales); `salas.capacidad` es cuánta gente cabe en el espacio físico; `casos_clinicos.capacidad_maxima_estudiantes` es cuántos estudiantes admite el escenario (RF74). Escribe siempre el nombre largo del tercero: "capacidad" a secas ya está ocupado.
 
@@ -107,10 +108,10 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `PreparacionService` | Crear preparación al aprobar, asignar sala, marcar ítems alistados |
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
-| `ConsentimientoService` | Periodo académico vigente, estado del consentimiento, bloqueo de prácticas |
+| `ConfidencialidadService` | Periodo académico vigente, estado del formato de confidencialidad, bloqueo de prácticas |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
-| `UsuarioSyncService` | Sincronización contra la vista institucional |
+| `UsuarioSyncService` | Sincronización contra la vista institucional. **Todavía no existe:** depende del pendiente 2, la estructura de la vista institucional. No lo invoques ni supongas que hay sincronización corriendo |
 
 ---
 
@@ -130,11 +131,15 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 6. **El nivel de fidelidad del simulador solo lo edita el ADMIN.** Es el único campo del inventario con esa restricción; el resto lo editan administrativos y coordinadores. Restricción a nivel de campo, no de recurso.
 
-7. **El consentimiento se renueva cada semestre.** Índice único sobre (`estudiante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
+7. **El formato de confidencialidad se renueva cada semestre.** Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
+
+   **Lo firma todo el que entra a la práctica, docente incluido (RF51-RF52).** El docente dirige la sesión pero está dentro de ella, y la autorización de captación de imágenes lo cubre igual. Quiénes son esos roles lo dice `Rol::queFirmanElFormato()`, y de ahí leen la Policy y el Service: no repitas la lista. Quien verifica —administrativo, coordinación, ADMIN— **no** firma, así que no puede entregarlo ni por sí mismo ni por otro.
 
    **La entrega en físico no es un estado del documento, es un hecho que convive con él (RF53).** El estudiante que no puede subir el escaneo entrega el formato firmado en la puerta; `recibido_fisico_at` y `recibido_fisico_por` registran cuándo y quién lo recibió, y esas columnas **no se borran nunca**: ni al subir el escaneo, ni al verificarlo, ni al devolvérselo. `estado` sigue describiendo solo el documento escaneado (`pendiente` → `cargado` → `verificado`). No metas la entrega física en ese enum: se pierde al avanzar de estado y no podrías responder quién entregó papel y todavía no escanea.
 
-   Dos preguntas parecidas que **no** son la misma: `puedeParticiparEnPracticas()` (verificado **o** entrega física) decide si entra a la práctica; `tieneConsentimientoVigente()` (solo verificado) dice si el trámite está cerrado.
+   Dos preguntas parecidas que **no** son la misma: `puedeParticiparEnPracticas()` (verificado **o** entrega física) decide si entra a la práctica; `tieneFormatoVigente()` (solo verificado) dice si el trámite está cerrado.
+
+   **PENDIENTE con el cliente:** qué significa que a un docente le falte el formato. Bloquear a un estudiante lo deja fuera de la práctica; bloquear al docente cancela la clase. Hoy nadie llama a `puedeParticiparEnPracticas()`, así que la pregunta no aprieta todavía, pero no la resuelvas por tu cuenta cuando llegue el RF68-RF70.
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
@@ -214,7 +219,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - **Código comentado o muerto.** Bórralo, para eso está Git.
 - **Migraciones editadas después de aplicadas.**
 - **`env()` fuera de los archivos de configuración.** Usa `config()`.
-- **Archivos de consentimiento en almacenamiento público.** Contienen datos personales: se sirven por ruta protegida con Policy.
+- **Archivos del formato de confidencialidad en almacenamiento público.** Contienen datos personales: se sirven por ruta protegida con Policy.
 - **Correr dos suites de tests a la vez contra la misma base.** PostgreSQL detecta el interbloqueo entre las dos y aborta transacciones, así que saltan `QueryException` en tests que no tienen nada roto. Parece un fallo del código y no lo es. Ya ha pasado dos veces en este proyecto: una suite cada vez, y espera a que termine antes de lanzar la siguiente.
 
 ---
@@ -225,7 +230,7 @@ Cada tarea termina con tests que la prueben. **Una funcionalidad sin test no est
 
 - **Feature tests** para los flujos completos: solicitar escenario, aprobar, preparar, evaluar.
 - **Unit tests** para la lógica de los Services: cálculo de intentos, copia del checklist, disponibilidad de inventario.
-- Prueba también los caminos negativos: crear una evaluación sin solicitud aprobada debe fallar; un docente no debe poder aprobar su propia solicitud si esa regla se activa; un administrativo no debe poder verificar consentimientos.
+- Prueba también los caminos negativos: crear una evaluación sin solicitud aprobada debe fallar; un docente no debe poder aprobar su propia solicitud si esa regla se activa; quien verifica no debe poder entregar un formato de confidencialidad por otro.
 - Usa factories, nunca datos escritos a mano dentro del test.
 - Los tests describen comportamiento del dominio, no implementación: `un docente no puede evaluar sin escenario aprobado`.
 

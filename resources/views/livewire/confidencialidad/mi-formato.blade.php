@@ -1,8 +1,8 @@
 <div class="space-y-4">
 
-    @php($estadoActual = $entrega?->estado ?? \App\Enums\EstadoConsentimiento::Pendiente)
+    @php($estadoActual = $entrega?->estado ?? \App\Enums\EstadoFormatoConfidencialidad::Pendiente)
 
-    {{-- Estado del periodo, bien visible: es lo primero que el estudiante busca. --}}
+    {{-- Estado del periodo, bien visible: es lo primero que se busca al entrar. --}}
     <x-tarjeta>
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div class="min-w-0">
@@ -14,14 +14,14 @@
 
         <p class="mt-3 text-sm text-gray-700">
             @switch($estadoActual)
-                @case(\App\Enums\EstadoConsentimiento::Verificado)
-                    Tu consentimiento de este periodo está verificado. No tienes nada pendiente.
+                @case(\App\Enums\EstadoFormatoConfidencialidad::Verificado)
+                    Tu formato de este periodo está verificado. No tienes nada pendiente.
                     @break
-                @case(\App\Enums\EstadoConsentimiento::Cargado)
-                    Ya subiste tu documento. La coordinación lo revisará; mientras tanto no tienes que hacer nada.
+                @case(\App\Enums\EstadoFormatoConfidencialidad::Cargado)
+                    Ya subiste tu documento. El laboratorio lo revisará; mientras tanto no tienes que hacer nada.
                     @break
                 @default
-                    Todavía no has entregado el consentimiento de este periodo.
+                    Todavía no has entregado el formato de este periodo.
             @endswitch
         </p>
 
@@ -30,13 +30,13 @@
             entiende, si no se le dice, que esto se renueva cada semestre.
         --}}
         <x-slot:pie>
-            El consentimiento autoriza la grabación de las prácticas y <span class="font-medium">se renueva cada semestre</span>.
+            El formato autoriza la grabación de las prácticas y <span class="font-medium">se renueva cada semestre</span>.
             El que hayas entregado en periodos anteriores sigue guardado, pero no vale para {{ $periodo }}.
         </x-slot:pie>
     </x-tarjeta>
 
     {{-- Motivo del rechazo --}}
-    @if ($entrega?->motivo_rechazo && $estadoActual === \App\Enums\EstadoConsentimiento::Pendiente)
+    @if ($entrega?->motivo_rechazo && $estadoActual === \App\Enums\EstadoFormatoConfidencialidad::Pendiente)
         <div class="rounded-md bg-rose-50 px-4 py-3 ring-1 ring-inset ring-rose-600/20" role="alert">
             <p class="text-sm font-medium text-rose-900">Tu documento anterior fue devuelto</p>
             <p class="mt-1 text-sm text-rose-900">{{ $entrega->motivo_rechazo }}</p>
@@ -50,19 +50,19 @@
             <p class="mb-3 text-sm text-gray-700">
                 Descárgalo, léelo, fírmalo y vuelve aquí para subirlo.
             </p>
-            <x-boton variante="secundario" href="{{ route('panel.consentimientos.plantilla') }}" class="px-4 py-2.5">
-                Descargar el consentimiento
+            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.plantilla') }}" class="px-4 py-2.5">
+                Descargar el formato
             </x-boton>
         @else
             <x-mensaje-vacio
                 titulo="Todavía no hay documento disponible"
-                descripcion="La administración del laboratorio aún no ha publicado el consentimiento de este periodo. Vuelve más tarde."
+                descripcion="La administración del laboratorio aún no ha publicado el formato de este periodo. Vuelve más tarde."
             />
         @endif
     </x-tarjeta>
 
     {{-- Paso 2: subir --}}
-    @if ($estadoActual !== \App\Enums\EstadoConsentimiento::Verificado && $hayPlantilla)
+    @if ($estadoActual !== \App\Enums\EstadoFormatoConfidencialidad::Verificado && $hayPlantilla)
         <x-tarjeta titulo="2 · Sube el documento firmado">
             @if ($errorDeRegla)
                 <p class="mb-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
@@ -75,7 +75,7 @@
                    class="w-full rounded-md border border-gray-300 px-3 py-2.5 text-base file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm">
 
             <p class="mt-1 text-sm text-gray-600">
-                Solo PDF, hasta {{ round((int) config('laboratorio.consentimiento.tamano_maximo_kb') / 1024, 1) }} MB.
+                Solo PDF, hasta {{ round((int) config('laboratorio.confidencialidad.tamano_maximo_kb') / 1024, 1) }} MB.
                 Si lo escaneaste con el celular, únelo en un solo PDF antes de subirlo.
             </p>
 
@@ -105,7 +105,7 @@
             <p class="mb-3 text-sm text-gray-700">
                 Subido el {{ $entrega->updated_at->format('d/m/Y H:i') }}.
             </p>
-            <x-boton variante="secundario" href="{{ route('panel.consentimientos.firmado', $entrega) }}" class="px-4 py-2.5">
+            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.firmado', $entrega) }}" class="px-4 py-2.5">
                 Descargar lo que subí
             </x-boton>
         </x-tarjeta>

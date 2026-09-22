@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Database\Factories\ConsentimientoPlantillaFactory;
+use Database\Factories\PlantillaConfidencialidadFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class ConsentimientoPlantilla extends Model
+class PlantillaConfidencialidad extends Model
 {
-    /** @use HasFactory<ConsentimientoPlantillaFactory> */
+    /** @use HasFactory<PlantillaConfidencialidadFactory> */
     use HasFactory;
 
-    protected $table = 'consentimientos_plantilla';
+    protected $table = 'plantillas_confidencialidad';
 
     /**
      * @var list<string>
@@ -45,10 +45,10 @@ class ConsentimientoPlantilla extends Model
         return $this->belongsTo(User::class, 'subido_por');
     }
 
-    /** @return HasMany<ConsentimientoEstudiante, $this> */
-    public function consentimientos(): HasMany
+    /** @return HasMany<FormatoConfidencialidad, $this> */
+    public function formatosDeConfidencialidad(): HasMany
     {
-        return $this->hasMany(ConsentimientoEstudiante::class, 'plantilla_id');
+        return $this->hasMany(FormatoConfidencialidad::class, 'plantilla_id');
     }
 
     /** @param Builder<$this> $consulta */

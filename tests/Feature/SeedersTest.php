@@ -7,8 +7,8 @@ use App\Enums\Rol;
 use App\Enums\TipoItemInventario;
 use App\Enums\TipoSesion;
 use App\Models\CasoClinico;
-use App\Models\ConsentimientoEstudiante;
 use App\Models\Evaluacion;
+use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
 use App\Models\Materia;
 use App\Models\Sala;
@@ -119,9 +119,10 @@ describe('DatosPruebaSeeder', function (): void {
             ->not->toContain('Texto cambiado por el ADMIN');
     });
 
-    it('entrega un consentimiento por estudiante en el periodo vigente', function (): void {
-        $estudiantes = User::role(Rol::Estudiante->value)->count();
+    it('entrega un formato por firmante en el periodo vigente', function (): void {
+        // Lo firman estudiantes y docentes, no solo estudiantes (RF51-RF52).
+        $firmantes = User::role(Rol::queFirmanElFormato())->count();
 
-        expect(ConsentimientoEstudiante::delPeriodo('2026-2')->count())->toBe($estudiantes);
+        expect(FormatoConfidencialidad::delPeriodo('2026-2')->count())->toBe($firmantes);
     });
 });

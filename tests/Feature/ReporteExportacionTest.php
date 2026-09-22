@@ -202,7 +202,7 @@ it('deja generar reportes al coordinador y al ADMIN', function (Rol $rol): void 
 
 it('no deja generar reportes al administrativo', function (): void {
     // Segunda función operativa, junto con la verificación del
-    // consentimiento, donde el administrativo no acompaña al coordinador.
+    // formato, donde el administrativo no acompaña al coordinador.
     $administrativo = User::factory()->administrativo()->create();
 
     expect(Gate::forUser($administrativo)->allows('generarReportes'))->toBeFalse();

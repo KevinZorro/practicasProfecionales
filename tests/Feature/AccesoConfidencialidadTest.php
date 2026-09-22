@@ -3,16 +3,16 @@
 declare(strict_types=1);
 
 use App\Enums\Rol;
-use App\Models\ConsentimientoEstudiante;
-use App\Models\ConsentimientoPlantilla;
+use App\Models\FormatoConfidencialidad;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
 
 beforeEach(function (): void {
     $this->seed(RolSeeder::class);
     $this->estudiante = User::factory()->estudiante()->create();
-    $this->entrega = ConsentimientoEstudiante::factory()->cargado()->create([
-        'estudiante_id' => $this->estudiante->id,
+    $this->entrega = FormatoConfidencialidad::factory()->cargado()->create([
+        'firmante_id' => $this->estudiante->id,
     ]);
 });
 
@@ -20,7 +20,7 @@ it('reserva la carga de la plantilla al ADMIN', function (Rol $rol, bool $puede)
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
 
-    expect($usuario->can('create', ConsentimientoPlantilla::class))->toBe($puede);
+    expect($usuario->can('create', PlantillaConfidencialidad::class))->toBe($puede);
 })->with([
     'admin' => [Rol::Admin, true],
     'coordinador' => [Rol::Coordinador, false],
@@ -33,7 +33,7 @@ it('deja bajar la plantilla en blanco a cualquiera que vaya a firmarla', functio
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
 
-    expect($usuario->can('descargar', ConsentimientoPlantilla::factory()->create()))->toBeTrue();
+    expect($usuario->can('descargar', PlantillaConfidencialidad::factory()->create()))->toBeTrue();
 })->with([Rol::Estudiante, Rol::Docente, Rol::Administrativo, Rol::Coordinador, Rol::Admin]);
 
 it('deja verificar al administrativo, al coordinador y al ADMIN', function (Rol $rol, bool $puede): void {
@@ -50,13 +50,13 @@ it('deja verificar al administrativo, al coordinador y al ADMIN', function (Rol 
     'estudiante' => [Rol::Estudiante, false],
 ]);
 
-it('deja al estudiante ver y bajar su propio consentimiento', function (): void {
+it('deja al estudiante ver y bajar su propio formato', function (): void {
     expect($this->estudiante->can('view', $this->entrega))->toBeTrue()
         ->and($this->estudiante->can('descargar', $this->entrega))->toBeTrue()
         ->and($this->estudiante->can('update', $this->entrega))->toBeTrue();
 });
 
-it('no deja a un estudiante acercarse al consentimiento de otro', function (): void {
+it('no deja a un estudiante acercarse al formato de otro', function (): void {
     $otro = User::factory()->estudiante()->create();
 
     expect($otro->can('view', $this->entrega))->toBeFalse()
