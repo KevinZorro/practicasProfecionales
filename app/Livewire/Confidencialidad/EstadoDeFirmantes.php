@@ -2,21 +2,25 @@
 
 declare(strict_types=1);
 
-namespace App\Livewire\Consentimiento;
+namespace App\Livewire\Confidencialidad;
 
-use App\Exceptions\ConsentimientoInvalido;
-use App\Models\ConsentimientoEstudiante;
+use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Models\FormatoConfidencialidad;
 use App\Models\User;
-use App\Services\ConsentimientoService;
+use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Quién tiene el consentimiento al día antes de una práctica (RF52).
+ * Quién tiene el formato de confidencialidad al día antes de una práctica
+ * (RF52).
+ *
+ * Lista a estudiantes y docentes juntos, porque el formato lo firma todo el
+ * que entra a la práctica y quien revisa lo revisa de una sola pasada.
  */
-final class EstadoDeEstudiantes extends Component
+final class EstadoDeFirmantes extends Component
 {
     use WithPagination;
 
@@ -36,12 +40,12 @@ final class EstadoDeEstudiantes extends Component
 
     public ?string $errorDeRegla = null;
 
-    public function mount(ConsentimientoService $consentimientos): void
+    public function mount(ConfidencialidadService $confidencialidad): void
     {
-        $this->authorize('viewAny', ConsentimientoEstudiante::class);
+        $this->authorize('viewAny', FormatoConfidencialidad::class);
 
         if ($this->periodo === '') {
-            $this->periodo = $consentimientos->periodoVigente();
+            $this->periodo = $confidencialidad->periodoVigente();
         }
     }
 
@@ -54,22 +58,22 @@ final class EstadoDeEstudiantes extends Component
 
     /**
      * RF53: la administrativa recibe el formato firmado en la puerta y lo
-     * registra para dejar entrar al estudiante. El escaneo llega después.
+     * registra para dejar entrar a quien lo trae. El escaneo llega después.
      */
-    public function marcarEntregaFisica(int $estudianteId, ConsentimientoService $consentimientos): void
+    public function marcarEntregaFisica(int $firmanteId, ConfidencialidadService $confidencialidad): void
     {
-        $this->authorize('marcarEntregaFisica', ConsentimientoEstudiante::class);
+        $this->authorize('marcarEntregaFisica', FormatoConfidencialidad::class);
         $this->errorDeRegla = null;
 
         try {
-            $consentimientos->registrarEntregaFisica(User::findOrFail($estudianteId), Auth::user());
-        } catch (ConsentimientoInvalido $invalido) {
+            $confidencialidad->registrarEntregaFisica(User::findOrFail($firmanteId), Auth::user());
+        } catch (FormatoConfidencialidadInvalido $invalido) {
             $this->errorDeRegla = $invalido->getMessage();
 
             return;
         }
 
-        session()->flash('estado', 'Entrega en físico registrada. El estudiante puede ingresar a la práctica.');
+        session()->flash('estado', 'Entrega en físico registrada. Puede ingresar a la práctica.');
     }
 
     public function limpiarFiltros(): void
@@ -78,10 +82,10 @@ final class EstadoDeEstudiantes extends Component
         $this->resetPage();
     }
 
-    public function render(ConsentimientoService $consentimientos): mixed
+    public function render(ConfidencialidadService $confidencialidad): mixed
     {
-        return view('livewire.consentimiento.estado-de-estudiantes', [
-            'estudiantes' => $consentimientos->estadoDeLosEstudiantes(
+        return view('livewire.confidencialidad.estado-de-firmantes', [
+            'firmantes' => $confidencialidad->estadoDeLosFirmantes(
                 periodo: $this->periodo,
                 soloSinVigente: $this->soloSinVigente(),
                 busqueda: $this->busqueda,

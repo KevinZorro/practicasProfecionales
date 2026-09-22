@@ -66,10 +66,10 @@ it('cambia de rol sin cerrar sesión y lo guarda en la sesión, no en la base', 
 it('cambia la navegación al cambiar de rol', function (): void {
     $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
 
-    // Como coordinadora ve reportes y consentimientos; no puede solicitar.
+    // Como coordinadora ve reportes y formatos de confidencialidad; no puede solicitar.
     $this->actingAs($coordinadoraDocente)->get(route('panel.inicio'))
         ->assertSee('Reportes')
-        ->assertSee('Consentimientos');
+        ->assertSee('Formatos de confidencialidad');
 
     $this->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value]);
 
@@ -77,7 +77,7 @@ it('cambia la navegación al cambiar de rol', function (): void {
     $this->get(route('panel.inicio'))
         ->assertOk()
         ->assertDontSee('Reportes')
-        ->assertDontSee('>Consentimientos<', escape: false);
+        ->assertDontSee('>Formatos de confidencialidad<', escape: false);
 });
 
 it('cambia los permisos efectivos al cambiar de rol, no solo el menú', function (): void {

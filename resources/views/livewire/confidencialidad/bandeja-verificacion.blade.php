@@ -26,16 +26,16 @@
         </div>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p class="text-sm text-gray-600">
-                {{ trans_choice(':count consentimiento|:count consentimientos', $entregas->total(), ['count' => $entregas->total()]) }}
+                {{ trans_choice(':count formato|:count formatos', $entregas->total(), ['count' => $entregas->total()]) }}
             </p>
-            <x-boton variante="secundario" href="{{ route('panel.consentimientos.estado') }}">Ver quién lo tiene al día</x-boton>
+            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.estado') }}">Ver quién lo tiene al día</x-boton>
         </div>
     </x-tarjeta>
 
     @if ($entregas->isEmpty())
         <x-mensaje-vacio
             titulo="No hay nada por revisar"
-            descripcion="Cuando un estudiante suba su consentimiento aparecerá aquí."
+            descripcion="Cuando alguien suba su formato aparecerá aquí."
         />
     @else
         <ul class="space-y-3">
@@ -44,10 +44,19 @@
                     <x-tarjeta>
                         <div class="flex flex-wrap items-start justify-between gap-2">
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-gray-900">{{ $entrega->estudiante->nombre }}</p>
-                                <p class="truncate text-sm text-gray-600">{{ $entrega->estudiante->email }}</p>
+                                <p class="truncate text-sm font-semibold text-gray-900">{{ $entrega->firmante->nombre }}</p>
+                                <p class="truncate text-sm text-gray-600">{{ $entrega->firmante->email }}</p>
                             </div>
-                            <x-etiqueta-estado :estado="$entrega->estado" />
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                {{-- Aquí también llegan formatos de docentes: sin esta
+                                     etiqueta parece una cola solo de estudiantes. --}}
+                                @if ($entrega->firmante->hasRole(\App\Enums\Rol::Docente->value))
+                                    <span class="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20">
+                                        Docente
+                                    </span>
+                                @endif
+                                <x-etiqueta-estado :estado="$entrega->estado" />
+                            </div>
                         </div>
 
                         <dl class="mt-3 grid grid-cols-2 gap-3">
@@ -58,20 +67,20 @@
                         <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-200 pt-3">
                             @can('descargar', $entrega)
                                 @if ($entrega->archivo_firmado_path)
-                                    <x-boton variante="secundario" href="{{ route('panel.consentimientos.firmado', $entrega) }}" class="px-3 py-2">
+                                    <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.firmado', $entrega) }}" class="px-3 py-2">
                                         Ver documento
                                     </x-boton>
                                 @endif
                             @endcan
 
                             @can('verificar', $entrega)
-                                @if ($entrega->estado === \App\Enums\EstadoConsentimiento::Cargado)
+                                @if ($entrega->estado === \App\Enums\EstadoFormatoConfidencialidad::Cargado)
                                     <x-boton type="button" wire:click="verificar({{ $entrega->id }})" class="px-3 py-2">Verificar</x-boton>
                                 @endif
                             @endcan
 
                             @can('rechazar', $entrega)
-                                @if ($entrega->estado === \App\Enums\EstadoConsentimiento::Cargado)
+                                @if ($entrega->estado === \App\Enums\EstadoFormatoConfidencialidad::Cargado)
                                     <x-boton variante="secundario" type="button" wire:click="pedirMotivo({{ $entrega->id }})" class="px-3 py-2">
                                         Devolver
                                     </x-boton>
@@ -87,7 +96,7 @@
                                 <textarea wire:model="motivoRechazo" id="motivo-{{ $entrega->id }}" rows="2"
                                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-rose-600 focus:ring-rose-600"></textarea>
                                 <p class="text-xs text-rose-900">
-                                    El estudiante lo verá en su pantalla y podrá volver a subir el documento.
+                                    Quien lo entregó lo verá en su pantalla y podrá volver a subir el documento.
                                     El archivo devuelto se borra: son datos personales que ya no hacen falta.
                                 </p>
                                 <div class="flex flex-wrap gap-2">

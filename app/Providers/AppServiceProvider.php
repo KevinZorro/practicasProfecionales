@@ -40,8 +40,8 @@ class AppServiceProvider extends ServiceProvider
      * modelo, y aquí no hay ninguno que emparejar.
      *
      * Según el §6.1 del documento de arquitectura los genera el ADMIN y el
-     * coordinador. El administrativo queda fuera, igual que en la
-     * verificación del consentimiento. Docentes y estudiantes tampoco
+     * coordinador. El administrativo queda fuera: es de las pocas funciones
+     * donde no acompaña al coordinador. Docentes y estudiantes tampoco
      * entran: su historial propio lo cubren el RF35, el RF49 y el RF50, que
      * son otra cosa.
      */

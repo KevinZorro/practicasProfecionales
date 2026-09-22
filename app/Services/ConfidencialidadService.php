@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\EstadoConsentimiento;
+use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\Rol;
-use App\Exceptions\ConsentimientoInvalido;
-use App\Models\ConsentimientoEstudiante;
-use App\Models\ConsentimientoPlantilla;
+use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Models\FormatoConfidencialidad;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -20,18 +20,22 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Consentimiento informado de prácticas (RF51-RF53).
+ * Formato de confidencialidad de prácticas (RF51-RF53).
  *
- * El consentimiento se entrega una vez por semestre y se renueva al
- * siguiente: el índice único sobre (estudiante_id, periodo_academico) lo
- * garantiza en la base, y aquí se decide a qué periodo pertenece cada
- * entrega.
+ * Es el documento que el laboratorio rotula así en el Drive, e incluye la
+ * autorización de captación de imágenes. Lo firma todo el que entra a la
+ * práctica —estudiantes y docentes—, y por eso la columna se llama
+ * "firmante_id" y no "estudiante_id".
+ *
+ * Se entrega una vez por semestre y se renueva al siguiente: el índice
+ * único sobre (firmante_id, periodo_academico) lo garantiza en la base, y
+ * aquí se decide a qué periodo pertenece cada entrega.
  *
  * Los archivos firmados llevan datos personales, así que viven en el disco
  * privado y se sirven por ruta protegida con Policy, nunca por enlace
  * directo (RNF07).
  */
-final class ConsentimientoService
+final class ConfidencialidadService
 {
     public const POR_PAGINA = 15;
 
@@ -61,32 +65,36 @@ final class ConsentimientoService
      * Bandeja de verificación (RF52): lo que espera a que un coordinador o
      * el ADMIN lo revise. Por defecto, los cargados del periodo vigente.
      *
-     * @return LengthAwarePaginator<int, ConsentimientoEstudiante>
+     * @return LengthAwarePaginator<int, FormatoConfidencialidad>
      */
     public function bandeja(
-        ?EstadoConsentimiento $estado = EstadoConsentimiento::Cargado,
+        ?EstadoFormatoConfidencialidad $estado = EstadoFormatoConfidencialidad::Cargado,
         ?string $periodo = null,
         int $porPagina = self::POR_PAGINA,
     ): LengthAwarePaginator {
-        return ConsentimientoEstudiante::query()
-            ->when($estado instanceof EstadoConsentimiento, fn (Builder $c) => $c->where('estado', $estado))
+        return FormatoConfidencialidad::query()
+            ->when($estado instanceof EstadoFormatoConfidencialidad, fn (Builder $c) => $c->where('estado', $estado))
             ->when($periodo !== null && $periodo !== '', fn (Builder $c) => $c->delPeriodo($periodo))
-            ->with(['estudiante:id,nombre,email,codigo_institucional', 'plantilla:id,nombre,version'])
+            ->with(['firmante:id,nombre,email,codigo_institucional', 'firmante.roles:id,name', 'plantilla:id,nombre,version'])
             ->orderBy('updated_at')
             ->paginate($porPagina);
     }
 
     /**
-     * Quién tiene el consentimiento al día y quién no, en un periodo (RF52).
+     * Quién tiene el formato al día y quién no, en un periodo (RF52).
      *
      * Es la vista que deja saber a quién le falta antes de una práctica. Se
-     * listan los estudiantes, no las entregas: quien todavía no ha entregado
-     * nada no tiene fila en consentimientos_estudiante y es justo el que hay
+     * listan las personas, no las entregas: quien todavía no ha entregado
+     * nada no tiene fila en formatos_confidencialidad y es justo el que hay
      * que ver.
+     *
+     * Lista a estudiantes y docentes juntos, porque el formato lo firma todo
+     * el que entra a la práctica y quien revisa en la puerta los revisa en
+     * la misma pasada.
      *
      * @return LengthAwarePaginator<int, User>
      */
-    public function estadoDeLosEstudiantes(
+    public function estadoDeLosFirmantes(
         ?string $periodo = null,
         ?bool $soloSinVigente = null,
         ?string $busqueda = null,
@@ -98,40 +106,57 @@ final class ConsentimientoService
         $delPeriodo = static fn (HasMany $relacion) => $relacion->delPeriodo($periodo);
 
         return User::query()
-            ->role(Rol::Estudiante->value)
+            ->role(Rol::queFirmanElFormato())
             ->with([
-                'consentimientos' => $delPeriodo,
-                'consentimientos.plantilla:id,nombre,version',
-                'consentimientos.recibidoFisicoPor:id,nombre',
+                'formatosDeConfidencialidad' => $delPeriodo,
+                'formatosDeConfidencialidad.plantilla:id,nombre,version',
+                'formatosDeConfidencialidad.recibidoFisicoPor:id,nombre',
+                'roles:id,name',
             ])
             ->when($soloSinVigente === true, fn (Builder $c) => $c->whereDoesntHave(
-                'consentimientos',
+                'formatosDeConfidencialidad',
                 static fn (Builder $e) => $e->delPeriodo($periodo)->verificados(),
             ))
             ->when($soloSinVigente === false, fn (Builder $c) => $c->whereHas(
-                'consentimientos',
+                'formatosDeConfidencialidad',
                 static fn (Builder $e) => $e->delPeriodo($periodo)->verificados(),
             ))
             ->when(
                 is_string($busqueda) && trim($busqueda) !== '',
-                fn (Builder $c) => $c->where(static function (Builder $o) use ($busqueda): void {
-                    $aguja = '%'.mb_strtolower(trim((string) $busqueda)).'%';
-                    $o->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
-                        ->orWhereRaw('LOWER(email) LIKE ?', [$aguja]);
-                }),
+                fn (Builder $c) => $c->where(
+                    fn (Builder $o) => $this->buscarPersona($o, (string) $busqueda),
+                ),
             )
             ->orderBy('nombre')
             ->paginate($porPagina);
     }
 
     /**
+     * Búsqueda por nombre, correo o código institucional (RF71).
+     *
+     * El código es como la administrativa identifica a alguien cuando el
+     * nombre se repite o viene mal escrito en la lista impresa, así que
+     * entra al mismo cuadro de búsqueda y no a un filtro aparte.
+     *
+     * @param  Builder<User>  $consulta
+     */
+    private function buscarPersona(Builder $consulta, string $busqueda): void
+    {
+        $aguja = '%'.mb_strtolower(trim($busqueda)).'%';
+
+        $consulta->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
+            ->orWhereRaw('LOWER(email) LIKE ?', [$aguja])
+            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]);
+    }
+
+    /**
      * Historial de plantillas, la vigente primero (RF51).
      *
-     * @return LengthAwarePaginator<int, ConsentimientoPlantilla>
+     * @return LengthAwarePaginator<int, PlantillaConfidencialidad>
      */
     public function plantillas(int $porPagina = self::POR_PAGINA): LengthAwarePaginator
     {
-        return ConsentimientoPlantilla::query()
+        return PlantillaConfidencialidad::query()
             ->with('subidoPor:id,nombre')
             ->orderByDesc('activo')
             ->orderByDesc('id')
@@ -140,40 +165,40 @@ final class ConsentimientoService
 
     /**
      * El ADMIN sube la plantilla en blanco (RF51). Solo una queda activa:
-     * los estudiantes deben firmar siempre la vigente.
+     * todos deben firmar siempre la vigente.
      */
     public function cargarPlantilla(
         User $admin,
         UploadedFile $archivo,
         string $nombre,
         string $version,
-    ): ConsentimientoPlantilla {
-        $this->garantizarPermiso($admin, 'create', ConsentimientoPlantilla::class);
+    ): PlantillaConfidencialidad {
+        $this->garantizarPermiso($admin, 'create', PlantillaConfidencialidad::class);
         $this->garantizarPdf($archivo);
 
         $atributos = $this->atributosDePlantilla($admin, $archivo, $nombre, $version);
 
-        return DB::transaction(static function () use ($atributos): ConsentimientoPlantilla {
-            ConsentimientoPlantilla::activas()->update(['activo' => false]);
+        return DB::transaction(static function () use ($atributos): PlantillaConfidencialidad {
+            PlantillaConfidencialidad::activas()->update(['activo' => false]);
 
-            return ConsentimientoPlantilla::create($atributos);
+            return PlantillaConfidencialidad::create($atributos);
         });
     }
 
     /**
-     * El estudiante sube el documento firmado. Si ya había entregado en este
+     * Quien firma sube el documento escaneado. Si ya había entregado en este
      * periodo, se reemplaza: el índice único impide un segundo registro.
      */
-    public function registrarEntrega(User $estudiante, UploadedFile $archivo): ConsentimientoEstudiante
+    public function registrarEntrega(User $firmante, UploadedFile $archivo): FormatoConfidencialidad
     {
         $this->garantizarPdf($archivo);
         $plantilla = $this->plantillaVigente();
 
-        return DB::transaction(function () use ($estudiante, $archivo, $plantilla): ConsentimientoEstudiante {
-            $entrega = $this->entregaDelPeriodo($estudiante) ?? new ConsentimientoEstudiante;
+        return DB::transaction(function () use ($firmante, $archivo, $plantilla): FormatoConfidencialidad {
+            $entrega = $this->entregaDelPeriodo($firmante) ?? new FormatoConfidencialidad;
             $this->borrarArchivoFirmado($entrega);
 
-            $entrega->fill($this->atributosDeEntrega($estudiante, $plantilla, $archivo));
+            $entrega->fill($this->atributosDeEntrega($firmante, $plantilla, $archivo));
             $entrega->save();
 
             return $entrega;
@@ -181,33 +206,36 @@ final class ConsentimientoService
     }
 
     /**
-     * El estudiante entrega el formato firmado en físico, en la puerta
-     * (RF53). La administrativa lo recibe, lo registra y lo deja entrar; el
-     * escaneo llega después.
+     * Quien firma entrega el formato en físico, en la puerta (RF53). La
+     * administrativa lo recibe, lo registra y lo deja entrar; el escaneo
+     * llega después.
      *
      * No toca el estado: el estado es del documento escaneado, que sigue sin
      * llegar. Esto anota el hecho —cuándo y quién recibió el papel— al lado,
      * y es lo que habilita el ingreso hasta que suba el archivo.
      *
-     * Si el estudiante todavía no tenía fila del periodo, se crea: quien
-     * nunca entregó nada no tiene registro, y es justo el caso de la puerta.
+     * Vale igual para un docente: llega a la misma puerta, con el mismo
+     * papel y ante la misma persona, así que no hay nada que distinguir.
+     *
+     * Si todavía no tenía fila del periodo, se crea: quien nunca entregó
+     * nada no tiene registro, y es justo el caso de la puerta.
      */
-    public function registrarEntregaFisica(User $estudiante, User $administrativo): ConsentimientoEstudiante
+    public function registrarEntregaFisica(User $firmante, User $administrativo): FormatoConfidencialidad
     {
-        $this->garantizarPermiso($administrativo, 'marcarEntregaFisica', ConsentimientoEstudiante::class);
+        $this->garantizarPermiso($administrativo, 'marcarEntregaFisica', FormatoConfidencialidad::class);
 
-        return DB::transaction(function () use ($estudiante, $administrativo): ConsentimientoEstudiante {
-            $entrega = $this->entregaDelPeriodo($estudiante);
+        return DB::transaction(function () use ($firmante, $administrativo): FormatoConfidencialidad {
+            $entrega = $this->entregaDelPeriodo($firmante);
 
-            if ($entrega instanceof ConsentimientoEstudiante && $entrega->entregadoEnFisico()) {
-                throw ConsentimientoInvalido::yaSeRecibioEnFisico();
+            if ($entrega instanceof FormatoConfidencialidad && $entrega->entregadoEnFisico()) {
+                throw FormatoConfidencialidadInvalido::yaSeRecibioEnFisico();
             }
 
-            $entrega ??= new ConsentimientoEstudiante([
-                'estudiante_id' => $estudiante->id,
+            $entrega ??= new FormatoConfidencialidad([
+                'firmante_id' => $firmante->id,
                 'plantilla_id' => $this->plantillaVigente()->id,
                 'periodo_academico' => $this->periodoVigente(),
-                'estado' => EstadoConsentimiento::Pendiente,
+                'estado' => EstadoFormatoConfidencialidad::Pendiente,
             ]);
 
             $entrega->fill([
@@ -221,16 +249,17 @@ final class ConsentimientoService
     }
 
     /**
-     * Solo coordinador o ADMIN (§6.1). El administrativo queda fuera: es la
-     * única función operativa donde no acompaña al coordinador.
+     * Verificar el documento escaneado (RF52). Lo ejerce el administrativo,
+     * que es quien recibe las entregas a diario; coordinación y ADMIN lo
+     * conservan para supervisar. Quién exactamente lo decide la Policy.
      */
-    public function verificar(ConsentimientoEstudiante $entrega, User $verificador): ConsentimientoEstudiante
+    public function verificar(FormatoConfidencialidad $entrega, User $verificador): FormatoConfidencialidad
     {
         $this->garantizarPermiso($verificador, 'verificar', $entrega);
         $this->garantizarCargado($entrega);
 
         $entrega->update([
-            'estado' => EstadoConsentimiento::Verificado,
+            'estado' => EstadoFormatoConfidencialidad::Verificado,
             'motivo_rechazo' => null,
             'verificado_por' => $verificador->id,
             'verificado_at' => now(),
@@ -240,21 +269,21 @@ final class ConsentimientoService
     }
 
     /**
-     * Devuelve la entrega a pendiente para que el estudiante vuelva a
+     * Devuelve la entrega a pendiente para que quien firma vuelva a
      * subirla. El archivo rechazado se borra: son datos personales que ya no
      * hacen falta, y un registro pendiente no debe conservar documento.
      */
     public function rechazar(
-        ConsentimientoEstudiante $entrega,
+        FormatoConfidencialidad $entrega,
         User $verificador,
         ?string $motivo = null,
-    ): ConsentimientoEstudiante {
+    ): FormatoConfidencialidad {
         $this->garantizarPermiso($verificador, 'rechazar', $entrega);
         $this->garantizarCargado($entrega);
         $this->borrarArchivoFirmado($entrega);
 
         $entrega->update([
-            'estado' => EstadoConsentimiento::Pendiente,
+            'estado' => EstadoFormatoConfidencialidad::Pendiente,
             'archivo_firmado_path' => null,
             'motivo_rechazo' => $motivo,
             'verificado_por' => null,
@@ -272,22 +301,22 @@ final class ConsentimientoService
      * (puedeParticiparEnPracticas) pero deja el trámite sin cerrar, y esta
      * es la pregunta que dice qué falta por escanear y verificar.
      */
-    public function tieneConsentimientoVigente(User $estudiante): bool
+    public function tieneFormatoVigente(User $firmante): bool
     {
-        return ConsentimientoEstudiante::query()
-            ->where('estudiante_id', $estudiante->id)
+        return FormatoConfidencialidad::query()
+            ->where('firmante_id', $firmante->id)
             ->delPeriodo($this->periodoVigente())
-            ->where('estado', EstadoConsentimiento::Verificado)
+            ->where('estado', EstadoFormatoConfidencialidad::Verificado)
             ->exists();
     }
 
     /**
-     * Punto único de verificación del RF53: si un estudiante puede entrar a
+     * Punto único de verificación del RF53: si alguien puede entrar a
      * prácticas.
      *
      * Dos caminos lo habilitan y no son el mismo: el documento verificado, o
      * el formato entregado en físico en la puerta mientras llega el escaneo.
-     * Por eso no coincide con tieneConsentimientoVigente(), que sigue
+     * Por eso no coincide con tieneFormatoVigente(), que sigue
      * respondiendo si el documento está verificado y es lo que persigue la
      * administrativa hasta cerrarlo.
      *
@@ -295,33 +324,35 @@ final class ConsentimientoService
      * al pasar lista, o en un middleware de las vistas de estudiante—, pero
      * la comprobación vive aquí y no se repite.
      *
-     * PENDIENTE con el cliente: si esto debe impedir que un docente agregue
-     * al estudiante a una evaluación o solo advertir. Hoy nadie lo llama:
+     * PENDIENTE con el cliente, dos cosas: si esto debe impedir que un
+     * docente agregue al estudiante a una evaluación o solo advertir; y qué
+     * significa para un docente sin el formato al día, porque bloquearlo es
+     * cancelar la clase, no dejar a alguien fuera. Hoy nadie lo llama:
      * EvaluacionService no lo consulta.
      */
-    public function puedeParticiparEnPracticas(User $estudiante): bool
+    public function puedeParticiparEnPracticas(User $firmante): bool
     {
-        return ConsentimientoEstudiante::query()
-            ->where('estudiante_id', $estudiante->id)
+        return FormatoConfidencialidad::query()
+            ->where('firmante_id', $firmante->id)
             ->delPeriodo($this->periodoVigente())
             ->queHabilitanPracticas()
             ->exists();
     }
 
-    public function entregaDelPeriodo(User $estudiante, ?string $periodo = null): ?ConsentimientoEstudiante
+    public function entregaDelPeriodo(User $firmante, ?string $periodo = null): ?FormatoConfidencialidad
     {
-        return ConsentimientoEstudiante::query()
-            ->where('estudiante_id', $estudiante->id)
+        return FormatoConfidencialidad::query()
+            ->where('firmante_id', $firmante->id)
             ->delPeriodo($periodo ?? $this->periodoVigente())
             ->first();
     }
 
-    public function plantillaVigente(): ConsentimientoPlantilla
+    public function plantillaVigente(): PlantillaConfidencialidad
     {
-        $plantilla = ConsentimientoPlantilla::activas()->latest('id')->first();
+        $plantilla = PlantillaConfidencialidad::activas()->latest('id')->first();
 
-        if (! $plantilla instanceof ConsentimientoPlantilla) {
-            throw ConsentimientoInvalido::sinPlantillaActiva();
+        if (! $plantilla instanceof PlantillaConfidencialidad) {
+            throw FormatoConfidencialidadInvalido::sinPlantillaActiva();
         }
 
         return $plantilla;
@@ -349,16 +380,16 @@ final class ConsentimientoService
      * @return array<string, mixed>
      */
     private function atributosDeEntrega(
-        User $estudiante,
-        ConsentimientoPlantilla $plantilla,
+        User $firmante,
+        PlantillaConfidencialidad $plantilla,
         UploadedFile $archivo,
     ): array {
         return [
-            'estudiante_id' => $estudiante->id,
+            'firmante_id' => $firmante->id,
             'plantilla_id' => $plantilla->id,
             'periodo_academico' => $this->periodoVigente(),
             'archivo_firmado_path' => $this->guardar($archivo, 'directorio_firmados'),
-            'estado' => EstadoConsentimiento::Cargado,
+            'estado' => EstadoFormatoConfidencialidad::Cargado,
             'motivo_rechazo' => null,
             'verificado_por' => null,
             'verificado_at' => null,
@@ -368,12 +399,12 @@ final class ConsentimientoService
     private function guardar(UploadedFile $archivo, string $claveDirectorio): string
     {
         return $this->disco()->putFile(
-            config("laboratorio.consentimiento.{$claveDirectorio}"),
+            config("laboratorio.confidencialidad.{$claveDirectorio}"),
             $archivo,
         );
     }
 
-    private function borrarArchivoFirmado(ConsentimientoEstudiante $entrega): void
+    private function borrarArchivoFirmado(FormatoConfidencialidad $entrega): void
     {
         if (is_string($entrega->archivo_firmado_path)) {
             $this->disco()->delete($entrega->archivo_firmado_path);
@@ -382,22 +413,22 @@ final class ConsentimientoService
 
     private function disco(): Filesystem
     {
-        return Storage::disk(config('laboratorio.consentimiento.disco'));
+        return Storage::disk(config('laboratorio.confidencialidad.disco'));
     }
 
     /**
      * La Policy decide; el Service la consulta para que la regla valga
      * también fuera de una petición HTTP (comandos, colas, seeders).
      *
-     * @param  ConsentimientoEstudiante|class-string  $sobre
+     * @param  FormatoConfidencialidad|class-string  $sobre
      *
      * @throws AuthorizationException
      */
-    private function garantizarPermiso(User $actor, string $accion, ConsentimientoEstudiante|string $sobre): void
+    private function garantizarPermiso(User $actor, string $accion, FormatoConfidencialidad|string $sobre): void
     {
         if ($actor->cannot($accion, $sobre)) {
             throw new AuthorizationException(
-                sprintf('El usuario no tiene permiso para "%s" este consentimiento.', $accion),
+                sprintf('El usuario no tiene permiso para "%s" este formato.', $accion),
             );
         }
     }
@@ -414,20 +445,20 @@ final class ConsentimientoService
     private function garantizarPdf(UploadedFile $archivo): void
     {
         if ($archivo->getMimeType() !== 'application/pdf') {
-            throw ConsentimientoInvalido::soloSeAceptaPdf((string) $archivo->getMimeType());
+            throw FormatoConfidencialidadInvalido::soloSeAceptaPdf((string) $archivo->getMimeType());
         }
 
-        $maximoKb = (int) config('laboratorio.consentimiento.tamano_maximo_kb');
+        $maximoKb = (int) config('laboratorio.confidencialidad.tamano_maximo_kb');
 
         if ($archivo->getSize() > $maximoKb * 1024) {
-            throw ConsentimientoInvalido::archivoDemasiadoGrande($maximoKb);
+            throw FormatoConfidencialidadInvalido::archivoDemasiadoGrande($maximoKb);
         }
     }
 
-    private function garantizarCargado(ConsentimientoEstudiante $entrega): void
+    private function garantizarCargado(FormatoConfidencialidad $entrega): void
     {
-        if ($entrega->estado !== EstadoConsentimiento::Cargado) {
-            throw ConsentimientoInvalido::noEstaCargado($entrega->estado);
+        if ($entrega->estado !== EstadoFormatoConfidencialidad::Cargado) {
+            throw FormatoConfidencialidadInvalido::noEstaCargado($entrega->estado);
         }
     }
 }

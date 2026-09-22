@@ -5,17 +5,22 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Enums\Rol;
-use App\Models\ConsentimientoEstudiante;
+use App\Models\FormatoConfidencialidad;
 use App\Models\User;
 
 /**
- * Consentimiento firmado por un estudiante (RF52).
+ * Formato de confidencialidad firmado (RF51-RF53).
  *
  * Permisos del §6.1 del documento de arquitectura:
  *
- * | Acción                                  | ADMIN | Coordinador | Administrativo | Docente | Estudiante |
- * | Entregar el consentimiento firmado      |       |             |                |         |     ✓      |
- * | Verificar consentimiento de estudiantes |   ✓   |      ✓      |       ✓        |         |            |
+ * | Acción                          | ADMIN | Coordinador | Administrativo | Docente | Estudiante |
+ * | Entregar el formato firmado     |       |             |                |    ✓    |     ✓      |
+ * | Verificar un formato entregado  |   ✓   |      ✓      |       ✓        |         |            |
+ *
+ * Lo firma todo el que entra a la práctica, docente incluido: el docente
+ * dirige la sesión pero está dentro de ella, y la autorización de captación
+ * de imágenes lo cubre igual. Quiénes son esos roles lo dice
+ * Rol::queFirmanElFormato(), para no repetir la lista aquí y en el Service.
  *
  * La verificación la ejerce el administrativo, que es quien recibe y revisa
  * las entregas en la operación diaria. Coordinación y ADMIN conservan el
@@ -29,10 +34,10 @@ use App\Models\User;
  * documento sin leerlo.
  *
  * El nombre importa: Laravel resuelve las Policies por modelo, así que la de
- * ConsentimientoEstudiante tiene que llamarse ConsentimientoEstudiantePolicy.
+ * FormatoConfidencialidad tiene que llamarse FormatoConfidencialidadPolicy.
  * Con cualquier otro nombre no se descubre y el Gate deniega en silencio.
  */
-final class ConsentimientoEstudiantePolicy
+final class FormatoConfidencialidadPolicy
 {
     /** El listado completo es para quien verifica. */
     public function viewAny(User $usuario): bool
@@ -40,64 +45,64 @@ final class ConsentimientoEstudiantePolicy
         return $this->verifica($usuario);
     }
 
-    public function view(User $usuario, ConsentimientoEstudiante $entrega): bool
+    public function view(User $usuario, FormatoConfidencialidad $entrega): bool
     {
         return $this->esSuyo($usuario, $entrega) || $this->verifica($usuario);
     }
 
-    /** RF52: la entrega la hace el propio estudiante. */
+    /** RF51-RF52: la entrega la hace quien firma, nunca un tercero por él. */
     public function create(User $usuario): bool
     {
-        return $usuario->hasRole(Rol::Estudiante->value);
+        return $usuario->hasAnyRole(Rol::queFirmanElFormato());
     }
 
     /** Solo el dueño reemplaza su entrega, y solo mientras no esté verificada. */
-    public function update(User $usuario, ConsentimientoEstudiante $entrega): bool
+    public function update(User $usuario, FormatoConfidencialidad $entrega): bool
     {
         return $this->esSuyo($usuario, $entrega);
     }
 
     /**
-     * Descarga del archivo firmado: el dueño y quien lo verifica. Un
-     * estudiante nunca ve el consentimiento de otro.
+     * Descarga del archivo firmado: el dueño y quien lo verifica. Nadie ve
+     * el formato de otro, tenga el rol que tenga.
      */
-    public function descargar(User $usuario, ConsentimientoEstudiante $entrega): bool
+    public function descargar(User $usuario, FormatoConfidencialidad $entrega): bool
     {
         return $this->esSuyo($usuario, $entrega) || $this->verifica($usuario);
     }
 
     /** RF52. Administrativo, coordinador y ADMIN. */
-    public function verificar(User $usuario, ConsentimientoEstudiante $entrega): bool
+    public function verificar(User $usuario, FormatoConfidencialidad $entrega): bool
     {
         return $this->verifica($usuario);
     }
 
     /**
-     * RF53: marcar que el estudiante entregó el formato firmado en físico,
-     * en la puerta del laboratorio.
+     * RF53: marcar que alguien entregó el formato firmado en físico, en la
+     * puerta del laboratorio.
      *
      * El modelo es opcional para poder preguntar a nivel de clase, que es lo
-     * que necesita la pantalla antes de tener una entrega delante: un
-     * estudiante que nunca ha entregado nada todavía no tiene fila.
+     * que necesita la pantalla antes de tener una entrega delante: quien
+     * nunca ha entregado nada todavía no tiene fila.
      *
      * Mismo grupo que verifica: el administrativo lo ejerce a diario y
      * coordinación y ADMIN lo conservan. Lo que el RF excluye —y aquí queda
-     * excluido— es que el propio estudiante se la marque.
+     * excluido— es que el propio firmante se la marque.
      */
-    public function marcarEntregaFisica(User $usuario, ?ConsentimientoEstudiante $entrega = null): bool
+    public function marcarEntregaFisica(User $usuario, ?FormatoConfidencialidad $entrega = null): bool
     {
         return $this->verifica($usuario);
     }
 
     /** Rechazar es la otra cara de verificar: la decide quien verifica. */
-    public function rechazar(User $usuario, ConsentimientoEstudiante $entrega): bool
+    public function rechazar(User $usuario, FormatoConfidencialidad $entrega): bool
     {
         return $this->verifica($usuario);
     }
 
-    private function esSuyo(User $usuario, ConsentimientoEstudiante $entrega): bool
+    private function esSuyo(User $usuario, FormatoConfidencialidad $entrega): bool
     {
-        return $usuario->id === $entrega->estudiante_id;
+        return $usuario->id === $entrega->firmante_id;
     }
 
     private function verifica(User $usuario): bool

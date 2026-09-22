@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
-enum EstadoConsentimiento: string
+enum EstadoFormatoConfidencialidad: string
 {
     case Pendiente = 'pendiente';
     case Cargado = 'cargado';

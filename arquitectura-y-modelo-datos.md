@@ -78,7 +78,7 @@ Event ─────────────► Listener ──► Mail (notifi
 | `PreparacionService` | Crear preparación al aprobarse una solicitud, asignar sala, marcar ítems alistados, cambiar estado de montaje |
 | `EvaluacionService` | Validar que exista solicitud aprobada de tipo evaluación, copiar ítems del checklist, calcular número de intento por estudiante |
 | `InventarioService` | Altas y bajas, cálculo de disponibilidad por fecha y franja horaria |
-| `ConsentimientoService` | Determinar el periodo académico vigente, verificar si el estudiante ya entregó consentimiento en ese periodo, bloquear prácticas si está pendiente |
+| `ConfidencialidadService` | Determinar el periodo académico vigente, verificar si el firmante ya entregó el formato de confidencialidad en ese periodo, bloquear prácticas si está pendiente |
 | `ReporteService` | Agregaciones de uso de escenarios y de resultados de evaluación, y generación de los archivos PDF y Excel |
 | `UsuarioSyncService` | Sincronizar contra la vista institucional, activar y desactivar usuarios |
 
@@ -112,7 +112,7 @@ proyecto/
 │   │       ├── PerfilDocenteResource.php
 │   │       ├── GaleriaFotoResource.php
 │   │       ├── VideoInstitucionalResource.php
-│   │       └── ConsentimientoPlantillaResource.php
+│   │       └── PlantillaConfidencialidadResource.php
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
@@ -199,13 +199,13 @@ proyecto/
 │       │       ├── docentes/
 │       │       ├── certificaciones/
 │       │       └── casos-clinicos/
-│       └── consentimientos/                   # privado, no público
+│       └── confidencialidad/                  # privado, no público
 ├── tests/
 ├── docker-compose.yml
 └── .env.example
 ```
 
-**Nota sobre `storage`:** los consentimientos firmados contienen datos personales de estudiantes y no deben quedar en la carpeta pública (RNF07). Se sirven mediante una ruta protegida por Policy, nunca por enlace directo.
+**Nota sobre `storage`:** los formatos de confidencialidad firmados contienen datos personales y no deben quedar en la carpeta pública (RNF07). Se sirven mediante una ruta protegida por Policy, nunca por enlace directo.
 
 ---
 
@@ -367,24 +367,31 @@ Copia congelada de los `items_checklist` en el momento de crear la evaluación (
 > `resultado` es independiente de los ítems marcados. El sistema no lo calcula (RF46).
 > `intento` se resuelve en `EvaluacionService` contando las evaluaciones previas del mismo estudiante para el mismo `tipo_evaluacion`.
 
-### 4.7 Consentimiento informado
+### 4.7 Formato de confidencialidad
 
-**`consentimientos_plantilla`** — `id`, `nombre`, `archivo_path`, `version`, `activo`, `subido_por` (RF51)
+Es el documento que el laboratorio rotula así en el Drive, e incluye la autorización de captación de imágenes. Antes se llamaba en el código "consentimiento informado", que era nuestro nombre y no el del cliente; se renombró entero (tabla, modelo, Service, Policy, rutas y vistas).
 
-**`consentimientos_estudiante`** (RF52–RF53)
+**`plantillas_confidencialidad`** — `id`, `nombre`, `archivo_path`, `version`, `activo`, `subido_por` (RF51)
+
+**`formatos_confidencialidad`** (RF52–RF53)
 
 | Campo | Tipo | Notas |
 |---|---|---|
 | id | bigint PK | |
-| estudiante_id | FK → users | |
-| plantilla_id | FK → consentimientos_plantilla | |
+| firmante_id | FK → users | estudiante o docente |
+| plantilla_id | FK → plantillas_confidencialidad | |
 | periodo_academico | string | ej. `2026-2` |
 | archivo_firmado_path | string, nullable | |
-| estado | enum(`pendiente`,`cargado`,`verificado`) | |
-| verificado_por | FK → users, nullable | solo coordinador o ADMIN |
+| estado | enum(`pendiente`,`cargado`,`verificado`) | del documento escaneado |
+| recibido_fisico_at | timestamp, nullable | RF53, eje aparte del estado |
+| recibido_fisico_por | FK → users, nullable | |
+| motivo_rechazo | text, nullable | |
+| verificado_por | FK → users, nullable | administrativo, coordinación o ADMIN |
 | verificado_at | timestamp, nullable | |
 
-Índice único sobre (`estudiante_id`, `periodo_academico`): el consentimiento se entrega una sola vez por semestre y se renueva al iniciar el siguiente (RF52).
+Índice único sobre (`firmante_id`, `periodo_academico`): el formato se entrega una sola vez por semestre y se renueva al iniciar el siguiente (RF52).
+
+La columna se llama `firmante_id` y no `estudiante_id` porque lo firma todo el que entra a la práctica, docente incluido (RF51–RF52). Qué roles son esos lo dice `Rol::queFirmanElFormato()`, y de ahí leen la Policy y el Service.
 
 ### 4.8 Contenido público (CMS)
 
@@ -429,7 +436,7 @@ evaluaciones ──< evaluacion_items                (copia congelada)
 evaluaciones ──< evaluacion_estudiantes ──> users (estudiante)
 evaluacion_estudiantes ──< evaluacion_estudiante_item >── evaluacion_items
 
-users ──< consentimientos_estudiante >── consentimientos_plantilla
+users ──< formatos_confidencialidad >── plantillas_confidencialidad
 ```
 
 ---
@@ -442,7 +449,7 @@ users ──< consentimientos_estudiante >── consentimientos_plantilla
 4. **La sala no se elige al solicitar.** Solo aparece en `preparaciones`, completada por el administrativo (RF28, RF36).
 5. **La disponibilidad de inventario no la ve el docente.** El acceso a `items_inventario` se restringe por Policy a administrativo y coordinador (RF40).
 6. **El acceso depende de la vigencia institucional.** `users.estado` se actualiza por sincronización programada, no manualmente (RF19, RF20).
-7. **El consentimiento se renueva cada semestre.** El índice único por estudiante y periodo impide duplicados dentro del mismo semestre y obliga a un registro nuevo al cambiar de periodo (RF52).
+7. **El formato de confidencialidad se renueva cada semestre.** El índice único por firmante y periodo impide duplicados dentro del mismo semestre y obliga a un registro nuevo al cambiar de periodo (RF52). Lo firman estudiantes y docentes.
 
 ---
 
@@ -470,18 +477,20 @@ Resume qué rol ejecuta cada acción sensible. El coordinador hereda todo lo del
 | Ver calendario de reservas aprobadas | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Crear y registrar evaluaciones | | | | ✓ | |
 | Consultar resultados propios | | | | | ✓ |
-| Cargar plantilla de consentimiento | ✓ | | | | |
-| Verificar consentimiento de estudiantes | ✓ | ✓ | ✓ | | |
+| Cargar plantilla del formato de confidencialidad | ✓ | | | | |
+| Entregar el formato de confidencialidad firmado | | | | ✓ | ✓ |
+| Verificar un formato de confidencialidad entregado | ✓ | ✓ | ✓ | | |
 | Generar reportes | ✓ | ✓ | | | |
 
 Notas de implementación:
 
 - El **nivel de fidelidad** (RF39) es el único atributo del inventario reservado al ADMIN. Los administrativos y coordinadores editan el resto de campos, por lo que la restricción se aplica a nivel de campo dentro de la Policy de `ItemInventario`, no al recurso completo.
-- La **verificación del consentimiento** (RF52) la ejerce el administrativo, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso para supervisar. Como el documento firmado lleva datos personales, quien verifica también lo descarga (RNF07).
+- La **verificación del formato de confidencialidad** (RF52) la ejerce el administrativo, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso para supervisar. Como el documento firmado lleva datos personales, quien verifica también lo descarga (RNF07).
+- **Quién firma el formato** (RF51–RF52): estudiantes y docentes, porque el docente dirige la sesión pero está dentro de ella y la autorización de captación de imágenes lo cubre igual. Quien verifica no firma, y nadie entrega el formato en nombre de otro. La pantalla de estado los lista juntos, con el docente marcado, y busca por nombre, correo o código institucional (RF71).
 - La **aprobación de una solicitud** exige que esté en estado `revisada`: sin revisión administrativa previa no aprueba nadie. El ADMIN aprueba en ausencia de la coordinadora, pero no revisa, así que aprobador y revisor nunca son la misma persona.
 - La **lista de insumos por pedir** (RF67) es un documento que se cierra, no una consulta: mientras está en borrador se calcula desde el historial de inventario y las necesidades anotadas, y al cerrarla sus líneas se congelan en `lineas_reposicion`. Es el soporte de una carta institucional, así que no puede cambiar después de entregarse. Lo que se pidió y no existe en el catálogo vive en `necesidades_reposicion` con la llave foránea nula, nunca como un ítem de inventario con cero unidades. Los movimientos de inventario se filtran por rango porque son un flujo del periodo; las necesidades son un saldo pendiente y entran en todos los borradores hasta que alguien las atienda. Cada lista arranca donde terminó la anterior, y el corte por día se calcula en la zona horaria de Colombia.
 - El **estado funcional del inventario** (RF66) es de las unidades, no del ítem: tres contadores en `items_inventario` y el historial de movimientos en `cambios_estado_item`, con cantidad, motivo y responsable. Un `CHECK` garantiza que los contadores sumen el total. No se confunde con la disponibilidad, que no se almacena: se calcula por franja horaria sobre las unidades operativas. La baja descuenta del total, es irreversible y la reserva la Policy a coordinación y ADMIN.
-- La **entrega en físico del consentimiento** (RF53) se modela como dos columnas de `consentimientos_estudiante` (`recibido_fisico_at`, `recibido_fisico_por`), no como un caso del enum `EstadoConsentimiento`. Son dos ejes distintos que se cruzan libremente: el estado describe el ciclo del documento escaneado y la entrega física describe un hecho del mundo que sobrevive a todas sus transiciones. Marcarla es del administrativo, y habilita el ingreso a prácticas igual que un documento verificado.
+- La **entrega en físico del formato** (RF53) se modela como dos columnas de `formatos_confidencialidad` (`recibido_fisico_at`, `recibido_fisico_por`), no como un caso del enum `EstadoFormatoConfidencialidad`. Son dos ejes distintos que se cruzan libremente: el estado describe el ciclo del documento escaneado y la entrega física describe un hecho del mundo que sobrevive a todas sus transiciones. Marcarla es del administrativo, y habilita el ingreso a prácticas igual que un documento verificado. Vale igual para un docente: llega a la misma puerta, con el mismo papel.
 - La **capacidad máxima de estudiantes** de un escenario (RF74) es parte de la gestión de casos clínicos, reservada al ADMIN. Se comprueba en `SolicitudService` al crear la solicitud. Un caso sin capacidad registrada no limita: `null` se lee como "sin definir".
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
 

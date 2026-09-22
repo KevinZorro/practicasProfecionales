@@ -30,19 +30,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Consentimiento informado
+    | Formato de confidencialidad
     |--------------------------------------------------------------------------
     |
-    | Los archivos firmados llevan datos personales de estudiantes, así que
-    | viven en el disco privado y se sirven por ruta protegida con Policy,
-    | nunca por enlace directo (RNF07).
+    | Es el mismo documento que el laboratorio rotula "formato de
+    | confidencialidad" en el Drive, e incluye la autorización de captación
+    | de imágenes. Lo firma todo el que entra a la práctica: estudiantes y
+    | docentes (RF51-RF52).
+    |
+    | Los archivos firmados llevan datos personales, así que viven en el
+    | disco privado y se sirven por ruta protegida con Policy, nunca por
+    | enlace directo (RNF07).
     |
     */
 
-    'consentimiento' => [
+    'confidencialidad' => [
         'disco' => 'local',
-        'directorio_plantillas' => 'consentimientos/plantillas',
-        'directorio_firmados' => 'consentimientos/firmados',
+        'directorio_plantillas' => 'confidencialidad/plantillas',
+        'directorio_firmados' => 'confidencialidad/firmados',
         'tamano_maximo_kb' => 5120,
     ],
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\EstadoConsentimiento;
 use App\Enums\EstadoEvaluacion;
+use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\EstadoItemInventario;
 use App\Enums\EstadoPreparacion;
 use App\Enums\EstadoSolicitud;
@@ -21,17 +21,17 @@ use App\Models\Capacidad;
 use App\Models\CasoClinico;
 use App\Models\Certificacion;
 use App\Models\ConfiguracionLanding;
-use App\Models\ConsentimientoEstudiante;
-use App\Models\ConsentimientoPlantilla;
 use App\Models\EstadisticaLanding;
 use App\Models\Evaluacion;
 use App\Models\EvaluacionEstudiante;
 use App\Models\Evento;
+use App\Models\FormatoConfidencialidad;
 use App\Models\GaleriaFoto;
 use App\Models\ItemChecklist;
 use App\Models\ItemInventario;
 use App\Models\Materia;
 use App\Models\PerfilDocente;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Sala;
 use App\Models\Solicitud;
@@ -73,7 +73,7 @@ class DatosPruebaSeeder extends Seeder
             $casos = $this->crearCasosClinicos($materias, $capacidades, $inventario);
             $tipos = $this->crearTiposEvaluacion($materias);
 
-            $this->crearConsentimientos($usuarios['admin'], $usuarios['estudiantes']);
+            $this->crearFormatosDeConfidencialidad($usuarios['admin']);
             $this->crearSolicitudes($usuarios, $materias, $casos, $inventario, $salas);
             $this->crearEvaluacion($usuarios, $tipos);
             $this->crearContenidoPublico($usuarios['coordinadora']);
@@ -451,35 +451,44 @@ class DatosPruebaSeeder extends Seeder
         ]);
     }
 
-    /** @param Collection<int, User> $estudiantes */
-    private function crearConsentimientos(User $admin, Collection $estudiantes): void
+    /**
+     * El formato lo firma todo el que entra a la práctica: estudiantes y
+     * docentes (RF51-RF52).
+     *
+     * Los firmantes se consultan por rol y no se reciben en una colección,
+     * porque la coordinadora es además docente y con dos listas sueltas se
+     * quedaba sin formato mientras la pantalla sí se lo pedía.
+     */
+    private function crearFormatosDeConfidencialidad(User $admin): void
     {
-        $plantilla = ConsentimientoPlantilla::create([
-            'nombre' => 'Consentimiento informado de prácticas de simulación',
-            'archivo_path' => 'consentimientos/plantillas/consentimiento-2026-2-v2.pdf',
+        $plantilla = PlantillaConfidencialidad::create([
+            'nombre' => 'Formato de confidencialidad y autorización de captación de imágenes',
+            'archivo_path' => 'confidencialidad/plantillas/formato-confidencialidad-2026-2-v2.pdf',
             'version' => '2.0',
             'activo' => true,
             'subido_por' => $admin->id,
         ]);
 
-        // Un consentimiento por estudiante y periodo: el índice único lo exige.
-        foreach ($estudiantes as $indice => $estudiante) {
+        // Un formato por persona y periodo: el índice único lo exige.
+        $firmantes = User::role(Rol::queFirmanElFormato())->orderBy('id')->get();
+
+        foreach ($firmantes as $indice => $firmante) {
             $estado = match ($indice % 3) {
-                0 => EstadoConsentimiento::Verificado,
-                1 => EstadoConsentimiento::Cargado,
-                default => EstadoConsentimiento::Pendiente,
+                0 => EstadoFormatoConfidencialidad::Verificado,
+                1 => EstadoFormatoConfidencialidad::Cargado,
+                default => EstadoFormatoConfidencialidad::Pendiente,
             };
 
-            ConsentimientoEstudiante::create([
-                'estudiante_id' => $estudiante->id,
+            FormatoConfidencialidad::create([
+                'firmante_id' => $firmante->id,
                 'plantilla_id' => $plantilla->id,
                 'periodo_academico' => self::PERIODO_ACADEMICO,
-                'archivo_firmado_path' => $estado === EstadoConsentimiento::Pendiente
+                'archivo_firmado_path' => $estado === EstadoFormatoConfidencialidad::Pendiente
                     ? null
-                    : 'consentimientos/firmados/'.$estudiante->id.'-2026-2.pdf',
+                    : 'confidencialidad/firmados/'.$firmante->id.'-2026-2.pdf',
                 'estado' => $estado,
-                'verificado_por' => $estado === EstadoConsentimiento::Verificado ? $admin->id : null,
-                'verificado_at' => $estado === EstadoConsentimiento::Verificado ? now() : null,
+                'verificado_por' => $estado === EstadoFormatoConfidencialidad::Verificado ? $admin->id : null,
+                'verificado_at' => $estado === EstadoFormatoConfidencialidad::Verificado ? now() : null,
             ]);
         }
     }

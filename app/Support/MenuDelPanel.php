@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\CasoClinico;
-use App\Models\ConsentimientoEstudiante;
-use App\Models\ConsentimientoPlantilla;
 use App\Models\Evaluacion;
+use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
 use App\Models\ListaDeReposicion;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -99,28 +99,28 @@ final class MenuDelPanel
                 sobre: ListaDeReposicion::class,
             ),
             new SeccionDelPanel(
-                clave: 'consentimientos',
-                etiqueta: 'Consentimientos',
-                ruta: 'panel.consentimientos',
+                clave: 'formatos-confidencialidad',
+                etiqueta: 'Formatos de confidencialidad',
+                ruta: 'panel.formatos-confidencialidad',
                 icono: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
                 permiso: 'viewAny',
-                sobre: ConsentimientoEstudiante::class,
+                sobre: FormatoConfidencialidad::class,
             ),
             new SeccionDelPanel(
-                clave: 'mi-consentimiento',
-                etiqueta: 'Mi consentimiento',
-                ruta: 'panel.mi-consentimiento',
+                clave: 'mi-formato',
+                etiqueta: 'Mi formato',
+                ruta: 'panel.mi-formato',
                 icono: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
                 permiso: 'create',
-                sobre: ConsentimientoEstudiante::class,
+                sobre: FormatoConfidencialidad::class,
             ),
             new SeccionDelPanel(
-                clave: 'plantillas-consentimiento',
-                etiqueta: 'Plantillas de consentimiento',
-                ruta: 'panel.plantillas-consentimiento',
+                clave: 'plantillas-confidencialidad',
+                etiqueta: 'Plantillas de confidencialidad',
+                ruta: 'panel.plantillas-confidencialidad',
                 icono: 'M12 4v16m8-8H4',
                 permiso: 'create',
-                sobre: ConsentimientoPlantilla::class,
+                sobre: PlantillaConfidencialidad::class,
             ),
             new SeccionDelPanel(
                 clave: 'casos-clinicos',

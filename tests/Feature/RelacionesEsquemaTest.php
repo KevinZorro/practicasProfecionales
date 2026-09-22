@@ -7,10 +7,10 @@ use App\Enums\Rol;
 use App\Enums\TipoItemInventario;
 use App\Enums\TipoSesion;
 use App\Models\CasoClinico;
-use App\Models\ConsentimientoEstudiante;
-use App\Models\ConsentimientoPlantilla;
 use App\Models\Evaluacion;
+use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
 use App\Models\TipoEvaluacion;
@@ -85,37 +85,37 @@ it('no permite dos evaluaciones sobre la misma solicitud', function (): void {
         ->toThrow(QueryException::class);
 });
 
-it('aplica el índice único de consentimiento por estudiante y periodo', function (): void {
+it('aplica el índice único de formato por firmante y periodo', function (): void {
     $estudiante = User::factory()->estudiante()->create();
-    $plantilla = ConsentimientoPlantilla::factory()->create();
+    $plantilla = PlantillaConfidencialidad::factory()->create();
 
-    ConsentimientoEstudiante::factory()->create([
-        'estudiante_id' => $estudiante->id,
+    FormatoConfidencialidad::factory()->create([
+        'firmante_id' => $estudiante->id,
         'plantilla_id' => $plantilla->id,
         'periodo_academico' => '2026-2',
     ]);
 
-    expect(fn () => ConsentimientoEstudiante::factory()->create([
-        'estudiante_id' => $estudiante->id,
+    expect(fn () => FormatoConfidencialidad::factory()->create([
+        'firmante_id' => $estudiante->id,
         'plantilla_id' => $plantilla->id,
         'periodo_academico' => '2026-2',
     ]))->toThrow(QueryException::class);
 });
 
-it('permite un consentimiento nuevo al cambiar de periodo académico', function (): void {
+it('permite un formato nuevo al cambiar de periodo académico', function (): void {
     $estudiante = User::factory()->estudiante()->create();
-    $plantilla = ConsentimientoPlantilla::factory()->create();
+    $plantilla = PlantillaConfidencialidad::factory()->create();
 
     foreach (['2026-1', '2026-2', '2027-1'] as $periodo) {
-        ConsentimientoEstudiante::factory()->create([
-            'estudiante_id' => $estudiante->id,
+        FormatoConfidencialidad::factory()->create([
+            'firmante_id' => $estudiante->id,
             'plantilla_id' => $plantilla->id,
             'periodo_academico' => $periodo,
         ]);
     }
 
-    expect($estudiante->consentimientos)->toHaveCount(3)
-        ->and(ConsentimientoEstudiante::delPeriodo('2026-2')->where('estudiante_id', $estudiante->id)->count())->toBe(1);
+    expect($estudiante->formatosDeConfidencialidad)->toHaveCount(3)
+        ->and(FormatoConfidencialidad::delPeriodo('2026-2')->where('firmante_id', $estudiante->id)->count())->toBe(1);
 });
 
 it('encadena solicitud, preparación y evaluación sobre el mismo escenario', function (): void {

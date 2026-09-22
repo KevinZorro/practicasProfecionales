@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace App\Livewire\Consentimiento;
+namespace App\Livewire\Confidencialidad;
 
-use App\Enums\EstadoConsentimiento;
-use App\Exceptions\ConsentimientoInvalido;
-use App\Models\ConsentimientoEstudiante;
-use App\Services\ConsentimientoService;
+use App\Enums\EstadoFormatoConfidencialidad;
+use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Models\FormatoConfidencialidad;
+use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Verificación de los consentimientos entregados (RF52).
+ * Verificación de los formatos entregados (RF52).
  *
  * Solo coordinador y ADMIN. El administrativo queda fuera, y quien lo decide
  * es la Policy: aquí no se comprueba ningún rol.
@@ -24,7 +24,7 @@ final class BandejaVerificacion extends Component
     use WithPagination;
 
     #[Url(as: 'estado', keep: false)]
-    public string $estado = EstadoConsentimiento::Cargado->value;
+    public string $estado = EstadoFormatoConfidencialidad::Cargado->value;
 
     #[Url(as: 'periodo', keep: false)]
     public string $periodo = '';
@@ -35,10 +35,10 @@ final class BandejaVerificacion extends Component
 
     public ?string $errorDeRegla = null;
 
-    public function mount(ConsentimientoService $consentimientos): void
+    public function mount(ConfidencialidadService $confidencialidad): void
     {
         if ($this->periodo === '') {
-            $this->periodo = $consentimientos->periodoVigente();
+            $this->periodo = $confidencialidad->periodoVigente();
         }
     }
 
@@ -64,24 +64,24 @@ final class BandejaVerificacion extends Component
         $this->errorDeRegla = null;
     }
 
-    public function verificar(int $entregaId, ConsentimientoService $consentimientos): void
+    public function verificar(int $entregaId, ConfidencialidadService $confidencialidad): void
     {
         $entrega = $this->entrega($entregaId);
         $this->authorize('verificar', $entrega);
         $this->errorDeRegla = null;
 
         try {
-            $consentimientos->verificar($entrega, Auth::user());
-        } catch (ConsentimientoInvalido $invalido) {
+            $confidencialidad->verificar($entrega, Auth::user());
+        } catch (FormatoConfidencialidadInvalido $invalido) {
             $this->errorDeRegla = $invalido->getMessage();
 
             return;
         }
 
-        session()->flash('estado', 'Consentimiento verificado.');
+        session()->flash('estado', 'Formato verificado.');
     }
 
-    public function rechazar(int $entregaId, ConsentimientoService $consentimientos): void
+    public function rechazar(int $entregaId, ConfidencialidadService $confidencialidad): void
     {
         $entrega = $this->entrega($entregaId);
         $this->authorize('rechazar', $entrega);
@@ -89,30 +89,30 @@ final class BandejaVerificacion extends Component
         $this->errorDeRegla = null;
 
         try {
-            $consentimientos->rechazar($entrega, Auth::user(), $this->motivoRechazo ?: null);
-        } catch (ConsentimientoInvalido $invalido) {
+            $confidencialidad->rechazar($entrega, Auth::user(), $this->motivoRechazo ?: null);
+        } catch (FormatoConfidencialidadInvalido $invalido) {
             $this->errorDeRegla = $invalido->getMessage();
 
             return;
         }
 
         $this->cancelar();
-        session()->flash('estado', 'Consentimiento devuelto al estudiante para que lo vuelva a subir.');
+        session()->flash('estado', 'Formato devuelto para que lo vuelvan a subir.');
     }
 
-    public function render(ConsentimientoService $consentimientos): mixed
+    public function render(ConfidencialidadService $confidencialidad): mixed
     {
-        return view('livewire.consentimiento.bandeja-verificacion', [
-            'entregas' => $consentimientos->bandeja(
-                EstadoConsentimiento::tryFrom($this->estado),
+        return view('livewire.confidencialidad.bandeja-verificacion', [
+            'entregas' => $confidencialidad->bandeja(
+                EstadoFormatoConfidencialidad::tryFrom($this->estado),
                 $this->periodo,
             ),
-            'estados' => EstadoConsentimiento::cases(),
+            'estados' => EstadoFormatoConfidencialidad::cases(),
         ]);
     }
 
-    private function entrega(int $entregaId): ConsentimientoEstudiante
+    private function entrega(int $entregaId): FormatoConfidencialidad
     {
-        return ConsentimientoEstudiante::with('estudiante')->findOrFail($entregaId);
+        return FormatoConfidencialidad::with('firmante')->findOrFail($entregaId);
     }
 }

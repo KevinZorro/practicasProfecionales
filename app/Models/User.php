@@ -90,10 +90,17 @@ class User extends Authenticatable
         return $this->hasMany(EvaluacionEstudiante::class, 'estudiante_id');
     }
 
-    /** @return HasMany<ConsentimientoEstudiante, $this> */
-    public function consentimientos(): HasMany
+    /**
+     * Los formatos de confidencialidad que ha firmado, uno por periodo.
+     *
+     * Lo firma todo el que entra a la práctica, así que esta relación vale
+     * igual para un estudiante y para un docente (RF51-RF52).
+     *
+     * @return HasMany<FormatoConfidencialidad, $this>
+     */
+    public function formatosDeConfidencialidad(): HasMany
     {
-        return $this->hasMany(ConsentimientoEstudiante::class, 'estudiante_id');
+        return $this->hasMany(FormatoConfidencialidad::class, 'firmante_id');
     }
 
     /** @return HasOne<PerfilDocente, $this> */

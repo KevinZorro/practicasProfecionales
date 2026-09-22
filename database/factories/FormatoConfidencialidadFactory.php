@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\EstadoConsentimiento;
-use App\Models\ConsentimientoEstudiante;
-use App\Models\ConsentimientoPlantilla;
+use App\Enums\EstadoFormatoConfidencialidad;
+use App\Models\FormatoConfidencialidad;
+use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ConsentimientoEstudiante>
+ * @extends Factory<FormatoConfidencialidad>
  */
-class ConsentimientoEstudianteFactory extends Factory
+class FormatoConfidencialidadFactory extends Factory
 {
-    protected $model = ConsentimientoEstudiante::class;
+    protected $model = FormatoConfidencialidad::class;
 
     /**
      * @return array<string, mixed>
@@ -23,13 +23,13 @@ class ConsentimientoEstudianteFactory extends Factory
     public function definition(): array
     {
         return [
-            'estudiante_id' => User::factory(),
-            'plantilla_id' => ConsentimientoPlantilla::factory(),
+            'firmante_id' => User::factory(),
+            'plantilla_id' => PlantillaConfidencialidad::factory(),
             'periodo_academico' => '2026-2',
             'archivo_firmado_path' => null,
             'recibido_fisico_at' => null,
             'recibido_fisico_por' => null,
-            'estado' => EstadoConsentimiento::Pendiente,
+            'estado' => EstadoFormatoConfidencialidad::Pendiente,
             'verificado_por' => null,
             'verificado_at' => null,
         ];
@@ -38,16 +38,16 @@ class ConsentimientoEstudianteFactory extends Factory
     public function cargado(): static
     {
         return $this->state(fn (array $atributos): array => [
-            'archivo_firmado_path' => 'consentimientos/firmados/'.$this->faker->uuid().'.pdf',
-            'estado' => EstadoConsentimiento::Cargado,
+            'archivo_firmado_path' => 'confidencialidad/firmados/'.$this->faker->uuid().'.pdf',
+            'estado' => EstadoFormatoConfidencialidad::Cargado,
         ]);
     }
 
     public function verificado(): static
     {
         return $this->state(fn (array $atributos): array => [
-            'archivo_firmado_path' => 'consentimientos/firmados/'.$this->faker->uuid().'.pdf',
-            'estado' => EstadoConsentimiento::Verificado,
+            'archivo_firmado_path' => 'confidencialidad/firmados/'.$this->faker->uuid().'.pdf',
+            'estado' => EstadoFormatoConfidencialidad::Verificado,
             'verificado_por' => User::factory(),
             'verificado_at' => now(),
         ]);
