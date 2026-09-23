@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
+use Livewire\Livewire;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -29,6 +30,13 @@ use Symfony\Component\HttpFoundation\Response;
  * administrador dejaría al usuario fuera del panel sin explicación, y
  * caerse al rol legítimo es igual de seguro —de la manipulación no sale
  * ningún permiso extra— y mucho menos desconcertante.
+ *
+ * La excepción son las acciones de Livewire. Corre también en ellas
+ * (middleware persistente, AppServiceProvider), porque van a
+ * /livewire/update y no pasan por las rutas del panel. Si el rol con el que
+ * se abrió la pantalla ya no vale, la acción se corta en vez de caer a otro
+ * rol: el botón se pulsó con un rol que ya no se tiene. Al recargar, la
+ * navegación normal lo lleva a su rol legítimo.
  */
 final class EstablecerRolActivo
 {
@@ -56,6 +64,14 @@ final class EstablecerRolActivo
             abort(403, 'Tu cuenta todavía no tiene ningún rol asignado en el laboratorio.');
         }
 
+        if (Livewire::isLivewireRequest() && $this->rolActivo->seRetiroElDeLaSesion($usuario)) {
+            abort(403, 'El rol con el que abriste esta pantalla ya no está vigente. Recarga la página.');
+        }
+
+        // Se guarda aunque sea el de siempre: es lo que permite reconocer,
+        // en la acción siguiente, que la pantalla se abrió con un rol que
+        // después se retiró.
+        $this->rolActivo->establecer($usuario, $rol);
         $this->rolActivo->aplicar($usuario, $rol);
         $this->compartirConLasVistas($usuario, $rol);
 

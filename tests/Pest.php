@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 /*
@@ -27,3 +28,45 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->in('Unit');
+
+/*
+|--------------------------------------------------------------------------
+| Acciones de Livewire por HTTP
+|--------------------------------------------------------------------------
+|
+| Livewire::test() se salta los middleware, así que no sirve para probar
+| quién puede pulsar un botón de una pantalla ya abierta. Estas dos funciones
+| hacen lo que hace el navegador: abrir la página y reenviar la instantánea
+| del componente a /livewire/update, donde Livewire vuelve a aplicar los
+| middleware persistentes (AppServiceProvider).
+|
+*/
+
+/**
+ * Abre la pantalla con el usuario autenticado y devuelve la instantánea de
+ * su primer componente de Livewire.
+ */
+function instantaneaDeLaPantalla(string $url): string
+{
+    $html = test()->get($url)->assertOk()->getContent();
+
+    preg_match('/wire:snapshot="([^"]+)"/', (string) $html, $coincidencia);
+
+    return html_entity_decode($coincidencia[1]);
+}
+
+/**
+ * Lo que manda el navegador al pulsar un botón de un componente ya abierto.
+ *
+ * @param  list<mixed>  $parametros
+ */
+function accionDeLivewire(string $instantanea, string $metodo, array $parametros = []): TestResponse
+{
+    return test()->withHeaders(['X-Livewire' => 'true'])->postJson('/livewire/update', [
+        'components' => [[
+            'snapshot' => $instantanea,
+            'updates' => [],
+            'calls' => [['path' => '', 'method' => $metodo, 'params' => $parametros]],
+        ]],
+    ]);
+}

@@ -45,7 +45,10 @@ it('arranca en el rol más amplio de los asignados', function (): void {
 
     $this->actingAs($coordinadoraDocente)->get(route('panel.inicio'));
 
-    expect(session(RolActivo::CLAVE_DE_SESION))->toBeNull()
+    // Queda guardado aunque no lo haya elegido: es el rol con el que se abrió
+    // la pantalla, y las acciones de Livewire lo necesitan para saber si
+    // sigue vigente (RolActivoEnLivewireTest).
+    expect(session(RolActivo::CLAVE_DE_SESION))->toBe(Rol::Coordinador->value)
         ->and(app(RolActivo::class)->actual($coordinadoraDocente))->toBe(Rol::Coordinador);
 });
 
@@ -99,7 +102,7 @@ it('no deja asumir un rol que no se tiene asignado', function (): void {
         ->post(route('panel.rol-activo'), ['rol' => Rol::Admin->value])
         ->assertForbidden();
 
-    expect(session(RolActivo::CLAVE_DE_SESION))->toBeNull();
+    expect(session(RolActivo::CLAVE_DE_SESION))->toBe(Rol::Docente->value);
 });
 
 it('ignora un rol metido a mano en la sesión y cae al que sí corresponde', function (): void {

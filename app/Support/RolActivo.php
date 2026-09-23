@@ -121,6 +121,22 @@ final class RolActivo
     }
 
     /**
+     * Si la sesión trae un rol que el usuario ya no tiene vigente: se lo
+     * revocaron o le venció mientras tenía el panel abierto.
+     *
+     * actual() resuelve ese caso cayendo a otro rol, que es lo correcto al
+     * navegar. Una acción desde una pantalla ya abierta es distinta: se
+     * pidió con el rol que la abrió, y ejecutarla con otro sería actuar en
+     * nombre de un rol que el usuario no eligió.
+     */
+    public function seRetiroElDeLaSesion(User $usuario): bool
+    {
+        $enSesion = Rol::tryFrom((string) $this->sesion->get(self::CLAVE_DE_SESION));
+
+        return $enSesion !== null && ! in_array($enSesion, $this->disponibles($usuario), true);
+    }
+
+    /**
      * Guarda el rol elegido. Devuelve false si el usuario no lo tiene
      * vigente: nadie asume un rol que no le corresponde, ni uno que ya
      * venció, venga la petición de donde venga.
