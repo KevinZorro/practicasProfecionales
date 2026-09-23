@@ -134,9 +134,14 @@ jobs:
       # Que el contenedor esté arriba no prueba que procese: se encola un job
       # y se espera a que la tabla jobs quede vacía. Es el fallo que dejaba
       # sin enviar el correo de resultado de las solicitudes (RF33).
+      #
+      # Se encola un comando de artisan y no un closure: un closure escrito
+      # dentro de tinker no se puede serializar y el job ni llega a la cola.
+      # Y se mira failed_jobs, porque un job que el trabajador hace fallar
+      # también deja vacía la tabla jobs.
       - name: Comprobar que el trabajador de la cola procesa
         run: |
-          docker compose exec -T app php artisan tinker --execute="dispatch(function () {});"
+          docker compose exec -T app php artisan tinker --execute="Illuminate\Support\Facades\Artisan::queue('about');"
           for _ in $(seq 1 24); do
             pendientes=$(docker compose exec -T app php artisan tinker --execute="echo DB::table('jobs')->count();" | tr -dc '0-9')
             [ "$pendientes" = "0" ] && break
@@ -144,6 +149,12 @@ jobs:
           done
           if [ "$pendientes" != "0" ]; then
             echo "::error::quedan $pendientes jobs sin procesar: el servicio queue no está trabajando"
+            docker compose logs queue --tail=50
+            exit 1
+          fi
+          fallidos=$(docker compose exec -T app php artisan tinker --execute="echo DB::table('failed_jobs')->count();" | tr -dc '0-9')
+          if [ "$fallidos" != "0" ]; then
+            echo "::error::el trabajador procesó el job pero falló ($fallidos en failed_jobs)"
             docker compose logs queue --tail=50
             exit 1
           fi
