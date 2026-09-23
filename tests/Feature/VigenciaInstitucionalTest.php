@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Services\AccesoService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Testing\TestResponse;
 
 /*
  * Regla 8 del CLAUDE.md: el acceso depende de la vigencia institucional
@@ -19,31 +18,6 @@ use Illuminate\Testing\TestResponse;
 beforeEach(function (): void {
     $this->seed(RolSeeder::class);
 });
-
-/**
- * Pide la pantalla de roles como el ADMIN y devuelve la instantánea del
- * componente, que es lo que el navegador reenvía en cada acción.
- */
-function instantaneaDeLaPantallaDeRoles(): string
-{
-    $html = test()->get(route('panel.usuarios'))->assertOk()->getContent();
-
-    preg_match('/wire:snapshot="([^"]+)"/', $html, $coincidencia);
-
-    return html_entity_decode($coincidencia[1]);
-}
-
-/** Lo que manda el navegador al pulsar un botón de un componente ya abierto. */
-function accionDeLivewire(string $instantanea, string $metodo): TestResponse
-{
-    return test()->withHeaders(['X-Livewire' => 'true'])->postJson('/livewire/update', [
-        'components' => [[
-            'snapshot' => $instantanea,
-            'updates' => [],
-            'calls' => [['path' => '', 'method' => $metodo, 'params' => []]],
-        ]],
-    ]);
-}
 
 // ---------------------------------------------------------------------
 // La regla
@@ -93,7 +67,7 @@ it('no deja actuar en una pantalla que ya estaba abierta cuando se desactivó', 
     // Livewire::test(), que se salta los middleware.
     $admin = User::factory()->admin()->create();
     $this->actingAs($admin);
-    $instantanea = instantaneaDeLaPantallaDeRoles();
+    $instantanea = instantaneaDeLaPantalla(route('panel.usuarios'));
 
     $admin->forceFill(['estado' => EstadoUsuario::Inactivo])->save();
 
@@ -105,7 +79,7 @@ it('sí deja actuar en esa misma pantalla mientras sigue activo', function (): v
     // Control del test anterior: prueba que la petición que arma el test es
     // válida, así que el 403 de arriba viene de la regla y no del armado.
     $this->actingAs(User::factory()->admin()->create());
-    $instantanea = instantaneaDeLaPantallaDeRoles();
+    $instantanea = instantaneaDeLaPantalla(route('panel.usuarios'));
 
     accionDeLivewire($instantanea, 'cerrar')->assertOk();
 });
