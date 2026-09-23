@@ -187,6 +187,9 @@ it('avisa al docente por correo cuando se aprueba', function (): void {
 
     Mail::assertSent(SolicitudAprobadaMail::class, fn (SolicitudAprobadaMail $correo): bool => $correo->hasTo($this->docente->email)
         && $correo->solicitud->is($solicitud));
+    // La cantidad exacta, no "al menos uno": con el listener registrado dos
+    // veces el docente recibía dos correos y assertSent sin número pasaba.
+    Mail::assertSent(SolicitudAprobadaMail::class, 1);
     Mail::assertNotSent(SolicitudRechazadaMail::class);
 });
 
@@ -203,6 +206,7 @@ it('avisa al docente por correo cuando se rechaza, con el motivo', function (): 
         return $correo->hasTo($this->docente->email)
             && str_contains($renderizado, 'No hay sala disponible.');
     });
+    Mail::assertSent(SolicitudRechazadaMail::class, 1);
     Mail::assertNotSent(SolicitudAprobadaMail::class);
 });
 
@@ -215,9 +219,16 @@ it('despacha los eventos de resolución', function (): void {
     $this->servicio->aprobar($aprobada, $this->coordinadora);
     $this->servicio->rechazar($rechazada, $this->coordinadora);
 
-    Event::assertDispatched(SolicitudAprobada::class);
-    Event::assertDispatched(SolicitudRechazada::class);
+    Event::assertDispatched(SolicitudAprobada::class, 1);
+    Event::assertDispatched(SolicitudRechazada::class, 1);
 });
+
+it('escucha cada resultado de solicitud con un solo listener', function (string $evento): void {
+    // Descubrimiento automático más registro a mano dejaban el listener dos
+    // veces. Se comprueba el cableado, no solo el correo: así también cae si
+    // mañana alguien añade un segundo registro sin pasar por Mail.
+    expect(app('events')->getListeners($evento))->toHaveCount(1);
+})->with([SolicitudAprobada::class, SolicitudRechazada::class]);
 
 it('envía el correo en cola para no bloquear la respuesta', function (): void {
     expect(app(EnviarCorreoResultadoSolicitud::class))

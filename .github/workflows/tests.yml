@@ -106,13 +106,13 @@ jobs:
       - name: Construir la imagen de PHP
         run: docker compose build app
 
-      - name: Levantar los cuatro servicios
+      - name: Levantar los servicios
         run: docker compose up -d
 
-      - name: Comprobar que los cuatro servicios están arriba
+      - name: Comprobar que los servicios están arriba
         run: |
           docker compose ps
-          for servicio in app nginx db node; do
+          for servicio in app queue nginx db node; do
             estado=$(docker compose ps --status running --services | grep -Fx "$servicio" || true)
             if [ -z "$estado" ]; then
               echo "::error::el servicio $servicio no está en ejecución"
@@ -130,6 +130,24 @@ jobs:
           docker compose exec -T app php artisan key:generate
           docker compose exec -T app php artisan migrate --force
           docker compose exec -T app php artisan --version
+
+      # Que el contenedor esté arriba no prueba que procese: se encola un job
+      # y se espera a que la tabla jobs quede vacía. Es el fallo que dejaba
+      # sin enviar el correo de resultado de las solicitudes (RF33).
+      - name: Comprobar que el trabajador de la cola procesa
+        run: |
+          docker compose exec -T app php artisan tinker --execute="dispatch(function () {});"
+          for _ in $(seq 1 24); do
+            pendientes=$(docker compose exec -T app php artisan tinker --execute="echo DB::table('jobs')->count();" | tr -dc '0-9')
+            [ "$pendientes" = "0" ] && break
+            sleep 5
+          done
+          if [ "$pendientes" != "0" ]; then
+            echo "::error::quedan $pendientes jobs sin procesar: el servicio queue no está trabajando"
+            docker compose logs queue --tail=50
+            exit 1
+          fi
+          echo "La cola se vació: el trabajador procesa"
 
       # La página de bienvenida usa @vite y public/build no está versionado,
       # así que sin el servidor de desarrollo de Vite la respuesta sería un 500.

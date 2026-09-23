@@ -13,6 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    // Sin descubrimiento automático de listeners: AppServiceProvider los
+    // registra a mano para que el enlace evento-listener se lea de un
+    // vistazo. Con los dos a la vez cada listener quedaba registrado dos
+    // veces y el docente recibía dos correos por cada aprobación (RF33).
+    ->withEvents(discover: false)
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,

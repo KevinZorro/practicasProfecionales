@@ -58,7 +58,7 @@ sed -i "s/^UID=.*/UID=$(id -u)/;s/^GID=.*/GID=$(id -g)/" .env
 # 3. Construir la imagen de PHP (la primera vez tarda varios minutos)
 docker compose build
 
-# 4. Levantar los cuatro servicios: app, nginx, db y node
+# 4. Levantar los cinco servicios: app, queue, nginx, db y node
 docker compose up -d
 
 # 5. Instalar las dependencias de PHP
@@ -76,12 +76,17 @@ Listo. La aplicación queda en **http://localhost**.
 El servicio `node` instala las dependencias de JavaScript y arranca Vite solo,
 así que no hace falta ejecutar `npm install` a mano.
 
+El servicio `queue` procesa la cola: es el que envía los correos (por ejemplo,
+el aviso al docente cuando se aprueba su solicitud). Espera a que exista
+`vendor/` y, hasta que se crean las tablas en el paso 7, se reinicia solo; es
+normal. Si un correo no llega, lo primero es `docker compose logs queue`.
+
 ---
 
 ## Verificar que quedó bien
 
 ```bash
-# Los cuatro servicios en estado "Up"
+# Los cinco servicios en estado "Up"
 docker compose ps
 
 # Debe mostrar "Laravel Framework 12.x"

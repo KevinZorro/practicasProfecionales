@@ -23,6 +23,34 @@ services:
     networks:
       - laboratorio
 
+  # Trabajador de la cola. Sin él, todo lo que va en cola se queda en la
+  # tabla jobs para siempre: el correo al docente con el resultado de su
+  # solicitud (RF33) nunca salía. Los tests no lo ven porque corren con la
+  # cola en "sync".
+  #
+  # queue:listen y no queue:work: en desarrollo el código cambia, y
+  # queue:work lo carga una vez y seguiría ejecutando el listener viejo. En
+  # producción se usará queue:work, que es más rápido.
+  #
+  # Espera a vendor/ porque "composer install" corre después de levantar los
+  # contenedores; si falta la tabla jobs (antes de migrar) sale y se reinicia.
+  queue:
+    image: laboratorio-simulacion/app
+    container_name: laboratorio_queue
+    restart: unless-stopped
+    user: www-data
+    working_dir: /var/www/html
+    command: sh -c "until [ -f vendor/autoload.php ]; do sleep 5; done; exec php artisan queue:listen --tries=3 --timeout=90"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
   # Servidor web: entrega los estáticos y delega el PHP al servicio app.
   nginx:
     image: nginx:alpine
