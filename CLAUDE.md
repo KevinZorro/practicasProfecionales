@@ -124,6 +124,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `ConfidencialidadService` | Periodo académico vigente, estado del formato de confidencialidad, bloqueo de prácticas |
+| `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
@@ -160,6 +161,10 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
    **PENDIENTE con el cliente:** qué significa que a un docente le falte el formato. Bloquear a un estudiante lo deja fuera de la práctica; bloquear al docente cancela la clase. Hoy nadie llama a `puedeParticiparEnPracticas()`, así que la pregunta no aprieta todavía, pero no la resuelvas por tu cuenta cuando llegue el RF68-RF70.
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
+
+   **Se decide en un solo sitio, `AccesoService::puedeEntrar()`, y se comprueba en dos puertas.** La entrada —hoy el acceso de desarrollo, mañana el controlador de Google— no deja pasar a un inactivo. Y el middleware `VerificarUsuarioActivo` corta en cada petición a quien se desactiva con la sesión abierta: cierra la sesión y después responde 403.
+
+   **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 
 9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador (o el ADMIN, si coordinación no está) aprueba, o coordinador rechaza → administrativo asigna sala y prepara. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
 

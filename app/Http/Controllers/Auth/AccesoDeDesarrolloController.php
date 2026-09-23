@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AccesoService;
 use App\Support\RolActivo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,16 +34,24 @@ final class AccesoDeDesarrolloController extends Controller
         ]);
     }
 
-    public function entrar(Request $peticion, RolActivo $rolActivo): RedirectResponse
+    public function entrar(Request $peticion, RolActivo $rolActivo, AccesoService $acceso): RedirectResponse
     {
         $datos = $peticion->validate([
             'usuario' => ['required', 'integer', 'exists:users,id'],
         ]);
 
+        $usuario = User::findOrFail($datos['usuario']);
+
+        // Regla 8: la misma comprobación que hará el controlador de Google.
+        // Así se puede probar ya, sin esperar a las credenciales.
+        if (! $acceso->puedeEntrar($usuario)) {
+            return back()->withErrors(['usuario' => $acceso->motivoDelRechazo()]);
+        }
+
         $peticion->session()->invalidate();
         $peticion->session()->regenerateToken();
 
-        Auth::login(User::findOrFail($datos['usuario']));
+        Auth::login($usuario);
         $rolActivo->olvidar();
 
         return redirect()->route('panel.inicio');
