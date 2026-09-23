@@ -64,6 +64,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Calendario | FullCalendar 6 |
 | Exportación | barryvdh/laravel-dompdf, maatwebsite/excel |
 | Tests | Pest |
+| Análisis estático | Larastan, nivel 6, con línea base (ver §7) |
 | Contenedores | Docker + Docker Compose |
 
 **El panel interno es Livewire puro.** Todas las pantallas que existen hoy están hechas con componentes Livewire y Blade.
@@ -277,7 +278,15 @@ Cada tarea termina con tests que la prueben. **Una funcionalidad sin test no est
 - Usa factories, nunca datos escritos a mano dentro del test.
 - Los tests describen comportamiento del dominio, no implementación: `un docente no puede evaluar sin escenario aprobado`.
 
-Antes de dar una tarea por terminada: `php artisan test` en verde.
+Antes de dar una tarea por terminada: `php artisan test` y `vendor/bin/phpstan analyse` en verde.
+
+### Análisis estático
+
+Larastan corre en la CI a nivel 6. `phpstan-baseline.neon` congela los errores que ya existían al instalarlo, así que la CI cae solo con los nuevos.
+
+- **La línea base es deuda y solo puede encoger.** Al tocar un archivo, arregla sus errores de la línea base y regenérala con `vendor/bin/phpstan analyse --generate-baseline=phpstan-baseline.neon`. Si arreglas uno sin regenerarla, el análisis falla a propósito.
+- **Nunca metas un error nuevo en la línea base** para que pase la CI. Se arregla.
+- **Los falsos positivos no son deuda.** Van en `ignoreErrors` de `phpstan.neon`, cada uno con un comentario que explique por qué el código está bien. Ya hay tres: `?->` sobre relaciones y columnas nulables que Larastan cree que nunca son nulas. **Quitar esos `?->` rompe el código.**
 
 ---
 
@@ -298,6 +307,7 @@ Todo corre dentro de Docker. No asumas PHP ni Composer instalados en el host.
 docker compose up -d                                    # levantar entorno
 docker compose exec app php artisan migrate:fresh --seed
 docker compose exec app php artisan test
+docker compose exec app vendor/bin/phpstan analyse       # análisis estático
 docker compose logs -f queue                           # trabajador de la cola (correos)
 docker compose exec app php artisan make:model Nombre -mf
 docker compose exec node npm run dev

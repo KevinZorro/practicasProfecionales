@@ -13,7 +13,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 
@@ -154,7 +154,7 @@ final class AsignacionDeRolService
 
         return User::query()
             ->whereHas('roles', fn (Builder $c) => $this->queVencenAntesDe($c, $limite))
-            ->with(['roles' => fn (MorphToMany $r) => $this->queVencenAntesDe($r, $limite)])
+            ->with(['roles' => fn (Relation $r) => $this->queVencenAntesDe($r->getQuery(), $limite)])
             ->orderBy('nombre')
             ->get();
     }
@@ -163,9 +163,14 @@ final class AsignacionDeRolService
      * El mismo criterio para el whereHas y para el with: si divergen, la
      * pantalla enseña personas sin ningún rol próximo a vencer.
      *
-     * @param  Builder<User>|MorphToMany<Role, User>  $consulta
+     * Recibe la consulta sobre roles en los dos casos: la del whereHas tal
+     * cual, y la que envuelve la relación del with().
+     *
+     * @template TModelo of \Illuminate\Database\Eloquent\Model
+     *
+     * @param  Builder<TModelo>  $consulta
      */
-    private function queVencenAntesDe(Builder|MorphToMany $consulta, string $limite): void
+    private function queVencenAntesDe(Builder $consulta, string $limite): void
     {
         $consulta->whereNotNull($this->pivote().'.hasta')
             ->where($this->pivote().'.hasta', '<=', $limite);
@@ -323,7 +328,12 @@ final class AsignacionDeRolService
 
     private function role(Rol $rol): Role
     {
-        return Role::findByName($rol->value);
+        // findByName() declara el contrato de spatie, pero devuelve el
+        // modelo configurado en config/permission.php, que es este.
+        $role = Role::findByName($rol->value);
+        assert($role instanceof Role);
+
+        return $role;
     }
 
     private function pivote(): string
