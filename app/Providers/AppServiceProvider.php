@@ -7,12 +7,14 @@ namespace App\Providers;
 use App\Enums\Rol;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
+use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Listeners\EnviarCorreoResultadoSolicitud;
 use App\Models\User;
 use App\Support\RolActivo;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,13 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(SolicitudRechazada::class, EnviarCorreoResultadoSolicitud::class);
 
         $this->registrarPermisoDeReportes();
+
+        // Las acciones de un componente ya abierto van a /livewire/update,
+        // fuera del grupo de rutas del panel. Livewire solo vuelve a aplicar
+        // ahí los middleware de esta lista, así que sin esto quien se
+        // desactivara con una pantalla abierta seguiría pudiendo actuar
+        // (regla 8).
+        Livewire::addPersistentMiddleware([VerificarUsuarioActivo::class]);
     }
 
     /**
