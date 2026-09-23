@@ -1,4 +1,9 @@
-# Imagen de la aplicación: PHP 8.3-FPM sobre Debian, igual que el servidor institucional.
+# Imagen de la aplicación: PHP 8.3-FPM sobre Debian 12 (bookworm).
+#
+# El servidor institucional es Debian 13 (trixie), pero eso es el anfitrión:
+# dentro del contenedor manda esta imagen. Lo que sí tiene que coincidir con
+# producción es la versión de PHP, 8.3, que es también la que fija
+# config.platform.php en composer.json.
 FROM php:8.3-fpm-bookworm
 
 # El usuario del contenedor se remapea al del host para que los archivos escritos

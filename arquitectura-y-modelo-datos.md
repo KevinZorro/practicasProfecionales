@@ -13,25 +13,34 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 
 ### Stack
 
+**Instalado** — lo que está en `composer.json` y `package.json` y se usa hoy:
+
 | Capa | Tecnología |
 |---|---|
 | Lenguaje | PHP 8.3 |
 | Framework | Laravel 12 LTS (12.60 o superior) |
 | Vistas | Blade |
-| Interactividad | Livewire 3 + Alpine.js |
-| Estilos | Tailwind CSS |
-| Panel administrativo | Filament 3 |
-| Base de datos | PostgreSQL 16 (o MySQL 8) |
-| Autenticación | Laravel Socialite (Google OAuth) |
+| Interactividad | Livewire 3 + Alpine.js (el que trae Livewire) |
+| Estilos | Tailwind CSS 3 |
+| Base de datos | PostgreSQL 16 |
 | Permisos | spatie/laravel-permission ^7.1 |
-| Calendario | FullCalendar.js |
+| Calendario | FullCalendar 6 |
 | Exportación PDF | barryvdh/laravel-dompdf |
 | Exportación Excel | maatwebsite/excel |
-| Métricas | Plausible o Matomo (contenedor aparte) |
 | Servidor web | Nginx |
 | Contenedores | Docker + Docker Compose |
 
-**Por qué Filament:** el ADMIN gestiona 8 módulos de contenido público (RF10–RF17) más la estructura académica (RF22–RF26). Construir esos CRUD a mano consumiría gran parte del presupuesto de horas de desarrollo. Filament los genera a partir de los modelos, incluyendo carga de imágenes, ordenamiento y filtros.
+**Previsto, todavía sin instalar:**
+
+| Capa | Tecnología | Estado |
+|---|---|---|
+| Autenticación | Laravel Socialite (Google OAuth, RF18) | Pendiente de las credenciales de Google |
+| Pantallas del ADMIN | Filament | Decidido para el contenido público y la estructura académica; versión por confirmar |
+| Métricas | Plausible o Matomo (contenedor aparte) | Sin decidir |
+
+**Solo PostgreSQL.** El plan inicial admitía MySQL 8 como alternativa; ya no es posible. Las invariantes críticas se garantizan con `CHECK` de PostgreSQL (regla 11 del `CLAUDE.md`: las cantidades del inventario siempre suman el total) y hay migraciones con SQL propio de PostgreSQL.
+
+**Por qué Filament, y solo para el ADMIN:** el ADMIN gestiona 8 módulos de contenido público (RF10–RF17) más la estructura académica (RF22–RF26). Son pantallas de alta, baja y edición sin reglas de negocio, y construirlas a mano consumiría gran parte del presupuesto de horas. Filament las genera a partir de los modelos, con carga de imágenes, orden y filtros, y respeta las Policies de Laravel, así que la disciplina de permisos se mantiene. Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad— tienen lógica de dominio propia y siguen en Livewire. Todavía no está instalado.
 
 ---
 
@@ -87,124 +96,78 @@ Event ─────────────► Listener ──► Mail (notifi
 
 ## 3. Estructura de carpetas
 
+Lo que existe hoy. Lo previsto va aparte, abajo, para que el árbol no afirme lo que no hay.
+
 ```
 proyecto/
 ├── app/
-│   ├── Console/
-│   │   └── Commands/
-│   │       └── SincronizarUsuarios.php      # tarea programada RF19–RF20
+│   ├── Enums/                                 # estados y tipos del dominio
 │   ├── Events/
 │   │   ├── SolicitudAprobada.php
 │   │   └── SolicitudRechazada.php
-│   ├── Exports/
-│   │   ├── UsoEscenariosExport.php          # Excel RF54
-│   │   └── ResultadosEvaluacionExport.php   # Excel RF55
-│   ├── Filament/
-│   │   └── Resources/                        # CRUD del panel ADMIN
-│   │       ├── MateriaResource.php
-│   │       ├── CasoClinicoResource.php
-│   │       ├── TipoEvaluacionResource.php
-│   │       ├── ItemInventarioResource.php
-│   │       ├── SalaResource.php
-│   │       ├── UserResource.php
-│   │       ├── TallerResource.php
-│   │       ├── EventoResource.php
-│   │       ├── CertificacionResource.php
-│   │       ├── PerfilDocenteResource.php
-│   │       ├── GaleriaFotoResource.php
-│   │       ├── VideoInstitucionalResource.php
-│   │       └── PlantillaConfidencialidadResource.php
+│   ├── Exceptions/                            # una por familia de regla rota
+│   ├── Exports/                               # Excel de reportes y de la lista de reposición
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
-│   │   │   │   └── GoogleController.php
-│   │   │   ├── Public/
-│   │   │   │   ├── LandingController.php
-│   │   │   │   └── SolicitudInformacionController.php
-│   │   │   ├── Docente/
-│   │   │   ├── Estudiante/
-│   │   │   ├── Administrativo/
-│   │   │   └── Coordinador/
-│   │   ├── Middleware/
-│   │   │   ├── VerificarUsuarioActivo.php
-│   │   │   └── EstablecerRolActivo.php        # selector de vista RF21
-│   │   └── Requests/
-│   │       ├── Solicitud/
-│   │       ├── Evaluacion/
-│   │       └── Inventario/
+│   │   │   │   ├── AccesoDeDesarrolloController.php   # solo en local, hasta RF18
+│   │   │   │   └── SalirController.php
+│   │   │   └── Panel/                         # entregan la vista; la lógica va en Livewire y Services
+│   │   └── Middleware/
+│   │       ├── EstablecerRolActivo.php        # selector de vista RF21
+│   │       └── SoloEnDesarrollo.php
 │   ├── Listeners/
-│   │   └── EnviarCorreoResultadoSolicitud.php
+│   │   └── EnviarCorreoResultadoSolicitud.php # en cola (RF33)
 │   ├── Livewire/
-│   │   ├── Solicitud/
-│   │   │   ├── FormularioSolicitud.php        # precarga de inventario RF29
-│   │   │   └── BandejaRevision.php
-│   │   ├── Preparacion/
-│   │   │   └── TableroDiario.php              # RF36–RF37
-│   │   ├── Evaluacion/
-│   │   │   └── ChecklistEvaluacion.php        # multi-estudiante RF45–RF47
-│   │   ├── Calendario/
-│   │   │   └── CalendarioEscenarios.php
-│   │   └── Reportes/
+│   │   ├── CasoClinico/                       # capacidad máxima de estudiantes RF74
+│   │   ├── Confidencialidad/                  # formato de confidencialidad RF51–RF53
+│   │   ├── Inventario/                        # RF38–RF40, RF66
+│   │   ├── Preparacion/                       # tablero diario RF36–RF37
+│   │   ├── Reposicion/                        # lista de insumos por pedir RF67
+│   │   ├── Solicitud/                         # formulario, bandeja, mis solicitudes
+│   │   └── Usuario/                           # roles con vigencia RF63–RF64
 │   ├── Mail/
-│   │   ├── SolicitudAprobadaMail.php
-│   │   ├── SolicitudRechazadaMail.php
-│   │   └── SolicitudInformacionMail.php
 │   ├── Models/
 │   ├── Policies/
 │   ├── Providers/
-│   └── Services/
-├── config/
+│   ├── Services/
+│   └── Support/                               # menú del panel y rol activo
 ├── database/
 │   ├── factories/
 │   ├── migrations/
-│   └── seeders/
-│       ├── RolSeeder.php
-│       └── DatosInicialesSeeder.php
+│   └── seeders/                               # RolSeeder, DatosPruebaSeeder
 ├── docker/
-│   ├── php/
-│   │   └── Dockerfile
-│   ├── nginx/
-│   │   └── default.conf
+│   ├── nginx/default.conf
+│   ├── php/                                   # Dockerfile, php.ini, www.conf
 │   └── postgres/
-├── public/
-├── resources/
-│   ├── css/
-│   ├── js/
-│   └── views/
-│       ├── layouts/
-│       │   ├── public.blade.php
-│       │   └── panel.blade.php
-│       ├── public/                            # landing RF01–RF09
-│       │   ├── index.blade.php
-│       │   └── secciones/
-│       ├── docente/
-│       ├── estudiante/
-│       ├── administrativo/
-│       ├── coordinador/
-│       ├── livewire/
-│       ├── reportes/
-│       │   └── pdf/                           # plantillas Blade para dompdf
-│       └── components/
+├── resources/views/
+│   ├── layouts/
+│   ├── panel/                                 # una carpeta por sección del menú
+│   ├── livewire/
+│   ├── emails/
+│   ├── reportes/pdf/                          # plantillas Blade para dompdf
+│   └── components/
 ├── routes/
 │   ├── web.php
-│   ├── auth.php
 │   └── console.php
-├── storage/
-│   └── app/
-│       ├── public/
-│       │   └── landing/
-│       │       ├── hero/
-│       │       ├── galeria/
-│       │       ├── talleres/
-│       │       ├── eventos/
-│       │       ├── docentes/
-│       │       ├── certificaciones/
-│       │       └── casos-clinicos/
-│       └── confidencialidad/                  # privado, no público
+├── storage/app/confidencialidad/              # privado, no público
 ├── tests/
-├── docker-compose.yml
+├── docker-compose.yml                         # entorno de desarrollo, con trabajador de cola
 └── .env.example
 ```
+
+**Previsto, todavía sin construir:**
+
+| Pieza | Para qué | Depende de |
+|---|---|---|
+| `Http/Controllers/Auth/GoogleController.php` | Entrada con Google (RF18) | Credenciales de Google |
+| `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
+| `Filament/Resources/` | Pantallas del ADMIN: materias, salas, tipos de evaluación, contenido público (RF10–RF17, RF22–RF26) | Confirmar la versión de Filament |
+| `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
+| `Livewire/Reportes/` | Pantalla de reportes (RF54–RF56). `ReporteService` y las exportaciones ya existen | — |
+| Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |
+
+**No hay Form Requests.** El diagrama de capas los nombra, pero en este proyecto su papel lo cumple la validación de Livewire (`#[Validate]` y `validate()`): todas las pantallas que reciben datos son componentes Livewire.
 
 **Nota sobre `storage`:** los formatos de confidencialidad firmados contienen datos personales y no deben quedar en la carpeta pública (RNF07). Se sirven mediante una ruta protegida por Policy, nunca por enlace directo.
 

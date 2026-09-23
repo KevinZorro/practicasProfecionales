@@ -48,21 +48,34 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 
 ## 2. Stack
 
+### Instalado
+
+Lo que está en `composer.json` y `package.json` y se usa hoy.
+
 | Capa | Tecnología |
 |---|---|
 | Lenguaje | PHP 8.3 |
 | Framework | Laravel 12 LTS (12.60 o superior) |
 | Vistas | Blade |
-| Interactividad | Livewire 3 + Alpine.js |
-| Estilos | Tailwind CSS |
-| Panel de administración | Filament 3 |
+| Interactividad | Livewire 3 + Alpine.js (el que trae Livewire) |
+| Estilos | Tailwind CSS 3 |
 | Base de datos | PostgreSQL 16 |
-| Autenticación | Laravel Socialite (Google OAuth) |
 | Permisos | spatie/laravel-permission ^7.1 |
-| Calendario | FullCalendar.js |
+| Calendario | FullCalendar 6 |
 | Exportación | barryvdh/laravel-dompdf, maatwebsite/excel |
 | Tests | Pest |
 | Contenedores | Docker + Docker Compose |
+
+**El panel interno es Livewire puro.** Todas las pantallas que existen hoy están hechas con componentes Livewire y Blade.
+
+### Previsto, todavía sin instalar
+
+**No escribas código que dé por hecho que existen.**
+
+| Capa | Tecnología | Estado |
+|---|---|---|
+| Autenticación | Laravel Socialite (Google OAuth, RF18) | Pendiente de las credenciales de Google. Mientras tanto la única entrada es el acceso de desarrollo, que solo existe en `local` y da 404 en cualquier otro entorno |
+| Pantallas del ADMIN | Filament | Decidido: solo para las pantallas del ADMIN (contenido público RF10–RF17 y estructura académica RF22–RF26). Los flujos operativos siguen en Livewire. Versión por confirmar antes de instalar |
 
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
 
@@ -70,7 +83,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 
 - `config.platform.php` está fijado en `8.3.0`. Producción corre PHP 8.3, así que ninguna dependencia puede exigir 8.4. Después de cualquier cambio en `composer.json`, verifica que el lock siga siendo instalable en 8.3.
 - Los roles y permisos los gestiona `spatie/laravel-permission` con sus propias tablas. **No crees tablas de roles propias** ni compruebes roles con condicionales sueltos.
-- La autenticación es únicamente por Google (RF18). No existe `users.password` ni el paquete Breeze: se retiraron por innecesarios. No añadas rutas de login, registro ni recuperación de contraseña; hay tests que fallan si reaparecen.
+- La autenticación será únicamente por Google (RF18), y Socialite todavía no está instalado (ver arriba). No existe `users.password` ni el paquete Breeze: se retiraron por innecesarios. No añadas rutas de login, registro ni recuperación de contraseña; hay tests que fallan si reaparecen.
 
 ---
 
@@ -90,7 +103,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 
 ### Qué va en cada capa
 
-**Form Request** — validación de formato y obligatoriedad. Nada más.
+**Form Request** — validación de formato y obligatoriedad. Nada más. Hoy no hay ninguno: todas las pantallas que reciben datos son componentes Livewire, y ese papel lo cumple su validación (`#[Validate]` y `validate()`). Las reglas son las mismas: formato y obligatoriedad, nunca reglas de negocio.
 
 **Controller / componente Livewire** — recibe, delega a un Service, responde. Un método de controlador que pasa de ~15 líneas casi siempre tiene lógica que pertenece a un Service.
 
@@ -207,7 +220,10 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - `declare(strict_types=1)` en todos los archivos.
 - Tipado explícito en parámetros, retornos y propiedades. Nada de `mixed` por comodidad.
 - **Enums de PHP** para todos los estados y tipos (`EstadoSolicitud`, `TipoSesion`, `NivelFidelidad`, `ResultadoEvaluacion`). Nunca strings sueltos ni constantes de clase.
-- Inyección de dependencias por constructor, no facades dentro de los Services.
+- **En los Services se permiten las facades `DB` y `Storage`. Se prohíbe todo lo que lea la petición:** `Auth::user()`, `auth()`, `request()`, `session()` y el propio `Request`. Quien actúa llega siempre como parámetro (`User $actor`), igual que los datos.
+
+  El porqué: un Service tiene que funcionar igual desde un controlador, un componente Livewire, un comando, un job en cola o un test. Una llamada a `Auth::user()` dentro del Service devuelve `null` en la cola y en los comandos, y además esconde quién actúa, que es justo lo que las Policies y el historial necesitan saber. `DB::transaction` y `Storage::disk` no tienen ese problema —no dependen de quién ni desde dónde se llama— y se leen mejor que una conexión inyectada, que es lo que importa para el mantenedor.
+- Para el resto de dependencias, inyección por constructor.
 - Retorno temprano en vez de `if` anidados.
 
 ### Base de datos
@@ -241,6 +257,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - **Migraciones editadas después de aplicadas.**
 - **`env()` fuera de los archivos de configuración.** Usa `config()`.
 - **Archivos del formato de confidencialidad en almacenamiento público.** Contienen datos personales: se sirven por ruta protegida con Policy.
+- **Comprobar un efecto secundario con "al menos uno".** Los tests de correos, eventos, jobs y notificaciones exigen la cantidad exacta: `Mail::assertSent(X::class, 1)`, `Event::assertDispatched(X::class, 1)`, `Queue::assertPushed(X::class, 1)`. `assertSent` con una función y sin número pasa con uno o con cinco, y así se nos escapó que cada aprobación mandaba dos correos al docente: el listener estaba registrado dos veces.
 - **Correr dos suites de tests a la vez contra la misma base.** PostgreSQL detecta el interbloqueo entre las dos y aborta transacciones, así que saltan `QueryException` en tests que no tienen nada roto. Parece un fallo del código y no lo es. Ya ha pasado dos veces en este proyecto: una suite cada vez, y espera a que termine antes de lanzar la siguiente.
 
 ---
@@ -276,6 +293,7 @@ Todo corre dentro de Docker. No asumas PHP ni Composer instalados en el host.
 docker compose up -d                                    # levantar entorno
 docker compose exec app php artisan migrate:fresh --seed
 docker compose exec app php artisan test
+docker compose logs -f queue                           # trabajador de la cola (correos)
 docker compose exec app php artisan make:model Nombre -mf
 docker compose exec node npm run dev
 docker compose logs -f app
