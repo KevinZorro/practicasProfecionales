@@ -115,7 +115,8 @@ proyecto/
 │   │   │   └── Panel/                         # entregan la vista; la lógica va en Livewire y Services
 │   │   └── Middleware/
 │   │       ├── EstablecerRolActivo.php        # selector de vista RF21
-│   │       └── SoloEnDesarrollo.php
+│   │       ├── SoloEnDesarrollo.php
+│   │       └── VerificarUsuarioActivo.php     # regla 8: corta al inactivo, también en Livewire
 │   ├── Listeners/
 │   │   └── EnviarCorreoResultadoSolicitud.php # en cola (RF33)
 │   ├── Livewire/
@@ -486,6 +487,7 @@ Notas de implementación:
 - La **entrega en físico del formato** (RF53) se modela como dos columnas de `formatos_confidencialidad` (`recibido_fisico_at`, `recibido_fisico_por`), no como un caso del enum `EstadoFormatoConfidencialidad`. Son dos ejes distintos que se cruzan libremente: el estado describe el ciclo del documento escaneado y la entrega física describe un hecho del mundo que sobrevive a todas sus transiciones. Marcarla es del administrativo, y habilita el ingreso a prácticas igual que un documento verificado. Vale igual para un docente: llega a la misma puerta, con el mismo papel.
 - La **capacidad máxima de estudiantes** de un escenario (RF74) es parte de la gestión de casos clínicos, reservada al ADMIN. Se comprueba en `SolicitudService` al crear la solicitud. Un caso sin capacidad registrada no limita: `null` se lee como "sin definir".
 - Los **roles con vigencia** (RF63–RF64) se hacen cumplir en `User::roles()`, que filtra `desde`/`hasta` del pivote en SQL: el vencimiento alcanza `hasRole()`, `can()`, las Policies, el scope `role()` y el `loadMissing()` de spatie, sin ningún job de por medio. Revocar borra la fila del pivote en vez de acortar `hasta`, porque con vigencia por día acortarla dejaría el rol vivo hasta medianoche. Toda escritura pasa por `AsignacionDeRolService`: `assignRole()` de spatie revienta contra la llave primaria si queda una fila vencida. Asignar y revocar es solo del ADMIN, y elevar a coordinador exige motivo. El selector de rol (RF21) no ofrece roles vencidos y entra por el permanente, no por el temporal.
+- La **vigencia institucional** (regla 8) se decide en `AccesoService` y se comprueba en la entrada y en cada petición, con `VerificarUsuarioActivo`. Ese middleware también está registrado como persistente en Livewire, porque las acciones de una pantalla ya abierta van a `/livewire/update` y no pasan por las rutas del panel.
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
 
 ---

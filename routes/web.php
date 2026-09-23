@@ -34,7 +34,7 @@ Route::post('salir', SalirController::class)->name('salir');
 |
 */
 
-Route::middleware(['auth', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
+Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
     $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'casos-clinicos', 'reposicion', 'usuarios'];

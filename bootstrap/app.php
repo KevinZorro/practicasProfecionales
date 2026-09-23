@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\SoloEnDesarrollo;
+use App\Http\Middleware\VerificarUsuarioActivo;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,
             'solo.desarrollo' => SoloEnDesarrollo::class,
+            'usuario.activo' => VerificarUsuarioActivo::class,
         ]);
 
         // La entrada real será por Google (RF18); mientras tanto el único

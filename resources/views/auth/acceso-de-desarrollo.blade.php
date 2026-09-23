@@ -39,7 +39,7 @@
                             class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
                         @foreach ($usuarios as $usuario)
                             <option value="{{ $usuario->id }}">
-                                {{ $usuario->nombre }} — {{ $usuario->roles->pluck('name')->join(', ') ?: 'sin rol' }}
+                                {{ $usuario->nombre }} — {{ $usuario->roles->pluck('name')->join(', ') ?: 'sin rol' }}@if ($usuario->estado !== \App\Enums\EstadoUsuario::Activo) · inactivo @endif
                             </option>
                         @endforeach
                     </select>
