@@ -27,6 +27,8 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 | Calendario | FullCalendar 6 |
 | Exportación PDF | barryvdh/laravel-dompdf |
 | Exportación Excel | maatwebsite/excel |
+| Tests | Pest |
+| Análisis estático | Larastan, nivel 6, con línea base |
 | Servidor web | Nginx |
 | Contenedores | Docker + Docker Compose |
 

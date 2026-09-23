@@ -73,6 +73,11 @@ jobs:
       - name: Comprobar el estilo del código
         run: ./vendor/bin/pint --test
 
+      # Larastan con la línea base: cae con cualquier error nuevo, y también
+      # si se arregla uno de la línea base sin regenerarla (ver phpstan.neon).
+      - name: Análisis estático
+        run: ./vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
       - name: Ejecutar la suite
         run: php artisan test
 

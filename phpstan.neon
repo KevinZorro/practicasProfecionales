@@ -1,0 +1,46 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    paths:
+        - app/
+
+    # Nivel 6: tipos de argumentos y retornos, y colecciones y genéricos con
+    # su tipo de elemento, que es lo que el CLAUDE.md ya exige (§5: tipado
+    # explícito, nada de mixed por comodidad).
+    level: 6
+
+    # Todos los modelos declaran sus casts con el método casts(), no con la
+    # propiedad $casts. Larastan no lo lee si no se le pide, y sin esto cree
+    # que "estado" es un string y marca como falsas todas las comparaciones
+    # con los enums.
+    parseModelCastsMethod: true
+
+    # phpstan-baseline.neon congela los errores que ya existían al instalar
+    # Larastan, para que la CI caiga solo con los nuevos. Es deuda que se paga
+    # archivo a archivo: al tocar un archivo se arreglan los suyos y se
+    # regenera la línea base (ver el CLAUDE.md). Si un error de la línea base
+    # desaparece sin regenerarla, el análisis falla: así la línea base solo
+    # puede encoger.
+
+    # Falsos positivos comprobados uno por uno. No van en la línea base porque
+    # no son deuda: el código está bien y "arreglarlo" lo rompería. Cada uno
+    # con su porqué.
+    ignoreErrors:
+        # necesidades_reposicion.item_inventario_id es nulable: una necesidad
+        # puede pedir algo que todavía no está en el catálogo (regla 12). El
+        # ?-> hace falta; quitarlo revienta con esas necesidades.
+        -
+            identifier: nullsafe.neverNull
+            path: app/Models/NecesidadDeReposicion.php
+        # items_inventario.nivel_fidelidad es nulable: solo lo tienen los
+        # simuladores. El ?-> hace falta.
+        -
+            identifier: nullsafe.neverNull
+            path: app/Livewire/Inventario/FormularioItem.php
+        # Al crear un ítem nuevo, Livewire inyecta un modelo vacío sin id.
+        # La comparación con null es justo cómo se distingue alta de edición.
+        -
+            identifier: identical.alwaysFalse
+            path: app/Livewire/Inventario/FormularioItem.php

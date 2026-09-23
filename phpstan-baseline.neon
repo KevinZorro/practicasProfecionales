@@ -1,0 +1,181 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$caso_clinico_nombre\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$docente_nombre\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$estudiantes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$horas\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$materia_nombre\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$materia_semestre\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$sala_nombre\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$sesiones\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Exports/UsoDeEscenariosExport.php
+
+		-
+			message: '#^Argument of an invalid type Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<int, App\\Models\\CasoClinico\> supplied for foreach, only iterables are supported\.$#'
+			identifier: foreach.nonIterable
+			count: 1
+			path: app/Livewire/CasoClinico/CapacidadDeEscenarios.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Preparacion/TableroDiario.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Solicitud/BandejaRevision.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Livewire/Solicitud/FormularioSolicitud.php
+
+		-
+			message: '#^Method App\\Models\\FormatoConfidencialidad\:\:recibidoFisicoPor\(\) return type with generic class Illuminate\\Database\\Eloquent\\Relations\\BelongsTo does not specify its types\: TRelatedModel, TDeclaringModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/FormatoConfidencialidad.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\HasMany\:\:delPeriodo\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/ConfidencialidadService.php
+
+		-
+			message: '#^Parameter \#1 \$relations of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:with\(\) expects array\<array\|\(Closure\(Illuminate\\Database\\Eloquent\\Relations\\Relation\<\*, \*, \*\>\)\: mixed\)\|string\>\|string, array\{formatosDeConfidencialidad\: static\-Closure\(Illuminate\\Database\\Eloquent\\Relations\\HasMany\)\: mixed, 0\: ''formatosDeConfidencialidad\.plantilla\:id,nombre,version'', 1\: ''formatosDeConfidencialidad\.recibidoFisicoPor\:id,nombre'', 2\: ''roles\:id,name''\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ConfidencialidadService.php
+
+		-
+			message: '#^Method App\\Services\\GeneradorDeReportes\:\:paraPantalla\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/GeneradorDeReportes.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/PreparacionService.php
+
+		-
+			message: '#^Method App\\Services\\ReporteService\:\:columnasDeUso\(\) should return list\<Illuminate\\Database\\Query\\Builder\|string\> but returns array\{''users\.nombre as…'', ''materias\.nombre as…'', ''materias\.semestre…'', ''casos_clinicos…'', Illuminate\\Contracts\\Database\\Query\\Expression, ''solicitudes\.tipo'', Illuminate\\Contracts\\Database\\Query\\Expression, Illuminate\\Contracts\\Database\\Query\\Expression, \.\.\.\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ReporteService.php
+
+		-
+			message: '#^Method App\\Services\\ReporteService\:\:evaluacionesNoRegistradas\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ReporteService.php
+
+		-
+			message: '#^Method App\\Services\\ReporteService\:\:paginar\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ReporteService.php
+
+		-
+			message: '#^Method App\\Services\\ReporteService\:\:resultadosDeEvaluacion\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ReporteService.php
+
+		-
+			message: '#^Method App\\Services\\ReporteService\:\:solicitudesAprobadas\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ReporteService.php
+
+		-
+			message: '#^Method App\\Services\\ReporteService\:\:usoDeEscenarios\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
+			identifier: missingType.generics
+			count: 1
+			path: app/Services/ReporteService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\CambioEstadoItem\:\:\$item_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ReposicionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\CambioEstadoItem\:\:\$nombre\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ReposicionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\CambioEstadoItem\:\:\$origen\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ReposicionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\CambioEstadoItem\:\:\$unidades\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ReposicionService.php
+
+		-
+			message: '#^Method App\\Services\\ReposicionService\:\:necesidadesPendientes\(\) should return Illuminate\\Support\\Collection\<int, array\{item_inventario_id\: int\|null, descripcion\: string, motivo\: App\\Enums\\MotivoReposicion, cantidad\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{item_inventario_id\: mixed, descripcion\: string, motivo\: App\\Enums\\MotivoReposicion\:\:Solicitada, cantidad\: int\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ReposicionService.php
+
+		-
+			message: '#^Method App\\Services\\ReposicionService\:\:salidasDeInventario\(\) should return Illuminate\\Support\\Collection\<int, array\{item_inventario_id\: int\|null, descripcion\: string, motivo\: App\\Enums\\MotivoReposicion, cantidad\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{item_inventario_id\: int, descripcion\: string, motivo\: App\\Enums\\MotivoReposicion, cantidad\: int\}\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ReposicionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SolicitudService.php
