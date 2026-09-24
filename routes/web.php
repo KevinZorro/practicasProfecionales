@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\CalendarioController;
-use App\Http\Controllers\Panel\CasoClinicoController;
 use App\Http\Controllers\Panel\ConfidencialidadController;
 use App\Http\Controllers\Panel\DescargaConfidencialidadController;
 use App\Http\Controllers\Panel\InventarioController;
@@ -37,15 +36,13 @@ Route::post('salir', SalirController::class)->name('salir');
 Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'casos-clinicos', 'reposicion', 'usuarios', 'administracion'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
     Route::get('solicitudes', [SolicitudController::class, 'bandeja'])->name('solicitudes');
 
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
-
-    Route::get('casos-clinicos', CasoClinicoController::class)->name('casos-clinicos');
 
     /* Reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
     Route::get('usuarios', [UsuarioController::class, 'roles'])->name('usuarios');

@@ -49,12 +49,6 @@ parameters:
 			path: app/Exports/UsoDeEscenariosExport.php
 
 		-
-			message: '#^Argument of an invalid type Illuminate\\Contracts\\Pagination\\LengthAwarePaginator\<int, App\\Models\\CasoClinico\> supplied for foreach, only iterables are supported\.$#'
-			identifier: foreach.nonIterable
-			count: 1
-			path: app/Livewire/CasoClinico/CapacidadDeEscenarios.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
 			identifier: property.notFound
 			count: 1

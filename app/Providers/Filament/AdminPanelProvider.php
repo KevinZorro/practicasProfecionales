@@ -58,6 +58,9 @@ final class AdminPanelProvider extends PanelProvider
                     ->label('Salir')
                     ->url(static fn (): string => route('salir')),
             ])
+            // Guardar un caso clínico toca varias tablas (el caso, sus
+            // materias, su inventario): todo o nada.
+            ->databaseTransactions()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([

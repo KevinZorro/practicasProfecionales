@@ -16,6 +16,9 @@ use App\Models\User;
  * capacidad máxima de estudiantes en ese mismo grupo: es un dato que el
  * ADMIN define y edita.
  *
+ * Lo que aquí no está definido —deleteAny, restore, replicate...— lo deniega
+ * el Gate, porque las pantallas de Filament heredan de RecursoDelAdmin.
+ *
  * El nombre importa: Laravel resuelve las Policies por modelo, así que la de
  * CasoClinico tiene que llamarse CasoClinicoPolicy. Con cualquier otro
  * nombre no se descubre y el Gate deniega en silencio.
@@ -32,9 +35,25 @@ final class CasoClinicoPolicy
         return $usuario->hasRole(Rol::Admin->value);
     }
 
+    public function create(User $usuario): bool
+    {
+        return $usuario->hasRole(Rol::Admin->value);
+    }
+
     /** RF74: la capacidad máxima solo la edita el ADMIN. */
     public function update(User $usuario, CasoClinico $caso): bool
     {
         return $usuario->hasRole(Rol::Admin->value);
+    }
+
+    /**
+     * No se borran, se desactivan. Uno con solicitudes no se puede borrar
+     * (la llave es restrict), y uno sin ellas se llevaría en cascada su lista
+     * de inventario y sus materias. Desactivarlo lo saca del formulario del
+     * docente y conserva todo lo demás.
+     */
+    public function delete(User $usuario, CasoClinico $caso): bool
+    {
+        return false;
     }
 }
