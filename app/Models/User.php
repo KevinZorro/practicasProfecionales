@@ -7,6 +7,9 @@ namespace App\Models;
 use App\Enums\EstadoUsuario;
 use App\Enums\OrigenUsuario;
 use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,7 +20,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, HasName
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -185,5 +188,20 @@ class User extends Authenticatable
     public function scopeInactivos(Builder $consulta): void
     {
         $consulta->where('estado', EstadoUsuario::Inactivo);
+    }
+
+    /**
+     * Pantallas del ADMIN en Filament. Decide el Gate, igual que en el resto
+     * del panel; aquí solo se le pregunta.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->can('accederAlPanelDelAdmin');
+    }
+
+    /** Filament busca "name" y la tabla guarda "nombre". */
+    public function getFilamentName(): string
+    {
+        return $this->nombre;
     }
 }

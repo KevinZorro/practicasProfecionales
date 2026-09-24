@@ -3,6 +3,7 @@
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\SoloEnDesarrollo;
 use App\Http\Middleware\VerificarUsuarioActivo;
+use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +26,17 @@ return Application::configure(basePath: dirname(__DIR__))
             'solo.desarrollo' => SoloEnDesarrollo::class,
             'usuario.activo' => VerificarUsuarioActivo::class,
         ]);
+
+        // Laravel reordena los middleware de la lista de prioridad, y los de
+        // autenticación van en ella: el Authenticate de Filament, que
+        // pregunta canAccessPanel(), acabaría delante de los nuestros y
+        // decidiría con todos los roles del usuario en vez de con el activo.
+        // Declararlos aquí, antes que AuthenticatesRequests, fija el orden en
+        // cualquier pila de rutas, incluida la que Livewire vuelve a aplicar
+        // en /livewire/update. Con un invitado no hacen nada: sin usuario,
+        // los dos dejan pasar y decide la autenticación.
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, VerificarUsuarioActivo::class);
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, EstablecerRolActivo::class);
 
         // La entrada real será por Google (RF18); mientras tanto el único
         // punto de acceso es el de desarrollo, que solo existe en local.

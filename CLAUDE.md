@@ -65,9 +65,18 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Exportación | barryvdh/laravel-dompdf, maatwebsite/excel |
 | Tests | Pest |
 | Análisis estático | Larastan, nivel 6, con línea base (ver §7) |
+| Pantallas del ADMIN | Filament 3.3, en `/admin` |
 | Contenedores | Docker + Docker Compose |
 
-**El panel interno es Livewire puro.** Todas las pantallas que existen hoy están hechas con componentes Livewire y Blade.
+**Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF22–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament.
+
+**Filament, cinco cosas que no son las de su plantilla:**
+
+- **Todo recurso hereda de `App\Filament\RecursoDelAdmin`, y su modelo tiene Policy antes de tener pantalla.** Por defecto Filament *permite* lo que la Policy no define, o todo si no hay Policy; la clase base lo invierte para que el Gate deniegue. `RecursosDelAdminTest` falla si un recurso no hereda de ella o si su modelo no tiene Policy descubierta.
+- **Solo entra el ADMIN, con el rol activo aplicado.** Lo decide el Gate `accederAlPanelDelAdmin` desde `User::canAccessPanel()`. `VerificarUsuarioActivo` y `EstablecerRolActivo` van en la pila de Filament, y `bootstrap/app.php` los pone en la lista de prioridad delante de la autenticación: si no, Laravel reordena el `Authenticate` de Filament delante de ellos y `canAccessPanel()` decidiría con todos los roles.
+- **Sin `->login()` ni ninguna otra entrada propia** (RF18). La salida del menú apunta a nuestra ruta `salir`. Filament registra de todas formas `admin/logout`, y es la única excepción de `AutenticacionTest`, por nombre exacto de ruta.
+- **Sus assets no se versionan.** Los publica el script `filament:upgrade` de `composer.json` en cada `composer install`; el job de Docker de la CI pide una hoja de estilos de Filament y exige 200. No quites ese script.
+- **Tailwind no lee las vistas compiladas.** Filament trae su propio CSS; si `content` incluyera `storage/framework/views`, cada build después de `view:cache` arrastraría sus clases al `app.css` del panel y lo duplicaría. Las vistas de paquete que usamos —la paginación de Livewire y la de Laravel— van en `content` por su ruta en `vendor/`.
 
 ### Previsto, todavía sin instalar
 
@@ -76,7 +85,6 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Capa | Tecnología | Estado |
 |---|---|---|
 | Autenticación | Laravel Socialite (Google OAuth, RF18) | Pendiente de las credenciales de Google. Mientras tanto la única entrada es el acceso de desarrollo, que solo existe en `local` y da 404 en cualquier otro entorno |
-| Pantallas del ADMIN | Filament | Decidido: solo para las pantallas del ADMIN (contenido público RF10–RF17 y estructura académica RF22–RF26). Los flujos operativos siguen en Livewire. Versión por confirmar antes de instalar |
 
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
 
