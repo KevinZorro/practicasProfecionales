@@ -41,6 +41,9 @@ final class CasoClinicoResource extends RecursoDelAdmin
 
     protected static ?string $model = CasoClinico::class;
 
+    // Filament pluraliza en inglés ("caso-clinicos").
+    protected static ?string $slug = 'casos-clinicos';
+
     protected static ?string $modelLabel = 'caso clínico';
 
     protected static ?string $pluralModelLabel = 'casos clínicos';

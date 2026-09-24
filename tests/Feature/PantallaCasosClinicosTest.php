@@ -90,6 +90,10 @@ it('no abre el listado a otro rol', function (): void {
         ->assertForbidden();
 });
 
+it('vive en /admin/casos-clinicos', function (): void {
+    expect(CasoClinicoResource::getUrl('index'))->toEndWith('/admin/casos-clinicos');
+});
+
 it('ya no sirve la pantalla de capacidad que sustituye', function (): void {
     $this->actingAs($this->admin)->get('/panel/casos-clinicos')->assertNotFound();
 });
