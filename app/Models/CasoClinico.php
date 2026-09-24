@@ -68,6 +68,17 @@ class CasoClinico extends Model
             ->withPivot('cantidad');
     }
 
+    /**
+     * Las mismas filas que items(), como modelos propios, para editarlas en
+     * la pantalla del ADMIN (ver ItemNecesarioDelCaso).
+     *
+     * @return HasMany<ItemNecesarioDelCaso, $this>
+     */
+    public function itemsNecesarios(): HasMany
+    {
+        return $this->hasMany(ItemNecesarioDelCaso::class);
+    }
+
     /** @return HasMany<Solicitud, $this> */
     public function solicitudes(): HasMany
     {

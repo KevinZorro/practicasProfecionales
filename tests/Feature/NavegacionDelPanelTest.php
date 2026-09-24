@@ -30,7 +30,7 @@ it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, ar
     'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-formato']],
     'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario', 'reposicion', 'formatos-confidencialidad']],
     'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'reportes']],
-    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'casos-clinicos', 'usuarios', 'administracion', 'reportes']],
+    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'usuarios', 'administracion', 'reportes']],
 ]);
 
 it('no enseña al docente el inventario ni los reportes', function (): void {

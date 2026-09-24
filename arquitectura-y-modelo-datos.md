@@ -127,7 +127,6 @@ proyecto/
 │   ├── Listeners/
 │   │   └── EnviarCorreoResultadoSolicitud.php # en cola (RF33)
 │   ├── Livewire/
-│   │   ├── CasoClinico/                       # capacidad máxima de estudiantes RF74
 │   │   ├── Confidencialidad/                  # formato de confidencialidad RF51–RF53
 │   │   ├── Inventario/                        # RF38–RF40, RF66
 │   │   ├── Preparacion/                       # tablero diario RF36–RF37
@@ -171,7 +170,7 @@ proyecto/
 |---|---|---|
 | `Http/Controllers/Auth/GoogleController.php` | Entrada con Google (RF18) | Credenciales de Google |
 | `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
-| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php` y materias | Una Policy por modelo antes de cada pantalla |
+| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias y casos clínicos (que absorben la capacidad máxima de estudiantes, RF74) | Una Policy por modelo antes de cada pantalla |
 | `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
 | `Livewire/Reportes/` | Pantalla de reportes (RF54–RF56). `ReporteService` y las exportaciones ya existen | — |
 | Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |
