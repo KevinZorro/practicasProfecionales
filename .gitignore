@@ -23,3 +23,5 @@ yarn-error.log
 /.zed
 .DS_Store
 /docker/postgres/data
+/public/css/filament
+/public/js/filament

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
+use Filament\Http\Middleware\Authenticate as FilamentAuthenticate;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\Route;
 use Livewire\Mechanisms\PersistentMiddleware\PersistentMiddleware;
@@ -22,9 +23,11 @@ use Livewire\Mechanisms\PersistentMiddleware\PersistentMiddleware;
  */
 
 /**
- * Los middleware de las rutas del panel que deciden acceso: los propios del
- * proyecto y los de autenticación de Laravel. Los alias se resuelven a su
- * clase; los grupos (como "web") no deciden acceso y se dejan fuera.
+ * Los middleware que deciden acceso en las rutas de los dos paneles —el de
+ * Livewire y el del ADMIN en Filament—: los propios del proyecto, los de
+ * autenticación de Laravel y los que heredan de ellos, como el Authenticate
+ * de Filament, que además pregunta canAccessPanel(). Los alias se resuelven
+ * a su clase; los grupos (como "web") no deciden acceso y se dejan fuera.
  *
  * @return list<class-string>
  */
@@ -33,11 +36,14 @@ function middlewareDeAutorizacionDelPanel(): array
     $alias = app('router')->getMiddleware();
 
     return collect(Route::getRoutes()->getRoutes())
-        ->filter(static fn ($ruta): bool => str_starts_with((string) $ruta->getName(), 'panel.'))
+        ->filter(static fn ($ruta): bool => str_starts_with((string) $ruta->getName(), 'panel.')
+            || str_starts_with((string) $ruta->getName(), 'filament.admin.'))
         ->flatMap(static fn ($ruta): array => $ruta->gatherMiddleware())
+        ->filter(static fn ($middleware): bool => is_string($middleware))
         ->map(static fn (string $middleware): string => $alias[explode(':', $middleware)[0]] ?? $middleware)
         ->filter(static fn (string $clase): bool => str_starts_with($clase, 'App\\Http\\Middleware\\')
-            || str_starts_with($clase, 'Illuminate\\Auth\\Middleware\\'))
+            || str_starts_with($clase, 'Illuminate\\Auth\\Middleware\\')
+            || is_subclass_of($clase, Authenticate::class))
         ->unique()
         ->values()
         ->all();
@@ -61,5 +67,6 @@ it('encuentra los middleware del panel que tiene que vigilar', function (): void
     expect(middlewareDeAutorizacionDelPanel())
         ->toContain(Authenticate::class)
         ->toContain(VerificarUsuarioActivo::class)
-        ->toContain(EstablecerRolActivo::class);
+        ->toContain(EstablecerRolActivo::class)
+        ->toContain(FilamentAuthenticate::class);
 });

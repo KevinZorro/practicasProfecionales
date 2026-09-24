@@ -34,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(SolicitudRechazada::class, EnviarCorreoResultadoSolicitud::class);
 
         $this->registrarPermisoDeReportes();
+        $this->registrarAccesoAlPanelDelAdmin();
 
         // Las acciones de un componente ya abierto van a /livewire/update,
         // fuera del grupo de rutas del panel. Livewire solo vuelve a aplicar
@@ -45,6 +46,17 @@ class AppServiceProvider extends ServiceProvider
             VerificarUsuarioActivo::class,
             EstablecerRolActivo::class,
         ]);
+    }
+
+    /**
+     * Las pantallas de Filament (estructura académica y contenido público)
+     * son solo del ADMIN, sin herencia: el coordinador no administra la
+     * plataforma. Qué puede hacer dentro de cada pantalla lo sigue diciendo
+     * la Policy de su modelo; esto solo abre la puerta del panel.
+     */
+    private function registrarAccesoAlPanelDelAdmin(): void
+    {
+        Gate::define('accederAlPanelDelAdmin', static fn (User $usuario): bool => $usuario->hasRole(Rol::Admin->value));
     }
 
     /**

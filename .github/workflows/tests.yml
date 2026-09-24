@@ -193,6 +193,19 @@ jobs:
           fi
           grep -q '<title>' pagina.html
 
+      # Los assets de Filament no están versionados: los publica el script
+      # "filament:upgrade" de composer.json en cada composer install. Si ese
+      # script se pierde, el panel del ADMIN carga sin estilos y ningún test
+      # lo nota; esta petición sí.
+      - name: Comprobar que Composer publicó los assets de Filament
+        run: |
+          codigo=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/css/filament/filament/app.css)
+          echo "HTTP $codigo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::la hoja de estilos de Filament respondió $codigo: composer install no publicó los assets"
+            exit 1
+          fi
+
       - name: Registros de los contenedores si algo falló
         if: failure()
         run: docker compose logs --tail=100

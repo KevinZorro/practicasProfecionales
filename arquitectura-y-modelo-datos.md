@@ -29,6 +29,7 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 | Exportación Excel | maatwebsite/excel |
 | Tests | Pest |
 | Análisis estático | Larastan, nivel 6, con línea base |
+| Pantallas del ADMIN | Filament 3.3, en `/admin` |
 | Servidor web | Nginx |
 | Contenedores | Docker + Docker Compose |
 
@@ -37,12 +38,13 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 | Capa | Tecnología | Estado |
 |---|---|---|
 | Autenticación | Laravel Socialite (Google OAuth, RF18) | Pendiente de las credenciales de Google |
-| Pantallas del ADMIN | Filament | Decidido para el contenido público y la estructura académica; versión por confirmar |
 | Métricas | Plausible o Matomo (contenedor aparte) | Sin decidir |
 
 **Solo PostgreSQL.** El plan inicial admitía MySQL 8 como alternativa; ya no es posible. Las invariantes críticas se garantizan con `CHECK` de PostgreSQL (regla 11 del `CLAUDE.md`: las cantidades del inventario siempre suman el total) y hay migraciones con SQL propio de PostgreSQL.
 
-**Por qué Filament, y solo para el ADMIN:** el ADMIN gestiona 8 módulos de contenido público (RF10–RF17) más la estructura académica (RF22–RF26). Son pantallas de alta, baja y edición sin reglas de negocio, y construirlas a mano consumiría gran parte del presupuesto de horas. Filament las genera a partir de los modelos, con carga de imágenes, orden y filtros, y respeta las Policies de Laravel, así que la disciplina de permisos se mantiene. Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad— tienen lógica de dominio propia y siguen en Livewire. Todavía no está instalado.
+**Por qué Filament, y solo para el ADMIN:** el ADMIN gestiona 8 módulos de contenido público (RF10–RF17) más la estructura académica (RF22–RF26). Son pantallas de alta, baja y edición sin reglas de negocio, y construirlas a mano consumiría gran parte del presupuesto de horas. Filament las genera a partir de los modelos, con carga de imágenes, orden y filtros, y respeta las Policies de Laravel, así que la disciplina de permisos se mantiene. Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad— tienen lógica de dominio propia y siguen en Livewire.
+
+La versión es la 3.3: la 4 exige Tailwind 4 para cualquier tema propio, y el panel usa Tailwind 3. Filament trae su CSS compilado y no toca la configuración de Tailwind del panel. Las condiciones con las que se instaló —clase base que deniega lo no definido, acceso solo del ADMIN con el rol activo, sin entrada por contraseña, assets fuera del repositorio— están en el §2 del `CLAUDE.md`.
 
 ---
 
@@ -109,6 +111,9 @@ proyecto/
 │   │   └── SolicitudRechazada.php
 │   ├── Exceptions/                            # una por familia de regla rota
 │   ├── Exports/                               # Excel de reportes y de la lista de reposición
+│   ├── Filament/
+│   │   ├── RecursoDelAdmin.php                # base de todo recurso: deniega lo que la Policy no define
+│   │   └── Resources/                         # pantallas del ADMIN (RF10–RF17, RF22–RF26)
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
@@ -133,6 +138,7 @@ proyecto/
 │   ├── Models/
 │   ├── Policies/
 │   ├── Providers/
+│   │   └── Filament/AdminPanelProvider.php    # panel /admin: solo ADMIN, sin login propio
 │   ├── Services/
 │   └── Support/                               # menú del panel y rol activo
 ├── database/
@@ -165,7 +171,7 @@ proyecto/
 |---|---|---|
 | `Http/Controllers/Auth/GoogleController.php` | Entrada con Google (RF18) | Credenciales de Google |
 | `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
-| `Filament/Resources/` | Pantallas del ADMIN: materias, salas, tipos de evaluación, contenido público (RF10–RF17, RF22–RF26) | Confirmar la versión de Filament |
+| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Instalados el panel y `Filament/RecursoDelAdmin.php` | Una Policy por modelo antes de cada pantalla |
 | `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
 | `Livewire/Reportes/` | Pantalla de reportes (RF54–RF56). `ReporteService` y las exportaciones ya existen | — |
 | Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |

@@ -57,16 +57,18 @@ function instantaneaDeLaPantalla(string $url): string
 
 /**
  * Lo que manda el navegador al pulsar un botón de un componente ya abierto.
+ * Sin método, lo que manda al refrescarlo ($refresh): la instantánea sin
+ * ninguna llamada.
  *
  * @param  list<mixed>  $parametros
  */
-function accionDeLivewire(string $instantanea, string $metodo, array $parametros = []): TestResponse
+function accionDeLivewire(string $instantanea, ?string $metodo = null, array $parametros = []): TestResponse
 {
     return test()->withHeaders(['X-Livewire' => 'true'])->postJson('/livewire/update', [
         'components' => [[
             'snapshot' => $instantanea,
             'updates' => [],
-            'calls' => [['path' => '', 'method' => $metodo, 'params' => $parametros]],
+            'calls' => $metodo === null ? [] : [['path' => '', 'method' => $metodo, 'params' => $parametros]],
         ]],
     ]);
 }
