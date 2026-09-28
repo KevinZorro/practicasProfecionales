@@ -14,7 +14,6 @@ use App\Enums\NivelFidelidad;
 use App\Enums\OrigenUsuario;
 use App\Enums\ResultadoEvaluacion;
 use App\Enums\Rol;
-use App\Enums\TipoEvento;
 use App\Enums\TipoItemInventario;
 use App\Enums\TipoSesion;
 use App\Models\Capacidad;
@@ -38,6 +37,7 @@ use App\Models\Solicitud;
 use App\Models\SolicitudInformacion;
 use App\Models\Taller;
 use App\Models\TipoEvaluacion;
+use App\Models\TipoEvento;
 use App\Models\TituloDocente;
 use App\Models\User;
 use App\Models\VideoInstitucional;
@@ -755,10 +755,14 @@ class DatosPruebaSeeder extends Seeder
             SolicitudInformacion::factory()->count(2)->create(['taller_id' => $taller->id]);
         }
 
+        // Tipos de ejemplo para desarrollo: en producción los crea el ADMIN.
+        $tipos = collect(['Jornada', 'Congreso', 'Seminario'])
+            ->mapWithKeys(static fn (string $nombre): array => [$nombre => TipoEvento::create(['nombre' => $nombre, 'activo' => true])]);
+
         $eventos = [
-            ['Jornada de simulación clínica', TipoEvento::Jornada],
-            ['Congreso regional de enfermería', TipoEvento::Congreso],
-            ['Seminario de seguridad del paciente', TipoEvento::Seminario],
+            ['Jornada de simulación clínica', $tipos['Jornada']],
+            ['Congreso regional de enfermería', $tipos['Congreso']],
+            ['Seminario de seguridad del paciente', $tipos['Seminario']],
         ];
 
         foreach ($eventos as $orden => $datos) {
@@ -767,7 +771,7 @@ class DatosPruebaSeeder extends Seeder
                 'descripcion' => 'Espacio académico organizado por la Facultad de Ciencias de la Salud.',
                 'imagen' => null,
                 'fecha' => now()->addMonths($orden + 2)->format('Y-m-d'),
-                'tipo' => $datos[1],
+                'tipo_evento_id' => $datos[1]->id,
                 'abierto_publico' => true,
                 'orden' => $orden + 1,
                 'activo' => true,

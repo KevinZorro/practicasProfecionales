@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\TipoEvento;
 use Database\Factories\EventoFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Evento extends Model
 {
@@ -23,7 +23,7 @@ class Evento extends Model
         'descripcion',
         'imagen',
         'fecha',
-        'tipo',
+        'tipo_evento_id',
         'abierto_publico',
         'orden',
         'activo',
@@ -36,11 +36,16 @@ class Evento extends Model
     {
         return [
             'fecha' => 'date',
-            'tipo' => TipoEvento::class,
             'abierto_publico' => 'boolean',
             'orden' => 'integer',
             'activo' => 'boolean',
         ];
+    }
+
+    /** @return BelongsTo<TipoEvento, $this> */
+    public function tipoEvento(): BelongsTo
+    {
+        return $this->belongsTo(TipoEvento::class);
     }
 
     /** @param Builder<$this> $consulta */
