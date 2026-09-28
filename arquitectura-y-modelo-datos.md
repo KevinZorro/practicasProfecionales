@@ -94,6 +94,7 @@ Event ─────────────► Listener ──► Mail (notifi
 | `ConfidencialidadService` | Determinar el periodo académico vigente, verificar si el firmante ya entregó el formato de confidencialidad en ese periodo, bloquear prácticas si está pendiente |
 | `AsignacionDeRolService` | Asignar y revocar roles con o sin vigencia, y registrar el rastro. Única puerta de escritura de roles |
 | `ReporteService` | Agregaciones de uso de escenarios y de resultados de evaluación, y generación de los archivos PDF y Excel |
+| `ImagenPublicaService` | Imágenes del contenido público: validar tipo y tamaño, enderezar según el EXIF, reducir a 1600 px de lado mayor y guardar en WebP (RNF10); borrar la reemplazada al confirmar la transacción |
 | `UsuarioSyncService` | Sincronizar contra la vista institucional, activar y desactivar usuarios |
 
 ---
@@ -113,6 +114,8 @@ proyecto/
 │   ├── Exports/                               # Excel de reportes y de la lista de reposición
 │   ├── Filament/
 │   │   ├── RecursoDelAdmin.php                # base de todo recurso: deniega lo que la Policy no define
+│   │   ├── Formularios/CampoDeImagen.php      # toda imagen pública pasa por ImagenPublicaService
+│   │   ├── Concerns/                          # BorraLasImagenesReemplazadas
 │   │   └── Resources/                         # pantallas del ADMIN (RF10–RF17, RF22–RF26)
 │   ├── Http/
 │   │   ├── Controllers/
@@ -170,7 +173,7 @@ proyecto/
 |---|---|---|
 | `Http/Controllers/Auth/GoogleController.php` | Entrada con Google (RF18) | Credenciales de Google |
 | `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
-| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Falta el contenido público | Una Policy por modelo antes de cada pantalla |
+| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Del contenido público: galería de fotos (RF10) | Una Policy por modelo antes de cada pantalla |
 | `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
 | `Livewire/Reportes/` | Pantalla de reportes (RF54–RF56). `ReporteService` y las exportaciones ya existen | — |
 | Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |
