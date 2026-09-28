@@ -11,8 +11,11 @@ use App\Models\ItemInventario;
 use App\Models\ItemNecesarioDelCaso;
 use App\Models\Materia;
 use App\Models\User;
+use App\Services\ImagenPublicaService;
 use App\Services\SolicitudService;
 use Database\Seeders\RolSeeder;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 /*
@@ -304,4 +307,57 @@ it('busca escenarios por nombre', function (): void {
         ->searchTable('parto')
         ->assertCanSeeTableRecords([$parto])
         ->assertCanNotSeeTableRecords([$convulsion]);
+});
+
+// ---------------------------------------------------------------------
+// En la landing (RF12): imagen, visibilidad y orden
+// ---------------------------------------------------------------------
+
+it('publica un caso en la landing con su imagen lista para la web', function (): void {
+    Storage::fake(ImagenPublicaService::DISCO);
+    CasoClinico::factory()->create(['nombre' => 'Otro escenario', 'orden' => 5]);
+
+    crearCasoClinico([
+        'imagen' => UploadedFile::fake()->image('parto.jpg', 2000, 1500),
+        'visible_publico' => true,
+    ])->assertHasNoFormErrors();
+
+    $caso = CasoClinico::where('nombre', 'Atención de parto normal')->firstOrFail();
+
+    expect($caso->visible_publico)->toBeTrue()
+        ->and($caso->orden)->toBe(6)
+        ->and($caso->imagen)->toStartWith('casos-clinicos/')->toEndWith('.webp')
+        ->and(CasoClinico::visiblesEnPublico()->pluck('id')->all())->toContain($caso->id);
+});
+
+it('no saca en la landing un caso visible pero inactivo', function (): void {
+    $caso = CasoClinico::factory()->create(['visible_publico' => true, 'activo' => false]);
+
+    expect(CasoClinico::visiblesEnPublico()->pluck('id')->all())->not->toContain($caso->id);
+});
+
+it('borra la imagen anterior del caso al reemplazarla', function (): void {
+    Storage::fake(ImagenPublicaService::DISCO);
+    Storage::disk(ImagenPublicaService::DISCO)->put('casos-clinicos/vieja.webp', 'x');
+    $caso = CasoClinico::factory()->create(['imagen' => 'casos-clinicos/vieja.webp']);
+
+    editarCasoClinico($caso)
+        ->set('data.imagen', [UploadedFile::fake()->image('nueva.jpg', 800, 600)])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    Storage::disk(ImagenPublicaService::DISCO)->assertMissing('casos-clinicos/vieja.webp');
+});
+
+it('reordena los casos de la landing arrastrando las filas', function (): void {
+    $primero = CasoClinico::factory()->create(['orden' => 1]);
+    $segundo = CasoClinico::factory()->create(['orden' => 2]);
+
+    expect($this->admin->can('reorder', CasoClinico::class))->toBeTrue();
+
+    Livewire::actingAs($this->admin)
+        ->test(ListCasosClinicos::class)
+        ->call('reorderTable', [(string) $segundo->id, (string) $primero->id]);
+
+    expect(CasoClinico::orderBy('orden')->pluck('id')->all())->toBe([$segundo->id, $primero->id]);
 });
