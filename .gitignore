@@ -25,3 +25,7 @@ yarn-error.log
 /docker/postgres/data
 /public/css/filament
 /public/js/filament
+.env.*
+!.env.example
+.claude/settings.local.json
+CLAUDE.local.md
