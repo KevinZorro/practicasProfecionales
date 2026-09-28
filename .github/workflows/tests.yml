@@ -134,6 +134,7 @@ jobs:
         run: |
           docker compose exec -T app php artisan key:generate
           docker compose exec -T app php artisan migrate --force
+          docker compose exec -T app php artisan storage:link
           docker compose exec -T app php artisan --version
 
       # Que el contenedor esté arriba no prueba que procese: se encola un job
@@ -192,6 +193,27 @@ jobs:
             exit 1
           fi
           grep -q '<title>' pagina.html
+
+      # Las imágenes públicas se guardan en WebP (ImagenPublicaService). La
+      # imagen de PHP tiene que traer GD compilado con WebP: si no, la primera
+      # foto que suba el ADMIN falla.
+      - name: Comprobar que GD guarda WebP
+        run: |
+          docker compose exec -T app php -r 'exit(function_exists("imagewebp") && (imagetypes() & IMG_WEBP) ? 0 : 1);' \
+            || { echo "::error::GD no tiene soporte WebP en la imagen de PHP"; exit 1; }
+
+      # De punta a punta: la aplicación escribe en el volumen de archivos
+      # públicos como www-data, y nginx lo sirve por /storage. Falla si el
+      # volumen queda de root, si falta storage:link o si nginx no lo monta.
+      - name: Comprobar que nginx sirve los archivos públicos
+        run: |
+          docker compose exec -T app php -r 'file_put_contents("storage/app/public/prueba-ci.txt", "servido por nginx");'
+          codigo=$(curl -sS -o archivo.txt -w '%{http_code}' http://localhost/storage/prueba-ci.txt)
+          echo "HTTP $codigo"
+          if [ "$codigo" != "200" ] || ! grep -q 'servido por nginx' archivo.txt; then
+            echo "::error::nginx no sirve storage/app/public (HTTP $codigo)"
+            exit 1
+          fi
 
       # Los assets de Filament no están versionados: los publica el script
       # "filament:upgrade" de composer.json en cada composer install. Si ese

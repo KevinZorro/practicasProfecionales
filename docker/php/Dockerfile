@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libpng-dev \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+        libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         bcmath \
         exif \
@@ -39,9 +40,14 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-aplicacion.ini
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
 
+# storage/app/public se crea aquí, con dueño www-data, aunque el código llegue
+# por el volumen montado: docker-compose monta encima un volumen con nombre
+# para las imágenes públicas, y Docker inicializa un volumen vacío con el
+# dueño de la carpeta de la imagen. Sin esto quedaría de root y la
+# aplicación no podría guardar ni una foto.
 RUN groupmod --non-unique --gid "${GID}" www-data \
     && usermod --non-unique --uid "${UID}" --gid "${GID}" --home /var/www www-data \
-    && mkdir -p /var/www/.composer \
+    && mkdir -p /var/www/.composer /var/www/html/storage/app/public \
     && chown -R www-data:www-data /var/www
 
 ENV COMPOSER_HOME=/var/www/.composer

@@ -23,4 +23,15 @@ use Filament\Resources\Resource;
 abstract class RecursoDelAdmin extends Resource
 {
     protected static bool $shouldCheckPolicyExistence = false;
+
+    /**
+     * Columnas que guardan una imagen del disco público. Las usa
+     * BorraLasImagenesReemplazadas para no dejar archivos huérfanos.
+     *
+     * @return list<string>
+     */
+    public static function camposDeImagen(): array
+    {
+        return [];
+    }
 }
