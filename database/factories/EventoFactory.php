@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Enums\TipoEvento;
 use App\Models\Evento;
+use App\Models\TipoEvento;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -29,7 +29,7 @@ class EventoFactory extends Factory
             'descripcion' => $this->faker->paragraph(),
             'imagen' => null,
             'fecha' => $this->faker->dateTimeBetween('now', '+6 months')->format('Y-m-d'),
-            'tipo' => $this->faker->randomElement(TipoEvento::cases()),
+            'tipo_evento_id' => TipoEvento::factory(),
             'abierto_publico' => true,
             'orden' => $this->faker->numberBetween(0, 10),
             'activo' => true,
