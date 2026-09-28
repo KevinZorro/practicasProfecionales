@@ -62,6 +62,7 @@ final class TipoEvaluacionResource extends RecursoDelAdmin
                     ->rows(3),
                 Toggle::make('activo')
                     ->label('Activo')
+                    ->helperText('Un tipo inactivo no admite evaluaciones nuevas; las ya creadas lo conservan.')
                     ->default(true),
             ]),
 
@@ -92,7 +93,10 @@ final class TipoEvaluacionResource extends RecursoDelAdmin
                                 ->required()
                                 ->rows(2),
                         ])
-                        ->defaultItems(0)
+                        // Un tipo sin checklist no evalúa nada: el docente no
+                        // tendría qué marcar.
+                        ->minItems(1)
+                        ->defaultItems(1)
                         ->addActionLabel('Añadir ítem'),
                 ]),
         ]);

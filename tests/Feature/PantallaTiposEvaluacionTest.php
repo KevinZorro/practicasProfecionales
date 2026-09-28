@@ -133,6 +133,27 @@ it('no guarda un ítem del checklist vacío', function (): void {
         ->and(ItemChecklist::count())->toBe(0);
 });
 
+it('no guarda un tipo de evaluación sin ningún ítem en el checklist', function (): void {
+    Livewire::actingAs($this->admin)
+        ->test(CreateTipoEvaluacion::class)
+        ->fillForm(['nombre' => 'Canalización de vía periférica', 'itemsChecklist' => []])
+        ->call('create')
+        ->assertHasFormErrors(['itemsChecklist']);
+
+    expect(TipoEvaluacion::count())->toBe(0);
+});
+
+it('no deja quitar todos los ítems del checklist al editar', function (): void {
+    $tipo = TipoEvaluacion::factory()->conChecklist(2)->create();
+
+    editarTipoEvaluacion($tipo)
+        ->set('data.itemsChecklist', [])
+        ->call('save')
+        ->assertHasFormErrors(['itemsChecklist']);
+
+    expect($tipo->fresh()->itemsChecklist)->toHaveCount(2);
+});
+
 it('reordena el checklist', function (): void {
     $tipo = TipoEvaluacion::factory()->create();
     foreach (['Primero', 'Segundo', 'Tercero'] as $posicion => $descripcion) {
@@ -183,7 +204,7 @@ it('habilita el tipo solo en las materias que el ADMIN marca', function (): void
     // la solicitud. Lo que se marca aquí es lo que consulta.
     $habilitada = Materia::factory()->create();
     $otra = Materia::factory()->create();
-    $tipo = TipoEvaluacion::factory()->create();
+    $tipo = TipoEvaluacion::factory()->conChecklist()->create();
 
     editarTipoEvaluacion($tipo)
         ->fillForm(['materias' => [$habilitada->id]])
@@ -200,7 +221,7 @@ it('habilita el tipo solo en las materias que el ADMIN marca', function (): void
 
 it('enseña y conserva una materia ya asociada aunque después se haya desactivado', function (): void {
     $inactiva = Materia::factory()->create(['nombre' => 'Semiologia Clinica']);
-    $tipo = TipoEvaluacion::factory()->create();
+    $tipo = TipoEvaluacion::factory()->conChecklist()->create();
     $tipo->materias()->attach($inactiva);
     $inactiva->update(['activo' => false]);
 

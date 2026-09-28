@@ -37,6 +37,14 @@ final class EvaluacionInvalida extends DomainException
         return new self(sprintf('La solicitud #%d ya tiene una evaluación registrada.', $solicitud->id));
     }
 
+    public static function tipoInactivo(TipoEvaluacion $tipo): self
+    {
+        return new self(sprintf(
+            'El tipo de evaluación "%s" está desactivado: no se pueden crear evaluaciones nuevas con él.',
+            $tipo->nombre,
+        ));
+    }
+
     public static function tipoAjenoALaMateria(TipoEvaluacion $tipo, Solicitud $solicitud): self
     {
         return new self(sprintf(

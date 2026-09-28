@@ -94,6 +94,28 @@ it('no acepta un tipo de evaluación ajeno a la materia de la solicitud', functi
         ->toThrow(EvaluacionInvalida::class, 'no está asociado a la materia');
 });
 
+it('no crea una evaluación con un tipo de evaluación desactivado', function (): void {
+    [$solicitud, $tipo] = escenarioEvaluable();
+    $tipo->update(['activo' => false]);
+
+    expect(fn () => $this->servicio->crear($solicitud, $tipo, $this->docente))
+        ->toThrow(EvaluacionInvalida::class, 'está desactivado');
+
+    expect(Evaluacion::count())->toBe(0);
+});
+
+it('deja seguir una evaluación ya creada aunque después se desactive su tipo', function (): void {
+    // Desactivar corta lo nuevo, no lo que ya está en curso.
+    [$solicitud, $tipo] = escenarioEvaluable();
+    $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
+    $tipo->update(['activo' => false]);
+
+    $this->servicio->agregarEstudiante($evaluacion->fresh(), User::factory()->estudiante()->create());
+
+    expect($evaluacion->fresh()->tipo_evaluacion_id)->toBe($tipo->id)
+        ->and($evaluacion->estudiantes()->count())->toBe(1);
+});
+
 // ---------------------------------------------------------------------
 // Regla 2: el resultado lo decide el docente, no se deriva del checklist
 // ---------------------------------------------------------------------

@@ -33,6 +33,7 @@ final class EvaluacionService
     public function crear(Solicitud $solicitud, TipoEvaluacion $tipo, User $docente): Evaluacion
     {
         $this->garantizarSolicitudApta($solicitud);
+        $this->garantizarTipoActivo($tipo);
         $this->garantizarTipoDeLaMateria($tipo, $solicitud);
 
         return DB::transaction(function () use ($solicitud, $tipo, $docente): Evaluacion {
@@ -201,6 +202,18 @@ final class EvaluacionService
 
         if ($solicitud->evaluacion()->exists()) {
             throw EvaluacionInvalida::solicitudYaEvaluada($solicitud);
+        }
+    }
+
+    /**
+     * Un tipo que el ADMIN desactivó ya no sirve para evaluaciones nuevas.
+     * Las que ya existen no se tocan: conservan su tipo y su checklist
+     * copiado (regla 3).
+     */
+    private function garantizarTipoActivo(TipoEvaluacion $tipo): void
+    {
+        if (! $tipo->activo) {
+            throw EvaluacionInvalida::tipoInactivo($tipo);
         }
     }
 
