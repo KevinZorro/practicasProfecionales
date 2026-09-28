@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Filament\Formularios\CampoDeImagen;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\CasoClinicoResource\Pages;
 use App\Models\CasoClinico;
@@ -27,8 +28,8 @@ use Filament\Tables\Table;
  * en que se usa, el inventario que necesita y cuántos estudiantes admite.
  *
  * Sin borrado: se desactivan (ver CasoClinicoPolicy). Los campos de la
- * landing —imagen, visibilidad pública, orden (RF12)— llegan con el
- * contenido público.
+ * landing (RF12) —imagen, visibilidad y orden— van en su propia sección; el
+ * orden se cambia arrastrando las filas.
  */
 final class CasoClinicoResource extends RecursoDelAdmin
 {
@@ -56,6 +57,11 @@ final class CasoClinicoResource extends RecursoDelAdmin
 
     protected static ?string $recordTitleAttribute = 'nombre';
 
+    public static function camposDeImagen(): array
+    {
+        return ['imagen'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -81,6 +87,17 @@ final class CasoClinicoResource extends RecursoDelAdmin
                     ->helperText('Un caso inactivo no aparece en el formulario de solicitud del docente.')
                     ->default(true),
             ]),
+
+            Section::make('En la landing')
+                ->description('Cómo se muestra el escenario en la página pública (RF03, RF12).')
+                ->schema([
+                    CampoDeImagen::make('imagen', 'casos-clinicos')
+                        ->label('Imagen'),
+                    Toggle::make('visible_publico')
+                        ->label('Visible en la landing')
+                        ->helperText('Solo sale si además está activo.')
+                        ->default(false),
+                ]),
 
             Section::make('Materias')
                 ->description('Materias en las que se practica este escenario (RF24).')
@@ -143,10 +160,15 @@ final class CasoClinicoResource extends RecursoDelAdmin
                 TextColumn::make('materias_count')->label('Materias')->counts('materias'),
                 TextColumn::make('items_necesarios_count')->label('Ítems')->counts('itemsNecesarios'),
                 IconColumn::make('activo')->boolean(),
+                IconColumn::make('visible_publico')->label('En la landing')->boolean(),
             ])
             ->defaultSort('nombre')
+            // El orden de la landing: se activa el modo de reordenar y se
+            // arrastran las filas. Fuera de ese modo, el listado va por nombre.
+            ->reorderable('orden')
             ->filters([
                 TernaryFilter::make('activo'),
+                TernaryFilter::make('visible_publico')->label('En la landing'),
             ])
             ->actions([
                 EditAction::make(),

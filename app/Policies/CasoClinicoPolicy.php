@@ -46,6 +46,12 @@ final class CasoClinicoPolicy
         return $usuario->hasRole(Rol::Admin->value);
     }
 
+    /** Cambiar el orden en que salen en la landing (RF12). */
+    public function reorder(User $usuario): bool
+    {
+        return $usuario->hasRole(Rol::Admin->value);
+    }
+
     /**
      * No se borran, se desactivan. Uno con solicitudes no se puede borrar
      * (la llave es restrict), y uno sin ellas se llevaría en cascada su lista
