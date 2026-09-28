@@ -80,7 +80,9 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 
 **Imágenes del contenido público (RNF10).** Toda imagen que sube el ADMIN entra por `App\Filament\Formularios\CampoDeImagen` y se guarda con `ImagenPublicaService`: valida tipo (JPEG, PNG, WebP) y tamaño (5 MB), endereza la foto según su EXIF, la reduce a 1600 px de lado mayor y la guarda en WebP en el disco `public`. **No uses un `FileUpload` suelto para imágenes públicas:** se saltaría la reducción y una foto de celular de 4 MB llegaría tal cual a quien entra desde una conexión lenta. Las páginas de edición con imágenes usan el trait `BorraLasImagenesReemplazadas`, y el recurso declara sus columnas en `camposDeImagen()`: así el archivo viejo se borra al reemplazarlo, después de confirmar la transacción.
 
-Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:link`), con caché de un mes: sus nombres se generan al subirlos y nunca se reescriben. `storage/app/public` vive en el volumen `archivos_publicos` del compose, montado en `app`, `queue` y `nginx`; el Dockerfile crea esa carpeta con dueño `www-data` porque Docker inicializa un volumen vacío con el dueño de la imagen, y sin eso la aplicación no podría escribir. El job de Docker de la CI comprueba que GD guarda WebP y que nginx sirve un archivo escrito por la aplicación.
+**El video del hero es la excepción:** no se recodifica (haría falta ffmpeg). Se sube ya comprimido, MP4 o WebM, con un tope de 15 MB (`ConfiguracionLandingService::TAMANO_MAXIMO_VIDEO_KB`). Ese tope tiene que caber en `php.ini`, en `client_max_body_size` de nginx y en `config/livewire.php`, que queda 1 MB por encima para que el error lo dé el formulario; `ConfiguracionLandingTest` lo comprueba.
+
+Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:link`), con caché de un mes y `nosniff`: sus nombres se generan al subirlos y nunca se reescriben. `storage/app/public` vive en el volumen `archivos_publicos` del compose, montado en `app`, `queue` y `nginx`; el Dockerfile crea esa carpeta con dueño `www-data` porque Docker inicializa un volumen vacío con el dueño de la imagen, y sin eso la aplicación no podría escribir. El job de Docker de la CI comprueba que GD guarda WebP y que nginx sirve un archivo escrito por la aplicación.
 
 ### Previsto, todavía sin instalar
 
@@ -140,6 +142,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
+| `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
 | `UsuarioSyncService` | Sincronización contra la vista institucional. **Todavía no existe:** depende del pendiente 2, la estructura de la vista institucional. No lo invoques ni supongas que hay sincronización corriendo |

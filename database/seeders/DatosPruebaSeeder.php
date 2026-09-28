@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Enums\ClaveConfiguracionLanding;
 use App\Enums\EstadoEvaluacion;
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\EstadoItemInventario;
@@ -688,13 +689,13 @@ class DatosPruebaSeeder extends Seeder
 
     private function crearContenidoPublico(User $coordinadora): void
     {
+        // Sin video del hero: es un archivo que sube el ADMIN (RF11).
         $configuracion = [
-            'hero_video_url' => 'https://www.youtube.com/watch?v=simulacion-lab',
-            'hero_titulo' => 'Laboratorio de Simulación Clínica',
-            'hero_subtitulo' => 'Formación práctica en entornos clínicos seguros y controlados.',
-            'contacto_email' => 'laboratorio@ejemplo.edu.co',
-            'contacto_telefono' => '+57 601 000 0000',
-            'contacto_direccion' => 'Facultad de Ciencias de la Salud, bloque C, piso 2',
+            ClaveConfiguracionLanding::HeroTitulo->value => 'Laboratorio de Simulación Clínica',
+            ClaveConfiguracionLanding::HeroSubtitulo->value => 'Formación práctica en entornos clínicos seguros y controlados.',
+            ClaveConfiguracionLanding::ContactoEmail->value => 'laboratorio@ejemplo.edu.co',
+            ClaveConfiguracionLanding::ContactoTelefono->value => '+57 601 000 0000',
+            ClaveConfiguracionLanding::ContactoDireccion->value => 'Facultad de Ciencias de la Salud, bloque C, piso 2',
         ];
 
         foreach ($configuracion as $clave => $valor) {
