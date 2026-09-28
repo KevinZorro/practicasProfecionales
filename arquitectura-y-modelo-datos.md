@@ -173,7 +173,7 @@ proyecto/
 |---|---|---|
 | `Http/Controllers/Auth/GoogleController.php` | Entrada con Google (RF18) | Credenciales de Google |
 | `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
-| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Del contenido público: galería de fotos (RF10), talleres (RF13), certificaciones (RF15) y perfiles docentes (RF16) | Una Policy por modelo antes de cada pantalla |
+| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Del contenido público: galería de fotos (RF10), talleres (RF13), certificaciones (RF15), perfiles docentes (RF16) y configuración de la landing (RF11) | Una Policy por modelo antes de cada pantalla |
 | `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
 | `Livewire/Reportes/` | Pantalla de reportes (RF54–RF56). `ReporteService` y las exportaciones ya existen | — |
 | Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |
@@ -398,7 +398,7 @@ Hace falta aparte del pivote porque la llave primaria de este es (`role_id`, `mo
 
 | Tabla | Campos principales | RF |
 |---|---|---|
-| `configuracion_landing` | `clave`, `valor` (pares clave-valor: video hero, textos, contacto) | RF02, RF11 |
+| `configuracion_landing` | `clave`, `valor` (pares clave-valor). Las claves las fija el enum `ClaveConfiguracionLanding`: título y subtítulo del hero, ruta del video del hero en el disco público, correo, teléfono y dirección de contacto. Se editan en una sola página de Filament | RF02, RF11 |
 | `estadisticas_landing` | `etiqueta`, `valor`, `orden` | RF01 |
 | `galeria_fotos` | `titulo`, `imagen_path`, `orden`, `activo` | RF01, RF10 |
 | `videos_institucionales` | `titulo`, `url`, `orden`, `activo` | RF08, RF17 |
