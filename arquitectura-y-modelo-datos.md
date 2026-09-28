@@ -400,7 +400,8 @@ Hace falta aparte del pivote porque la llave primaria de este es (`role_id`, `mo
 | `galeria_fotos` | `titulo`, `imagen_path`, `orden`, `activo` | RF01, RF10 |
 | `videos_institucionales` | `titulo`, `url`, `orden`, `activo` | RF08, RF17 |
 | `talleres` | `titulo`, `descripcion`, `imagen`, `tema`, `fecha`, `modalidad` (`virtual` \| `presencial`), `muestra_formulario`, `orden`, `activo` | RF04, RF13 |
-| `eventos` | `titulo`, `descripcion`, `imagen`, `fecha`, `tipo` (valores pendientes de confirmar), `abierto_publico`, `orden`, `activo` | RF05, RF14 |
+| `eventos` | `titulo`, `descripcion`, `imagen`, `fecha`, `tipo_evento_id` (FK → `tipos_evento`, restrict), `abierto_publico`, `orden`, `activo` | RF05, RF14 |
+| `tipos_evento` | `nombre` (único), `activo`. Catálogo que gestiona el ADMIN desde Filament; no se borran, se desactivan | RF05, RF14 |
 | `certificaciones` | `nombre`, `entidad`, `imagen_insignia`, `descripcion`, `orden`, `activo` | RF06, RF15 |
 | `perfiles_docentes` | `user_id` (nullable), `nombre`, `cargo`, `foto`, `orden`, `activo` | RF07, RF16 |
 | `titulos_docente` | `perfil_docente_id`, `titulo`, `institucion`, `orden` | RF07 |
@@ -545,4 +546,3 @@ La sincronización de usuarios contra la vista institucional corre como tarea pr
 2. **Estructura de la vista institucional:** los campos exactos que entregue la universidad pueden obligar a ajustar `users.documento`, `codigo_institucional` y `origen`.
 3. **Aviso de sala al docente:** si se decide notificar la asignación de sala, se agrega un evento sobre `preparaciones`. No requiere cambios de esquema.
 4. ~~**Volumen real de usuarios.**~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes (RNF01 actualizado). El dimensionamiento no cambia la arquitectura ni el esquema; si alguna vez hiciera falta más capacidad, la vía sigue siendo Laravel Octane, que es configuración del contenedor.
-5. **Valores de `eventos.tipo`:** el RF05 exige registrar el tipo de evento pero no enumera los valores posibles. Pendiente de definir con la coordinación.

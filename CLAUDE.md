@@ -346,4 +346,3 @@ No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 2. Estructura exacta de la vista de la base de datos institucional para la sincronización de usuarios.
 3. Cómo se entera hoy el docente de la sala asignada al llegar a clase.
 4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
-5. Valores posibles de `eventos.tipo`: el RF05 pide registrar el tipo pero no los enumera.
