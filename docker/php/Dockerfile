@@ -109,19 +109,22 @@ COPY --chown=www-data:www-data . .
 COPY --from=dependencias --chown=www-data:www-data /var/www/html/vendor ./vendor
 COPY --from=assets --chown=www-data:www-data /app/public/build ./public/build
 
+# Las carpetas de storage se crean antes que nada: .dockerignore las deja
+# fuera de la imagen y los scripts de composer arrancan Laravel, que sin
+# storage/framework/views no arranca ("Please provide a valid cache path").
+# storage/app/public y storage/app/private quedan con dueño www-data por la
+# misma razón que en desarrollo: son los puntos de montaje de los volúmenes.
+#
 # El autoload optimizado dispara los scripts de composer.json: package:discover
 # y filament:upgrade, que publica los assets de Filament en public/.
 #
 # storage:link deja el enlace public/storage apuntando a
 # /var/www/html/storage/app/public, que en producción es el volumen de las
 # imágenes: el contenedor web lo monta en esa misma ruta.
-#
-# storage/app/public y storage/app/private se crean con dueño www-data por la
-# misma razón que en desarrollo: son los puntos de montaje de los volúmenes.
-RUN composer dump-autoload --optimize --no-dev --no-interaction \
-    && php artisan storage:link \
-    && mkdir -p storage/app/public storage/app/private storage/framework/cache/data \
+RUN mkdir -p storage/app/public storage/app/private storage/framework/cache/data \
         storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && composer dump-autoload --optimize --no-dev --no-interaction \
+    && php artisan storage:link \
     && chown -R www-data:www-data storage bootstrap/cache public
 
 COPY docker/produccion/arrancar.sh /usr/local/bin/arrancar
