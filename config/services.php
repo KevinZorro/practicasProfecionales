@@ -28,6 +28,22 @@ return [
         'key' => env('RESEND_KEY'),
     ],
 
+    /*
+    | Entrada con Google (RF18). Sin client_id la entrada no existe: las
+    | rutas responden 404 y los invitados vuelven a la portada.
+    |
+    | "dominio" es el de las cuentas institucionales (por ejemplo
+    | ufps.edu.co). Se le pasa a Google para que ofrezca solo esas cuentas y,
+    | sobre todo, se comprueba al volver, porque lo que se manda a Google es
+    | una sugerencia que cualquiera puede quitar de la URL.
+    */
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', '/acceso/google/volver'),
+        'dominio' => env('GOOGLE_DOMINIO_INSTITUCIONAL'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

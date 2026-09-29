@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\Reporte;
+use App\Http\Controllers\Auth\AccesoConGoogleController;
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\CalendarioController;
@@ -22,6 +23,26 @@ use Illuminate\Support\Facades\Route;
 Route::view('/', 'welcome')->name('inicio.publico');
 
 Route::post('salir', SalirController::class)->name('salir');
+
+/*
+|--------------------------------------------------------------------------
+| Entrada con Google (RF18)
+|--------------------------------------------------------------------------
+|
+| La única entrada fuera de local. Sin credenciales configuradas las tres
+| rutas responden 404 (lo comprueba el controlador en cada petición, así que
+| una caché de rutas no la deja abierta a medias).
+|
+| Sin límite de peticiones por IP: en la universidad cientos de personas
+| salen por la misma dirección y entran a la vez al empezar la clase. El
+| retorno no se puede forzar probando valores: Google valida el código y
+| Socialite el "state" de la sesión.
+|
+*/
+
+Route::get('acceso', [AccesoConGoogleController::class, 'pantalla'])->name('acceso');
+Route::get('acceso/google', [AccesoConGoogleController::class, 'redirigir'])->name('acceso.google');
+Route::get('acceso/google/volver', [AccesoConGoogleController::class, 'volver'])->name('acceso.google.volver');
 
 /*
 |--------------------------------------------------------------------------
