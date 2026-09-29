@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Inventario;
 
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Services\InventarioService;
 use Livewire\Attributes\Validate;
@@ -17,6 +18,8 @@ use Livewire\Component;
  */
 final class ConsultaDisponibilidad extends Component
 {
+    use AutorizaEnCadaPeticion;
+
     #[Validate('required|integer|exists:items_inventario,id')]
     public ?int $itemId = null;
 
@@ -50,6 +53,12 @@ final class ConsultaDisponibilidad extends Component
             $this->horaInicio.':00',
             $this->horaFin.':00',
         );
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', ItemInventario::class);
     }
 
     public function render(): mixed

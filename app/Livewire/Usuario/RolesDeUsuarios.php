@@ -6,6 +6,7 @@ namespace App\Livewire\Usuario;
 
 use App\Enums\Rol;
 use App\Exceptions\AsignacionDeRolInvalida;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\AsignacionDeRol;
 use App\Models\User;
 use App\Services\AsignacionDeRolService;
@@ -26,6 +27,7 @@ use Livewire\WithPagination;
  */
 final class RolesDeUsuarios extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     #[Url(as: 'buscar', keep: false)]
@@ -41,11 +43,6 @@ final class RolesDeUsuarios extends Component
     public string $motivo = '';
 
     public ?string $errorDeRegla = null;
-
-    public function mount(): void
-    {
-        $this->authorize('viewAny', AsignacionDeRol::class);
-    }
 
     public function updatedBusqueda(): void
     {
@@ -131,6 +128,12 @@ final class RolesDeUsuarios extends Component
         }
 
         session()->flash('estado', 'Rol revocado. Deja de tener efecto ahora mismo, no al final del día.');
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', AsignacionDeRol::class);
     }
 
     public function render(AsignacionDeRolService $roles): mixed

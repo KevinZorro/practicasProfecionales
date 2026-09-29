@@ -6,6 +6,7 @@ namespace App\Livewire\Confidencialidad;
 
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\FormatoConfidencialidad;
 use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +22,7 @@ use Livewire\WithPagination;
  */
 final class BandejaVerificacion extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     #[Url(as: 'estado', keep: false)]
@@ -98,6 +100,12 @@ final class BandejaVerificacion extends Component
 
         $this->cancelar();
         session()->flash('estado', 'Formato devuelto para que lo vuelvan a subir.');
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', FormatoConfidencialidad::class);
     }
 
     public function render(ConfidencialidadService $confidencialidad): mixed

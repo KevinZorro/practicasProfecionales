@@ -77,7 +77,7 @@ it('deja al estudiante subir su formato y lo deja cargado', function (): void {
         ->set('documento', pdfFirmado())
         ->call('entregar')
         ->assertHasNoErrors()
-        ->assertSet('errorDeRegla', null);
+        ->assertSetStrict('errorDeRegla', null);
 
     $entrega = FormatoConfidencialidad::firstOrFail();
     expect($entrega->firmante_id)->toBe($this->estudiante->id)
@@ -136,7 +136,7 @@ it('no da por vigente el formato verificado del periodo anterior', function (): 
 
     Livewire::actingAs($this->estudiante)
         ->test(MiFormato::class)
-        ->assertViewHas('entrega', null)
+        ->assertViewHas('entrega', fn ($entrega): bool => $entrega === null)
         ->assertSee('Todavía no has entregado el formato de este periodo')
         ->assertSee('Sube el documento firmado');
 });
@@ -183,7 +183,10 @@ it('deja al administrativo entrar a la bandeja de verificación', function (): v
     $this->actingAs($this->administrativo)->get(route('panel.formatos-confidencialidad.estado'))->assertOk();
 });
 
-it('no deja al docente verificar ni rechazar aunque llame al método', function (string $accion): void {
+it('no deja al docente ni abrir la bandeja de verificación', function (): void {
+    // Sin la bandeja abierta no hay componente sobre el que llamar a
+    // verificar() o rechazar(): el componente pide su permiso en cada
+    // petición, también en la primera.
     $entrega = FormatoConfidencialidad::factory()->cargado()->delPeriodo('2026-2')->create([
         'firmante_id' => $this->estudiante->id,
     ]);
@@ -191,11 +194,10 @@ it('no deja al docente verificar ni rechazar aunque llame al método', function 
 
     Livewire::actingAs($docente)
         ->test(BandejaVerificacion::class)
-        ->call($accion, $entrega->id)
         ->assertForbidden();
 
     expect($entrega->fresh()->estado)->toBe(EstadoFormatoConfidencialidad::Cargado);
-})->with(['verificar', 'rechazar']);
+});
 
 it('devuelve el formato a pendiente con el motivo', function (): void {
     $entrega = FormatoConfidencialidad::factory()->cargado()->delPeriodo('2026-2')->create([

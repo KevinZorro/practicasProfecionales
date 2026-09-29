@@ -7,6 +7,7 @@ namespace App\Livewire\Inventario;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Exceptions\InventarioInvalido;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Services\DatosItemInventario;
 use App\Services\InventarioService;
@@ -29,6 +30,8 @@ use Livewire\Component;
  */
 final class FormularioItem extends Component
 {
+    use AutorizaEnCadaPeticion;
+
     public ?ItemInventario $item = null;
 
     #[Validate('required|string|max:150')]
@@ -92,6 +95,18 @@ final class FormularioItem extends Component
 
         session()->flash('estado', 'Ítem guardado.');
         $this->redirectRoute('panel.inventario', navigate: true);
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        if ($this->item instanceof ItemInventario) {
+            $this->authorize('update', $this->item);
+
+            return;
+        }
+
+        $this->authorize('create', ItemInventario::class);
     }
 
     public function render(): mixed

@@ -6,6 +6,7 @@ namespace App\Livewire\Confidencialidad;
 
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\FormatoConfidencialidad;
 use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
@@ -22,6 +23,7 @@ use Livewire\WithFileUploads;
  */
 final class MiFormato extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithFileUploads;
 
     public ?TemporaryUploadedFile $documento = null;
@@ -69,6 +71,12 @@ final class MiFormato extends Component
 
         $this->reset('documento');
         session()->flash('estado', 'Tu formato quedó cargado. El laboratorio lo revisará.');
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('create', FormatoConfidencialidad::class);
     }
 
     public function render(ConfidencialidadService $confidencialidad): mixed

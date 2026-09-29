@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Confidencialidad;
 
 use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\PlantillaConfidencialidad;
 use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,7 @@ use Livewire\WithPagination;
  */
 final class GestionDePlantilla extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithFileUploads;
     use WithPagination;
 
@@ -71,6 +73,12 @@ final class GestionDePlantilla extends Component
 
         $this->reset('archivo', 'version');
         session()->flash('estado', 'Plantilla cargada. Es la que se descargará desde ahora.');
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('create', PlantillaConfidencialidad::class);
     }
 
     public function render(ConfidencialidadService $confidencialidad): mixed

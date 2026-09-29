@@ -96,10 +96,13 @@ it('no deja a un docente ni a un estudiante acercarse a la bandeja', function (R
     $usuario->assignRole($rol->value);
     $solicitud = Solicitud::factory()->create();
 
+    // La bandeja pide su permiso en cada petición, también en la primera:
+    // ni siquiera se abre, así que no hay revisar() al que llamar.
     Livewire::actingAs($usuario->fresh())
         ->test(BandejaRevision::class)
-        ->call('revisar', $solicitud->id)
         ->assertForbidden();
+
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Pendiente);
 })->with([Rol::Docente, Rol::Estudiante]);
 
 // ---------------------------------------------------------------------

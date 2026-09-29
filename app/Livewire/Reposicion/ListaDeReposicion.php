@@ -6,6 +6,7 @@ namespace App\Livewire\Reposicion;
 
 use App\Enums\MotivoReposicion;
 use App\Exceptions\ReposicionInvalida;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Models\ListaDeReposicion as Lista;
 use App\Models\NecesidadDeReposicion;
@@ -24,6 +25,8 @@ use Livewire\Component;
  */
 final class ListaDeReposicion extends Component
 {
+    use AutorizaEnCadaPeticion;
+
     #[Url(as: 'desde', keep: false)]
     public string $desde = '';
 
@@ -60,8 +63,6 @@ final class ListaDeReposicion extends Component
 
     public function mount(ReposicionService $reposicion): void
     {
-        $this->authorize('viewAny', Lista::class);
-
         $this->origenFijado = $reposicion->origenDelSiguienteBorrador();
 
         // En cuanto hay una lista cerrada, el borrador arranca donde terminó
@@ -181,6 +182,12 @@ final class ListaDeReposicion extends Component
         $this->listaCerrada = $lista->id;
         $this->origenFijado = $reposicion->origenDelSiguienteBorrador();
         session()->flash('estado', 'Lista cerrada. Ya se puede descargar como soporte de la solicitud de compra.');
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', Lista::class);
     }
 
     public function render(ReposicionService $reposicion): mixed

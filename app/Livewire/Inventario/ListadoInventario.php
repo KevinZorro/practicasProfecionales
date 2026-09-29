@@ -8,6 +8,7 @@ use App\Enums\EstadoItemInventario;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Exceptions\InventarioInvalido;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Services\InventarioService;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ use Livewire\WithPagination;
  */
 final class ListadoInventario extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     /** Valor del filtro de fidelidad que busca los simuladores sin asignar. */
@@ -125,6 +127,12 @@ final class ListadoInventario extends Component
             $item->nombre,
             $destino->etiqueta(),
         ));
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', ItemInventario::class);
     }
 
     public function render(InventarioService $inventario): mixed

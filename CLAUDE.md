@@ -264,6 +264,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - En Tailwind, `border-gray-300` fija el **color** del borde, no su grosor. Sin `border` al lado, el borde no se ve. Es un fallo que se lee perfectamente en el código y solo aparece al abrir el navegador: lo correcto es `border border-gray-300`.
 - Móvil primero: los administrativos usan el sistema desde el celular mientras preparan escenarios.
 - La interfaz debe funcionar en conexiones lentas y equipos de gama baja: sin dependencias pesadas de JavaScript.
+- **La aplicación está en español** (`APP_LOCALE=es`, que también es el valor por defecto de `config/app.php`). Las traducciones del framework viven en `lang/es/validation.php`, `lang/es/pagination.php` y `lang/es.json`, escritas a mano y sin paquetes. Un campo nuevo que se valida lleva su nombre legible en `attributes` de `validation.php`; si no, el mensaje diría "el campo caso clinico id". No escribas mensajes propios en una pantalla para decir lo que el mensaje general ya dice: los propios son para lo que solo esa pantalla sabe explicar. `IdiomaDeLaAplicacionTest` falla si Laravel trae una regla sin traducir.
 
 ---
 
@@ -344,6 +345,7 @@ docker compose logs -f app
 - **Si algo contradice este archivo o el documento de arquitectura, dilo** en vez de resolverlo por tu cuenta.
 - Al terminar una tarea: resume qué se hizo, qué archivos se tocaron y cómo verificarlo.
 - No refactorices código ajeno a la tarea actual sin avisar.
+- **Todo mensaje al usuario va en español**: respuestas, preguntas, resúmenes al terminar y también las notas de avance mientras se trabaja.
 
 ---
 
