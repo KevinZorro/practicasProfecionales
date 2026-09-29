@@ -121,11 +121,15 @@ COPY --from=assets --chown=www-data:www-data /app/public/build ./public/build
 # storage:link deja el enlace public/storage apuntando a
 # /var/www/html/storage/app/public, que en producción es el volumen de las
 # imágenes: el contenedor web lo monta en esa misma ruta.
+#
+# /var/www/.config es donde tinker guarda su historial: el hogar de www-data
+# es de root, y sin esa carpeta tinker no arranca.
 RUN mkdir -p storage/app/public storage/app/private storage/framework/cache/data \
         storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+        /var/www/.config \
     && composer dump-autoload --optimize --no-dev --no-interaction \
     && php artisan storage:link \
-    && chown -R www-data:www-data storage bootstrap/cache public
+    && chown -R www-data:www-data storage bootstrap/cache public /var/www/.config
 
 COPY docker/produccion/arrancar.sh /usr/local/bin/arrancar
 
