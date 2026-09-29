@@ -30,6 +30,7 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 | Tests | Pest |
 | Análisis estático | Larastan, nivel 6, con línea base |
 | Pantallas del ADMIN | Filament 3.3, en `/admin` |
+| Autenticación | Laravel Socialite 5 (Google OAuth, RF18). Sin `GOOGLE_CLIENT_ID` la entrada no existe |
 | Servidor web | Nginx |
 | Contenedores | Docker + Docker Compose |
 
@@ -37,7 +38,6 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 
 | Capa | Tecnología | Estado |
 |---|---|---|
-| Autenticación | Laravel Socialite (Google OAuth, RF18) | Pendiente de las credenciales de Google |
 | Métricas | Plausible o Matomo (contenedor aparte) | Sin decidir |
 
 **Solo PostgreSQL.** El plan inicial admitía MySQL 8 como alternativa; ya no es posible. Las invariantes críticas se garantizan con `CHECK` de PostgreSQL (regla 11 del `CLAUDE.md`: las cantidades del inventario siempre suman el total) y hay migraciones con SQL propio de PostgreSQL.
@@ -120,7 +120,8 @@ proyecto/
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
-│   │   │   │   ├── AccesoDeDesarrolloController.php   # solo en local, hasta RF18
+│   │   │   │   ├── AccesoConGoogleController.php      # entrada con Google (RF18)
+│   │   │   │   ├── AccesoDeDesarrolloController.php   # solo en local, hasta probar Google con credenciales reales
 │   │   │   │   └── SalirController.php
 │   │   │   └── Panel/                         # entregan la vista; la lógica va en Livewire y Services
 │   │   ├── Requests/
@@ -175,7 +176,6 @@ proyecto/
 
 | Pieza | Para qué | Depende de |
 |---|---|---|
-| `Http/Controllers/Auth/GoogleController.php` | Entrada con Google (RF18) | Credenciales de Google |
 | `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
 | `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Del contenido público: galería de fotos y estadísticas (RF10), talleres (RF13), certificaciones (RF15), perfiles docentes (RF16), configuración de la landing (RF11), campos públicos de los casos clínicos (RF12), tipos de evento y eventos (RF14). Falta la galería de videos (RF17), pendiente de confirmar con el cliente | Una Policy por modelo antes de cada pantalla |
 | `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
@@ -198,7 +198,6 @@ proyecto/
 | id | bigint PK | |
 | google_id | string, nullable, unique | identificador devuelto por Google |
 | email | string, unique | correo institucional |
-| password | string, nullable | vestigio de Breeze; la autenticación es por Google |
 | nombre | string | |
 | documento | string, nullable | proviene de la vista institucional |
 | codigo_institucional | string, nullable | código de estudiante o docente |

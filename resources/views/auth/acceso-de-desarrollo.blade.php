@@ -1,6 +1,7 @@
 {{--
     Acceso provisional de desarrollo. Solo se sirve en entorno local
-    (middleware SoloEnDesarrollo); desaparece cuando entre Socialite (RF18).
+    (middleware SoloEnDesarrollo); se retira cuando la entrada con Google (RF18)
+    esté probada con las credenciales reales.
 --}}
 <!DOCTYPE html>
 <html lang="es" class="h-full">

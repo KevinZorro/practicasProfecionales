@@ -14,13 +14,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
- * Acceso de desarrollo mientras no llegan las credenciales de Google.
+ * Acceso de desarrollo, para recorrer las vistas con distintos roles.
  *
- * La autenticación real es únicamente por Google (RF18). Este controlador
- * existe solo para poder recorrer las vistas con distintos roles antes de
- * tener las credenciales, y desaparece el día que entre Socialite: el
- * contrato con el resto del sistema es una sola línea —Auth::login()—, así
- * que sustituirlo es cambiar este archivo y su bloque de rutas, nada más.
+ * La autenticación real es únicamente por Google (RF18), en
+ * AccesoConGoogleController. Este se queda hasta probar esa entrada con las
+ * credenciales reales; retirarlo es borrar este archivo, su vista y su
+ * bloque de rutas, nada más.
  *
  * Está cerrado fuera de local por el middleware SoloEnDesarrollo, que
  * comprueba el entorno en cada petición.
@@ -42,8 +41,7 @@ final class AccesoDeDesarrolloController extends Controller
 
         $usuario = User::findOrFail($datos['usuario']);
 
-        // Regla 8: la misma comprobación que hará el controlador de Google.
-        // Así se puede probar ya, sin esperar a las credenciales.
+        // Regla 8: la misma comprobación que hace la entrada con Google.
         if (! $acceso->puedeEntrar($usuario)) {
             return back()->withErrors(['usuario' => $acceso->motivoDelRechazo()]);
         }

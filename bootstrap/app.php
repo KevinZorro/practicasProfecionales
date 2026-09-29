@@ -3,6 +3,7 @@
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\SoloEnDesarrollo;
 use App\Http\Middleware\VerificarUsuarioActivo;
+use App\Services\AccesoService;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -38,11 +39,16 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(AuthenticatesRequests::class, VerificarUsuarioActivo::class);
         $middleware->prependToPriorityList(AuthenticatesRequests::class, EstablecerRolActivo::class);
 
-        // La entrada real será por Google (RF18); mientras tanto el único
-        // punto de acceso es el de desarrollo, que solo existe en local.
-        $middleware->redirectGuestsTo(
-            static fn (): string => Route::has('login') ? route('login') : '/',
-        );
+        // El invitado va a la entrada con Google (RF18) si hay credenciales;
+        // si no, al acceso de desarrollo, que solo existe en local, y en
+        // cualquier otro caso a la portada.
+        $middleware->redirectGuestsTo(static function (): string {
+            if (app(AccesoService::class)->entradaConGoogleDisponible()) {
+                return route('acceso');
+            }
+
+            return Route::has('login') ? route('login') : '/';
+        });
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

@@ -66,6 +66,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Tests | Pest |
 | Análisis estático | Larastan, nivel 6, con línea base (ver §7) |
 | Pantallas del ADMIN | Filament 3.3, en `/admin` |
+| Autenticación | Laravel Socialite 5 (Google OAuth, RF18) |
 | Contenedores | Docker + Docker Compose |
 
 **Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF22–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament.
@@ -84,13 +85,15 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 
 Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:link`), con caché de un mes y `nosniff`: sus nombres se generan al subirlos y nunca se reescriben. `storage/app/public` vive en el volumen `archivos_publicos` del compose, montado en `app`, `queue` y `nginx`; el Dockerfile crea esa carpeta con dueño `www-data` porque Docker inicializa un volumen vacío con el dueño de la imagen, y sin eso la aplicación no podría escribir. El job de Docker de la CI comprueba que GD guarda WebP y que nginx sirve un archivo escrito por la aplicación.
 
-### Previsto, todavía sin instalar
+**Entrada con Google (RF18).** `AccesoConGoogleController` habla con Google por Socialite; quién entra lo decide `AccesoService::cuentaDeGoogle()`, que no conoce Socialite y recibe una `IdentidadDeGoogle`. Cinco decisiones que no son las del ejemplo de Socialite:
 
-**No escribas código que dé por hecho que existen.**
+- **No crea cuentas.** Solo entra quien ya tiene cuenta en `users` (la crea la sincronización institucional o el laboratorio): un correo institucional no autoriza el ingreso (regla 8).
+- **Vincula `google_id` la primera vez**, encontrando la cuenta por el correo sin distinguir mayúsculas; desde entonces la encuentra por `google_id`, que no cambia aunque cambie el correo. Una cuenta ya vinculada a otro `google_id` no se entrega a quien coincida en el correo.
+- **Exige `email_verified`**, y el dominio institucional (`GOOGLE_DOMINIO_INSTITUCIONAL`) se **comprueba al volver** con el campo `hd`. El `hd` que se manda a Google es una sugerencia que cualquiera quita de la URL.
+- **Sin `GOOGLE_CLIENT_ID`, la entrada no existe:** las tres rutas dan 404 y el invitado va a la portada, o en `local` al acceso de desarrollo, que sigue ahí hasta probar la entrada con las credenciales reales.
+- **Sin límite de peticiones por IP:** en la universidad cientos de personas salen por la misma dirección y entran a la vez.
 
-| Capa | Tecnología | Estado |
-|---|---|---|
-| Autenticación | Laravel Socialite (Google OAuth, RF18) | Pendiente de las credenciales de Google. Mientras tanto la única entrada es el acceso de desarrollo, que solo existe en `local` y da 404 en cualquier otro entorno |
+Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Google y la comprobación del `state` usan el proveedor real.
 
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
 
@@ -98,7 +101,7 @@ Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:
 
 - `config.platform.php` está fijado en `8.3.0`. Producción corre PHP 8.3, así que ninguna dependencia puede exigir 8.4. Después de cualquier cambio en `composer.json`, verifica que el lock siga siendo instalable en 8.3.
 - Los roles y permisos los gestiona `spatie/laravel-permission` con sus propias tablas. **No crees tablas de roles propias** ni compruebes roles con condicionales sueltos.
-- La autenticación será únicamente por Google (RF18), y Socialite todavía no está instalado (ver arriba). No existe `users.password` ni el paquete Breeze: se retiraron por innecesarios. No añadas rutas de login, registro ni recuperación de contraseña; hay tests que fallan si reaparecen.
+- La autenticación es únicamente por Google (RF18). No existe `users.password` ni el paquete Breeze: se retiraron por innecesarios. No añadas rutas de login, registro ni recuperación de contraseña; hay tests que fallan si reaparecen.
 
 ---
 
@@ -139,7 +142,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `ConfidencialidadService` | Periodo académico vigente, estado del formato de confidencialidad, bloqueo de prácticas |
-| `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
+| `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8) y a qué cuenta corresponde quien vuelve de Google (RF18). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
@@ -179,7 +182,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
-   **Se decide en un solo sitio, `AccesoService::puedeEntrar()`, y se comprueba en dos puertas.** La entrada —hoy el acceso de desarrollo, mañana el controlador de Google— no deja pasar a un inactivo. Y el middleware `VerificarUsuarioActivo` corta en cada petición a quien se desactiva con la sesión abierta: cierra la sesión y después responde 403.
+   **Se decide en un solo sitio, `AccesoService::puedeEntrar()`, y se comprueba en dos puertas.** La entrada —el controlador de Google, y en `local` el acceso de desarrollo— no deja pasar a un inactivo. Y el middleware `VerificarUsuarioActivo` corta en cada petición a quien se desactiva con la sesión abierta: cierra la sesión y después responde 403.
 
    **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 
