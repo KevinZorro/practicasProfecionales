@@ -118,7 +118,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 
 ### Qué va en cada capa
 
-**Form Request** — validación de formato y obligatoriedad. Nada más. Hoy no hay ninguno: todas las pantallas que reciben datos son componentes Livewire, y ese papel lo cumple su validación (`#[Validate]` y `validate()`). Las reglas son las mismas: formato y obligatoriedad, nunca reglas de negocio.
+**Form Request** — validación de formato y obligatoriedad. Nada más. Casi todas las pantallas que reciben datos son componentes Livewire, y ese papel lo cumple su validación (`#[Validate]` y `validate()`). Hay un solo Form Request, `FiltroDeReporteRequest`, porque las descargas de reportes son enlaces normales con los filtros en la URL; la pantalla de reportes valida con sus mismas reglas. Las reglas son las mismas: formato y obligatoriedad, nunca reglas de negocio.
 
 **Controller / componente Livewire** — recibe, delega a un Service, responde. Un método de controlador que pasa de ~15 líneas casi siempre tiene lógica que pertenece a un Service.
 

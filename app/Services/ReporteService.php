@@ -10,8 +10,10 @@ use App\Enums\TipoSesion;
 use App\Models\EvaluacionEstudiante;
 use App\Models\LineaDeReposicion;
 use App\Models\Solicitud;
+use App\Models\User;
 use Illuminate\Contracts\Database\Query\Builder as BuilderContract;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as ColeccionDeModelos;
 use Illuminate\Database\Query\Builder as ConsultaCruda;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -118,11 +120,6 @@ final class ReporteService
     }
 
     /**
-     * @template T of BuilderContract
-     *
-     * @param  T  $consulta
-     */
-    /**
      * RF67. Las líneas congeladas de una lista de reposición ya cerrada.
      *
      * No agrega nada: la agregación se hizo al cerrar la lista, y volver a
@@ -136,6 +133,19 @@ final class ReporteService
             ->where('lista_reposicion_id', $filtro->listaDeReposicionId)
             ->orderBy('motivo')
             ->orderBy('descripcion');
+    }
+
+    /**
+     * Docentes que ofrece el filtro: quien tiene solicitudes, no quien tiene
+     * hoy el rol. Un rol temporal vencido (regla 13) o un docente que ya no
+     * dicta en el laboratorio no pueden desaparecer de los reportes de lo
+     * que sí hicieron.
+     *
+     * @return ColeccionDeModelos<int, User>
+     */
+    public function docentesConSolicitudes(): ColeccionDeModelos
+    {
+        return User::query()->whereHas('solicitudes')->orderBy('nombre')->get(['id', 'nombre']);
     }
 
     public function paginar(BuilderContract $consulta, int $porPagina = self::POR_PAGINA): LengthAwarePaginator

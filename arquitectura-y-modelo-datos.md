@@ -123,6 +123,8 @@ proyecto/
 │   │   │   │   ├── AccesoDeDesarrolloController.php   # solo en local, hasta RF18
 │   │   │   │   └── SalirController.php
 │   │   │   └── Panel/                         # entregan la vista; la lógica va en Livewire y Services
+│   │   ├── Requests/
+│   │   │   └── FiltroDeReporteRequest.php     # filtros de las descargas de reportes, los mismos de la pantalla
 │   │   └── Middleware/
 │   │       ├── EstablecerRolActivo.php        # selector de vista RF21
 │   │       ├── SoloEnDesarrollo.php
@@ -133,6 +135,7 @@ proyecto/
 │   │   ├── Confidencialidad/                  # formato de confidencialidad RF51–RF53
 │   │   ├── Inventario/                        # RF38–RF40, RF66
 │   │   ├── Preparacion/                       # tablero diario RF36–RF37
+│   │   ├── Reportes/                          # pantalla de reportes RF54–RF56
 │   │   ├── Reposicion/                        # lista de insumos por pedir RF67
 │   │   ├── Solicitud/                         # formulario, bandeja, mis solicitudes
 │   │   └── Usuario/                           # roles con vigencia RF63–RF64
@@ -175,10 +178,9 @@ proyecto/
 | `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
 | `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Del contenido público: galería de fotos y estadísticas (RF10), talleres (RF13), certificaciones (RF15), perfiles docentes (RF16), configuración de la landing (RF11), campos públicos de los casos clínicos (RF12), tipos de evento y eventos (RF14). Falta la galería de videos (RF17), pendiente de confirmar con el cliente | Una Policy por modelo antes de cada pantalla |
 | `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
-| `Livewire/Reportes/` | Pantalla de reportes (RF54–RF56). `ReporteService` y las exportaciones ya existen | — |
 | Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |
 
-**No hay Form Requests.** El diagrama de capas los nombra, pero en este proyecto su papel lo cumple la validación de Livewire (`#[Validate]` y `validate()`): todas las pantallas que reciben datos son componentes Livewire.
+**Un solo Form Request.** El diagrama de capas los nombra, pero en este proyecto su papel lo cumple casi siempre la validación de Livewire (`#[Validate]` y `validate()`): las pantallas que reciben datos son componentes Livewire. La excepción son las descargas de reportes, que son enlaces normales con los filtros en la URL: `FiltroDeReporteRequest` las valida, y la pantalla de reportes usa sus mismas reglas y su mismo método para armar el filtro, así que la tabla y el archivo no pueden entender los filtros de forma distinta.
 
 **Nota sobre `storage`:** los formatos de confidencialidad firmados contienen datos personales y no deben quedar en la carpeta pública (RNF07). Se sirven mediante una ruta protegida por Policy, nunca por enlace directo.
 
@@ -513,7 +515,7 @@ Notas de implementación:
 
 ### Exportación
 
-Los reportes se consultan en pantalla y se descargan en dos formatos: PDF mediante plantillas Blade renderizadas con dompdf, y Excel mediante clases `Export` que reutilizan la misma consulta del `ReporteService`. La consulta se escribe una sola vez y alimenta las tres salidas (pantalla, PDF y Excel) para evitar divergencias entre lo que se ve y lo que se descarga.
+Los reportes se consultan en pantalla (`/panel/reportes`, coordinación y ADMIN, Gate `generarReportes`) y se descargan en dos formatos: PDF mediante plantillas Blade renderizadas con dompdf, y Excel mediante clases `Export` que reutilizan la misma consulta del `ReporteService`. La consulta se escribe una sola vez y alimenta las tres salidas (pantalla, PDF y Excel) para evitar divergencias entre lo que se ve y lo que se descarga.
 
 Los reportes con muchos registros se exportan mediante consultas por lotes (`chunk`), no cargando todo en memoria, para no comprometer el rendimiento del contenedor.
 

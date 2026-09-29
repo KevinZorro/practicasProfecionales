@@ -10,6 +10,9 @@ use App\Exports\ListaDeReposicionExport;
 use App\Exports\ReporteExport;
 use App\Exports\ResultadosDeEvaluacionExport;
 use App\Exports\UsoDeEscenariosExport;
+use App\Models\Materia;
+use App\Models\Sala;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -99,10 +102,34 @@ final class GeneradorDeReportes
 
         return Pdf::loadView($reporte->plantillaPdf(), [
             'titulo' => $reporte->titulo(),
-            'descripcionDelFiltro' => $filtro->descripcion(),
+            'descripcionDelFiltro' => $this->describir($filtro),
             'encabezados' => $exportador->headings(),
             'filas' => $this->filas($reporte, $filtro),
         ])->setPaper('a4', 'landscape')->download("{$reporte->nombreDeArchivo()}.pdf");
+    }
+
+    /**
+     * El filtro completo, en palabras, para la cabecera del PDF. Un archivo
+     * descargado circula sin la pantalla que lo generó: si filtró por un
+     * docente y no lo dice, parece el total del laboratorio.
+     */
+    public function describir(FiltroReporte $filtro): string
+    {
+        $partes = [$filtro->descripcion()];
+
+        if ($filtro->docenteId !== null) {
+            $partes[] = 'Docente: '.User::query()->whereKey($filtro->docenteId)->value('nombre');
+        }
+
+        if ($filtro->materiaId !== null) {
+            $partes[] = 'Materia: '.Materia::query()->whereKey($filtro->materiaId)->value('nombre');
+        }
+
+        if ($filtro->salaId !== null) {
+            $partes[] = 'Sala: '.Sala::query()->whereKey($filtro->salaId)->value('nombre');
+        }
+
+        return implode(' · ', $partes);
     }
 
     public function excel(Reporte $reporte, FiltroReporte $filtro): BinaryFileResponse

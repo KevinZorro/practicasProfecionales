@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\Reporte;
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\CalendarioController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Panel\DescargaConfidencialidadController;
 use App\Http\Controllers\Panel\InventarioController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PreparacionController;
+use App\Http\Controllers\Panel\ReporteController;
 use App\Http\Controllers\Panel\ReposicionController;
 use App\Http\Controllers\Panel\SelectorDeRolController;
 use App\Http\Controllers\Panel\SolicitudController;
@@ -36,7 +38,7 @@ Route::post('salir', SalirController::class)->name('salir');
 Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
@@ -55,6 +57,17 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('reposicion', [ReposicionController::class, 'index'])->name('reposicion');
     Route::get('reposicion/{lista}/excel', [ReposicionController::class, 'excel'])->name('reposicion.excel');
     Route::get('reposicion/{lista}/pdf', [ReposicionController::class, 'pdf'])->name('reposicion.pdf');
+
+    /*
+     * Reportes agregados (RF54-RF56). Las descargas llevan en la URL los
+     * mismos filtros que la pantalla. La lista de reposición no entra por
+     * aquí: tiene sus propias descargas, solo de listas cerradas.
+     */
+    $reportesAgregados = array_map(static fn (Reporte $reporte): string => $reporte->value, Reporte::agregados());
+
+    Route::get('reportes', [ReporteController::class, 'index'])->name('reportes');
+    Route::get('reportes/{reporte}/excel', [ReporteController::class, 'excel'])->whereIn('reporte', $reportesAgregados)->name('reportes.excel');
+    Route::get('reportes/{reporte}/pdf', [ReporteController::class, 'pdf'])->whereIn('reporte', $reportesAgregados)->name('reportes.pdf');
 
     Route::get('inventario/nuevo', [InventarioController::class, 'nuevo'])->name('inventario.nuevo');
     Route::get('inventario/disponibilidad', [InventarioController::class, 'disponibilidad'])->name('inventario.disponibilidad');
