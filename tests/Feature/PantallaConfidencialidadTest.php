@@ -77,7 +77,7 @@ it('deja al estudiante subir su formato y lo deja cargado', function (): void {
         ->set('documento', pdfFirmado())
         ->call('entregar')
         ->assertHasNoErrors()
-        ->assertSet('errorDeRegla', null);
+        ->assertSetStrict('errorDeRegla', null);
 
     $entrega = FormatoConfidencialidad::firstOrFail();
     expect($entrega->firmante_id)->toBe($this->estudiante->id)
@@ -136,7 +136,7 @@ it('no da por vigente el formato verificado del periodo anterior', function (): 
 
     Livewire::actingAs($this->estudiante)
         ->test(MiFormato::class)
-        ->assertViewHas('entrega', null)
+        ->assertViewHas('entrega', fn ($entrega): bool => $entrega === null)
         ->assertSee('Todavía no has entregado el formato de este periodo')
         ->assertSee('Sube el documento firmado');
 });

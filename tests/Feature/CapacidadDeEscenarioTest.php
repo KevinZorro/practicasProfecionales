@@ -129,6 +129,6 @@ it('no avisa de ningún máximo si el escenario no tiene capacidad registrada', 
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
         ->set('casoClinicoId', $caso->id)
-        ->assertSet('capacidadDelCaso', null)
+        ->assertSetStrict('capacidadDelCaso', null)
         ->assertDontSee('estudiantes como máximo');
 });

@@ -99,7 +99,7 @@ it('no deja a un administrativo cambiar la fidelidad manipulando la petición', 
         ->set('nombre', 'Torso revisado')
         ->set('nivelFidelidad', NivelFidelidad::Alta->value)
         ->call('guardar')
-        ->assertSet('errorDeRegla', null);
+        ->assertSetStrict('errorDeRegla', null);
 
     $simulador->refresh();
     expect($simulador->nivel_fidelidad)->toBe(NivelFidelidad::Baja)
