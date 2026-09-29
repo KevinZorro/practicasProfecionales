@@ -161,6 +161,7 @@ proyecto/
 │   ├── emails/
 │   ├── reportes/pdf/                          # plantillas Blade para dompdf
 │   └── components/
+├── lang/es/ y lang/es.json                   # la aplicación en español: validación, paginación, páginas de error
 ├── routes/
 │   ├── web.php
 │   └── console.php

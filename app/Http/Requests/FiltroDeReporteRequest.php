@@ -28,12 +28,6 @@ final class FiltroDeReporteRequest extends FormRequest
         return self::reglas();
     }
 
-    /** @return array<string, string> */
-    public function messages(): array
-    {
-        return self::mensajes();
-    }
-
     /** @return array<string, list<string>> */
     public static function reglas(): array
     {
@@ -43,19 +37,6 @@ final class FiltroDeReporteRequest extends FormRequest
             'docente' => ['nullable', 'integer', 'exists:users,id'],
             'materia' => ['nullable', 'integer', 'exists:materias,id'],
             'sala' => ['nullable', 'integer', 'exists:salas,id'],
-        ];
-    }
-
-    /** @return array<string, string> */
-    public static function mensajes(): array
-    {
-        return [
-            'desde.date_format' => 'Escribe la fecha inicial como aaaa-mm-dd.',
-            'hasta.date_format' => 'Escribe la fecha final como aaaa-mm-dd.',
-            'hasta.after_or_equal' => 'La fecha final no puede ser anterior a la inicial.',
-            'docente.*' => 'Ese docente no existe.',
-            'materia.*' => 'Esa materia no existe.',
-            'sala.*' => 'Esa sala no existe.',
         ];
     }
 

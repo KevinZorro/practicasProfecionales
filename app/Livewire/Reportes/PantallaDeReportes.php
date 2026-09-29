@@ -129,6 +129,6 @@ final class PantallaDeReportes extends Component
 
         $datos = array_map(static fn (string $valor): ?string => $valor === '' ? null : $valor, $this->filtros());
 
-        Validator::make($datos, FiltroDeReporteRequest::reglas(), FiltroDeReporteRequest::mensajes())->validate();
+        Validator::make($datos, FiltroDeReporteRequest::reglas())->validate();
     }
 }
