@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Confidencialidad;
 
 use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\FormatoConfidencialidad;
 use App\Models\User;
 use App\Services\ConfidencialidadService;
@@ -22,6 +23,7 @@ use Livewire\WithPagination;
  */
 final class EstadoDeFirmantes extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     /** Valores del filtro de situación. */
@@ -42,8 +44,6 @@ final class EstadoDeFirmantes extends Component
 
     public function mount(ConfidencialidadService $confidencialidad): void
     {
-        $this->authorize('viewAny', FormatoConfidencialidad::class);
-
         if ($this->periodo === '') {
             $this->periodo = $confidencialidad->periodoVigente();
         }
@@ -80,6 +80,12 @@ final class EstadoDeFirmantes extends Component
     {
         $this->reset('busqueda', 'situacion');
         $this->resetPage();
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', FormatoConfidencialidad::class);
     }
 
     public function render(ConfidencialidadService $confidencialidad): mixed

@@ -347,14 +347,13 @@ it('no deja entrar al tablero a docente, estudiante ni ADMIN', function (Rol $ro
     $this->actingAs($usuario->fresh())->get(route('panel.preparaciones'))->assertForbidden();
 })->with([Rol::Docente, Rol::Estudiante, Rol::Admin]);
 
-it('no deja tocar el montaje a quien no puede, aunque llame al método', function (Rol $rol): void {
+it('no deja tocar el montaje a quien no puede: ni siquiera abre el tablero', function (Rol $rol): void {
     $montaje = montajeParaPantalla('2026-10-05');
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
 
     Livewire::actingAs($usuario->fresh())
         ->test(TableroDiario::class)
-        ->call('cambiarEstado', $montaje->id, 'en_preparacion')
         ->assertForbidden();
 
     expect($montaje->fresh()->estado)->toBe(EstadoPreparacion::Pendiente);

@@ -6,6 +6,7 @@ namespace App\Livewire\Reportes;
 
 use App\Enums\Reporte;
 use App\Http\Requests\FiltroDeReporteRequest;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\Materia;
 use App\Models\Sala;
 use App\Services\GeneradorDeReportes;
@@ -28,6 +29,7 @@ use Livewire\WithPagination;
  */
 final class PantallaDeReportes extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     #[Url(except: 'uso_de_escenarios')]
@@ -48,16 +50,6 @@ final class PantallaDeReportes extends Component
     #[Url(except: '')]
     public string $sala = '';
 
-    /**
-     * En cada petición, no solo al abrir: las acciones de un componente ya
-     * abierto llegan por /livewire/update, y con el rol activo cambiado en
-     * otra pestaña la pantalla no puede seguir enseñando datos agregados.
-     */
-    public function boot(): void
-    {
-        $this->authorize('generarReportes');
-    }
-
     public function mount(): void
     {
         $this->reporte = $this->reporteElegido()->value;
@@ -75,6 +67,12 @@ final class PantallaDeReportes extends Component
         $this->reset('desde', 'hasta', 'docente', 'materia', 'sala');
         $this->resetErrorBag();
         $this->resetPage();
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('generarReportes');
     }
 
     public function render(GeneradorDeReportes $generador, ReporteService $reportes): View

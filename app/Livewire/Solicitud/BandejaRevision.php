@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Enums\EstadoSolicitud;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Models\Solicitud;
 use App\Services\InventarioService;
@@ -22,6 +23,7 @@ use Livewire\WithPagination;
  */
 final class BandejaRevision extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     #[Url(as: 'estado', keep: false)]
@@ -86,6 +88,12 @@ final class BandejaRevision extends Component
         $solicitudes->rechazar($solicitud, Auth::user(), $this->motivoRechazo ?: null);
         session()->flash('estado', 'Solicitud rechazada. El docente recibirá el motivo.');
         $this->cerrar();
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('verBandeja', Solicitud::class);
     }
 
     public function render(SolicitudService $solicitudes): mixed

@@ -323,23 +323,22 @@ it('cierra todas las pantallas de inventario a docentes y estudiantes', function
 })->with([Rol::Docente, Rol::Estudiante])
     ->with(['panel.inventario', 'panel.inventario.nuevo', 'panel.inventario.disponibilidad', 'panel.inventario.editar']);
 
-it('no deja a un docente consultar disponibilidad ni por el componente', function (): void {
+it('no deja a un docente ni abrir la consulta de disponibilidad', function (): void {
     $docente = User::factory()->docente()->create();
 
+    // Regla 5. El componente pide su permiso en cada petición, también en
+    // la primera, así que ni siquiera se abre.
     Livewire::actingAs($docente)
         ->test(ConsultaDisponibilidad::class)
-        ->set('itemId', ItemInventario::factory()->create()->id)
-        ->call('consultar')
         ->assertForbidden();
 });
 
-it('no deja a un docente cambiar el estado ni por el componente', function (): void {
+it('no deja a un docente ni abrir el listado de inventario para cambiar estados', function (): void {
     $docente = User::factory()->docente()->create();
     $item = ItemInventario::factory()->create();
 
     Livewire::actingAs($docente)
         ->test(ListadoInventario::class)
-        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Operativo->value, EstadoItemInventario::EnRevision->value)
         ->assertForbidden();
 
     expect($item->fresh()->cantidad_operativa)->toBe($item->cantidad_total);

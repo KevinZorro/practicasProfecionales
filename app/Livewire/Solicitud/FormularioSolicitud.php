@@ -6,6 +6,7 @@ namespace App\Livewire\Solicitud;
 
 use App\Enums\TipoSesion;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\Materia;
@@ -26,6 +27,8 @@ use Livewire\Component;
  */
 final class FormularioSolicitud extends Component
 {
+    use AutorizaEnCadaPeticion;
+
     #[Validate('required|string')]
     public string $tipo = TipoSesion::Practica->value;
 
@@ -130,6 +133,12 @@ final class FormularioSolicitud extends Component
             // lo que quiere es quitar el equipo, y para eso está "Quitar".
             items: array_map(static fn (mixed $c): int => max(1, (int) $c), $this->items),
         );
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('create', Solicitud::class);
     }
 
     public function render(): mixed

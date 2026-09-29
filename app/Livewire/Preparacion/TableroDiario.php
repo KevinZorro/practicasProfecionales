@@ -7,6 +7,7 @@ namespace App\Livewire\Preparacion;
 use App\Enums\EstadoPreparacion;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Models\Preparacion;
 use App\Models\Sala;
@@ -28,6 +29,8 @@ use Livewire\Component;
  */
 final class TableroDiario extends Component
 {
+    use AutorizaEnCadaPeticion;
+
     #[Url(as: 'fecha', keep: false)]
     public string $fecha = '';
 
@@ -135,6 +138,12 @@ final class TableroDiario extends Component
 
         $preparaciones->registrarObservaciones($preparacion, $this->observaciones ?: null);
         session()->flash('estado', 'Observaciones guardadas.');
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('viewAny', Preparacion::class);
     }
 
     public function render(PreparacionService $preparaciones): mixed

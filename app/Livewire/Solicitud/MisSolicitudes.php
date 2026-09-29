@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Enums\EstadoSolicitud;
+use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Models\Solicitud;
 use App\Services\SolicitudService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
@@ -18,6 +20,7 @@ use Livewire\WithPagination;
  */
 final class MisSolicitudes extends Component
 {
+    use AutorizaEnCadaPeticion;
     use WithPagination;
 
     #[Url(as: 'estado', keep: false)]
@@ -26,6 +29,12 @@ final class MisSolicitudes extends Component
     public function updatedEstado(): void
     {
         $this->resetPage();
+    }
+
+    /** El permiso que exige el controlador de la página. */
+    protected function autorizarPantalla(): void
+    {
+        $this->authorize('create', Solicitud::class);
     }
 
     public function render(SolicitudService $solicitudes): mixed
