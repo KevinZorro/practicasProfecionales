@@ -205,18 +205,23 @@ function aKilobytes(string $tamano): int
     };
 }
 
-it('deja subir el video del hero por PHP, nginx y Livewire', function (): void {
+dataset('entornos', [
+    'desarrollo' => ['docker/php/php.ini', 'docker/nginx/default.conf'],
+    'producción' => ['docker/php/php-produccion.ini', 'docker/produccion/nginx.conf'],
+]);
+
+it('deja subir el video del hero por PHP, nginx y Livewire', function (string $phpIni, string $nginxConf): void {
     // Si alguno se queda corto, la subida se corta antes de llegar al
     // formulario, con un error que no dice por qué. Livewire tiene que
     // quedar por encima del tope, para que el mensaje lo dé el formulario.
     $tope = ConfiguracionLandingService::TAMANO_MAXIMO_VIDEO_KB;
     preg_match('/max:(\d+)/', implode('|', config('livewire.temporary_file_upload.rules')), $livewire);
 
-    $php = (string) file_get_contents(base_path('docker/php/php.ini'));
+    $php = (string) file_get_contents(base_path($phpIni));
     preg_match('/^upload_max_filesize\s*=\s*(\S+)/m', $php, $subida);
     preg_match('/^post_max_size\s*=\s*(\S+)/m', $php, $peticion);
 
-    $nginx = (string) file_get_contents(base_path('docker/nginx/default.conf'));
+    $nginx = (string) file_get_contents(base_path($nginxConf));
     preg_match('/client_max_body_size\s+(\S+);/', $nginx, $cuerpo);
 
     expect(aKilobytes($subida[1]))->toBeGreaterThanOrEqual($tope)
@@ -224,12 +229,12 @@ it('deja subir el video del hero por PHP, nginx y Livewire', function (): void {
         ->and(aKilobytes($cuerpo[1]))->toBeGreaterThanOrEqual((int) $livewire[1])
         ->and(aKilobytes($subida[1]))->toBeGreaterThanOrEqual((int) $livewire[1])
         ->and((int) $livewire[1])->toBeGreaterThan($tope);
-});
+})->with('entornos');
 
-it('sirve los archivos públicos con nosniff', function (): void {
+it('sirve los archivos públicos con nosniff', function (string $phpIni, string $nginxConf): void {
     // El video no se recodifica al subirlo: que el navegador no adivine su tipo.
-    $nginx = (string) file_get_contents(base_path('docker/nginx/default.conf'));
+    $nginx = (string) file_get_contents(base_path($nginxConf));
     preg_match('/location \^~ \/storage\/ \{(.*?)\}/s', $nginx, $bloque);
 
     expect($bloque[1] ?? '')->toContain('X-Content-Type-Options "nosniff"');
-});
+})->with('entornos');

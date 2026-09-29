@@ -235,3 +235,157 @@ jobs:
       - name: Apagar el entorno
         if: always()
         run: docker compose down -v --remove-orphans
+
+  # El compose de producción de punta a punta: construye las imágenes, las
+  # levanta con el .env de ejemplo, y comprueba lo que ningún test de PHP ve.
+  produccion:
+    name: Producción · imágenes, cabeceras y copias
+    runs-on: ubuntu-latest
+
+    env:
+      COMPOSE: docker compose -f docker-compose.produccion.yml
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      # El ejemplo con sus marcas <...> llenas. Si al ejemplo le falta algo
+      # que el compose exige, falla aquí y no en el servidor.
+      - name: Preparar el .env de producción
+        run: |
+          cp .env.produccion.example .env
+          sed -i \
+            -e "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" \
+            -e "s|^APP_URL=.*|APP_URL=http://localhost|" \
+            -e "s|^DB_PASSWORD=.*|DB_PASSWORD=ci-$(openssl rand -hex 12)|" \
+            -e "s|^MAIL_MAILER=.*|MAIL_MAILER=log|" \
+            -e "s|^MAIL_HOST=.*|MAIL_HOST=localhost|" \
+            -e "s|^MAIL_USERNAME=.*|MAIL_USERNAME=null|" \
+            -e "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=null|" \
+            -e "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=ci@ejemplo.edu.co|" \
+            -e "s|^DIRECTORIO_COPIAS=.*|DIRECTORIO_COPIAS=${RUNNER_TEMP}/copias|" \
+            .env
+          if grep -n '=<' .env; then
+            echo "::error::quedaron marcas <...> sin llenar en el .env"
+            exit 1
+          fi
+
+      - name: Comprobar el compose de producción
+        run: |
+          $COMPOSE config --format json > compose.json
+          # La base de datos no se publica fuera de Docker.
+          if [ "$(jq '.services.db.ports // [] | length' compose.json)" != "0" ]; then
+            echo "::error::el servicio db publica puertos en producción"
+            exit 1
+          fi
+          # Los documentos privados van en su volumen en app, queue y copias.
+          for servicio in app queue copias; do
+            jq -e --arg s "$servicio" '.services[$s].volumes[] | select(.source == "archivos_privados")' compose.json > /dev/null \
+              || { echo "::error::$servicio no monta el volumen archivos_privados"; exit 1; }
+          done
+
+      - name: Construir las imágenes
+        run: $COMPOSE build
+
+      - name: Levantar los servicios
+        run: $COMPOSE up -d
+
+      - name: Migrar
+        run: |
+          for _ in $(seq 1 24); do
+            $COMPOSE exec -T app php artisan migrate --force && break
+            sleep 5
+          done
+          $COMPOSE exec -T app php artisan migrate:status > /dev/null
+
+      - name: Comprobar que sirve la portada con las cabeceras de seguridad
+        run: |
+          codigo=$(curl -sS -D cabeceras.txt -o pagina.html -w '%{http_code}' \
+            --retry 12 --retry-delay 5 --retry-all-errors http://localhost/)
+          echo "HTTP $codigo"; cat cabeceras.txt
+          [ "$codigo" = "200" ] || { echo "::error::la portada respondió $codigo"; exit 1; }
+          grep -q '<title>' pagina.html
+          for cabecera in content-security-policy x-frame-options x-content-type-options referrer-policy permissions-policy; do
+            grep -qi "^$cabecera:" cabeceras.txt || { echo "::error::falta la cabecera $cabecera"; exit 1; }
+          done
+          if grep -qi '^x-powered-by:' cabeceras.txt; then
+            echo "::error::la respuesta dice qué versión de PHP corre"; exit 1
+          fi
+          if grep -qiE '^server: nginx/[0-9]' cabeceras.txt; then
+            echo "::error::la respuesta dice qué versión de nginx corre"; exit 1
+          fi
+
+      # Los assets se compilan al construir la imagen: sin ellos la portada
+      # responde 200 pero sin estilos.
+      - name: Comprobar que nginx sirve los assets compilados y los de Filament
+        run: |
+          css=$(grep -oE '/build/assets/app-[A-Za-z0-9_-]+\.css' pagina.html | head -1)
+          [ -n "$css" ] || { echo "::error::la portada no enlaza el CSS compilado"; exit 1; }
+          curl -sS -D css.txt -o /dev/null "http://localhost$css"
+          grep -q ' 200' css.txt || { echo "::error::$css no responde 200"; cat css.txt; exit 1; }
+          grep -qi 'cache-control: .*immutable' css.txt || { echo "::error::$css sin caché larga"; exit 1; }
+          codigo=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/css/filament/filament/app.css)
+          [ "$codigo" = "200" ] || { echo "::error::la hoja de estilos de Filament respondió $codigo"; exit 1; }
+
+      - name: Comprobar que un error no enseña trazas
+        run: |
+          codigo=$(curl -sS -o error.html -w '%{http_code}' http://localhost/no-existe)
+          [ "$codigo" = "404" ] || { echo "::error::una ruta inexistente respondió $codigo"; exit 1; }
+          if grep -qiE 'stack trace|vendor/laravel|Whoops' error.html; then
+            echo "::error::la página de error enseña detalles internos"; exit 1
+          fi
+
+      - name: Comprobar que nginx sirve los archivos públicos
+        run: |
+          $COMPOSE exec -T app php -r 'file_put_contents("storage/app/public/prueba-ci.txt", "servido por nginx");'
+          codigo=$(curl -sS -o archivo.txt -w '%{http_code}' http://localhost/storage/prueba-ci.txt)
+          [ "$codigo" = "200" ] && grep -q 'servido por nginx' archivo.txt \
+            || { echo "::error::nginx no sirve storage/app/public (HTTP $codigo)"; exit 1; }
+
+      - name: Comprobar que el trabajador de la cola procesa
+        run: |
+          $COMPOSE exec -T app php artisan tinker --execute="Illuminate\Support\Facades\Artisan::queue('about');"
+          for _ in $(seq 1 24); do
+            pendientes=$($COMPOSE exec -T app php artisan tinker --execute="echo DB::table('jobs')->count();" | tr -dc '0-9')
+            [ "$pendientes" = "0" ] && break
+            sleep 5
+          done
+          [ "$pendientes" = "0" ] || { echo "::error::quedan $pendientes jobs: queue no trabaja"; $COMPOSE logs queue --tail=50; exit 1; }
+
+      # La copia no vale si no se restaura: se hace una, se dañan los datos y
+      # se comprueba que la restauración los devuelve tal como estaban.
+      - name: Hacer una copia de seguridad y restaurarla
+        run: |
+          contar() { $COMPOSE exec -T app php artisan tinker --execute="echo DB::table('estadisticas_landing')->where('etiqueta', 'Prueba de la copia')->count();" | tr -dc '0-9'; }
+          $COMPOSE exec -T app php artisan tinker --execute="DB::table('estadisticas_landing')->insert(['etiqueta' => 'Prueba de la copia', 'valor' => '1', 'orden' => 1, 'activo' => true]);"
+          $COMPOSE exec -T app php -r 'file_put_contents("storage/app/private/prueba-ci.txt", "documento privado");'
+
+          $COMPOSE exec -T copias /scripts/hacer-copia.sh
+          copia=$(sudo ls "$RUNNER_TEMP/copias" | grep -E '^20..-..-.._....$' | tail -1)
+          [ -n "$copia" ] || { echo "::error::no quedó ninguna copia"; exit 1; }
+          echo "Copia: $copia"
+          sudo stat -c '%a %n' "$RUNNER_TEMP/copias/$copia"
+
+          # El daño.
+          $COMPOSE exec -T app php artisan tinker --execute="DB::table('estadisticas_landing')->delete();"
+          $COMPOSE exec -T app rm storage/app/private/prueba-ci.txt
+          [ "$(contar)" = "0" ]
+
+          $COMPOSE stop app queue web
+          $COMPOSE run --rm restauracion "$copia"
+          $COMPOSE start app queue web
+
+          [ "$(contar)" = "1" ] || { echo "::error::la restauración no devolvió la fila"; exit 1; }
+          $COMPOSE exec -T app cat storage/app/private/prueba-ci.txt | grep -q 'documento privado' \
+            || { echo "::error::la restauración no devolvió el documento privado"; exit 1; }
+          # Y la aplicación puede seguir escribiendo en lo restaurado.
+          $COMPOSE exec -T app php -r 'file_put_contents("storage/app/private/despues.txt", "ok");'
+          echo "Copia restaurada"
+
+      - name: Registros de los contenedores si algo falló
+        if: failure()
+        run: $COMPOSE logs --tail=100
+
+      - name: Apagar el entorno
+        if: always()
+        run: $COMPOSE down -v --remove-orphans

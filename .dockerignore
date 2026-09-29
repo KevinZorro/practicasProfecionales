@@ -15,3 +15,19 @@ storage/logs
 !.env.example
 .phpunit.cache
 .phpunit.result.cache
+# Lo que se sube a la aplicación nunca entra en una imagen: las imágenes
+# públicas y, sobre todo, los documentos privados (el formato de
+# confidencialidad firmado tiene datos personales). En producción viven en
+# volúmenes. Se conservan los .gitignore para que las carpetas existan.
+storage/app/public/*
+!storage/app/public/.gitignore
+storage/app/private/*
+!storage/app/private/.gitignore
+bootstrap/cache/*.php
+# Los regenera "composer dump-autoload" al construir.
+public/css/filament
+public/js/filament
+public/fonts/filament
+# Copias de seguridad, si alguien las deja en la carpeta del proyecto.
+copias
+tests

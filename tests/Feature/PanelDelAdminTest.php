@@ -111,3 +111,14 @@ it('enseña el enlace a la administración solo a quien puede entrar', function 
         ->get(route('panel.inicio'))
         ->assertDontSee('href="'.route('filament.admin.pages.dashboard').'"', escape: false);
 });
+
+it('dibuja el avatar con las iniciales sin pedirlo a un servicio externo', function (): void {
+    // El de fábrica de Filament lo pide a ui-avatars.com: manda las iniciales
+    // de cada usuario a un tercero, y la política de contenido lo bloquea.
+    $admin = User::factory()->admin()->create(['nombre' => 'Sandra Milena Ortiz']);
+
+    $avatar = Filament\Facades\Filament::getUserAvatarUrl($admin);
+
+    expect($avatar)->toStartWith('data:image/svg+xml;base64,')
+        ->and(base64_decode(substr($avatar, strlen('data:image/svg+xml;base64,'))))->toContain('>SM<');
+});
