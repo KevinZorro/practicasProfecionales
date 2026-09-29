@@ -179,16 +179,110 @@ docker compose up -d
 ```
 docker/
 ├── nginx/
-│   └── default.conf                     configuración del sitio
+│   └── default.conf                     configuración del sitio (desarrollo)
 ├── php/
-│   ├── Dockerfile                       imagen de PHP 8.3-FPM
-│   ├── php.ini                          límites de memoria, subida y opcache
+│   ├── Dockerfile                       imágenes de desarrollo y de producción
+│   ├── php.ini                          PHP de desarrollo
+│   ├── php-produccion.ini               PHP de producción
 │   └── www.conf                         pool de PHP-FPM
+├── produccion/
+│   ├── arrancar.sh                      caché de configuración al arrancar
+│   ├── nginx.conf                       nginx de producción
+│   └── copias/                          copias de seguridad y restauración
 └── postgres/
     └── init/
         └── 01-base-de-datos-de-pruebas.sql
-docker-compose.yml
+docker-compose.yml                       desarrollo
+docker-compose.produccion.yml            producción
 ```
+
+---
+
+## Producción
+
+El servidor institucional corre la aplicación con `docker-compose.produccion.yml`.
+El código, las dependencias y los assets compilados van **dentro de las
+imágenes**: en el servidor no hace falta PHP, Composer ni Node, solo Docker.
+
+### Primera instalación
+
+```bash
+# 1. El código, en la versión que se va a desplegar
+git clone <repositorio> /srv/laboratorio && cd /srv/laboratorio
+
+# 2. La configuración: copiar el ejemplo y llenar las marcas <...>
+cp .env.produccion.example .env
+chmod 600 .env
+
+# 3. Construir las imágenes y generar la clave (se pega en APP_KEY del .env)
+docker compose -f docker-compose.produccion.yml build
+docker compose -f docker-compose.produccion.yml run --rm --entrypoint php app artisan key:generate --show
+
+# 4. La carpeta de las copias, solo para root
+sudo install -d -m 700 /srv/laboratorio/copias
+
+# 5. Levantar y crear las tablas
+docker compose -f docker-compose.produccion.yml up -d
+docker compose -f docker-compose.produccion.yml exec app php artisan migrate --force
+```
+
+### Desplegar una versión nueva
+
+```bash
+git pull
+docker compose -f docker-compose.produccion.yml build
+docker compose -f docker-compose.produccion.yml up -d
+docker compose -f docker-compose.produccion.yml exec app php artisan migrate --force
+```
+
+Después de cambiar el `.env`, los contenedores tienen que volver a leerlo:
+`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue`.
+
+### HTTPS
+
+El nginx del compose escucha por HTTP en `APP_PORT`. El HTTPS lo termina quien
+esté delante: normalmente el proxy de la universidad. En ese caso su IP va en
+`PROXIES_DE_CONFIANZA` del `.env`, para que la aplicación sepa que la petición
+original era segura (enlaces `https://`, cookie segura y HSTS). `APP_URL`
+siempre con `https://`: de ella sale la dirección de retorno que se registra
+en Google.
+
+### Cabeceras de seguridad
+
+Las pone el middleware `CabecerasDeSeguridad` en todas las respuestas:
+Content-Security-Policy, X-Frame-Options, X-Content-Type-Options,
+Referrer-Policy, Permissions-Policy y, sobre HTTPS, HSTS. Si la
+Content-Security-Policy rompiera alguna pantalla, se apaga con
+`POLITICA_DE_CONTENIDO=false` en el `.env` mientras se corrige
+(`config/seguridad.php` explica cada directiva).
+
+### Copias de seguridad
+
+El servicio `copias` hace cada día, a `COPIAS_HORA`:`COPIAS_MINUTO`, una copia
+de la base de datos, las imágenes del contenido público y los documentos
+privados (el formato de confidencialidad firmado). Cada copia es una carpeta
+con fecha dentro de `DIRECTORIO_COPIAS`, con sus sumas SHA-256, y se borran
+las de más de `COPIAS_RETENCION_DIAS` días.
+
+Las copias están en el mismo servidor: protegen de un error, no de que se
+dañe el disco. **Hay que llevarlas fuera** con el sistema de copias de la
+universidad. Tienen datos personales.
+
+```bash
+# Hacer una copia ahora
+docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia.sh
+
+# Ver que la copia diaria corre
+docker compose -f docker-compose.produccion.yml logs copias
+
+# Restaurar una copia (borra lo que hay ahora)
+docker compose -f docker-compose.produccion.yml stop app queue web
+docker compose -f docker-compose.produccion.yml run --rm restauracion 2026-10-01_0230
+docker compose -f docker-compose.produccion.yml start app queue web
+```
+
+La restauración comprueba las sumas antes de borrar nada: una copia dañada no
+se restaura. La CI hace una copia, daña los datos y la restaura en cada PR.
 
 ---
 

@@ -1,0 +1,150 @@
+# Producción del Laboratorio de Simulación Clínica.
+#
+#   docker compose -f docker-compose.produccion.yml up -d --build
+#
+# Las variables se leen del .env de la raíz, copiado de .env.produccion.example.
+# Los pasos completos, incluida la restauración de una copia, están en la
+# sección "Producción" del README.
+#
+# Diferencias con docker-compose.yml (desarrollo):
+#   - El código va dentro de las imágenes, no montado desde el disco: lo que
+#     corre es exactamente lo que se construyó.
+#   - Sin Node ni Vite: los assets se compilan al construir la imagen.
+#   - La base de datos no publica su puerto fuera de Docker.
+#   - La cola corre con queue:work, no con queue:listen.
+#   - Un servicio más, "copias", hace la copia de seguridad diaria.
+
+name: laboratorio
+
+services:
+  # PHP-FPM con la aplicación. Al arrancar guarda en caché la configuración,
+  # las rutas y las vistas (docker/produccion/arrancar.sh).
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: produccion
+    image: laboratorio-simulacion/app:produccion
+    restart: always
+    env_file: .env
+    volumes:
+      - archivos_publicos:/var/www/html/storage/app/public
+      - archivos_privados:/var/www/html/storage/app/private
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
+  # Trabajador de la cola: los correos (RF33). queue:work carga el código una
+  # vez y es más rápido que queue:listen; --max-time lo reinicia cada hora
+  # para que no acumule memoria.
+  queue:
+    image: laboratorio-simulacion/app:produccion
+    restart: always
+    env_file: .env
+    command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90", "--max-time=3600"]
+    volumes:
+      - archivos_publicos:/var/www/html/storage/app/public
+      - archivos_privados:/var/www/html/storage/app/private
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
+  # nginx con los archivos de public/ dentro de su imagen. Solo monta el
+  # volumen de imágenes públicas, y de solo lectura.
+  web:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      target: web
+    image: laboratorio-simulacion/web:produccion
+    restart: always
+    ports:
+      - "${APP_PORT:-80}:80"
+    volumes:
+      - archivos_publicos:/var/www/html/storage/app/public:ro
+    depends_on:
+      - app
+    networks:
+      - laboratorio
+
+  # Sin "ports": a la base solo llegan los contenedores de este compose.
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:?Falta DB_DATABASE en .env}
+      POSTGRES_USER: ${DB_USERNAME:?Falta DB_USERNAME en .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
+    volumes:
+      - datos_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - laboratorio
+
+  # Copia de seguridad diaria de la base, las imágenes públicas y los
+  # documentos privados, en DIRECTORIO_COPIAS del servidor. La misma versión
+  # de PostgreSQL que la base, para que pg_dump la entienda.
+  copias:
+    image: postgres:16-alpine
+    restart: always
+    entrypoint: ["/scripts/programar.sh"]
+    environment: &entorno_copias
+      PGHOST: db
+      PGDATABASE: ${DB_DATABASE}
+      PGUSER: ${DB_USERNAME}
+      PGPASSWORD: ${DB_PASSWORD}
+      COPIAS_HORA: ${COPIAS_HORA:-2}
+      COPIAS_MINUTO: ${COPIAS_MINUTO:-30}
+      COPIAS_RETENCION_DIAS: ${COPIAS_RETENCION_DIAS:-14}
+      TZ: ${APP_TIMEZONE:-America/Bogota}
+    volumes:
+      - ./docker/produccion/copias:/scripts:ro
+      - archivos_publicos:/datos/archivos-publicos:ro
+      - archivos_privados:/datos/archivos-privados:ro
+      - ${DIRECTORIO_COPIAS:?Falta DIRECTORIO_COPIAS en .env}:/copias
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
+  # Solo se usa para restaurar una copia; no arranca con "up". Monta los
+  # volúmenes con escritura, a diferencia de "copias".
+  #   docker compose -f docker-compose.produccion.yml run --rm restauracion <carpeta>
+  restauracion:
+    image: postgres:16-alpine
+    profiles: ["restauracion"]
+    entrypoint: ["/scripts/restaurar-copia.sh"]
+    environment: *entorno_copias
+    volumes:
+      - ./docker/produccion/copias:/scripts:ro
+      - archivos_publicos:/datos/archivos-publicos
+      - archivos_privados:/datos/archivos-privados
+      - ${DIRECTORIO_COPIAS:?Falta DIRECTORIO_COPIAS en .env}:/copias:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
+networks:
+  laboratorio:
+    driver: bridge
+
+volumes:
+  datos_postgres:
+  # Imágenes y videos del contenido público (storage/app/public).
+  archivos_publicos:
+  # Documentos privados: el formato de confidencialidad firmado
+  # (storage/app/private). Sin este volumen se perderían en cada despliegue.
+  archivos_privados:

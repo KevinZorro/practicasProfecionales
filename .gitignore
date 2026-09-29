@@ -27,5 +27,7 @@ yarn-error.log
 /public/js/filament
 .env.*
 !.env.example
+!.env.produccion.example
 .claude/settings.local.json
 CLAUDE.local.md
+/copias

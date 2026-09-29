@@ -169,6 +169,7 @@ proyecto/
 ├── storage/app/confidencialidad/              # privado, no público
 ├── tests/
 ├── docker-compose.yml                         # entorno de desarrollo, con trabajador de cola
+├── docker-compose.produccion.yml              # producción: imágenes con el código, copias de seguridad
 └── .env.example
 ```
 
@@ -530,10 +531,29 @@ Los reportes con muchos registros se exportan mediante consultas por lotes (`chu
 
 ## 8. Despliegue
 
-`docker-compose.yml` con cuatro servicios:
+Dos compose sobre un mismo `docker/php/Dockerfile` de varias etapas:
 
-| Servicio | Imagen base | Función |
+- `docker-compose.yml`, desarrollo: el código montado desde el disco, Vite con recarga en caliente y la base publicada en el puerto 5432.
+- `docker-compose.produccion.yml`, producción: el código, `vendor/` sin dependencias de desarrollo y los assets compilados van dentro de las imágenes. El servidor solo necesita Docker.
+
+| Servicio de producción | Imagen | Función |
 |---|---|---|
+| `app` | etapa `produccion` (php:8.3-fpm) | la aplicación. Al arrancar guarda en caché configuración, rutas y vistas (`docker/produccion/arrancar.sh`) |
+| `queue` | la misma | `queue:work`, reiniciado cada hora |
+| `web` | etapa `web` (nginx:alpine) | los archivos de `public/` y `/storage`; lo demás a PHP-FPM |
+| `db` | postgres:16 | sin puertos publicados fuera de Docker |
+| `copias` | postgres:16-alpine | copia diaria de la base, las imágenes públicas y los documentos privados, con retención y sumas SHA-256 |
+| `restauracion` | postgres:16-alpine | solo con `run`: restaura una copia, comprobando las sumas antes de borrar nada |
+
+Tres volúmenes: `datos_postgres`, `archivos_publicos` (`storage/app/public`) y `archivos_privados` (`storage/app/private`, el formato de confidencialidad firmado). Nada de lo que suben los usuarios entra en una imagen (`.dockerignore`). Variables sensibles en `.env`, a partir de `.env.produccion.example`, fuera del control de versiones.
+
+El HTTPS lo termina quien esté delante del nginx del compose; su IP va en `PROXIES_DE_CONFIANZA` (`config/trustedproxy.php`). Las cabeceras de seguridad las pone el middleware `CabecerasDeSeguridad` (`config/seguridad.php`), y la CI levanta el compose de producción y comprueba cabeceras, assets, que los errores no enseñen trazas y una copia restaurada de punta a punta.
+
+La sincronización de usuarios contra la vista institucional correrá como tarea programada de Laravel: cuando exista, el compose de producción necesita un servicio más con `php artisan schedule:work`. Hoy no hay ninguna tarea programada.
+
+Las métricas del sitio público (Plausible o Matomo) siguen sin decidir.
+
+---|---|---|
 | `app` | php:8.3-fpm | aplicación Laravel |
 | `nginx` | nginx:alpine | servidor web y archivos estáticos |
 | `db` | postgres:16 | base de datos, con volumen persistente |
