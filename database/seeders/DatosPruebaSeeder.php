@@ -705,7 +705,7 @@ class DatosPruebaSeeder extends Seeder
         $estadisticas = [
             ['Salas de simulación', '5'],
             ['Simuladores disponibles', '22'],
-            ['Estudiantes por semestre', '1.850'],
+            ['Estudiantes', '+700'],
             ['Casos clínicos', '6'],
         ];
 
