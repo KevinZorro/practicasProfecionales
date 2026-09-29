@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\AvatarConIniciales;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use Filament\Http\Middleware\Authenticate;
@@ -50,6 +51,8 @@ final class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('Administración del laboratorio')
+            // Sin ui-avatars.com: ver AvatarConIniciales.
+            ->defaultAvatarProvider(AvatarConIniciales::class)
             ->colors([
                 'primary' => Color::Indigo,
             ])

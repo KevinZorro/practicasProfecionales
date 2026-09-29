@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CabecerasDeSeguridad;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\SoloEnDesarrollo;
 use App\Http\Middleware\VerificarUsuarioActivo;
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
     // veces y el docente recibía dos correos por cada aprobación (RF33).
     ->withEvents(discover: false)
     ->withMiddleware(function (Middleware $middleware) {
+        // En todas las respuestas, también las de error y las de Filament.
+        $middleware->append(CabecerasDeSeguridad::class);
+
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,
             'solo.desarrollo' => SoloEnDesarrollo::class,
