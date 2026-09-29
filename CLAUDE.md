@@ -345,6 +345,7 @@ docker compose logs -f app
 - **Si algo contradice este archivo o el documento de arquitectura, dilo** en vez de resolverlo por tu cuenta.
 - Al terminar una tarea: resume qué se hizo, qué archivos se tocaron y cómo verificarlo.
 - No refactorices código ajeno a la tarea actual sin avisar.
+- **Todo mensaje al usuario va en español**: respuestas, preguntas, resúmenes al terminar y también las notas de avance mientras se trabaja.
 
 ---
 
