@@ -2,11 +2,11 @@
 # Restaura una copia hecha por hacer-copia.sh. Borra lo que hay ahora.
 #
 # Antes: parar la aplicación, para que nadie escriba mientras tanto.
-#   docker compose -f docker-compose.produccion.yml stop app queue web
+#   docker compose -f docker-compose.produccion.yml stop app queue programador web
 # Restaurar (el argumento es el nombre de la carpeta de la copia):
 #   docker compose -f docker-compose.produccion.yml run --rm restauracion 2026-10-01_0230
 # Después:
-#   docker compose -f docker-compose.produccion.yml start app queue web
+#   docker compose -f docker-compose.produccion.yml start app queue programador web
 set -eu
 
 if [ "$#" -ne 1 ]; then

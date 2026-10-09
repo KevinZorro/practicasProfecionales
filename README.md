@@ -58,7 +58,7 @@ sed -i "s/^UID=.*/UID=$(id -u)/;s/^GID=.*/GID=$(id -g)/" .env
 # 3. Construir la imagen de PHP (la primera vez tarda varios minutos)
 docker compose build
 
-# 4. Levantar los cinco servicios: app, queue, nginx, db y node
+# 4. Levantar los seis servicios: app, queue, programador, nginx, db y node
 docker compose up -d
 
 # 5. Instalar las dependencias de PHP
@@ -80,6 +80,11 @@ El servicio `queue` procesa la cola: es el que envía los correos (por ejemplo,
 el aviso al docente cuando se aprueba su solicitud). Espera a que exista
 `vendor/` y, hasta que se crean las tablas en el paso 7, se reinicia solo; es
 normal. Si un correo no llega, lo primero es `docker compose logs queue`.
+
+El servicio `programador` corre las tareas programadas de `routes/console.php`
+(`schedule:work`). Hoy es una: el aviso diario, a las 6 de la mañana, de las
+sesiones próximas sin formato intramural (RF60). Para lanzarlo a mano:
+`docker compose exec app php artisan sesiones:avisar-formato-intramural`.
 
 ---
 
@@ -236,7 +241,7 @@ docker compose -f docker-compose.produccion.yml exec app php artisan migrate --f
 ```
 
 Después de cambiar el `.env`, los contenedores tienen que volver a leerlo:
-`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue`.
+`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue programador`.
 
 ### HTTPS
 
@@ -276,9 +281,9 @@ docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia
 docker compose -f docker-compose.produccion.yml logs copias
 
 # Restaurar una copia (borra lo que hay ahora)
-docker compose -f docker-compose.produccion.yml stop app queue web
+docker compose -f docker-compose.produccion.yml stop app queue programador web
 docker compose -f docker-compose.produccion.yml run --rm restauracion 2026-10-01_0230
-docker compose -f docker-compose.produccion.yml start app queue web
+docker compose -f docker-compose.produccion.yml start app queue programador web
 ```
 
 La restauración comprueba las sumas antes de borrar nada: una copia dañada no

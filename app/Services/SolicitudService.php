@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\EstadoSolicitud;
 use App\Enums\EstadoUsuario;
+use App\Enums\OrigenSolicitud;
 use App\Enums\Rol;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
@@ -50,10 +51,14 @@ final class SolicitudService
         $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
 
         return DB::transaction(function () use ($docente, $datos, $grupo, $estudianteIds): Solicitud {
+            // El formato intramural viene con la solicitud del docente (RF59).
             $solicitud = Solicitud::create([
                 ...$this->atributosIniciales($docente, $datos),
                 'grupo' => $grupo,
                 'cantidad_estudiantes' => count($estudianteIds),
+                'origen' => OrigenSolicitud::Docente,
+                'formato_intramural_at' => now(),
+                'formato_intramural_por' => $docente->id,
             ]);
             $solicitud->items()->attach($this->itemsAAdjuntar($datos));
             $solicitud->estudiantes()->attach($estudianteIds);
@@ -189,7 +194,7 @@ final class SolicitudService
      * llenado sería peor que no limitarla, y en pantalla se lee como
      * "sin definir".
      */
-    private function garantizarCapacidad(int $casoClinicoId, int $cantidad): void
+    public function garantizarCapacidad(int $casoClinicoId, int $cantidad): void
     {
         $caso = CasoClinico::findOrFail($casoClinicoId);
         $maximo = $caso->capacidad_maxima_estudiantes;
@@ -204,7 +209,7 @@ final class SolicitudService
     /**
      * Una o dos letras, en mayúscula: "a" y "A" son el mismo grupo.
      */
-    private function normalizarGrupo(string $grupo): string
+    public function normalizarGrupo(string $grupo): string
     {
         $grupo = mb_strtoupper(trim($grupo));
 
@@ -269,9 +274,17 @@ final class SolicitudService
         return $solicitud->estudiantesPresentes()->count();
     }
 
-    /** "cantidad_estudiantes" sigue a la lista: es la que leen los reportes (RF54). */
+    /**
+     * "cantidad_estudiantes" sigue a la lista: es la que leen los reportes
+     * (RF54). Una sesión apartada sin lista todavía conserva la cantidad que
+     * se registró con ella (RF57).
+     */
     private function actualizarCantidad(Solicitud $solicitud): void
     {
+        if (! $solicitud->estudiantes()->exists()) {
+            return;
+        }
+
         $solicitud->update(['cantidad_estudiantes' => $this->presentes($solicitud)]);
     }
 

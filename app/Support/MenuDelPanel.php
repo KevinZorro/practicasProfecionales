@@ -70,6 +70,14 @@ final class MenuDelPanel
                 sobre: Solicitud::class,
             ),
             new SeccionDelPanel(
+                clave: 'sesiones-apartadas',
+                etiqueta: 'Sesiones apartadas',
+                ruta: 'panel.sesiones-apartadas',
+                icono: 'M8 7V3m8 4V3M3 11h18M5 5h14v16H5zM12 14v4m-2-2h4',
+                permiso: 'registrarApartada',
+                sobre: Solicitud::class,
+            ),
+            new SeccionDelPanel(
                 clave: 'preparaciones',
                 etiqueta: 'Preparaciones',
                 ruta: 'panel.preparaciones',

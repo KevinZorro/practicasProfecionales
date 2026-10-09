@@ -160,6 +160,8 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `ParticipacionService` | Quién puede entrar al laboratorio y por qué no: formato al día y sin bloqueo (RF70). Lo consultan la evaluación (RF45) y la lista de cada sesión |
 | `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8) y a qué cuenta corresponde quien vuelve de Google (RF18). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
+| `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): las registra un administrativo y nacen aprobadas; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
+| `AjustesService` | Valores que el ADMIN cambia sin desplegar (`ajustes_laboratorio`, claves fijas en `AjusteDelLaboratorio`), como la antelación del aviso del RF60 |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
@@ -352,6 +354,7 @@ docker compose exec app php artisan storage:link         # una vez: nginx sirve 
 docker compose exec app php artisan test
 docker compose exec app vendor/bin/phpstan analyse       # análisis estático
 docker compose logs -f queue                           # trabajador de la cola (correos)
+docker compose logs -f programador                     # tareas programadas (aviso del RF60)
 docker compose exec app php artisan make:model Nombre -mf
 docker compose exec node npm run dev
 docker compose logs -f app

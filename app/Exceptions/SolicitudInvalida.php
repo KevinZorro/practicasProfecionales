@@ -49,6 +49,16 @@ final class SolicitudInvalida extends DomainException
         return new self('Escriba el motivo del retiro.');
     }
 
+    public static function formatoIntramuralVacio(): self
+    {
+        return new self('El formato intramural necesita al menos un insumo, equipo o simulador.');
+    }
+
+    public static function noEsDocente(): self
+    {
+        return new self('La sesión tiene que quedar a nombre de un docente.');
+    }
+
     public static function grupoInvalido(string $grupo): self
     {
         return new self(sprintf('El grupo se identifica con una o dos letras (A, B, C…); se recibió "%s".', $grupo));

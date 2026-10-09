@@ -98,6 +98,21 @@ final class SolicitudPolicy
     }
 
     /**
+     * Registrar las sesiones apartadas antes del semestre (RF57) y su
+     * formato intramural (RF59): los administrativos, que reciben el formato
+     * físico de coordinación, y coordinación por herencia.
+     */
+    public function registrarApartada(User $usuario): bool
+    {
+        return $this->revisaSolicitudes($usuario);
+    }
+
+    public function registrarFormatoIntramural(User $usuario, Solicitud $solicitud): bool
+    {
+        return $this->revisaSolicitudes($usuario) && $solicitud->estado === EstadoSolicitud::Aprobada;
+    }
+
+    /**
      * Completar o retirar estudiantes de la lista de una sesión (RF28,
      * RF69): el docente de la sesión y quien entra a la bandeja. Lo que se
      * puede cambiar y cuándo lo decide SolicitudService.

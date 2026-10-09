@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\EstadoSolicitud;
+use App\Enums\OrigenSolicitud;
 use App\Enums\TipoSesion;
 use Database\Factories\SolicitudFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -41,6 +42,10 @@ class Solicitud extends Model
         'motivo_rechazo',
         'observaciones',
         'grupo',
+        'origen',
+        'registrada_por',
+        'formato_intramural_at',
+        'formato_intramural_por',
     ];
 
     /**
@@ -55,6 +60,8 @@ class Solicitud extends Model
             'cantidad_estudiantes' => 'integer',
             'revisada_at' => 'datetime',
             'resuelta_at' => 'datetime',
+            'origen' => OrigenSolicitud::class,
+            'formato_intramural_at' => 'datetime',
         ];
     }
 
@@ -62,6 +69,40 @@ class Solicitud extends Model
     public function docente(): BelongsTo
     {
         return $this->belongsTo(User::class, 'docente_id');
+    }
+
+    /**
+     * Quién registró la sesión apartada (RF57). Nulo si la pidió el docente.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function registradaPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registrada_por');
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function formatoIntramuralPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'formato_intramural_por');
+    }
+
+    /** Si ya tiene los insumos, equipos y simuladores de la sesión (RF59). */
+    public function tieneFormatoIntramural(): bool
+    {
+        return $this->formato_intramural_at !== null;
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopeSinFormatoIntramural(Builder $consulta): void
+    {
+        $consulta->whereNull('formato_intramural_at');
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopeApartadas(Builder $consulta): void
+    {
+        $consulta->where('origen', OrigenSolicitud::RegistroPrevio);
     }
 
     /** @return BelongsTo<Materia, $this> */

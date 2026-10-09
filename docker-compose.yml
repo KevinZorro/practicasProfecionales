@@ -56,6 +56,24 @@ services:
     networks:
       - laboratorio
 
+  # Tareas programadas (routes/console.php), como en producción.
+  programador:
+    image: laboratorio-simulacion/app
+    container_name: laboratorio_programador
+    restart: unless-stopped
+    user: www-data
+    working_dir: /var/www/html
+    command: sh -c "until [ -f vendor/autoload.php ]; do sleep 5; done; exec php artisan schedule:work"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
   # Servidor web: entrega los estáticos y delega el PHP al servicio app.
   nginx:
     image: nginx:alpine

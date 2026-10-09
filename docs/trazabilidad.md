@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 51 | 4 |
+| Completo | 55 | 4 |
 | Solo backend | 0 | 0 |
 | Parcial | 6 | 6 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 17 | 0 |
+| No iniciado | 13 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -147,16 +147,16 @@ Pantallas: `/panel/evaluaciones` (el docente registra sobre sus sesiones de eval
 
 ## Programación de sesiones (RF57–RF61, RF73)
 
-Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apartada es una solicitud que **nace aprobada** —coordinación ya entregó el formato a los administrativos—, la registra un administrativo y recibe el formato intramural después, también de mano de un administrativo. Es la única excepción a la regla 9 del `CLAUDE.md` (sin revisión no aprueba nadie), y tiene que quedar registrado quién la cargó.
+Una sesión apartada es una solicitud con `origen` = `registro_previo`: la registra un administrativo desde el formato físico que entrega coordinación, **nace aprobada** con su preparación (P3; única excepción a la regla 9 del `CLAUDE.md`) y recibe el formato intramural después.
 
-| RF | Pide | Estado | Falta |
-|---|---|---|---|
-| RF57 | Los administrativos registran las sesiones apartadas antes del semestre, a mano y en parte, conviviendo con las solicitudes del semestre | No iniciado | Todo: registro por el administrativo, nace aprobada y crea su preparación. Quién pone los estudiantes: D15 |
-| RF58 | Validar sala y simuladores disponibles al registrar, con aviso de cruces; sin tiempo de montaje impuesto | No iniciado | Validar simuladores y equipos en la franja y avisar de cruces. La sala no se valida al registrar: la elige el administrativo en la preparación entre las libres (P4). Aviso si no queda ninguna sala libre: D17 |
-| RF59 | Formato intramural (insumos, equipos, simuladores) como paso posterior a la fecha | No iniciado | Pantalla del administrativo para digitar el formato impreso (P3) |
-| RF60 | Alerta a administrativos y docente si una sesión próxima no tiene formato intramural, con antelación configurable | No iniciado | Tarea programada, correo y la antelación (D5). El compose de producción no tiene servicio de tareas programadas |
-| RF61 | Reprogramar una sesión aprobada con motivo, constancia de comunicación y correo al docente | No iniciado | Qué es la constancia: D4 |
-| RF73 | Sustituir al docente de una sesión, con el original y el reemplazo | No iniciado | Quién la registra: D11 |
+| RF | Pide | Estado | Dónde | Tests | Notas |
+|---|---|---|---|---|---|
+| RF57 | Los administrativos registran las sesiones apartadas antes del semestre, a mano y en parte, conviviendo con las solicitudes del semestre | Completo | `RegistroPrevioService::registrar()`, `/panel/sesiones-apartadas` | `SesionesApartadasTest` | Docente, materia, escenario, tipo, fecha, franja, cantidad y grupo si viene. Queda registrado quién la cargó. Valida la capacidad del escenario (RF74). Los estudiantes los pone el docente después, desde Participantes (D15); hasta entonces rige la cantidad registrada |
+| RF58 | Validar sala y simuladores al registrar, con aviso de cruces; sin tiempo de montaje impuesto | Completo | `RegistroPrevioService::advertencias()`, `registrarFormatoIntramural()` | `SesionesApartadasTest` | Mientras se llena el formulario se avisa de sesiones en la misma franja, del docente con otra sesión y de que no quedaría sala libre (D17). Son avisos, no impedimentos. Los simuladores se validan al registrar el formato intramural, que es cuando se conocen: se avisa de lo que no alcanza en la franja. La sala se elige en la preparación entre las libres (P4) |
+| RF59 | Formato intramural como paso posterior a la fecha | Completo | `RegistroPrevioService::registrarFormatoIntramural()`, `/panel/solicitudes/{solicitud}/formato-intramural` | `SesionesApartadasTest` | Lo digita el administrativo (P3). Se precarga el inventario del escenario y se ajusta; al guardar pasa a la preparación. La solicitud del docente lo trae desde que se crea |
+| RF60 | Alerta a administrativos y docente de sesiones próximas sin formato intramural, con antelación configurable | Completo | `RegistroPrevioService::avisarSinFormatoIntramural()`, comando `sesiones:avisar-formato-intramural` (diario, 6:00), servicio `programador` del compose, ajuste en `/admin/ajustes-del-laboratorio` | `SesionesApartadasTest` | Un correo diario por persona con todas sus sesiones (D16): al docente las suyas, a cada administrativo activo todas. Antelación de 3 días por defecto, la cambia el ADMIN (D5). La lista de sesiones apartadas marca las que no lo tienen |
+| RF61 | Reprogramar una sesión aprobada con motivo, constancia de comunicación y correo al docente | No iniciado | — | — | Qué es la constancia: D4 |
+| RF73 | Sustituir al docente de una sesión, con el original y el reemplazo | No iniciado | — | — | Quién la registra: D11 |
 
 ## Periodo académico (RF75)
 
@@ -294,4 +294,4 @@ Para ponerlo a andar hace falta:
 12. **"Bloquear prácticas si está pendiente"** (arquitectura §2) se le atribuye a `ConfidencialidadService`. Lo decide `ParticipacionService`, que junta el formato con los bloqueos de coordinación.
 13. **Las tablas de Services** de la arquitectura (§2) omiten `AccesoService`, `ConfiguracionLandingService`, `ReposicionService` y `GeneradorDeReportes`, y presentan `UsuarioSyncService` sin advertir que no existe.
 14. **RF22 en Filament.** El `CLAUDE.md`, la arquitectura y `AdminPanelProvider` agrupan "RF22–RF26" en `/admin`. RF22 (usuarios) no está en Filament: lo que hay es la pantalla de roles en `/panel/usuarios`.
-15. **El compose de producción no tiene tareas programadas.** RF20 (sincronización) y RF60 (alertas) las necesitan; hay que añadir un servicio que corra `php artisan schedule:work`.
+15. ~~**El compose de producción no tiene tareas programadas.**~~ Corregido: servicio `programador` (`schedule:work`) en los dos compose; la CI comprueba que esté arriba y lo detiene durante la restauración de copias.

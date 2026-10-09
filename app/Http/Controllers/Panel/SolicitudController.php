@@ -41,6 +41,22 @@ final class SolicitudController extends Controller
         return view('panel.solicitudes.bandeja');
     }
 
+    /** Sesiones apartadas antes del semestre (RF57). */
+    public function apartadas(Request $peticion): View
+    {
+        abort_unless($peticion->user()->can('registrarApartada', Solicitud::class), 403);
+
+        return view('panel.solicitudes.apartadas');
+    }
+
+    /** Formato intramural de una sesión (RF59). */
+    public function formatoIntramural(Request $peticion, Solicitud $solicitud): View
+    {
+        abort_unless($peticion->user()->can('registrarFormatoIntramural', $solicitud), 403);
+
+        return view('panel.solicitudes.formato-intramural', ['solicitud' => $solicitud]);
+    }
+
     /**
      * Los participantes de una sesión: quién no puede asistir y por qué
      * (RF70), y retirar o agregar estudiantes (RF69, RF28).
