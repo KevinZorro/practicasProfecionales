@@ -1,6 +1,6 @@
 # REQUERIMIENTOS FUNCIONALES
 
-**Versión:** 9 de octubre de 2026. Reemplaza las versiones anteriores e incorpora las decisiones tomadas con el laboratorio hasta esta fecha. Los cambios están resumidos al final del documento.
+**Versión:** 9 de octubre de 2026, con las aclaraciones del mismo día. Reemplaza las versiones anteriores e incorpora las decisiones tomadas con el laboratorio hasta esta fecha. Los cambios están resumidos al final del documento.
 
 **Nota de roles:** el sistema maneja cinco roles (ADMIN, coordinador, administrativo, docente y estudiante). El coordinador hereda todos los permisos del administrativo. Un usuario puede tener varios roles asignados simultáneamente.
 
@@ -45,10 +45,10 @@
 ## Solicitud de escenarios
 
 - **RF27** — El sistema debe permitir al docente solicitar un escenario, indicando el tipo de sesión (práctica o evaluación).
-- **RF28** *(modificado)* — El sistema debe permitir al docente seleccionar el caso clínico, la fecha y hora, la materia, el grupo y la cantidad de estudiantes. El grupo es la subdivisión de la clase que pasa a los simuladores, identificada con una letra (A, B, C…), porque cada simulador admite menos estudiantes que una clase completa. La sala no es seleccionada por el docente. En las sesiones apartadas antes del semestre, la fecha proviene del registro previo (RF57).
+- **RF28** *(modificado)* — El sistema debe permitir al docente seleccionar el caso clínico, la fecha y hora, la materia, el grupo, la cantidad de estudiantes y los estudiantes que asistirán a esa sesión. El grupo es la subdivisión de la clase que pasa a los simuladores, identificada con una letra (A, B, C…), porque cada simulador admite menos estudiantes que una clase completa. La sala no es seleccionada por el docente. En las sesiones apartadas antes del semestre, la fecha proviene del registro previo (RF57).
 - **RF29** — Al seleccionar el caso clínico, el sistema debe precargar los simuladores y equipos asociados, permitiendo ajustar cantidades o agregar elementos adicionales.
 - **RF30** *(modificado)* — El sistema debe permitir a los administrativos revisar las solicitudes de escenario y rechazarlas cuando corresponda. La revisión es obligatoria antes de la aprobación e incluye verificar cruces de horario, disponibilidad de insumos y simuladores, y estado del espacio físico (aire acondicionado, filtraciones, escenario deshabilitado).
-- **RF31** *(modificado)* — El sistema debe permitir a coordinación aprobar las solicitudes previamente revisadas. El ADMIN puede aprobar en ausencia de la coordinadora, siempre que exista revisión administrativa previa registrada. Como toda solicitud pasa antes por la revisión administrativa, no se requiere un bloqueo adicional cuando la coordinadora aprueba una solicitud hecha por ella misma como docente.
+- **RF31** *(modificado)* — El sistema debe permitir a coordinación aprobar o rechazar las solicitudes previamente revisadas. La solicitud pasa así por dos fases: el administrativo la acepta o la rechaza, y coordinación aprueba o rechaza la que el administrativo aceptó. El ADMIN puede aprobar en ausencia de la coordinadora, siempre que exista revisión administrativa previa registrada. Como toda solicitud pasa antes por la revisión administrativa, no se requiere un bloqueo adicional cuando la coordinadora aprueba una solicitud hecha por ella misma como docente.
 - **RF32** — En caso de rechazo, el sistema debe permitir registrar un comentario opcional con el motivo.
 - **RF33** — El sistema debe notificar por correo electrónico al docente el resultado de su solicitud.
 - **RF34** — El sistema debe mostrar las reservas aprobadas en un calendario visible para estudiantes, docentes, administrativos y coordinación, diferenciando visualmente las sesiones de práctica de las de evaluación. La sala se muestra una vez asignada.
@@ -56,7 +56,7 @@
 
 ## Preparación de escenarios
 
-- **RF36** *(modificado)* — El sistema debe mostrar a los administrativos la vista diaria de escenarios aprobados por preparar, permitiendo asignar la sala en la que se montará cada caso clínico, con el detalle de simuladores y equipos requeridos. Al asignar o cambiar la sala, el sistema debe notificar por correo al docente cuál es.
+- **RF36** *(modificado)* — El sistema debe mostrar a los administrativos la vista diaria de escenarios aprobados por preparar, permitiendo asignar la sala en la que se montará cada caso clínico, con el detalle de simuladores y equipos requeridos. El administrativo elige la sala, y el sistema solo le ofrece las que están libres en esa franja. Al asignar o cambiar la sala, el sistema debe notificar por correo al docente cuál es.
 - **RF37** — El sistema debe permitir marcar individualmente los elementos alistados y registrar el estado general del escenario (pendiente por preparar, en preparación o preparado), con campo de observaciones. La preparación admite avance parcial, continuado por otra persona y en día distinto al de la sesión.
 
 ## Inventario
@@ -92,9 +92,9 @@
 
 ## Programación de sesiones
 
-- **RF57** *(modificado)* — El sistema debe permitir a los administrativos registrar las sesiones apartadas con anterioridad al semestre, que se repiten cada periodo, a partir del formato físico que maneja el laboratorio y que siempre llega antes de iniciar el semestre. El registro es manual y parcial, de modo que se cargan las sesiones apartadas y no el sílabo completo. El sistema admite tanto estas sesiones como las solicitudes que surgen durante el semestre (RF27).
+- **RF57** *(modificado)* — El sistema debe permitir a los administrativos registrar las sesiones apartadas con anterioridad al semestre, que se repiten cada periodo, a partir del formato físico que maneja el laboratorio y que siempre llega antes de iniciar el semestre. El registro es manual y parcial, de modo que se cargan las sesiones apartadas y no el sílabo completo. Estas sesiones llegan ya aprobadas, porque es coordinación quien entrega el formato a los administrativos, y no pasan por la revisión ni la aprobación de RF30 y RF31. El sistema admite tanto estas sesiones como las solicitudes que surgen durante el semestre (RF27).
 - **RF58** *(modificado)* — Al registrar una sesión, el sistema debe validar que la sala y los simuladores requeridos estén disponibles en esa fecha y hora, advirtiendo de cruces con sesiones ya registradas. El tiempo entre sesiones para desmontar y montar lo decide el personal del laboratorio, y el sistema no lo impone.
-- **RF59** — El sistema debe permitir registrar, por cada sesión, el formato intramural con los insumos, equipo clínico y simuladores que el docente requiere, como paso separado y posterior a la programación de la fecha.
+- **RF59** — El sistema debe permitir registrar, por cada sesión, el formato intramural con los insumos, equipo clínico y simuladores que el docente requiere, como paso separado y posterior a la programación de la fecha. Lo registran los administrativos a partir del formato impreso que el laboratorio recibe antes del semestre.
 - **RF60** — El sistema debe alertar a administrativos y al docente cuando una sesión próxima no tenga formato intramural registrado, con la antelación que configure el laboratorio.
 - **RF61** — Los administrativos deben poder reprogramar una sesión aprobada (fecha, hora o escenario), exigiendo motivo, constancia de comunicación previa con el docente y notificación automática al docente.
 - **RF73** — El sistema debe permitir sustituir al docente responsable de una sesión cuando no pueda asistir, registrando la novedad, el docente original y el que lo reemplaza.
@@ -111,7 +111,7 @@
 
 ## Espacios, inventario y preparación
 
-- **RF65** — El ADMIN debe poder crear, editar y reubicar espacios físicos y vincularlos con los escenarios clínicos que se montan en ellos, conservando el histórico de la reubicación.
+- **RF65** — El ADMIN debe poder crear, editar y reubicar espacios físicos y vincularlos con los escenarios clínicos que se montan en ellos, conservando el histórico de la reubicación. Cada sala tiene un nombre editable y una ubicación formada por bloque, piso y número de sala dentro de ese bloque y piso, para dar cabida a edificios nuevos.
 - **RF66** — El sistema debe permitir registrar el estado funcional de cada ítem de inventario (operativo, en revisión, defectuoso o dado de baja), con motivo y responsable del reporte.
 - **RF67** *(modificado)* — El sistema debe mantener una lista de insumos pendientes por pedir o reponer, que los administrativos alimentan y la coordinadora confirma. Una vez confirmada, la lista es exportable como soporte de la solicitud de compra de fin de semestre.
 - **RF72** — El sistema debe distinguir, en la preparación del escenario, los elementos que monta el personal administrativo de los que requieren intervención del ingeniero (simuladores de alta fidelidad).
@@ -180,4 +180,5 @@ No son requerimientos, pero condicionan la puesta en producción y dependen de l
 - **RF67.** La coordinadora confirma la lista de reposición antes de exportarla.
 - **RF74.** La capacidad que limita la cantidad de estudiantes es la del caso clínico, no la de la sala.
 - **RF75.** Nuevo requerimiento para que el laboratorio abra y cierre el periodo académico sin fechas impuestas por el sistema.
+- **Aclaraciones del 9 de octubre.** RF28: el docente indica los estudiantes de cada sesión. RF31: coordinación también puede rechazar, en una segunda fase. RF36: solo se ofrecen salas libres. RF57: las sesiones apartadas llegan aprobadas. RF59: el formato intramural lo digitan los administrativos. RF65: las salas se ubican por bloque, piso y número.
 - **Pendientes cerrados.** Autoaprobación, antelación del formato intramural, aviso de sala al docente, solicitudes fuera de la programación, tipos de evento, quién rechaza, retiro de inventario, cierre de la lista de reposición, grupos, tiempo entre sesiones, canal de videos, participantes sin formato o bloqueados, conciliación de capacidades, mes de inicio del semestre y hoja de alistamiento.

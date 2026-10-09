@@ -104,6 +104,8 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 - **Las cabeceras de seguridad las pone `CabecerasDeSeguridad`**, en Laravel y no en nginx, para que se prueben. La Content-Security-Policy lleva `'unsafe-inline'` y `'unsafe-eval'` porque Alpine y Filament los necesitan; lo que cierra son los orígenes externos. Cualquier recurso de otro sitio que se añada (una fuente, un script, una imagen) hay que declararlo en ella, o el navegador lo bloquea. Por eso el avatar de Filament se dibuja en local (`App\Filament\AvatarConIniciales`) y no se pide a ui-avatars.com.
 - **Una copia que no se restaura no es una copia.** La CI hace una en cada PR, daña los datos y la restaura. Si cambia dónde guarda algo la aplicación, cambia también `docker/produccion/copias/`.
 
+**Correo: Resend por SMTP, sin paquete.** Los correos salen por `smtp.resend.com` con el transporte SMTP que ya trae Laravel; todo se configura con las variables `MAIL_*`. No instales `resend/resend-php`: cambiar de proveedor tiene que ser cambiar el `.env`. El plan gratuito tiene un tope de 100 correos al día, así que un aviso que pueda repetirse por sesión se agrupa en un correo por persona.
+
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
 
 **Restricciones de plataforma:**
@@ -195,7 +197,9 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 
-9. **El flujo de una solicitud es:** docente solicita → administrativo revisa, y si corresponde rechaza (RF30) → coordinador (o el ADMIN, si coordinación no está) aprueba → administrativo asigna sala, se avisa al docente por correo (RF36) y prepara. **El código todavía deja rechazar solo a coordinación** (`SolicitudPolicy::rechazar()`); el cambio está en `docs/trazabilidad.md`. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
+9. **El flujo de una solicitud es:** docente solicita → administrativo acepta (revisa) o rechaza (RF30) → coordinador (o el ADMIN, si coordinación no está) aprueba o rechaza (RF31) → administrativo elige una sala libre, se avisa al docente por correo (RF36) y prepara. Son dos fases y en las dos se puede rechazar. **El código todavía deja rechazar solo a coordinación** (`SolicitudPolicy::rechazar()`); el cambio está en `docs/trazabilidad.md`.
+
+   **La única excepción son las sesiones apartadas antes del semestre (RF57):** las registra un administrativo desde el formato que le entrega coordinación, así que nacen aprobadas, sin pasar por las dos fases. Queda registrado quién las cargó. Fuera de ese registro no hay otro camino a `aprobada`. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
 
 10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
@@ -374,4 +378,5 @@ No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 2. Motor, acceso y estructura de la base de datos institucional para la sincronización de usuarios (RF19, RF20). Se desarrolla con datos simulados.
 3. ~~Cómo se entera hoy el docente de la sala asignada al llegar a clase.~~ Resuelto (RF36): por correo, al asignar o cambiar la sala.
 4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
-5. Las preguntas P1–P5 y las decisiones por defecto D1–D13 de `docs/trazabilidad.md` (grupos y participantes, sesiones apartadas, diseño de la landing, entre otras). Las D se aplican si nadie las corrige; las P no se construyen sin respuesta.
+5. Las decisiones por defecto D2–D17 de `docs/trazabilidad.md`. Se aplican si nadie las corrige. Las preguntas P1–P5 ya están respondidas y sus respuestas, en `docs/requerimientos.md`.
+6. Cuenta de Resend, dominio verificado para el remitente y visto bueno de la universidad para enviar datos de estudiantes por un servicio externo (ver `docs/trazabilidad.md`, Bloqueos externos).

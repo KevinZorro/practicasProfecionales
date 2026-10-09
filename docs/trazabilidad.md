@@ -4,7 +4,7 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 **Corte:** 9 de octubre de 2026, rama `main` en `fe3e6a3` (incluye la PR #43, configuración de producción).
 
-**Enunciados:** `docs/requerimientos.md`, versión del 9 de octubre de 2026. Es la primera vez que la matriz se coteja contra el enunciado real; las versiones anteriores tuvieron que deducir qué cubría cada número a partir del código.
+**Enunciados:** `docs/requerimientos.md`, versión del 9 de octubre de 2026 con las aclaraciones del mismo día (respuestas a P1–P5 y a D1). Es la primera vez que la matriz se coteja contra el enunciado real; las versiones anteriores tuvieron que deducir qué cubría cada número a partir del código.
 
 ## Cómo se hizo
 
@@ -29,11 +29,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 | Completo | 31 | 4 |
 | Solo backend | 8 | 0 |
 | Parcial | 14 | 6 |
-| Bloqueado | 10 | 0 |
-| No iniciado | 12 | 0 |
+| Bloqueado | 1 | 0 |
+| No iniciado | 21 | 0 |
 | **Total** | **75** | **10** |
 
-De los 10 bloqueados, 9 son la landing pública (P1, el diseño) y 1 es la sincronización con la base institucional (dato externo). Todo lo demás se puede construir hoy.
+El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la cuenta de Resend (ver [Bloqueos externos](#bloqueos-externos)).
 
 ---
 
@@ -41,17 +41,19 @@ De los 10 bloqueados, 9 son la landing pública (P1, el diseño) y 1 es la sincr
 
 `/` sirve `resources/views/welcome.blade.php`, que es **la página de ejemplo de Laravel**: título "Laravel" y una imagen cargada desde laravel.com, que además bloquea la Content-Security-Policy. Los datos que la landing va a mostrar sí existen y los gestiona el ADMIN (RF10–RF17).
 
+**El diseño se rehace (P1).** Hay un diseño aprobado por el ingeniero Zambrano, pero se descarta por genérico: el desarrollo propone uno nuevo a partir de estos requerimientos. Conviene que el laboratorio vea la propuesta antes de construir todas las secciones.
+
 | RF | Pide | Estado | Hecho | Falta |
 |---|---|---|---|---|
-| RF01 | Información institucional, cifras destacadas y galería de fotos | Bloqueado | Datos: RF10 | La vista pública. Espera P1 (diseño) |
-| RF02 | Video institucional de fondo en el hero | Bloqueado | Datos: RF11 | Igual que RF01 |
-| RF03 | Escenarios clínicos con sus capacidades, resumen y detalle ampliado | Bloqueado | Datos: RF12 | Igual que RF01 |
-| RF04 | Talleres con imagen, tema, fecha y modalidad | Bloqueado | Datos: RF13 | Igual que RF01 |
-| RF05 | Eventos con fecha, tipo e indicador de abierto al público | Bloqueado | Datos: RF14 | Igual que RF01 |
-| RF06 | Certificaciones como insignias | Bloqueado | Datos: RF15 | Igual que RF01 |
-| RF07 | Docentes con foto, nombre, cargo y títulos | Bloqueado | Datos: RF16 | Igual que RF01 |
-| RF08 | Galería de videos institucionales | Bloqueado | — | Igual que RF01, y los datos de RF17. Ya no espera la decisión YouTube o Vimeo: el enunciado fija subida al servidor |
-| RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | Bloqueado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario (P1), su Service, el correo (D8 y la cuenta de correo, ver [Bloqueos externos](#bloqueos-externos)) y el interruptor para ocultar la sección en la configuración de la landing |
+| RF01 | Información institucional, cifras destacadas y galería de fotos | No iniciado | Datos: RF10 | La vista pública, con el diseño nuevo |
+| RF02 | Video institucional de fondo en el hero | No iniciado | Datos: RF11 | Igual que RF01 |
+| RF03 | Escenarios clínicos con sus capacidades, resumen y detalle ampliado | No iniciado | Datos: RF12 | Igual que RF01 |
+| RF04 | Talleres con imagen, tema, fecha y modalidad | No iniciado | Datos: RF13 | Igual que RF01 |
+| RF05 | Eventos con fecha, tipo e indicador de abierto al público | No iniciado | Datos: RF14 | Igual que RF01 |
+| RF06 | Certificaciones como insignias | No iniciado | Datos: RF15 | Igual que RF01 |
+| RF07 | Docentes con foto, nombre, cargo y títulos | No iniciado | Datos: RF16 | Igual que RF01 |
+| RF08 | Galería de videos institucionales | No iniciado | — | Igual que RF01, y los datos de RF17. Ya no espera la decisión YouTube o Vimeo: el enunciado fija subida al servidor |
+| RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | No iniciado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario, su Service, el correo (D8 y la cuenta de Resend), una protección contra envíos masivos (D16) y el interruptor para ocultar la sección en la configuración de la landing |
 
 ## Contenido público: pantallas del ADMIN (RF10–RF17)
 
@@ -89,10 +91,10 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
 | RF27 | El docente solicita, con tipo práctica o evaluación | Completo | `SolicitudService::crear()`, `/panel/solicitudes/nueva` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | |
-| RF28 | Caso, fecha y hora, materia, **grupo** y cantidad; sin sala; fecha del registro previo en sesiones apartadas | Parcial | `SolicitudService::crear()` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | No existe el grupo (letra A, B, C…): ni columna ni campo. La fecha desde el registro previo depende de RF57 |
+| RF28 | Caso, fecha y hora, materia, **grupo** y cantidad; sin sala; fecha del registro previo en sesiones apartadas | Parcial | `SolicitudService::crear()` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | No existe el grupo (letra A, B, C…) ni la lista de estudiantes de la sesión, que según la aclaración de P2 la escribe el docente al solicitar. La fecha desde el registro previo depende de RF57 |
 | RF29 | Precarga del inventario del caso | Completo | `SolicitudService::itemsSugeridos()` | `PantallaSolicitudDocenteTest`, `FlujoSolicitudTest` | |
-| RF30 | Revisión administrativa obligatoria **y rechazo por los administrativos** | Parcial | `SolicitudService::marcarRevisada()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | Hoy solo rechaza coordinación (`SolicitudPolicy::rechazar()`), como dice la regla 9 del `CLAUDE.md`, que el enunciado cambió. La bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). Si el ADMIN rechaza: D1 |
-| RF31 | Aprobación de coordinación o del ADMIN, siempre con revisión previa; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Queda borrar el bloque comentado de `SolicitudPolicy::aprobar()` |
+| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza** | Parcial | `SolicitudService::marcarRevisada()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | Hoy solo rechaza coordinación (`SolicitudPolicy::rechazar()`). Hay que dejar rechazar también al administrativo en la primera fase; coordinación conserva el rechazo en la segunda. La bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). Si el ADMIN rechaza: D1 |
+| RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Queda borrar el bloque comentado de `SolicitudPolicy::aprobar()` |
 | RF32 | Comentario opcional al rechazar | Completo | `SolicitudService::rechazar()` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | |
 | RF33 | Correo al docente con el resultado | Completo | Eventos `SolicitudAprobada`/`SolicitudRechazada`, listener en cola | `FlujoSolicitudTest`, `ListenersRegistradosTest` | |
 | RF34 | Calendario de aprobadas para estudiantes, docentes, administrativos y coordinación, con la sala cuando exista | Completo | `SolicitudService::paraCalendario()`, `/panel/calendario` | `CalendarioSolicitudesTest`, `PantallaCalendarioTest` | |
@@ -102,7 +104,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Parcial | `PreparacionService::asignarSala()`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest` | El correo al asignar o cambiar la sala. Cierra el pendiente 3 del `CLAUDE.md` |
+| RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Parcial | `PreparacionService::asignarSala()`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest` | El correo al asignar o cambiar la sala. Ya está hecho que solo se ofrezcan las salas libres (`PreparacionService::salasLibresPara()`, excepción `SalaOcupada`) |
 | RF37 | Ítems alistados, estado del montaje, observaciones, avance parcial por otra persona | Completo | `PreparacionService`, `/panel/preparaciones` | `TableroDiarioTest`, `PantallaPreparacionTest` | |
 | RF38 | Registrar y actualizar inventario, retirar unidades, distinguir consumibles de **accesorios y repuestos de un simulador** | Parcial | `InventarioService`, `/panel/inventario` | `InventarioTest`, `PantallaInventarioTest`, `EstadoFuncionalInventarioTest` | Los tipos son simulador, equipo clínico y equipo básico; no hay accesorio o repuesto ligado a un simulador (D13) |
 | RF39 | Nivel de fidelidad, solo el ADMIN | Completo | `ItemInventarioPolicy` | `PantallaInventarioTest` | |
@@ -118,7 +120,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF42 | Impedirla sin solicitud aprobada | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
 | RF43 | Tipo de evaluación de la materia, sin editar el checklist | Parcial | `EvaluacionService`, `/admin/tipos-de-evaluacion` | `PantallaTiposEvaluacionTest`, `EvaluacionReglasTest` | La pantalla del docente |
 | RF44 | Copia del checklist vigente | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
-| RF45 | Varios estudiantes; **solo los habilitados** (formato verificado o en físico, sin bloqueo) | Parcial | `EvaluacionService::agregarEstudiante()` | `EvaluacionReglasTest` | La pantalla, y la regla: `agregarEstudiante()` no llama a `ConfidencialidadService::puedeParticiparEnPracticas()` ni existe el bloqueo (RF68). De qué lista salen los estudiantes: P2 |
+| RF45 | Varios estudiantes; **solo los habilitados** (formato verificado o en físico, sin bloqueo) | Parcial | `EvaluacionService::agregarEstudiante()` | `EvaluacionReglasTest` | La pantalla, y la regla: `agregarEstudiante()` no llama a `ConfidencialidadService::puedeParticiparEnPracticas()` ni existe el bloqueo (RF68). Los estudiantes salen de la lista de la sesión que escribió el docente (P2) |
 | RF46 | Ítems marcados y resultado decidido por el docente | Solo backend | `EvaluacionService::marcarItem()`, `registrarResultado()` | `EvaluacionReglasTest` | Pantalla |
 | RF47 | Observaciones por estudiante | Solo backend | `EvaluacionService::registrarObservaciones()` | `EvaluacionReglasTest` | Pantalla |
 | RF48 | Un intento por evaluación, sin límite | Solo backend | `EvaluacionService::calcularIntento()` | `EvaluacionIntentoTest` | Pantalla |
@@ -131,7 +133,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 |---|---|---|---|---|---|
 | RF51 | El ADMIN carga la plantilla PDF por periodo | Completo | `ConfidencialidadService::cargarPlantilla()`, `/panel/plantillas-confidencialidad` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | |
 | RF52 | Estudiantes y docentes descargan, firman a mano y cargan, una vez por **periodo académico** | Parcial | `ConfidencialidadService::registrarEntrega()`, `/panel/mi-formato` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest`, `AccesoConfidencialidadTest` | El periodo hoy se calcula del calendario (`periodoVigente()`, corte en julio o `PERIODO_ACADEMICO_VIGENTE`). Tiene que leer el periodo que abre el laboratorio (RF75) |
-| RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Parcial | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: estados, entrega física y verificación. Falta: agrupar por programa (no hay programa en `users`), por materia (no hay matrícula) y por grupo (P2); y que el estado condicione el ingreso (RF45, RF70) |
+| RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Parcial | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: estados, entrega física y verificación. Falta: agrupar por programa (no hay programa en `users`), por materia y por sesión (la lista de estudiantes de cada solicitud, P2); y que el estado condicione el ingreso (RF45, RF70) |
 
 "Entregado en físico" aparece en el enunciado como un estado más. En el código es un hecho que convive con el estado del escaneo (`recibido_fisico_at`, regla 7 del `CLAUDE.md`). El comportamiento es el que pide el enunciado —habilita el ingreso y deja la carga pendiente—; solo cambia cómo se guarda, y así no se pierde al avanzar de estado.
 
@@ -145,13 +147,13 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 
 ## Programación de sesiones (RF57–RF61, RF73)
 
-Ninguno está construido. Todos dependen del mismo modelo: una sesión apartada es una solicitud que nace sin formato intramural y lo recibe después. P3 y P4 deciden ese modelo.
+Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apartada es una solicitud que **nace aprobada** —coordinación ya entregó el formato a los administrativos—, la registra un administrativo y recibe el formato intramural después, también de mano de un administrativo. Es la única excepción a la regla 9 del `CLAUDE.md` (sin revisión no aprueba nadie), y tiene que quedar registrado quién la cargó.
 
 | RF | Pide | Estado | Falta |
 |---|---|---|---|
-| RF57 | Los administrativos registran las sesiones apartadas antes del semestre, a mano y en parte, conviviendo con las solicitudes del semestre | No iniciado | Todo. Estado inicial de la sesión apartada: P3 |
-| RF58 | Validar sala y simuladores disponibles al registrar, con aviso de cruces; sin tiempo de montaje impuesto | No iniciado | Qué significa "sala disponible" si la sala se asigna en la preparación: P4 |
-| RF59 | Formato intramural (insumos, equipos, simuladores) como paso posterior a la fecha | No iniciado | Quién lo llena: P3 |
+| RF57 | Los administrativos registran las sesiones apartadas antes del semestre, a mano y en parte, conviviendo con las solicitudes del semestre | No iniciado | Todo: registro por el administrativo, nace aprobada y crea su preparación. Quién pone los estudiantes: D15 |
+| RF58 | Validar sala y simuladores disponibles al registrar, con aviso de cruces; sin tiempo de montaje impuesto | No iniciado | Validar simuladores y equipos en la franja y avisar de cruces. La sala no se valida al registrar: la elige el administrativo en la preparación entre las libres (P4). Aviso si no queda ninguna sala libre: D17 |
+| RF59 | Formato intramural (insumos, equipos, simuladores) como paso posterior a la fecha | No iniciado | Pantalla del administrativo para digitar el formato impreso (P3) |
 | RF60 | Alerta a administrativos y docente si una sesión próxima no tiene formato intramural, con antelación configurable | No iniciado | Tarea programada, correo y la antelación (D5). El compose de producción no tiene servicio de tareas programadas |
 | RF61 | Reprogramar una sesión aprobada con motivo, constancia de comunicación y correo al docente | No iniciado | Qué es la constancia: D4 |
 | RF73 | Sustituir al docente de una sesión, con el original y el reemplazo | No iniciado | Quién la registra: D11 |
@@ -174,7 +176,7 @@ Ninguno está construido. Todos dependen del mismo modelo: una sesión apartada 
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF65 | Crear, editar y reubicar salas, vincularlas con escenarios, con histórico de la reubicación | Parcial | `/admin/salas` | `PantallaSalasTest` | El vínculo sala–escenario y su histórico. Qué se reubica: P5 |
+| RF65 | Crear, editar y reubicar salas, vincularlas con escenarios, con histórico de la reubicación | Parcial | `/admin/salas` | `PantallaSalasTest` | Bloque, piso y número de sala (P5), el histórico de cambios de ubicación y el vínculo sala–escenario (D14). El nombre ya es editable |
 | RF66 | Estado funcional por ítem con motivo y responsable | Completo | `InventarioService::cambiarEstado()`, `retirarUnidades()`, `reponerUnidades()`, `darDeBaja()` | `EstadoFuncionalInventarioTest`, `InventarioTest`, `DisponibilidadInventarioTest` | |
 | RF67 | Lista de reposición que alimentan los administrativos y confirma la coordinadora, exportable una vez confirmada | Completo | `ReposicionService`, `/panel/reposicion` | `ListaDeReposicionTest`, `PantallaDeReportesTest` | |
 | RF72 | Distinguir en la preparación lo que monta el administrativo de lo que requiere al ingeniero | No iniciado | — | — | Criterio: D10 |
@@ -185,9 +187,9 @@ Ninguno está construido. Todos dependen del mismo modelo: una sesión apartada 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
 | RF68 | Coordinación bloquea a un estudiante o docente, con motivo | No iniciado | — | — | Todo. Efecto sobre un docente bloqueado o sin formato: D2 |
-| RF69 | Retirar a un participante de una sesión, con motivo y responsable | No iniciado | — | — | Quiénes son los participantes de una sesión: P2 |
-| RF70 | Mostrar al docente quién no puede asistir y por qué | No iniciado | `ConfidencialidadService::puedeParticiparEnPracticas()` existe, sin uso | — | La pantalla y la lista de participantes (P2) |
-| RF71 | Verificar el formato de un grupo completo en una pantalla, con búsqueda por persona | Parcial | `ConfidencialidadService::estadoDeLosFirmantes()`, `/panel/formatos-confidencialidad/estado` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: búsqueda por nombre, correo y código. Falta el filtro por grupo (P2) |
+| RF69 | Retirar a un participante de una sesión, con motivo y responsable | No iniciado | — | — | Todo. Los participantes son los estudiantes que el docente puso en la sesión (P2) |
+| RF70 | Mostrar al docente quién no puede asistir y por qué | No iniciado | `ConfidencialidadService::puedeParticiparEnPracticas()` existe, sin uso | — | La pantalla, sobre la lista de estudiantes de la sesión (P2) |
+| RF71 | Verificar el formato de un grupo completo en una pantalla, con búsqueda por persona | Parcial | `ConfidencialidadService::estadoDeLosFirmantes()`, `/panel/formatos-confidencialidad/estado` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: búsqueda por nombre, correo y código. Falta ver de una vez a los estudiantes de una sesión o grupo (P2) |
 
 ## Requerimientos no funcionales (RNF01–RNF10)
 
@@ -208,33 +210,37 @@ Ninguno está construido. Todos dependen del mismo modelo: una sesión apartada 
 
 ## Preguntas abiertas
 
-### Las que bloquean (sin respuesta no se construye)
+### Respondidas el 9 de octubre
 
-| # | Pregunta | Afecta | Recomendación |
+| # | Pregunta | Respuesta | Afecta |
 |---|---|---|---|
-| P1 | ¿La landing tiene un diseño aprobado que haya que seguir (maqueta, Figma, referencia), o lo propone el desarrollo con la identidad de la universidad? | RF01–RF09 | Que lo proponga el desarrollo y el laboratorio lo apruebe sobre la página funcionando |
-| P2 | **Grupos y participantes.** ¿Quién decide qué estudiantes forman el grupo A, B o C de una materia, y de dónde sale la lista de estudiantes de la materia? | RF28, RF45, RF53, RF69, RF70, RF71 | El docente arma los grupos de cada materia una vez por periodo, buscando estudiantes; cada sesión toma la lista de su grupo. Si la base institucional trae la matrícula por materia, la lista viene precargada y el docente solo reparte |
-| P3 | **Sesiones apartadas.** La sesión que el administrativo registra desde el formato físico, ¿pasa por aprobación de coordinación como cualquier solicitud, o nace aprobada? Y el formato intramural, ¿lo llena el docente en la plataforma o el administrativo desde el papel? | RF57, RF59, RF60 | Nace revisada (el administrativo ya la revisó al registrarla) y coordinación la aprueba, para no romper la regla "sin revisión no aprueba nadie". El formato intramural lo llena el docente, y el administrativo puede llenarlo por él si llega en papel |
-| P4 | **"Sala disponible" al registrar una sesión.** La sala se asigna en la preparación, minutos antes (RF36). ¿RF58 pide comprobar que haya al menos una sala apta para ese escenario libre en la franja, o que el administrativo elija la sala al registrar la sesión apartada? | RF58, RF65 | Comprobar que quede al menos una sala vinculada al escenario libre en esa franja, sin elegirla |
-| P5 | **"Reubicar" un espacio físico.** ¿Qué cambia: el escenario se monta en otra sala (la incubadora pasa de la sala 2 a la 3), o la sala cambia de lugar (bloque, piso)? | RF65 | Lo primero: el vínculo sala–escenario guarda historial con fechas |
+| P1 | ¿Hay un diseño de la landing que seguir? | Hay uno aprobado por el ingeniero Zambrano, pero se descarta por genérico. El desarrollo propone uno nuevo a partir de los requerimientos | RF01–RF09 |
+| P2 | ¿Quién decide qué estudiantes van a cada grupo? | El docente, al solicitar: dice qué estudiantes van a esa sesión. No hay grupos fijos del semestre; la lista es de cada sesión | RF28, RF45, RF53, RF69, RF70, RF71 |
+| P3 | ¿Las sesiones apartadas pasan por aprobación? ¿Quién digita el formato intramural? | Llegan aprobadas: coordinación es quien entrega el formato a los administrativos. Los insumos los digitan los administrativos desde el formato impreso | RF57, RF59 |
+| P4 | ¿Qué significa "sala disponible" en RF58? | La sala la elige el administrativo en la preparación, nunca el docente, y el sistema no le ofrece una sala ocupada en esa franja. El nombre de la sala es editable | RF36, RF58 |
+| P5 | ¿Qué es "reubicar" un espacio? | Pensado para un edificio nuevo: el ADMIN crea salas con bloque, piso y número de sala dentro de ese bloque y piso | RF65 |
+| D1 | ¿Quién rechaza? | Los dos, en dos fases: el administrativo acepta o rechaza, y después coordinación aprueba o rechaza. El ADMIN, cuando actúa por coordinación, también puede rechazar (decisión por defecto, no corregida) | RF30, RF31 |
 
-### Las que tienen decisión por defecto (se aplica si no se corrige)
+### Decisiones por defecto (se aplican si no se corrigen)
 
 | # | Decisión por defecto | Afecta |
 |---|---|---|
-| D1 | Rechazan los administrativos (y coordinación, por herencia) mientras la solicitud está pendiente o revisada. El ADMIN también puede rechazar, igual que aprueba en ausencia de la coordinadora | RF30, RF32 |
 | D2 | El bloqueo no tiene fecha de fin: dura hasta que coordinación lo levante, con motivo. El ADMIN también puede bloquear. Un docente bloqueado no puede crear solicitudes nuevas, y sus sesiones aprobadas se marcan para que coordinación las reprograme o lo sustituya. Al docente sin formato no se le cancela la sesión: se avisa al docente, en la bandeja y en la preparación | RF68, RF70, regla 7 del `CLAUDE.md` |
 | D3 | Sin periodo abierto no se reciben entregas del formato, y sigue valiendo lo del último periodo hasta que se abra el siguiente. El nombre del periodo lo escriben ellos ("2026-2") y no se repite | RF52, RF75 |
 | D4 | La constancia de comunicación es un texto obligatorio (medio, fecha, con quién habló). La sesión reprogramada sigue aprobada, se revalidan capacidad y disponibilidad, y si cambia la fecha se libera la sala asignada | RF61 |
-| D5 | La antelación del aviso la edita el ADMIN en la plataforma, con 3 días por defecto. El aviso es un correo diario y un indicador en la vista de sesiones | RF60 |
+| D5 | La antelación del aviso la edita el ADMIN en la plataforma, con 3 días por defecto | RF60 |
 | D6 | Deshabilitar a mano es una marca propia que la sincronización no revierte. Los usuarios creados a mano (por ejemplo, un pasante externo) no los desactiva la sincronización | RF20, RF22 |
 | D7 | Tamaño máximo de cada video: 100 MB por defecto, configurable por variable de entorno | RF17 |
-| D8 | "Se dirige a un correo no-reply" se lee como: el correo **sale** de la cuenta no-reply y **llega** al correo de contacto del laboratorio (RF11), con responder-a del interesado. También se guarda en `solicitudes_informacion` | RF09 |
+| D8 | El correo del formulario **sale** de la dirección no-reply y **llega** al correo de contacto del laboratorio (RF11), con responder-a del interesado. También se guarda en `solicitudes_informacion` | RF09 |
 | D9 | "Retiro" en la bitácora cubre el retiro de participantes (RF69) y el de unidades de inventario (RF38). La bitácora la consultan coordinación y el ADMIN | RF62 |
 | D10 | Lo que requiere al ingeniero se deduce del nivel de fidelidad alta. El ingeniero no tiene cuenta: el administrativo marca el ítem cuando él termina | RF72 |
 | D11 | La sustitución la registran los administrativos (y coordinación). El reemplazo debe ser un docente con cuenta | RF73 |
 | D12 | Elevar a coordinador exige fecha de fin, porque el enunciado dice "temporalmente" | RF63 |
 | D13 | Accesorio o repuesto es un tipo nuevo de ítem de inventario, ligado a un simulador del inventario | RF38 |
+| D14 | El vínculo sala–escenario es informativo: en la preparación las salas vinculadas al escenario aparecen primero, pero el administrativo puede elegir cualquier sala libre. Así un vínculo sin llenar no bloquea una clase, igual que la capacidad sin definir de la regla 10 | RF36, RF65 |
+| D15 | En las sesiones apartadas, los estudiantes los pone el docente desde su historial de solicitudes antes de la sesión; el administrativo también puede hacerlo. Sin lista, RF70 no tiene a quién revisar y la sesión se marca | RF57, RF70 |
+| D16 | Para no agotar el cupo de correos (ver Resend abajo): el aviso de RF60 es **un correo diario por persona** con todas sus sesiones pendientes, no uno por sesión; y el formulario público de RF09 tiene límite de envíos por IP y un campo trampa contra robots. Es la excepción a "sin límite de peticiones por IP" del `CLAUDE.md`, que habla de la entrada con Google, no de un formulario anónimo | RF09, RF60 |
+| D17 | Al registrar una sesión apartada, si en esa franja no queda ninguna sala libre se avisa, sin impedir el registro: la sala se resuelve en la preparación | RF58 |
 
 ---
 
@@ -247,23 +253,29 @@ Dependen de la universidad, no del laboratorio.
 1. **El motor** (Oracle, SQL Server, MySQL, PostgreSQL…). Decide qué extensión de PHP hay que instalar en la imagen de producción; Oracle y SQL Server necesitan librerías del fabricante.
 2. Que el servidor del laboratorio llegue a la base por red (host, puerto, firewall).
 3. El usuario de solo lectura.
-4. La estructura: personas (correo, documento, código), programa, vigencia de matrícula o contrato y, si existe, la matrícula por materia (resolvería la mitad de P2).
+4. La estructura: personas (correo, documento, código), programa y vigencia de matrícula o contrato.
+
+**Correo con Resend (RF09, RF33, RF36, RF60, RF61, aviso al ADMIN de RF20).** Decidido: se envía por Resend, por su servidor SMTP (`smtp.resend.com`). Laravel ya trae el envío por SMTP, así que **no se agrega ningún paquete**: basta con las variables `MAIL_*` del `.env`, y cambiar de proveedor mañana es cambiar esas variables. Para ponerlo a andar hace falta:
+
+1. **La cuenta de Resend**, creada con el correo del ADMIN que se va a entregar. Esa cuenta da la clave que va en `MAIL_PASSWORD`.
+2. **Un dominio verificado.** Resend solo envía desde direcciones de un dominio en el que se hayan publicado sus registros DNS (SPF y DKIM). **No puede enviar desde una dirección de Gmail** ni desde el correo personal del ADMIN: el remitente tiene que ser algo como `no-reply@laboratorio.ufps.edu.co`, y esos registros los publica quien administre el DNS de la universidad. Resend recomienda un subdominio dedicado. Va de la mano del dominio de la plataforma (despliegue, punto 1).
+3. **Revisar el cupo.** El plan gratuito permite 3.000 correos al mes y **100 al día**; al llegar al tope deja de enviar hasta la medianoche UTC (las siete de la noche en Colombia) y no cobra. Para un día normal alcanza; D16 lo protege de los picos. Si un día se agota, los correos fallan en la cola y hay que reintentarlos.
+4. **Confirmar con la universidad si puede usarse un servicio externo** para correos con datos de estudiantes (nombre, sesión, resultado de una solicitud). Resend procesa los correos en Estados Unidos, y la Ley 1581 pide cuidado con las transferencias internacionales de datos personales.
 
 **Despliegue.**
 
-1. Dominio o subdominio definitivo, para la dirección de retorno en Google.
+1. Dominio o subdominio definitivo, para la dirección de retorno en Google y para verificar el dominio en Resend.
 2. Quién crea las credenciales de Google.
 3. Si el HTTPS lo pone un proxy de la universidad o el propio servidor.
 4. Destino externo de las copias de seguridad.
-5. **La cuenta de correo no-reply y sus datos de envío (SMTP).** No estaba en la lista y sin ella no sale ningún correo: RF09, RF33, RF36, RF60 y RF61.
-6. **Espacio en disco del servidor.** Los videos de RF17 y sus copias de seguridad son lo que más va a ocupar.
+5. **Espacio en disco del servidor.** Los videos de RF17 y sus copias de seguridad son lo que más va a ocupar.
 
 ---
 
 ## Diferencias entre los documentos y el código
 
 1. **La portada pública es la página de ejemplo de Laravel**, con una imagen de laravel.com que la Content-Security-Policy bloquea. Si se despliega antes de la landing, eso verá el público.
-2. **Quién rechaza.** La regla 9 del `CLAUDE.md` y `SolicitudPolicy::rechazar()` dicen que rechaza coordinación; RF30 dice que rechazan los administrativos durante la revisión.
+2. **Quién rechaza.** `SolicitudPolicy::rechazar()` deja rechazar solo a coordinación; RF30 y RF31 piden dos fases, con rechazo del administrativo en la primera y de coordinación en la segunda. El `CLAUDE.md` (regla 9) ya lo dice así.
 3. **El periodo académico.** `ConfidencialidadService::periodoVigente()` y `config/laboratorio.php` lo calculan del calendario. RF52 y RF75 lo dejan en manos del laboratorio.
 4. **Pendientes del `CLAUDE.md` ya cerrados por el enunciado:** el 1 (autoaprobación, RF31: no se bloquea) y el 3 (cómo se entera el docente de la sala, RF36: por correo). Siguen en `SolicitudPolicy::aprobar()` un bloque comentado y un aviso de "pendiente con el cliente" sobre esto.
 5. **Números de RF19 y RF20.** La versión anterior de esta matriz los tenía al revés: RF19 es el criterio de acceso y RF20 la sincronización.
