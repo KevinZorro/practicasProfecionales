@@ -9,6 +9,7 @@ use App\Models\Evaluacion;
 use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
 use App\Models\ListaDeReposicion;
+use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
@@ -121,6 +122,14 @@ final class MenuDelPanel
                 icono: 'M12 4v16m8-8H4',
                 permiso: 'create',
                 sobre: PlantillaConfidencialidad::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'periodo-academico',
+                etiqueta: 'Periodo académico',
+                ruta: 'panel.periodo-academico',
+                icono: 'M8 7V3m8 4V3M3 11h18M5 5h14v16H5zM9 15l2 2 4-4',
+                permiso: 'viewAny',
+                sobre: PeriodoAcademico::class,
             ),
             new SeccionDelPanel(
                 clave: 'usuarios',

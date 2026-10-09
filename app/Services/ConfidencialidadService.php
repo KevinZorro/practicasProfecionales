@@ -27,9 +27,10 @@ use Illuminate\Support\Facades\Storage;
  * práctica —estudiantes y docentes—, y por eso la columna se llama
  * "firmante_id" y no "estudiante_id".
  *
- * Se entrega una vez por semestre y se renueva al siguiente: el índice
- * único sobre (firmante_id, periodo_academico) lo garantiza en la base, y
- * aquí se decide a qué periodo pertenece cada entrega.
+ * Se entrega una vez por periodo académico y se renueva en el siguiente:
+ * el índice único sobre (firmante_id, periodo_academico) lo garantiza en la
+ * base. Qué periodo corre lo decide el laboratorio al abrirlo (RF75), y lo
+ * responde PeriodoAcademicoService.
  *
  * Los archivos firmados llevan datos personales, así que viven en el disco
  * privado y se sirven por ruta protegida con Policy, nunca por enlace
@@ -39,26 +40,17 @@ final class ConfidencialidadService
 {
     public const POR_PAGINA = 15;
 
+    public function __construct(
+        private readonly PeriodoAcademicoService $periodos,
+    ) {}
+
     /**
-     * Periodo académico vigente, en formato "2026-2".
-     *
-     * Es el único sitio donde se decide qué periodo corre. Cómo se calcula
-     * no está definido con la institución, así que se deriva del calendario
-     * y config/laboratorio.php deja una salida manual para las semanas de
-     * transición entre semestres.
+     * Nombre del periodo que rige ("2026-2"): el abierto o, entre semestres,
+     * el último cerrado. Nulo si el laboratorio nunca ha abierto uno.
      */
-    public function periodoVigente(): string
+    public function periodoVigente(): ?string
     {
-        $fijado = config('laboratorio.periodo_academico.vigente');
-
-        if (is_string($fijado) && $fijado !== '') {
-            return $fijado;
-        }
-
-        $corte = (int) config('laboratorio.periodo_academico.mes_inicio_segundo_semestre');
-        $hoy = now();
-
-        return sprintf('%d-%d', $hoy->year, $hoy->month >= $corte ? 2 : 1);
+        return $this->periodos->vigente()?->nombre;
     }
 
     /**
@@ -100,7 +92,8 @@ final class ConfidencialidadService
         ?string $busqueda = null,
         int $porPagina = self::POR_PAGINA,
     ): LengthAwarePaginator {
-        $periodo ??= $this->periodoVigente();
+        // Sin ningún periodo nadie tiene entregas: '' no coincide con ninguna.
+        $periodo ??= $this->periodoVigente() ?? '';
 
         // La restricción de un with() recibe la relación, no un Builder.
         $delPeriodo = static fn (HasMany $relacion) => $relacion->delPeriodo($periodo);
@@ -193,12 +186,13 @@ final class ConfidencialidadService
     {
         $this->garantizarPdf($archivo);
         $plantilla = $this->plantillaVigente();
+        $periodo = $this->periodoAbierto();
 
-        return DB::transaction(function () use ($firmante, $archivo, $plantilla): FormatoConfidencialidad {
-            $entrega = $this->entregaDelPeriodo($firmante) ?? new FormatoConfidencialidad;
+        return DB::transaction(function () use ($firmante, $archivo, $plantilla, $periodo): FormatoConfidencialidad {
+            $entrega = $this->entregaDelPeriodo($firmante, $periodo) ?? new FormatoConfidencialidad;
             $this->borrarArchivoFirmado($entrega);
 
-            $entrega->fill($this->atributosDeEntrega($firmante, $plantilla, $archivo));
+            $entrega->fill($this->atributosDeEntrega($firmante, $plantilla, $archivo, $periodo));
             $entrega->save();
 
             return $entrega;
@@ -223,9 +217,10 @@ final class ConfidencialidadService
     public function registrarEntregaFisica(User $firmante, User $administrativo): FormatoConfidencialidad
     {
         $this->garantizarPermiso($administrativo, 'marcarEntregaFisica', FormatoConfidencialidad::class);
+        $periodo = $this->periodoAbierto();
 
-        return DB::transaction(function () use ($firmante, $administrativo): FormatoConfidencialidad {
-            $entrega = $this->entregaDelPeriodo($firmante);
+        return DB::transaction(function () use ($firmante, $administrativo, $periodo): FormatoConfidencialidad {
+            $entrega = $this->entregaDelPeriodo($firmante, $periodo);
 
             if ($entrega instanceof FormatoConfidencialidad && $entrega->entregadoEnFisico()) {
                 throw FormatoConfidencialidadInvalido::yaSeRecibioEnFisico();
@@ -234,7 +229,7 @@ final class ConfidencialidadService
             $entrega ??= new FormatoConfidencialidad([
                 'firmante_id' => $firmante->id,
                 'plantilla_id' => $this->plantillaVigente()->id,
-                'periodo_academico' => $this->periodoVigente(),
+                'periodo_academico' => $periodo,
                 'estado' => EstadoFormatoConfidencialidad::Pendiente,
             ]);
 
@@ -303,9 +298,15 @@ final class ConfidencialidadService
      */
     public function tieneFormatoVigente(User $firmante): bool
     {
+        $periodo = $this->periodoVigente();
+
+        if ($periodo === null) {
+            return false;
+        }
+
         return FormatoConfidencialidad::query()
             ->where('firmante_id', $firmante->id)
-            ->delPeriodo($this->periodoVigente())
+            ->delPeriodo($periodo)
             ->where('estado', EstadoFormatoConfidencialidad::Verificado)
             ->exists();
     }
@@ -332,19 +333,53 @@ final class ConfidencialidadService
      */
     public function puedeParticiparEnPracticas(User $firmante): bool
     {
+        $periodo = $this->periodoVigente();
+
+        if ($periodo === null) {
+            return false;
+        }
+
         return FormatoConfidencialidad::query()
             ->where('firmante_id', $firmante->id)
-            ->delPeriodo($this->periodoVigente())
+            ->delPeriodo($periodo)
             ->queHabilitanPracticas()
             ->exists();
     }
 
     public function entregaDelPeriodo(User $firmante, ?string $periodo = null): ?FormatoConfidencialidad
     {
+        $periodo ??= $this->periodoVigente();
+
+        if ($periodo === null) {
+            return null;
+        }
+
         return FormatoConfidencialidad::query()
             ->where('firmante_id', $firmante->id)
-            ->delPeriodo($periodo ?? $this->periodoVigente())
+            ->delPeriodo($periodo)
             ->first();
+    }
+
+    /** Si hoy se reciben entregas: solo con un periodo abierto. */
+    public function recibeEntregas(): bool
+    {
+        return $this->periodos->abierto() !== null;
+    }
+
+    /**
+     * Las entregas solo se reciben con un periodo abierto (D3): entre
+     * semestres sigue valiendo lo del anterior, pero no se recibe nada
+     * nuevo, porque no se sabría a qué periodo pertenece.
+     */
+    private function periodoAbierto(): string
+    {
+        $abierto = $this->periodos->abierto();
+
+        if ($abierto === null) {
+            throw FormatoConfidencialidadInvalido::sinPeriodoAbierto();
+        }
+
+        return $abierto->nombre;
     }
 
     public function plantillaVigente(): PlantillaConfidencialidad
@@ -383,11 +418,12 @@ final class ConfidencialidadService
         User $firmante,
         PlantillaConfidencialidad $plantilla,
         UploadedFile $archivo,
+        string $periodo,
     ): array {
         return [
             'firmante_id' => $firmante->id,
             'plantilla_id' => $plantilla->id,
-            'periodo_academico' => $this->periodoVigente(),
+            'periodo_academico' => $periodo,
             'archivo_firmado_path' => $this->guardar($archivo, 'directorio_firmados'),
             'estado' => EstadoFormatoConfidencialidad::Cargado,
             'motivo_rechazo' => null,

@@ -31,6 +31,7 @@ use App\Models\ItemChecklist;
 use App\Models\ItemInventario;
 use App\Models\Materia;
 use App\Models\PerfilDocente;
+use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Sala;
@@ -468,6 +469,13 @@ class DatosPruebaSeeder extends Seeder
             'version' => '2.0',
             'activo' => true,
             'subido_por' => $admin->id,
+        ]);
+
+        // Las entregas cuentan para el periodo que el laboratorio abrió (RF75).
+        PeriodoAcademico::query()->forceCreate([
+            'nombre' => self::PERIODO_ACADEMICO,
+            'abierto_at' => now(),
+            'abierto_por' => $admin->id,
         ]);
 
         // Un formato por persona y periodo: el índice único lo exige.

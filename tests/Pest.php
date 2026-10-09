@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\PeriodoAcademico;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -71,4 +72,20 @@ function accionDeLivewire(string $instantanea, ?string $metodo = null, array $pa
             'calls' => $metodo === null ? [] : [['path' => '', 'method' => $metodo, 'params' => $parametros]],
         ]],
     ]);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Periodo académico
+|--------------------------------------------------------------------------
+|
+| El formato de confidencialidad cuenta para el periodo que el laboratorio
+| abrió (RF75). Las factories de formatos usan "2026-2", así que es el que se
+| abre por defecto.
+|
+*/
+
+function abrirPeriodo(string $nombre = '2026-2'): PeriodoAcademico
+{
+    return PeriodoAcademico::factory()->create(['nombre' => $nombre]);
 }

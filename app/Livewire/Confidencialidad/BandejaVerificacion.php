@@ -40,7 +40,7 @@ final class BandejaVerificacion extends Component
     public function mount(ConfidencialidadService $confidencialidad): void
     {
         if ($this->periodo === '') {
-            $this->periodo = $confidencialidad->periodoVigente();
+            $this->periodo = $confidencialidad->periodoVigente() ?? '';
         }
     }
 

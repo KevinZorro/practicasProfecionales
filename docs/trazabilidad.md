@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 32 | 4 |
+| Completo | 34 | 4 |
 | Solo backend | 8 | 0 |
-| Parcial | 13 | 6 |
+| Parcial | 12 | 6 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 21 | 0 |
+| No iniciado | 20 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -132,7 +132,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
 | RF51 | El ADMIN carga la plantilla PDF por periodo | Completo | `ConfidencialidadService::cargarPlantilla()`, `/panel/plantillas-confidencialidad` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | |
-| RF52 | Estudiantes y docentes descargan, firman a mano y cargan, una vez por **periodo académico** | Parcial | `ConfidencialidadService::registrarEntrega()`, `/panel/mi-formato` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest`, `AccesoConfidencialidadTest` | El periodo hoy se calcula del calendario (`periodoVigente()`, corte en julio o `PERIODO_ACADEMICO_VIGENTE`). Tiene que leer el periodo que abre el laboratorio (RF75) |
+| RF52 | Estudiantes y docentes descargan, firman a mano y cargan, una vez por **periodo académico** | Completo | `ConfidencialidadService::registrarEntrega()`, `periodoVigente()`, `/panel/mi-formato` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest`, `AccesoConfidencialidadTest` | El periodo es el que abrió el laboratorio (RF75), no el del calendario |
 | RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Parcial | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: estados, entrega física y verificación. Falta: agrupar por programa (no hay programa en `users`), por materia y por sesión (la lista de estudiantes de cada solicitud, P2); y que el estado condicione el ingreso (RF45, RF70) |
 
 "Entregado en físico" aparece en el enunciado como un estado más. En el código es un hecho que convive con el estado del escaneo (`recibido_fisico_at`, regla 7 del `CLAUDE.md`). El comportamiento es el que pide el enunciado —habilita el ingreso y deja la carga pendiente—; solo cambia cómo se guarda, y así no se pierde al avanzar de estado.
@@ -162,7 +162,7 @@ Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apar
 
 | RF | Pide | Estado | Falta |
 |---|---|---|---|
-| RF75 | Administrativos, coordinación y ADMIN abren y cierran el periodo, sin fechas impuestas | No iniciado | Tabla de periodos, pantalla y que `ConfidencialidadService::periodoVigente()` lea de ahí en vez del calendario. Qué pasa entre un cierre y la siguiente apertura: D3 |
+| RF75 | Administrativos, coordinación y ADMIN abren y cierran el periodo, sin fechas impuestas | Completo | `PeriodoAcademicoService`, `PeriodoAcademicoPolicy`, `/panel/periodo-academico`; tests en `PeriodoAcademicoTest` y `FormatoConfidencialidadTest`. A lo sumo uno abierto (índice único parcial). Entre un cierre y la siguiente apertura sigue valiendo el último y no se reciben entregas (D3). Se puede reabrir el último cerrado para deshacer un error |
 
 ## Auditoría y roles (RF62–RF64)
 
@@ -282,7 +282,7 @@ Para ponerlo a andar hace falta:
 
 1. **La portada pública es la página de ejemplo de Laravel**, con una imagen de laravel.com que la Content-Security-Policy bloquea. Si se despliega antes de la landing, eso verá el público.
 2. ~~**Quién rechaza.**~~ Corregido: rechazo en dos fases (RF30, RF31).
-3. **El periodo académico.** `ConfidencialidadService::periodoVigente()` y `config/laboratorio.php` lo calculan del calendario. RF52 y RF75 lo dejan en manos del laboratorio.
+3. ~~**El periodo académico.**~~ Corregido: el periodo lo abre y lo cierra el laboratorio (RF75); se quitaron el cálculo por calendario y `PERIODO_ACADEMICO_VIGENTE`.
 4. **Pendientes del `CLAUDE.md` ya cerrados por el enunciado:** el 1 (autoaprobación, RF31: no se bloquea) y el 3 (cómo se entera el docente de la sala, RF36: por correo). Ya se quitaron de `SolicitudPolicy` el bloque comentado y los avisos de pendiente.
 5. **Números de RF19 y RF20.** La versión anterior de esta matriz los tenía al revés: RF19 es el criterio de acceso y RF20 la sincronización.
 6. ~~**Número de RF30.**~~ Corregido: `FormularioSolicitud` y `SolicitudController` citan RF27–RF29.

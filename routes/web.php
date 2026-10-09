@@ -11,6 +11,7 @@ use App\Http\Controllers\Panel\ConfidencialidadController;
 use App\Http\Controllers\Panel\DescargaConfidencialidadController;
 use App\Http\Controllers\Panel\InventarioController;
 use App\Http\Controllers\Panel\PanelController;
+use App\Http\Controllers\Panel\PeriodoAcademicoController;
 use App\Http\Controllers\Panel\PreparacionController;
 use App\Http\Controllers\Panel\ReporteController;
 use App\Http\Controllers\Panel\ReposicionController;
@@ -59,7 +60,7 @@ Route::get('acceso/google/volver', [AccesoConGoogleController::class, 'volver'])
 Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes', 'periodo-academico'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
@@ -108,6 +109,9 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('formatos-confidencialidad/plantilla', [DescargaConfidencialidadController::class, 'plantilla'])->name('formatos-confidencialidad.plantilla');
     Route::get('formatos-confidencialidad/plantilla/{plantilla}', [DescargaConfidencialidadController::class, 'versionDePlantilla'])->name('formatos-confidencialidad.version');
     Route::get('formatos-confidencialidad/{entrega}/documento', [DescargaConfidencialidadController::class, 'firmado'])->name('formatos-confidencialidad.firmado');
+
+    /* Abrir y cerrar el periodo académico (RF75). */
+    Route::get('periodo-academico', PeriodoAcademicoController::class)->name('periodo-academico');
 
     Route::get('calendario', [CalendarioController::class, 'index'])->name('calendario');
     Route::get('calendario/eventos', [CalendarioController::class, 'eventos'])->name('calendario.eventos');

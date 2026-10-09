@@ -152,7 +152,8 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `PreparacionService` | Crear preparación al aprobar, asignar sala, marcar ítems alistados |
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
-| `ConfidencialidadService` | Periodo académico vigente, estado del formato de confidencialidad, bloqueo de prácticas |
+| `PeriodoAcademicoService` | Abrir, cerrar y reabrir el periodo académico (RF75). Es la única fuente del periodo vigente: el abierto, o entre semestres el último cerrado. Nunca se deriva del calendario |
+| `ConfidencialidadService` | Estado del formato de confidencialidad en el periodo vigente; solo recibe entregas con un periodo abierto |
 | `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8) y a qué cuenta corresponde quien vuelve de Google (RF18). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
@@ -181,7 +182,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 6. **El nivel de fidelidad del simulador solo lo edita el ADMIN.** Es el único campo del inventario con esa restricción; el resto lo editan administrativos y coordinadores. Restricción a nivel de campo, no de recurso.
 
-7. **El formato de confidencialidad se renueva cada semestre.** Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
+7. **El formato de confidencialidad se renueva cada periodo académico**, el que abre el laboratorio (RF75). Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
 
    **Lo firma todo el que entra a la práctica, docente incluido (RF51-RF52).** El docente dirige la sesión pero está dentro de ella, y la autorización de captación de imágenes lo cubre igual. Quiénes son esos roles lo dice `Rol::queFirmanElFormato()`, y de ahí leen la Policy y el Service: no repitas la lista. Quien verifica —administrativo, coordinación, ADMIN— **no** firma, así que no puede entregarlo ni por sí mismo ni por otro.
 

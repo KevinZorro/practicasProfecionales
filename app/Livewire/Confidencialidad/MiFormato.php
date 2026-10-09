@@ -87,6 +87,7 @@ final class MiFormato extends Component
             'periodo' => $periodo,
             'entrega' => $confidencialidad->entregaDelPeriodo(Auth::user(), $periodo),
             'hayPlantilla' => $this->hayPlantilla($confidencialidad),
+            'recibeEntregas' => $confidencialidad->recibeEntregas(),
             'estados' => EstadoFormatoConfidencialidad::cases(),
         ]);
     }
