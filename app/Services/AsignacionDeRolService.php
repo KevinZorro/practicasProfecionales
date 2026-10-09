@@ -98,6 +98,42 @@ final class AsignacionDeRolService
     }
 
     /**
+     * Rol permanente que pone la sincronización institucional (RF20), según
+     * la vinculación. No pasa por la Policy porque no la ejerce una persona:
+     * en asignaciones_de_rol queda con "asignado_por" nulo, que es como se
+     * lee "lo puso la sincronización".
+     *
+     * Si ya lo tiene vigente, no hace nada. Nunca revoca ni acorta: las
+     * filas con fecha de fin son del ADMIN.
+     */
+    public function asignarPorSincronizacion(User $usuario, Rol $rol): ?AsignacionDeRol
+    {
+        if ($usuario->hasRole($rol->value)) {
+            return null;
+        }
+
+        $role = $this->role($rol);
+        $desde = CarbonImmutable::now()->toDateString();
+
+        return DB::transaction(function () use ($usuario, $role, $desde): AsignacionDeRol {
+            $this->escribirPivote($usuario, $role, $desde, null);
+
+            $asignacion = AsignacionDeRol::create([
+                'user_id' => $usuario->id,
+                'role_id' => $role->id,
+                'desde' => $desde,
+                'hasta' => null,
+                'motivo' => 'Vinculación institucional (sincronización).',
+                'asignado_por' => null,
+            ]);
+
+            $this->olvidarRolesCargados($usuario);
+
+            return $asignacion;
+        });
+    }
+
+    /**
      * Revoca un rol con efecto inmediato (RF63, punto 3).
      *
      * Borra la fila del pivote en vez de acortar "hasta". Con vigencia por
@@ -222,7 +258,8 @@ final class AsignacionDeRolService
                     $consulta->where(static function (Builder $o) use ($aguja): void {
                         $o->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
                             ->orWhereRaw('LOWER(email) LIKE ?', [$aguja])
-                            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]);
+                            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja])
+                            ->orWhereRaw('LOWER(documento) LIKE ?', [$aguja]);
                     });
                 },
             )

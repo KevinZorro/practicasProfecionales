@@ -19,6 +19,8 @@ enum AccionAuditada: string
     case RolRevocado = 'rol_revocado';
     case BloqueoRegistrado = 'bloqueo_registrado';
     case BloqueoLevantado = 'bloqueo_levantado';
+    case UsuarioDeshabilitado = 'usuario_deshabilitado';
+    case UsuarioHabilitado = 'usuario_habilitado';
 
     public function etiqueta(): string
     {
@@ -35,6 +37,8 @@ enum AccionAuditada: string
             self::RolRevocado => 'Rol revocado',
             self::BloqueoRegistrado => 'Bloqueo',
             self::BloqueoLevantado => 'Bloqueo levantado',
+            self::UsuarioDeshabilitado => 'Cuenta deshabilitada',
+            self::UsuarioHabilitado => 'Cuenta habilitada',
         };
     }
 }

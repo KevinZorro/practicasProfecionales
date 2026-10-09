@@ -45,6 +45,24 @@ class UserFactory extends Factory
         ]);
     }
 
+    /** Creada por el ADMIN en la plataforma (RF22): la sincronización no la toca. */
+    public function manual(): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'origen' => OrigenUsuario::Manual,
+            'ultima_sincronizacion' => null,
+        ]);
+    }
+
+    /** Deshabilitada por el ADMIN (RF22), aparte de la vigencia institucional. */
+    public function deshabilitado(): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'deshabilitado_at' => now(),
+            'motivo_deshabilitacion' => 'Cuenta suspendida por la plataforma.',
+        ]);
+    }
+
     public function docente(): static
     {
         return $this->afterCreating(fn (User $usuario) => $usuario->assignRole(Rol::Docente->value));

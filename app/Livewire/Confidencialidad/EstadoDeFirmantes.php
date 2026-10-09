@@ -50,6 +50,10 @@ final class EstadoDeFirmantes extends Component
     #[Url(as: 'materia', keep: false)]
     public ?int $materia = null;
 
+    /** El programa académico de la persona, el que trae la sincronización (RF53). */
+    #[Url(as: 'programa', keep: false)]
+    public string $programa = '';
+
     public ?string $errorDeRegla = null;
 
     public function mount(ConfidencialidadService $confidencialidad): void
@@ -61,7 +65,7 @@ final class EstadoDeFirmantes extends Component
 
     public function updated(string $propiedad): void
     {
-        if (in_array($propiedad, ['busqueda', 'periodo', 'situacion', 'sesion', 'materia'], true)) {
+        if (in_array($propiedad, ['busqueda', 'periodo', 'situacion', 'sesion', 'materia', 'programa'], true)) {
             $this->resetPage();
         }
     }
@@ -88,7 +92,7 @@ final class EstadoDeFirmantes extends Component
 
     public function limpiarFiltros(): void
     {
-        $this->reset('busqueda', 'situacion', 'sesion', 'materia');
+        $this->reset('busqueda', 'situacion', 'sesion', 'materia', 'programa');
         $this->resetPage();
     }
 
@@ -107,7 +111,9 @@ final class EstadoDeFirmantes extends Component
                 busqueda: $this->busqueda,
                 solicitudId: $this->sesion,
                 materiaId: $this->materia,
+                programa: $this->programa,
             ),
+            'programas' => (array) config('laboratorio.sincronizacion.programas'),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre']),
             'laSesion' => $this->sesion === null ? null : Solicitud::with(['casoClinico:id,nombre', 'materia:id,nombre'])->find($this->sesion),
         ]);

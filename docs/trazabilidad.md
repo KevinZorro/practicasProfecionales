@@ -26,14 +26,14 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 61 | 4 |
+| Completo | 64 | 4 |
 | Solo backend | 0 | 0 |
-| Parcial | 3 | 6 |
+| Parcial | 0 | 6 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 10 | 0 |
 | **Total** | **75** | **10** |
 
-El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
+El único bloqueado es la sincronización con la base institucional (RF20): ya funciona con datos simulados y solo espera la fuente real de la universidad. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
 
 ---
 
@@ -75,10 +75,10 @@ Todas las imágenes pasan por `ImagenPublicaService` (validación, orientación 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
 | RF18 | Entrada solo con Google institucional, restringida al dominio | Completo | `AccesoService`, `/acceso` | `AccesoConGoogleTest`, `AutenticacionTest`, `AccesoDeDesarrolloTest` | Probarlo con las credenciales reales (despliegue) |
-| RF19 | Acceso solo a personas vigentes de los cuatro programas, cruzando matrícula y contratación | Parcial | `AccesoService::puedeEntrar()`, middleware `VerificarUsuarioActivo` | `VigenciaInstitucionalTest` | Hecho: el inactivo no entra y se le corta la sesión, también en Livewire. Falta el cruce que pone `users.estado`, que es RF20. Tampoco hay columna de programa en `users` |
-| RF20 | Copia periódica de la base institucional con usuario de solo lectura, sin borrar, con freno ante desactivaciones masivas | Bloqueado | — (`UsuarioSyncService` no existe) | — | Motor, acceso y estructura de la base institucional (ver [Bloqueos externos](#bloqueos-externos)). **Se puede construir hoy con datos simulados**, como dice el propio enunciado: comando programado, frecuencia y umbral configurables, aviso al ADMIN. Solo el mapeo final de columnas espera el dato. Requiere además un servicio de tareas programadas en el compose de producción, que hoy no existe |
+| RF19 | Acceso solo a personas vigentes de los cuatro programas, cruzando matrícula y contratación | Completo | `AccesoService::puedeEntrar()`, middleware `VerificarUsuarioActivo`, `UsuarioSyncService` (filtro de vigentes y programas), `users.programa` | `VigenciaInstitucionalTest`, `SincronizacionDeUsuariosTest` | El inactivo no entra y se le corta la sesión, también en Livewire. La sincronización solo trae a los vigentes de los programas de `config/laboratorio.php`, comparados sin tildes ni mayúsculas. El cruce con los datos reales llega con la fuente real (RF20) |
+| RF20 | Copia periódica de la base institucional con usuario de solo lectura, sin borrar, con freno ante desactivaciones masivas | Bloqueado | `UsuarioSyncService`, interfaz `FuenteInstitucional` con `FuenteInstitucionalSimulada` (`database/datos/institucional-simulada.json`), comando `usuarios:sincronizar`, `SincronizacionDetenidaMail` | `SincronizacionDeUsuariosTest` | Hecho con datos simulados: altas, cambios, desactivación sin borrar, reactivación, roles permanentes sin revocar los temporales, cuentas manuales y deshabilitadas intactas (D6), y el freno (umbral configurable, correo a cada ADMIN, sin cambios). La pasada programada está apagada por defecto (`SINCRONIZACION_PROGRAMADA`). Solo falta la fuente real: una clase que implemente `FuenteInstitucional` con el motor y las columnas de la universidad (ver [Bloqueos externos](#bloqueos-externos)) |
 | RF21 | Selector de rol | Completo | `App\Support\RolActivo`, cabecera del panel | `SelectorDeRolTest`, `RolActivoEnLivewireTest`, `ComponentesAutorizanEnCadaPeticionTest` | |
-| RF22 | Crear, actualizar y deshabilitar usuarios y asignarles roles | Parcial | `AsignacionDeRolService`, `/panel/usuarios` | `RolesConVigenciaTest` | Hecho: asignar y revocar roles. Falta: crear, editar y deshabilitar usuarios. Cómo convive deshabilitar con la sincronización: D6 |
+| RF22 | Crear, actualizar y deshabilitar usuarios y asignarles roles | Completo | `UsuarioService`, `UserPolicy`, `AsignacionDeRolService`, `/panel/usuarios`, `/panel/usuarios/nueva`, `/panel/usuarios/{cuenta}/editar` | `GestionDeUsuariosTest`, `RolesConVigenciaTest` | Las cuentas creadas aquí quedan con origen «manual» y la sincronización no las toca. Deshabilitar es una marca aparte de la vigencia institucional, con motivo y en la bitácora (D6); la cuenta deshabilitada no entra y ve su propio mensaje. Nadie se deshabilita a sí mismo. En `/panel`, no en Filament (ver la diferencia 14) |
 | RF23 | Materias con su semestre | Completo | `/admin/materias` | `PantallaMateriasTest` | |
 | RF24 | Tipos de caso clínico y sus materias | Completo | `/admin/casos-clinicos` | `PantallaCasosClinicosTest` | |
 | RF25 | Simuladores y equipos de cada caso, con cantidades | Completo | `/admin/casos-clinicos` (`ItemNecesarioDelCaso`) | `PantallaCasosClinicosTest` | |
@@ -133,7 +133,7 @@ Pantallas: `/panel/evaluaciones` (el docente registra sobre sus sesiones de eval
 |---|---|---|---|---|---|
 | RF51 | El ADMIN carga la plantilla PDF por periodo | Completo | `ConfidencialidadService::cargarPlantilla()`, `/panel/plantillas-confidencialidad` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | |
 | RF52 | Estudiantes y docentes descargan, firman a mano y cargan, una vez por **periodo académico** | Completo | `ConfidencialidadService::registrarEntrega()`, `periodoVigente()`, `/panel/mi-formato` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest`, `AccesoConfidencialidadTest` | El periodo es el que abrió el laboratorio (RF75), no el del calendario |
-| RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Parcial | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` (filtros de sesión y materia), `ParticipacionService` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest`, `ParticipantesDeLaSesionTest` | Hecho: estados, entrega física, verificación, filtro por materia y por sesión, y el estado ya condiciona la evaluación y la lista de la sesión. Falta el filtro por programa: `users` no tiene programa hasta que llegue la sincronización (RF20) |
+| RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Completo | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` (filtros de sesión, materia y programa), `ParticipacionService` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest`, `ParticipantesDeLaSesionTest`, `GestionDeUsuariosTest` | El programa es el de `users.programa`, que trae la sincronización (RF20) o pone el ADMIN en las cuentas manuales |
 
 "Entregado en físico" aparece en el enunciado como un estado más. En el código es un hecho que convive con el estado del escaneo (`recibido_fisico_at`, regla 7 del `CLAUDE.md`). El comportamiento es el que pide el enunciado —habilita el ingreso y deja la carga pendiente—; solo cambia cómo se guarda, y así no se pierde al avanzar de estado.
 
@@ -248,7 +248,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 
 Dependen de la universidad, no del laboratorio.
 
-**Base de datos institucional (RF19, RF20).** Se desarrolla con datos simulados; para cerrarla hace falta:
+**Base de datos institucional (RF19, RF20).** La sincronización ya funciona contra una fuente simulada; para conectarla a la real hace falta:
 
 1. **El motor** (Oracle, SQL Server, MySQL, PostgreSQL…). Decide qué extensión de PHP hay que instalar en la imagen de producción; Oracle y SQL Server necesitan librerías del fabricante.
 2. Que el servidor del laboratorio llegue a la base por red (host, puerto, firewall).
@@ -293,5 +293,5 @@ Para ponerlo a andar hace falta:
 11. **La ruta de los formatos de confidencialidad.** La arquitectura (§3) dice `storage/app/confidencialidad/`; la real es `storage/app/private/confidencialidad/{plantillas,firmados}`.
 12. **"Bloquear prácticas si está pendiente"** (arquitectura §2) se le atribuye a `ConfidencialidadService`. Lo decide `ParticipacionService`, que junta el formato con los bloqueos de coordinación.
 13. **Las tablas de Services** de la arquitectura (§2) omiten `AccesoService`, `ConfiguracionLandingService`, `ReposicionService` y `GeneradorDeReportes`, y presentan `UsuarioSyncService` sin advertir que no existe.
-14. **RF22 en Filament.** El `CLAUDE.md`, la arquitectura y `AdminPanelProvider` agrupan "RF22–RF26" en `/admin`. RF22 (usuarios) no está en Filament: lo que hay es la pantalla de roles en `/panel/usuarios`.
+14. **RF22 en Filament.** El `CLAUDE.md`, la arquitectura y `AdminPanelProvider` agrupan "RF22–RF26" en `/admin`. RF22 (usuarios) no está en Filament: está en `/panel/usuarios`, junto al reparto de roles, porque deshabilitar y asignar roles tienen reglas de negocio (motivo, bitácora, vigencia).
 15. ~~**El compose de producción no tiene tareas programadas.**~~ Corregido: servicio `programador` (`schedule:work`) en los dos compose; la CI comprueba que esté arriba y lo detiene durante la restauración de copias.

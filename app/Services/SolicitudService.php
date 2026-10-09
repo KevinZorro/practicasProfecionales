@@ -6,7 +6,6 @@ namespace App\Services;
 
 use App\Enums\AccionAuditada;
 use App\Enums\EstadoSolicitud;
-use App\Enums\EstadoUsuario;
 use App\Enums\OrigenSolicitud;
 use App\Enums\Rol;
 use App\Events\SolicitudAprobada;
@@ -333,7 +332,7 @@ final class SolicitudService
     {
         return User::query()
             ->role(Rol::Estudiante->value)
-            ->where('estado', EstadoUsuario::Activo);
+            ->activos();
     }
 
     /**

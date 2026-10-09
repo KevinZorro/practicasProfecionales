@@ -87,8 +87,8 @@ final class ConfidencialidadService
      * la misma pasada.
      *
      * Se puede acotar a una sesión —sus estudiantes no retirados y su
-     * docente, el grupo completo del RF71— o a una materia: quienes van o
-     * dictan sesiones de ella (RF53).
+     * docente, el grupo completo del RF71—, a una materia: quienes van o
+     * dictan sesiones de ella, o a un programa académico (RF53).
      *
      * @return LengthAwarePaginator<int, User>
      */
@@ -99,6 +99,7 @@ final class ConfidencialidadService
         int $porPagina = self::POR_PAGINA,
         ?int $solicitudId = null,
         ?int $materiaId = null,
+        ?string $programa = null,
     ): LengthAwarePaginator {
         // Sin ningún periodo nadie tiene entregas: '' no coincide con ninguna.
         $periodo ??= $this->periodoVigente() ?? '';
@@ -136,6 +137,7 @@ final class ConfidencialidadService
                 $c,
                 static fn (QueryBuilder $s) => $s->where('materia_id', $materiaId),
             ))
+            ->when(is_string($programa) && $programa !== '', static fn (Builder $c) => $c->where('programa', $programa))
             ->orderBy('nombre')
             ->paginate($porPagina);
     }

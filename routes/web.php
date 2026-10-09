@@ -88,8 +88,10 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
 
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
 
-    /* Reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
+    /* Cuentas (RF22) y reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
     Route::get('usuarios', [UsuarioController::class, 'roles'])->name('usuarios');
+    Route::get('usuarios/nueva', [UsuarioController::class, 'nueva'])->name('usuarios.nueva');
+    Route::get('usuarios/{cuenta}/editar', [UsuarioController::class, 'editar'])->name('usuarios.editar');
 
     /*
      * Lista de insumos por pedir (RF67). Las descargas solo existen para

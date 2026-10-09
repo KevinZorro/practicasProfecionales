@@ -36,9 +36,15 @@
         <label for="buscar" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Buscar</label>
         <input type="search" wire:model.live.debounce.400ms="busqueda" id="buscar" placeholder="Nombre, correo o código"
                class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
-        <p class="mt-2 text-sm text-gray-600">
-            {{ trans_choice(':count persona|:count personas', $usuarios->total(), ['count' => $usuarios->total()]) }}
-        </p>
+        <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <p class="text-sm text-gray-600">
+                {{ trans_choice(':count persona|:count personas', $usuarios->total(), ['count' => $usuarios->total()]) }}
+            </p>
+            {{-- RF22: la mayoría llegan de la sincronización; aquí, quien no figura en ella. --}}
+            @can('create', \App\Models\User::class)
+                <x-boton href="{{ route('panel.usuarios.nueva') }}">Nueva cuenta</x-boton>
+            @endcan
+        </div>
     </x-tarjeta>
 
     @if ($usuarios->isEmpty())
@@ -54,7 +60,22 @@
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold text-gray-900">{{ $usuario->nombre }}</p>
                                 <p class="truncate text-sm text-gray-600">{{ $usuario->email }}</p>
+                                <p class="text-xs text-gray-600">
+                                    {{ collect([$usuario->origen->etiqueta(), $usuario->programa])->filter()->implode(' · ') }}
+                                </p>
                             </div>
+
+                            {{-- Dos motivos distintos para no entrar: la vigencia institucional
+                                 (la escribe la sincronización) y la marca del ADMIN (RF22). --}}
+                            @if ($usuario->estaDeshabilitado())
+                                <p class="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20">
+                                    Deshabilitada el {{ $usuario->deshabilitado_at->format('d/m/Y') }}: {{ $usuario->motivo_deshabilitacion }}
+                                </p>
+                            @elseif ($usuario->estado === \App\Enums\EstadoUsuario::Inactivo)
+                                <p class="rounded-md bg-gray-100 px-3 py-2 text-sm text-gray-700 ring-1 ring-inset ring-gray-500/20">
+                                    Sin vigencia institucional: no puede entrar.
+                                </p>
+                            @endif
 
                             @if ($usuario->roles->isEmpty())
                                 <p class="text-sm text-gray-500">Sin ningún rol asignado.</p>
@@ -83,6 +104,43 @@
                                         </li>
                                     @endforeach
                                 </ul>
+                            @endif
+
+                            <div class="flex flex-wrap gap-x-4 gap-y-1">
+                                @can('update', $usuario)
+                                    <a href="{{ route('panel.usuarios.editar', $usuario) }}" wire:navigate
+                                       class="text-sm font-medium text-sky-700 underline underline-offset-2 hover:text-sky-900">Editar datos</a>
+                                @endcan
+                                @if ($usuario->estaDeshabilitado())
+                                    @can('habilitar', $usuario)
+                                        <button type="button" wire:click="abrirAcceso({{ $usuario->id }})"
+                                                class="text-sm font-medium text-emerald-700 underline underline-offset-2 hover:text-emerald-900">Volver a habilitar</button>
+                                    @endcan
+                                @else
+                                    @can('deshabilitar', $usuario)
+                                        <button type="button" wire:click="abrirAcceso({{ $usuario->id }})"
+                                                class="text-sm font-medium text-rose-700 underline underline-offset-2 hover:text-rose-900">Deshabilitar</button>
+                                    @endcan
+                                @endif
+                            </div>
+
+                            @if ($cambiandoAcceso === $usuario->id)
+                                <div class="space-y-2">
+                                    <label for="motivo-acceso-{{ $usuario->id }}" class="block text-xs font-medium uppercase tracking-wide text-gray-500">
+                                        {{ $usuario->estaDeshabilitado() ? 'Por qué se vuelve a habilitar' : 'Por qué se deshabilita' }}
+                                    </label>
+                                    <textarea wire:model="motivoDeAcceso" id="motivo-acceso-{{ $usuario->id }}" rows="2"
+                                              class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600"></textarea>
+                                    @error('motivoDeAcceso') <p class="text-sm text-rose-700">{{ $message }}</p> @enderror
+                                    <div class="flex flex-wrap gap-2">
+                                        @if ($usuario->estaDeshabilitado())
+                                            <x-boton wire:click="habilitar" wire:loading.attr="disabled" class="px-4 py-2.5">Habilitar</x-boton>
+                                        @else
+                                            <x-boton wire:click="deshabilitar" wire:loading.attr="disabled" class="px-4 py-2.5">Deshabilitar</x-boton>
+                                        @endif
+                                        <x-boton variante="secundario" type="button" wire:click="abrirAcceso({{ $usuario->id }})" class="px-4 py-2.5">Cancelar</x-boton>
+                                    </div>
+                                </div>
                             @endif
                         </div>
 

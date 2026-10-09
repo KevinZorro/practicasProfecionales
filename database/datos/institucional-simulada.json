@@ -1,0 +1,9 @@
+[
+    {"documento": "1090000001", "codigo": "1151001", "nombre": "Ana Lucía Ruiz Peña", "email": "analuciarp@ejemplo.edu.co", "programa": "Enfermería", "vinculacion": "matriculado", "vigente": true},
+    {"documento": "1090000002", "codigo": "1151002", "nombre": "Andrés Felipe Mora", "email": "andresfm@ejemplo.edu.co", "programa": "Enfermería", "vinculacion": "matriculado", "vigente": true},
+    {"documento": "1090000003", "codigo": "1171003", "nombre": "Laura Camila Díaz", "email": "lauracd@ejemplo.edu.co", "programa": "Regencia en Farmacia", "vinculacion": "matriculado", "vigente": true},
+    {"documento": "1090000004", "codigo": "1161004", "nombre": "Jhon Sebastián Pabón", "email": "jhonsp@ejemplo.edu.co", "programa": "Seguridad y Salud en el Trabajo", "vinculacion": "matriculado", "vigente": false},
+    {"documento": "1090000005", "codigo": "1191005", "nombre": "María Fernanda Ortiz", "email": "mariafo@ejemplo.edu.co", "programa": "Ingeniería de Sistemas", "vinculacion": "matriculado", "vigente": true},
+    {"documento": "60000006", "codigo": "D-0006", "nombre": "Gloria Esperanza Vera", "email": "gloriaev@ejemplo.edu.co", "programa": "Enfermería", "vinculacion": "contratado", "vigente": true},
+    {"documento": "60000007", "codigo": "D-0007", "nombre": "Óscar Iván Contreras", "email": "oscarivc@ejemplo.edu.co", "programa": "Licenciatura en Ciencias Naturales", "vinculacion": "contratado", "vigente": true}
+]

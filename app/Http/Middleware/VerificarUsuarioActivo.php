@@ -43,6 +43,6 @@ final class VerificarUsuarioActivo
         $peticion->session()->invalidate();
         $peticion->session()->regenerateToken();
 
-        abort(403, $this->acceso->motivoDelRechazo());
+        abort(403, $this->acceso->motivoDelRechazo($usuario));
     }
 }

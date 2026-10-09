@@ -43,7 +43,7 @@ final class AccesoDeDesarrolloController extends Controller
 
         // Regla 8: la misma comprobación que hace la entrada con Google.
         if (! $acceso->puedeEntrar($usuario)) {
-            return back()->withErrors(['usuario' => $acceso->motivoDelRechazo()]);
+            return back()->withErrors(['usuario' => $acceso->motivoDelRechazo($usuario)]);
         }
 
         $peticion->session()->invalidate();
