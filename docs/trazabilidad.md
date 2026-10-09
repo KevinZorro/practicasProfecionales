@@ -2,7 +2,7 @@
 
 Estado de cada requerimiento según lo que existe en el código, no según lo que dicen los documentos.
 
-**Corte:** 9 de octubre de 2026, rama `claude/nice-brown-qgepab` en `636d281`: `main` (`fe3e6a3`) más el rechazo en dos fases, el periodo académico, la ubicación de las salas, los estudiantes de cada sesión y el control de participantes. Sin fusionar todavía.
+**Corte:** 9 de octubre de 2026, rama `claude/nice-brown-qgepab` en `a52d760`: `main` (`fe3e6a3`) más el rechazo en dos fases, el periodo académico, la ubicación de las salas, los estudiantes de cada sesión, el control de participantes, las pantallas de evaluación, las sesiones apartadas con su formato intramural y las novedades de sesión. Sin fusionar todavía.
 
 **Enunciados:** `docs/requerimientos.md`, versión del 9 de octubre de 2026 con las aclaraciones del mismo día (respuestas a P1–P5 y a D1). Es la primera vez que la matriz se coteja contra el enunciado real; las versiones anteriores tuvieron que deducir qué cubría cada número a partir del código.
 
