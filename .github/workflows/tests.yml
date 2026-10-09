@@ -117,7 +117,7 @@ jobs:
       - name: Comprobar que los servicios están arriba
         run: |
           docker compose ps
-          for servicio in app queue nginx db node; do
+          for servicio in app queue programador nginx db node; do
             estado=$(docker compose ps --status running --services | grep -Fx "$servicio" || true)
             if [ -z "$estado" ]; then
               echo "::error::el servicio $servicio no está en ejecución"
@@ -371,9 +371,9 @@ jobs:
           $COMPOSE exec -T app rm storage/app/private/prueba-ci.txt
           [ "$(contar)" = "0" ]
 
-          $COMPOSE stop app queue web
+          $COMPOSE stop app queue programador web
           $COMPOSE run --rm restauracion "$copia"
-          $COMPOSE start app queue web
+          $COMPOSE start app queue programador web
 
           [ "$(contar)" = "1" ] || { echo "::error::la restauración no devolvió la fila"; exit 1; }
           $COMPOSE exec -T app cat storage/app/private/prueba-ci.txt | grep -q 'documento privado' \

@@ -7,6 +7,7 @@ namespace Database\Factories;
 use App\Enums\EstadoUsuario;
 use App\Enums\OrigenUsuario;
 use App\Enums\Rol;
+use App\Models\FormatoConfidencialidad;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
@@ -54,6 +55,18 @@ class UserFactory extends Factory
         return $this->state(fn (array $atributos): array => [
             'origen' => OrigenUsuario::Matriculado,
         ])->afterCreating(fn (User $usuario) => $usuario->assignRole(Rol::Estudiante->value));
+    }
+
+    /**
+     * Puede entrar al laboratorio: formato de confidencialidad verificado del
+     * periodo "2026-2" (RF53). El periodo tiene que estar abierto en el test
+     * (abrirPeriodo()).
+     */
+    public function habilitado(): static
+    {
+        return $this->afterCreating(fn (User $usuario) => FormatoConfidencialidad::factory()->verificado()->create([
+            'firmante_id' => $usuario->id,
+        ]));
     }
 
     public function coordinador(): static

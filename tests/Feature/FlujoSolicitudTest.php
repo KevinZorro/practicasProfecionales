@@ -42,7 +42,8 @@ function datosDeSolicitud(?CasoClinico $caso = null, array $items = []): DatosNu
         fecha: now()->addWeek()->format('Y-m-d'),
         horaInicio: '07:00',
         horaFin: '09:00',
-        cantidadEstudiantes: 12,
+        grupo: 'A',
+        estudianteIds: idsDeEstudiantes(3),
         items: $items,
     );
 }
@@ -90,6 +91,21 @@ it('rechaza una solicitud registrando el motivo', function (): void {
         ->and($solicitud->motivo_rechazo)->toBe('El simulador está en mantenimiento.')
         ->and($solicitud->resuelta_por)->toBe($this->coordinadora->id)
         ->and($solicitud->preparacion)->toBeNull();
+});
+
+it('deja al administrativo rechazar una pendiente sin aceptarla', function (): void {
+    Mail::fake();
+    $solicitud = $this->servicio->crear($this->docente, datosDeSolicitud());
+
+    $this->servicio->rechazar($solicitud, $this->administrativo, 'Ese día la sala de partos está inundada.');
+    $solicitud = $solicitud->fresh();
+
+    // Sin "revisada_por": no pasó la primera fase.
+    expect($solicitud->estado)->toBe(EstadoSolicitud::Rechazada)
+        ->and($solicitud->resuelta_por)->toBe($this->administrativo->id)
+        ->and($solicitud->revisada_por)->toBeNull()
+        ->and($solicitud->preparacion)->toBeNull();
+    Mail::assertSent(SolicitudRechazadaMail::class, 1);
 });
 
 it('rechaza una solicitud sin motivo', function (): void {
@@ -149,7 +165,6 @@ it('sugiere los items de un caso clínico con sus cantidades', function (): void
 
 dataset('transiciones inválidas', [
     'aprobar una pendiente sin revisar' => [EstadoSolicitud::Pendiente, 'aprobar'],
-    'rechazar una pendiente sin revisar' => [EstadoSolicitud::Pendiente, 'rechazar'],
     'revisar una ya revisada' => [EstadoSolicitud::Revisada, 'marcarRevisada'],
     'revisar una aprobada' => [EstadoSolicitud::Aprobada, 'marcarRevisada'],
     'revisar una rechazada' => [EstadoSolicitud::Rechazada, 'marcarRevisada'],

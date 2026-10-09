@@ -31,6 +31,7 @@ use App\Models\ItemChecklist;
 use App\Models\ItemInventario;
 use App\Models\Materia;
 use App\Models\PerfilDocente;
+use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Sala;
@@ -92,11 +93,15 @@ class DatosPruebaSeeder extends Seeder
             'SIM-05' => ['Consultorio de semiología', 8],
         ];
 
+        // Todas en el bloque A, primer piso; el número sale del código.
         return collect($definicion)->map(fn (array $datos, string $codigo): Sala => Sala::create([
             'nombre' => $datos[0],
             'codigo' => $codigo,
             'capacidad' => $datos[1],
             'activo' => true,
+            'bloque' => 'A',
+            'piso' => '1',
+            'numero' => substr($codigo, -2),
         ]));
     }
 
@@ -470,6 +475,13 @@ class DatosPruebaSeeder extends Seeder
             'subido_por' => $admin->id,
         ]);
 
+        // Las entregas cuentan para el periodo que el laboratorio abrió (RF75).
+        PeriodoAcademico::query()->forceCreate([
+            'nombre' => self::PERIODO_ACADEMICO,
+            'abierto_at' => now(),
+            'abierto_por' => $admin->id,
+        ]);
+
         // Un formato por persona y periodo: el índice único lo exige.
         $firmantes = User::role(Rol::queFirmanElFormato())->orderBy('id')->get();
 
@@ -595,6 +607,7 @@ class DatosPruebaSeeder extends Seeder
                 'hora_inicio' => $datos['hora'].':00',
                 'hora_fin' => sprintf('%02d:00:00', ((int) substr($datos['hora'], 0, 2)) + 2),
                 'cantidad_estudiantes' => $datos['estudiantes'],
+                'grupo' => 'A',
                 'estado' => $datos['estado'],
                 'revisada_por' => $revisada ? $administrativo->id : null,
                 'revisada_at' => $revisada ? $datos['fecha']->copy()->subDays(3) : null,
@@ -604,6 +617,9 @@ class DatosPruebaSeeder extends Seeder
                     ? 'El simulador de auscultación está en mantenimiento en esa fecha.'
                     : null,
             ]);
+
+            // Los estudiantes de la sesión (RF28), tantos como dice la cantidad.
+            $solicitud->estudiantes()->attach($usuarios['estudiantes']->take($datos['estudiantes'])->pluck('id')->all());
 
             // El inventario del caso clínico se precarga en la solicitud.
             foreach ($caso->items as $item) {

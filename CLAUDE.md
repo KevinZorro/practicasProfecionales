@@ -8,6 +8,8 @@ Instrucciones permanentes para trabajar en este repositorio. Léelas antes de es
 
 Plataforma web de gestión del Laboratorio de Simulación Clínica de la Facultad de Ciencias de la Salud. Reemplaza procesos manuales de reserva de escenarios, evaluación de habilidades e inventario de simuladores.
 
+**Los enunciados de los requerimientos están en `docs/requerimientos.md`**, y el estado de cada uno contra el código, con las preguntas abiertas, en `docs/trazabilidad.md`. Si este archivo y el enunciado no coinciden, manda el enunciado: dilo y anótalo en la matriz.
+
 **Usuarios:** ~700 estudiantes y ~150 docentes, más personal administrativo, coordinación y un administrador de la plataforma (RNF01, cifra confirmada con el cliente).
 
 **Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago.
@@ -37,6 +39,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 - **Simulador** — maniquí de baja, media o alta fidelidad.
 - **Equipo clínico / equipo básico** — insumos y equipos que acompañan la práctica.
 - **Solicitud** — pedido de un docente para usar un escenario. Es de tipo `practica` o `evaluacion`.
+- **Grupo** — la parte de la clase que pasa a los simuladores en una sesión (A, B, C…). No hay grupos fijos del semestre: el docente dice al solicitar qué estudiantes van (`estudiante_solicitud`), y `cantidad_estudiantes` sale de esa lista.
 - **Preparación** — el montaje físico del escenario, previo a la clase.
 - **Checklist** — lista de ítems que el docente marca al evaluar.
 - **Intento** — número de vez que un estudiante presenta la misma evaluación.
@@ -102,6 +105,8 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 - **Las cabeceras de seguridad las pone `CabecerasDeSeguridad`**, en Laravel y no en nginx, para que se prueben. La Content-Security-Policy lleva `'unsafe-inline'` y `'unsafe-eval'` porque Alpine y Filament los necesitan; lo que cierra son los orígenes externos. Cualquier recurso de otro sitio que se añada (una fuente, un script, una imagen) hay que declararlo en ella, o el navegador lo bloquea. Por eso el avatar de Filament se dibuja en local (`App\Filament\AvatarConIniciales`) y no se pide a ui-avatars.com.
 - **Una copia que no se restaura no es una copia.** La CI hace una en cada PR, daña los datos y la restaura. Si cambia dónde guarda algo la aplicación, cambia también `docker/produccion/copias/`.
 
+**Correo: la cuenta institucional del laboratorio, por SMTP de Google, sin paquete.** Los correos salen de la cuenta de Google Workspace que el laboratorio ya tiene, por `smtp.gmail.com` con una contraseña de aplicación y el transporte SMTP que ya trae Laravel; todo se configura con las variables `MAIL_*`. No instales paquetes de proveedores de correo: cambiar de proveedor tiene que ser cambiar el `.env`. La cuenta tiene un tope diario (unos 2.000), así que un aviso que pueda repetirse por sesión se agrupa en un correo por persona. Si alguien cambia la contraseña de esa cuenta, la de aplicación se anula y los correos dejan de salir hasta generar otra.
+
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
 
 **Restricciones de plataforma:**
@@ -144,13 +149,20 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 
 | Service | Responsabilidad |
 |---|---|
-| `SolicitudService` | Crear solicitud, precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
-| `PreparacionService` | Crear preparación al aprobar, asignar sala, marcar ítems alistados |
+| `SolicitudService` | Crear solicitud con su grupo y estudiantes, completar o retirar estudiantes de la sesión (RF28, RF69), precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
+| `PreparacionService` | Crear preparación al aprobar, asignar sala entre las libres (las vinculadas al escenario primero) y avisar al docente por correo, marcar ítems alistados |
+| `SalaService` | Rastro de la ubicación de las salas (bloque, piso y número, RF65): una fila en `ubicaciones_sala` cada vez que cambia. Lo llaman las páginas de alta y edición de Filament |
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
-| `ConfidencialidadService` | Periodo académico vigente, estado del formato de confidencialidad, bloqueo de prácticas |
+| `PeriodoAcademicoService` | Abrir, cerrar y reabrir el periodo académico (RF75). Es la única fuente del periodo vigente: el abierto, o entre semestres el último cerrado. Nunca se deriva del calendario |
+| `ConfidencialidadService` | Estado del formato de confidencialidad en el periodo vigente; solo recibe entregas con un periodo abierto |
+| `BloqueoService` | Bloquear y levantar el bloqueo de estudiantes y docentes, siempre con motivo (RF68). Se levanta, no se borra |
+| `ParticipacionService` | Quién puede entrar al laboratorio y por qué no: formato al día y sin bloqueo (RF70). Lo consultan la evaluación (RF45) y la lista de cada sesión |
 | `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8) y a qué cuenta corresponde quien vuelve de Google (RF18). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
+| `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): las registra un administrativo y nacen aprobadas; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
+| `AjustesService` | Valores que el ADMIN cambia sin desplegar (`ajustes_laboratorio`, claves fijas en `AjusteDelLaboratorio`), como la antelación del aviso del RF60 |
+| `NovedadesDeSesionService` | Reprogramar una sesión aprobada (RF61) y sustituir a su docente (RF73), con rastro de solo añadir y correo. `solicitudes.docente_que_dicta_id` es el reemplazo vigente: quien dicta es quien evalúa, gestiona la lista y suma las horas del reporte |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
@@ -177,7 +189,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 6. **El nivel de fidelidad del simulador solo lo edita el ADMIN.** Es el único campo del inventario con esa restricción; el resto lo editan administrativos y coordinadores. Restricción a nivel de campo, no de recurso.
 
-7. **El formato de confidencialidad se renueva cada semestre.** Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
+7. **El formato de confidencialidad se renueva cada periodo académico**, el que abre el laboratorio (RF75). Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
 
    **Lo firma todo el que entra a la práctica, docente incluido (RF51-RF52).** El docente dirige la sesión pero está dentro de ella, y la autorización de captación de imágenes lo cubre igual. Quiénes son esos roles lo dice `Rol::queFirmanElFormato()`, y de ahí leen la Policy y el Service: no repitas la lista. Quien verifica —administrativo, coordinación, ADMIN— **no** firma, así que no puede entregarlo ni por sí mismo ni por otro.
 
@@ -185,7 +197,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    Dos preguntas parecidas que **no** son la misma: `puedeParticiparEnPracticas()` (verificado **o** entrega física) decide si entra a la práctica; `tieneFormatoVigente()` (solo verificado) dice si el trámite está cerrado.
 
-   **PENDIENTE con el cliente:** qué significa que a un docente le falte el formato. Bloquear a un estudiante lo deja fuera de la práctica; bloquear al docente cancela la clase. Hoy nadie llama a `puedeParticiparEnPracticas()`, así que la pregunta no aprieta todavía, pero no la resuelvas por tu cuenta cuando llegue el RF68-RF70.
+   **Quien no tiene el formato o está bloqueado no entra ni puede ser evaluado (RF45, RF70).** Para el estudiante eso es quedar fuera de la práctica. Lo decide **`ParticipacionService`**, el único sitio que junta el formato con los bloqueos de coordinación (RF68): lo consultan la evaluación y la lista de cada sesión. No repitas la comprobación en otro lado. Para el docente, la decisión por defecto (D2 de `docs/trazabilidad.md`) es avisar sin cancelar la sesión: bloquear al docente cancela la clase. Un docente bloqueado sí deja de poder solicitar escenarios.
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
@@ -193,7 +205,9 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 
-9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador (o el ADMIN, si coordinación no está) aprueba, o coordinador rechaza → administrativo asigna sala y prepara. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
+9. **El flujo de una solicitud es:** docente solicita → administrativo acepta (revisa) o rechaza (RF30) → coordinador (o el ADMIN, si coordinación no está) aprueba o rechaza (RF31) → administrativo elige una sala libre, se avisa al docente por correo (RF36) y prepara. Son dos fases y en las dos se puede rechazar, cada una lo suyo (`SolicitudPolicy::rechazar()`): la pendiente la rechaza quien revisa; la revisada, coordinación o el ADMIN. El administrativo no rechaza lo que ya aceptó. Una solicitud rechazada en la primera fase queda con `revisada_por` nulo.
+
+   **La única excepción son las sesiones apartadas antes del semestre (RF57):** las registra un administrativo desde el formato que le entrega coordinación, así que nacen aprobadas, sin pasar por las dos fases. Queda registrado quién las cargó. Fuera de ese registro no hay otro camino a `aprobada`. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
 
 10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
@@ -341,6 +355,7 @@ docker compose exec app php artisan storage:link         # una vez: nginx sirve 
 docker compose exec app php artisan test
 docker compose exec app vendor/bin/phpstan analyse       # análisis estático
 docker compose logs -f queue                           # trabajador de la cola (correos)
+docker compose logs -f programador                     # tareas programadas (aviso del RF60)
 docker compose exec app php artisan make:model Nombre -mf
 docker compose exec node npm run dev
 docker compose logs -f app
@@ -368,7 +383,9 @@ docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia
 
 No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 
-1. Si un usuario con rol docente y coordinador debe poder aprobar su propia solicitud.
-2. Estructura exacta de la vista de la base de datos institucional para la sincronización de usuarios.
-3. Cómo se entera hoy el docente de la sala asignada al llegar a clase.
+1. ~~Si un usuario con rol docente y coordinador debe poder aprobar su propia solicitud.~~ Resuelto (RF31): sí, porque siempre media la revisión administrativa.
+2. Motor, acceso y estructura de la base de datos institucional para la sincronización de usuarios (RF19, RF20). Se desarrolla con datos simulados.
+3. ~~Cómo se entera hoy el docente de la sala asignada al llegar a clase.~~ Resuelto (RF36): por correo, al asignar o cambiar la sala.
 4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
+5. Las decisiones por defecto D2–D17 de `docs/trazabilidad.md`. Se aplican si nadie las corrige. Las preguntas P1–P5 ya están respondidas y sus respuestas, en `docs/requerimientos.md`.
+6. La dirección del correo del laboratorio y su contraseña de aplicación (verificación en dos pasos activada), o, si la universidad no permite contraseñas de aplicación, el relay de Google Workspace autorizado por sistemas (ver `docs/trazabilidad.md`, Bloqueos externos).

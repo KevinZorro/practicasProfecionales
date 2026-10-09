@@ -17,6 +17,12 @@ use App\Models\User;
  */
 final class EvaluacionEstudiantePolicy
 {
+    /** La pantalla de resultados propios (RF49): solo el estudiante. */
+    public function viewAny(User $usuario): bool
+    {
+        return $usuario->hasRole(Rol::Estudiante->value);
+    }
+
     /**
      * Lo ve el propio estudiante (RF49), el docente que lo evaluó, y
      * coordinación o el ADMIN para los reportes del §6.1.

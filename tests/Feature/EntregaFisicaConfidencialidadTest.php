@@ -19,7 +19,7 @@ use Livewire\Livewire;
 beforeEach(function (): void {
     Storage::fake('local');
     $this->seed(RolSeeder::class);
-    config(['laboratorio.periodo_academico.vigente' => '2026-2']);
+    abrirPeriodo('2026-2');
     $this->servicio = app(ConfidencialidadService::class);
     $this->administrativo = User::factory()->administrativo()->create();
     $this->coordinadora = User::factory()->coordinador()->create();

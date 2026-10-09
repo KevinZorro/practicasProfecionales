@@ -75,7 +75,7 @@ it('agrupa el uso por docente, materia, caso clínico, sala y tipo de sesión', 
         ->and($fila->tipo)->toBe(TipoSesion::Practica)
         ->and((int) $fila->sesiones)->toBe(2)
         ->and((float) $fila->horas)->toBe(5.0)
-        ->and((int) $fila->estudiantes)->toBe(22);
+        ->and((int) $fila->total_estudiantes)->toBe(22);
 });
 
 it('separa en renglones distintos las sesiones de práctica y las de evaluación', function (): void {

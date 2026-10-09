@@ -36,9 +36,9 @@
         </tr>
     </table>
 
-    {{-- La sala se asigna durante la preparación, poco antes de la clase. --}}
-    <p>La sala se le informará el día de la práctica, cuando el equipo del
-       laboratorio termine el montaje del escenario.</p>
+    {{-- La sala se asigna durante la preparación (RF36), y llega en otro correo. --}}
+    <p>La sala la elige el laboratorio al preparar el escenario. Le llegará
+       otro correo en cuanto la asigne.</p>
 
     <p>{{ config('app.name') }}</p>
 </body>

@@ -18,6 +18,7 @@ use Database\Seeders\RolSeeder;
 use Illuminate\Database\QueryException;
 
 beforeEach(function (): void {
+    abrirPeriodo();
     $this->seed(RolSeeder::class);
     $this->servicio = app(EvaluacionService::class);
     $this->docente = User::factory()->docente()->create();
@@ -110,7 +111,7 @@ it('deja seguir una evaluación ya creada aunque después se desactive su tipo',
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
     $tipo->update(['activo' => false]);
 
-    $this->servicio->agregarEstudiante($evaluacion->fresh(), User::factory()->estudiante()->create());
+    $this->servicio->agregarEstudiante($evaluacion->fresh(), User::factory()->estudiante()->habilitado()->create());
 
     expect($evaluacion->fresh()->tipo_evaluacion_id)->toBe($tipo->id)
         ->and($evaluacion->estudiantes()->count())->toBe(1);
@@ -124,7 +125,7 @@ it('deja sin resultado a los estudiantes recién agregados', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
 
-    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
 
     expect($registro->resultado)->toBeNull();
 });
@@ -132,7 +133,7 @@ it('deja sin resultado a los estudiantes recién agregados', function (): void {
 it('no fija el resultado aunque se marquen todos los ítems', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
 
     foreach ($evaluacion->items as $item) {
         $this->servicio->marcarItem($registro, $item);
@@ -146,7 +147,7 @@ it('acepta aprobar sin ningún ítem marcado', function (): void {
     // El docente manda: los ítems son apoyo, no aritmética.
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
 
     $this->servicio->registrarResultado($registro, ResultadoEvaluacion::Aprobado);
 
@@ -157,7 +158,7 @@ it('acepta aprobar sin ningún ítem marcado', function (): void {
 it('acepta no aprobar con todos los ítems marcados', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
     foreach ($evaluacion->items as $item) {
         $this->servicio->marcarItem($registro, $item);
     }
@@ -214,8 +215,8 @@ it('mantiene los ítems copiados aunque se borre el tipo de evaluación completo
 it('no finaliza si algún estudiante se quedó sin resultado', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $conResultado = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
-    $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $conResultado = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
+    $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
     $this->servicio->registrarResultado($conResultado, ResultadoEvaluacion::Aprobado);
 
     expect(fn () => $this->servicio->finalizar($evaluacion))
@@ -227,12 +228,12 @@ it('no finaliza si algún estudiante se quedó sin resultado', function (): void
 it('no modifica una evaluación ya finalizada', function (string $metodo): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
     $this->servicio->registrarResultado($registro, ResultadoEvaluacion::Aprobado);
     $this->servicio->finalizar($evaluacion);
 
     $accion = match ($metodo) {
-        'agregarEstudiante' => fn () => $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create()),
+        'agregarEstudiante' => fn () => $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create()),
         'quitarEstudiante' => fn () => $this->servicio->quitarEstudiante($evaluacion, $registro->estudiante),
         'marcarItem' => fn () => $this->servicio->marcarItem($registro->fresh(), $evaluacion->items->first()),
         'registrarResultado' => fn () => $this->servicio->registrarResultado($registro->fresh(), ResultadoEvaluacion::NoAprobado),
@@ -249,8 +250,8 @@ it('no modifica una evaluación ya finalizada', function (string $metodo): void 
 it('recorre el flujo completo hasta dejar la evaluación finalizada', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $aprobada = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
-    $reprobado = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $aprobada = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
+    $reprobado = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
 
     $this->servicio->marcarItem($aprobada, $evaluacion->items->first());
     $this->servicio->registrarResultado($aprobada, ResultadoEvaluacion::Aprobado);
@@ -267,7 +268,7 @@ it('recorre el flujo completo hasta dejar la evaluación finalizada', function (
 it('quita a un estudiante mientras la evaluación es un borrador', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
     $this->servicio->agregarEstudiante($evaluacion, $estudiante);
 
     $this->servicio->quitarEstudiante($evaluacion, $estudiante);
@@ -278,7 +279,7 @@ it('quita a un estudiante mientras la evaluación es un borrador', function (): 
 it('desmarca un ítem ya marcado', function (): void {
     [$solicitud, $tipo] = escenarioEvaluable();
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
-    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->create());
+    $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
     $item = $evaluacion->items->first();
     $this->servicio->marcarItem($registro, $item);
 

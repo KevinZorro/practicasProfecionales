@@ -27,10 +27,10 @@ it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, ar
     expect(seccionesVisibles($rol))->toEqualCanonicalizing($esperadas);
 })->with([
     'docente' => [Rol::Docente, ['inicio', 'calendario', 'mis-solicitudes', 'evaluaciones', 'mi-formato']],
-    'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mi-formato']],
-    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'inventario', 'reposicion', 'formatos-confidencialidad']],
-    'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'reportes']],
-    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'usuarios', 'administracion', 'reportes']],
+    'estudiante' => [Rol::Estudiante, ['inicio', 'calendario', 'mis-resultados', 'mi-formato']],
+    'administrativo' => [Rol::Administrativo, ['inicio', 'calendario', 'solicitudes', 'sesiones-apartadas', 'preparaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'periodo-academico']],
+    'coordinador' => [Rol::Coordinador, ['inicio', 'calendario', 'solicitudes', 'sesiones-apartadas', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'bloqueos', 'periodo-academico', 'reportes']],
+    'admin' => [Rol::Admin, ['inicio', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'bloqueos', 'periodo-academico', 'usuarios', 'administracion', 'reportes']],
 ]);
 
 it('no enseña al docente el inventario ni los reportes', function (): void {

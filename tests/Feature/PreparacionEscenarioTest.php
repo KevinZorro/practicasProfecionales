@@ -59,7 +59,8 @@ it('copia a la preparación los items pedidos, sin alistar, al aprobar', functio
         fecha: now()->addWeek()->format('Y-m-d'),
         horaInicio: '07:00',
         horaFin: '09:00',
-        cantidadEstudiantes: 12,
+        grupo: 'A',
+        estudianteIds: idsDeEstudiantes(3),
     ));
     $solicitudes->marcarRevisada($solicitud, $this->administrativo);
     $solicitudes->aprobar($solicitud, User::factory()->coordinador()->create());

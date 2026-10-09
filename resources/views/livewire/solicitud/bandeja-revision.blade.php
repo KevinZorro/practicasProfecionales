@@ -52,7 +52,7 @@
                         <dl class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                             <x-dato etiqueta="Fecha">{{ $solicitud->fecha->format('d/m/Y') }}</x-dato>
                             <x-dato etiqueta="Hora">{{ substr($solicitud->hora_inicio, 0, 5) }}–{{ substr($solicitud->hora_fin, 0, 5) }}</x-dato>
-                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}</x-dato>
+                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
                             <x-dato etiqueta="Sala">
                                 @if ($solicitud->preparacion?->sala)
                                     {{ $solicitud->preparacion->sala->nombre }}
@@ -66,6 +66,10 @@
                             <x-boton variante="secundario" type="button" wire:click="abrir({{ $solicitud->id }})">
                                 {{ $abierta === $solicitud->id ? 'Ocultar detalle' : 'Ver detalle' }}
                             </x-boton>
+                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.participantes', $solicitud) }}">Participantes</x-boton>
+                            @can('reprogramar', $solicitud)
+                                <x-boton variante="secundario" href="{{ route('panel.solicitudes.novedades', $solicitud) }}">Reprogramar o sustituir</x-boton>
+                            @endcan
 
                             @can('revisar', $solicitud)
                                 @if ($solicitud->estado === \App\Enums\EstadoSolicitud::Pendiente)
@@ -120,6 +124,15 @@
 
                                 <h3 class="mb-2 text-sm font-semibold text-gray-900">Equipos solicitados</h3>
                                 <x-lista-equipos :items="$detalle->items" :faltantes="$faltantes" />
+
+                                @if ($detalle->estudiantes->isNotEmpty())
+                                    <h3 class="mb-2 mt-4 text-sm font-semibold text-gray-900">Estudiantes de la sesión</h3>
+                                    <ul class="grid gap-1 text-sm text-gray-700 sm:grid-cols-2">
+                                        @foreach ($detalle->estudiantes as $estudiante)
+                                            <li wire:key="detalle-estudiante-{{ $estudiante->id }}">{{ $estudiante->nombre }}</li>
+                                        @endforeach
+                                    </ul>
+                                @endif
                             </div>
                         @endif
                     </x-tarjeta>

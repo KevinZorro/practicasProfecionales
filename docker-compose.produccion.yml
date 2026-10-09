@@ -55,6 +55,22 @@ services:
     networks:
       - laboratorio
 
+  # Tareas programadas de Laravel (routes/console.php): hoy, el aviso diario
+  # de sesiones sin formato intramural (RF60). schedule:work revisa cada
+  # minuto qué toca correr; sin este servicio nada programado se ejecuta.
+  programador:
+    image: laboratorio-simulacion/app:produccion
+    restart: always
+    env_file: .env
+    command: ["php", "artisan", "schedule:work"]
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - laboratorio
+
   # nginx con los archivos de public/ dentro de su imagen. Solo monta el
   # volumen de imágenes públicas, y de solo lectura.
   web:

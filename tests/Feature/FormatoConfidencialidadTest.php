@@ -6,9 +6,11 @@ use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\Rol;
 use App\Exceptions\FormatoConfidencialidadInvalido;
 use App\Models\FormatoConfidencialidad;
+use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use App\Services\ConfidencialidadService;
+use App\Services\PeriodoAcademicoService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
@@ -18,6 +20,7 @@ use Illuminate\Support\Facades\Storage;
 beforeEach(function (): void {
     Storage::fake('local');
     $this->seed(RolSeeder::class);
+    abrirPeriodo('2026-2');
     $this->servicio = app(ConfidencialidadService::class);
     $this->admin = User::factory()->admin()->create();
     $this->coordinadora = User::factory()->coordinador()->create();
@@ -43,25 +46,45 @@ function entregaCargada(User $estudiante): FormatoConfidencialidad
 // Periodo académico
 // ---------------------------------------------------------------------
 
-it('deriva el periodo vigente del calendario', function (string $hoy, string $esperado): void {
-    config(['laboratorio.periodo_academico.vigente' => null]);
-    $this->travelTo($hoy);
+it('toma el periodo que abrió el laboratorio, no el del calendario', function (): void {
+    // En enero, el calendario diría primer semestre; manda lo que abrieron.
+    $this->travelTo('2027-01-15');
 
-    expect($this->servicio->periodoVigente())->toBe($esperado);
-})->with([
-    'enero es primer semestre' => ['2026-01-15', '2026-1'],
-    'junio sigue siendo primero' => ['2026-06-30', '2026-1'],
-    'julio abre el segundo' => ['2026-07-01', '2026-2'],
-    'diciembre cierra el segundo' => ['2026-12-20', '2026-2'],
-    'cambia de año' => ['2027-03-04', '2027-1'],
-]);
+    expect($this->servicio->periodoVigente())->toBe('2026-2');
+});
 
-it('deja fijar el periodo a mano por encima del calendario', function (): void {
-    // Válvula de escape para las semanas de transición entre semestres.
-    $this->travelTo('2026-01-15');
-    config(['laboratorio.periodo_academico.vigente' => '2025-2']);
+it('no recibe entregas sin un periodo abierto, pero lo entregado sigue valiendo', function (): void {
+    $entrega = entregaCargada($this->estudiante);
+    $this->servicio->verificar($entrega, $this->administrativo);
+    app(PeriodoAcademicoService::class)->cerrar(PeriodoAcademico::firstOrFail(), $this->administrativo);
 
-    expect($this->servicio->periodoVigente())->toBe('2025-2');
+    expect($this->servicio->tieneFormatoVigente($this->estudiante))->toBeTrue()
+        ->and($this->servicio->recibeEntregas())->toBeFalse()
+        ->and(fn () => $this->servicio->registrarEntrega(User::factory()->estudiante()->create(), pdfDePrueba()))
+        ->toThrow(FormatoConfidencialidadInvalido::class, 'periodo académico abierto');
+});
+
+it('exige el formato de nuevo cuando se abre el periodo siguiente', function (): void {
+    $entrega = entregaCargada($this->estudiante);
+    $this->servicio->verificar($entrega, $this->administrativo);
+    $periodos = app(PeriodoAcademicoService::class);
+    $periodos->cerrar(PeriodoAcademico::firstOrFail(), $this->administrativo);
+
+    $periodos->abrir('2027-1', $this->administrativo);
+
+    expect($this->servicio->periodoVigente())->toBe('2027-1')
+        ->and($this->servicio->tieneFormatoVigente($this->estudiante))->toBeFalse()
+        ->and($this->servicio->puedeParticiparEnPracticas($this->estudiante))->toBeFalse();
+});
+
+it('no da a nadie por habilitado si el laboratorio nunca abrió un periodo', function (): void {
+    PeriodoAcademico::query()->delete();
+    FormatoConfidencialidad::factory()->verificado()->create(['firmante_id' => $this->estudiante->id]);
+
+    expect($this->servicio->periodoVigente())->toBeNull()
+        ->and($this->servicio->tieneFormatoVigente($this->estudiante))->toBeFalse()
+        ->and($this->servicio->puedeParticiparEnPracticas($this->estudiante))->toBeFalse()
+        ->and($this->servicio->entregaDelPeriodo($this->estudiante))->toBeNull();
 });
 
 // ---------------------------------------------------------------------

@@ -1,5 +1,13 @@
 <div class="space-y-6">
 
+    {{-- Un docente bloqueado no pide escenarios (RF68): se le dice antes de que llene nada. --}}
+    @if ($bloqueo)
+        <div class="rounded-md bg-rose-50 px-4 py-3 ring-1 ring-inset ring-rose-600/20" role="alert">
+            <p class="text-sm font-medium text-rose-900">No puedes solicitar escenarios mientras tengas un bloqueo vigente.</p>
+            <p class="mt-1 text-sm text-rose-900">Motivo: {{ $bloqueo->motivo }}. Consulta con la coordinación del laboratorio.</p>
+        </div>
+    @endif
+
     {{-- 1 · Escenario y horario --}}
     <x-tarjeta titulo="1 · Escenario y horario">
         <div class="grid gap-4 sm:grid-cols-2">
@@ -43,15 +51,11 @@
             </div>
 
             <div>
-                <label for="cantidadEstudiantes" class="mb-1 block text-sm font-medium text-gray-700">Cantidad de estudiantes</label>
-                <input type="number" min="1" wire:model="cantidadEstudiantes" id="cantidadEstudiantes" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                @error('cantidadEstudiantes')
-                    <p class="mt-1 text-sm text-rose-700">{{ $message }}</p>
-                @else
-                    @if ($capacidadDelCaso !== null)
-                        <p class="mt-1 text-sm text-gray-500">Este escenario admite {{ $capacidadDelCaso }} estudiantes como máximo.</p>
-                    @endif
-                @enderror
+                <label for="grupo" class="mb-1 block text-sm font-medium text-gray-700">Grupo</label>
+                <input type="text" wire:model="grupo" id="grupo" maxlength="2" placeholder="A" autocapitalize="characters"
+                       class="w-full rounded-md border border-gray-300 text-sm uppercase focus:border-sky-600 focus:ring-sky-600">
+                <p class="mt-1 text-xs text-gray-500">La parte de la clase que pasa a los simuladores en esta sesión.</p>
+                @error('grupo') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
             </div>
 
             <div>
@@ -73,8 +77,73 @@
         </x-slot:pie>
     </x-tarjeta>
 
-    {{-- 2 · Equipos --}}
-    <x-tarjeta titulo="2 · Equipos a solicitar">
+    {{-- 2 · Estudiantes --}}
+    <x-tarjeta titulo="2 · Estudiantes que van a la sesión">
+        <p class="mb-3 text-sm text-gray-700">
+            {{ count($estudianteIds) }} {{ count($estudianteIds) === 1 ? 'estudiante' : 'estudiantes' }}
+            @if ($capacidadDelCaso !== null)
+                · este escenario admite {{ $capacidadDelCaso }} como máximo
+            @endif
+        </p>
+
+        @error('estudianteIds') <p class="mb-3 text-sm text-rose-700" role="alert">{{ $message }}</p> @enderror
+
+        @if ($seleccionados->isNotEmpty())
+            <ul class="mb-4 divide-y divide-gray-200 rounded-md border border-gray-200">
+                @foreach ($seleccionados as $estudiante)
+                    <li class="flex items-center justify-between gap-2 px-3 py-2" wire:key="estudiante-{{ $estudiante->id }}">
+                        <span class="min-w-0 truncate text-sm text-gray-900">
+                            {{ $estudiante->nombre }}
+                            @if ($estudiante->codigo_institucional)
+                                <span class="text-gray-500">· {{ $estudiante->codigo_institucional }}</span>
+                            @endif
+                        </span>
+                        <button type="button" wire:click="quitarEstudiante({{ $estudiante->id }})"
+                                class="shrink-0 rounded-md px-2 py-1 text-sm text-rose-700 hover:bg-rose-50">
+                            Quitar
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+
+        <label for="busquedaEstudiante" class="mb-1 block text-sm font-medium text-gray-700">Buscar por nombre o código</label>
+        <input type="search" wire:model.live.debounce.400ms="busquedaEstudiante" id="busquedaEstudiante" autocomplete="off"
+               class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
+
+        @if ($resultados->isNotEmpty())
+            <ul class="mt-2 divide-y divide-gray-200 rounded-md border border-gray-200">
+                @foreach ($resultados as $estudiante)
+                    <li wire:key="resultado-{{ $estudiante->id }}">
+                        <button type="button" wire:click="agregarEstudiante({{ $estudiante->id }})"
+                                class="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm hover:bg-sky-50">
+                            <span class="min-w-0 truncate">{{ $estudiante->nombre }} <span class="text-gray-500">· {{ $estudiante->codigo_institucional ?? $estudiante->email }}</span></span>
+                            <span class="shrink-0 font-medium text-sky-800">Agregar</span>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        @elseif (trim($busquedaEstudiante) !== '')
+            <p class="mt-2 text-sm text-gray-600">Ningún estudiante activo coincide con «{{ $busquedaEstudiante }}».</p>
+        @endif
+
+        <div class="mt-4 border-t border-gray-200 pt-4">
+            <label for="codigosPegados" class="mb-1 block text-sm font-medium text-gray-700">O pega los códigos del grupo</label>
+            <textarea wire:model="codigosPegados" id="codigosPegados" rows="2"
+                      class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600"
+                      placeholder="Separados por comas, espacios o uno por línea"></textarea>
+            <x-boton variante="secundario" type="button" wire:click="agregarPorCodigo" class="mt-2">Agregar los códigos</x-boton>
+
+            @if ($codigosDesconocidos !== [])
+                <p class="mt-2 text-sm text-amber-800">
+                    Estos códigos no son de ningún estudiante activo: {{ implode(', ', $codigosDesconocidos) }}.
+                </p>
+            @endif
+        </div>
+    </x-tarjeta>
+
+    {{-- 3 · Equipos --}}
+    <x-tarjeta titulo="3 · Equipos a solicitar">
         <x-lista-equipos :items="collect($seleccionadosPorTipo)->flatten()" :cantidades="$items">
         </x-lista-equipos>
 
@@ -111,8 +180,8 @@
         </div>
     </x-tarjeta>
 
-    {{-- 3 · Observaciones --}}
-    <x-tarjeta titulo="3 · Observaciones para el laboratorio">
+    {{-- 4 · Observaciones --}}
+    <x-tarjeta titulo="4 · Observaciones para el laboratorio">
         <textarea wire:model="observaciones" rows="3"
                   class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600"
                   placeholder="Cualquier detalle que el laboratorio deba tener en cuenta."></textarea>
@@ -120,7 +189,9 @@
     </x-tarjeta>
 
     <div class="flex flex-wrap gap-2">
-        <x-boton wire:click="guardar" wire:loading.attr="disabled">Enviar solicitud</x-boton>
+        @unless ($bloqueo)
+            <x-boton wire:click="guardar" wire:loading.attr="disabled">Enviar solicitud</x-boton>
+        @endunless
         <x-boton variante="secundario" href="{{ route('panel.mis-solicitudes') }}">Cancelar</x-boton>
     </div>
 </div>

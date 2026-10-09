@@ -8,6 +8,7 @@ use App\Livewire\Confidencialidad\EstadoDeFirmantes;
 use App\Livewire\Confidencialidad\GestionDePlantilla;
 use App\Livewire\Confidencialidad\MiFormato;
 use App\Models\FormatoConfidencialidad;
+use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
@@ -20,7 +21,7 @@ use Livewire\Livewire;
 beforeEach(function (): void {
     Storage::fake('local');
     $this->seed(RolSeeder::class);
-    config(['laboratorio.periodo_academico.vigente' => '2026-2']);
+    abrirPeriodo('2026-2');
 
     $this->estudiante = User::factory()->estudiante()->create();
     $this->coordinadora = User::factory()->coordinador()->create();
@@ -115,7 +116,7 @@ it('avisa al estudiante si todavía no hay plantilla publicada', function (): vo
         ->assertSee('Todavía no hay documento disponible');
 });
 
-it('explica que el formato se renueva cada semestre', function (): void {
+it('explica que el formato se renueva cada periodo académico', function (): void {
     // Un estudiante que entregó el semestre pasado tiene que entender por
     // qué se lo piden otra vez.
     FormatoConfidencialidad::factory()->verificado()->delPeriodo('2026-1')->create([
@@ -124,7 +125,7 @@ it('explica que el formato se renueva cada semestre', function (): void {
 
     Livewire::actingAs($this->estudiante)
         ->test(MiFormato::class)
-        ->assertSee('se renueva cada semestre')
+        ->assertSee('se renueva cada periodo académico')
         ->assertSee('no vale para 2026-2');
 });
 
@@ -523,4 +524,14 @@ it('ofrece verificar y devolver solo cuando está cargado', function (): void {
         ->test(BandejaVerificacion::class)
         ->assertSee('Verificar')
         ->assertSee('Devolver');
+});
+
+it('no ofrece subir el formato mientras no haya un periodo abierto', function (): void {
+    PlantillaConfidencialidad::factory()->create();
+    PeriodoAcademico::query()->update(['cerrado_at' => now()]);
+
+    Livewire::actingAs($this->estudiante)
+        ->test(MiFormato::class)
+        ->assertSee('El laboratorio todavía no ha abierto el periodo')
+        ->assertDontSee('Enviar para verificación');
 });

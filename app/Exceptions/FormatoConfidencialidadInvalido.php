@@ -14,6 +14,11 @@ final class FormatoConfidencialidadInvalido extends DomainException
         return new self('No hay plantilla de confidencialidad activa: el ADMIN debe cargar una antes de que alguien entregue.');
     }
 
+    public static function sinPeriodoAbierto(): self
+    {
+        return new self('No hay un periodo académico abierto: el laboratorio debe abrirlo antes de recibir formatos.');
+    }
+
     public static function soloSeAceptaPdf(string $mime): self
     {
         return new self(sprintf('El formato debe entregarse en PDF; se recibió "%s".', $mime));

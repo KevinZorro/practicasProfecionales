@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\AsignacionDeRol;
+use App\Models\Bloqueo;
 use App\Models\Evaluacion;
+use App\Models\EvaluacionEstudiante;
 use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
 use App\Models\ListaDeReposicion;
+use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
@@ -67,6 +70,14 @@ final class MenuDelPanel
                 sobre: Solicitud::class,
             ),
             new SeccionDelPanel(
+                clave: 'sesiones-apartadas',
+                etiqueta: 'Sesiones apartadas',
+                ruta: 'panel.sesiones-apartadas',
+                icono: 'M8 7V3m8 4V3M3 11h18M5 5h14v16H5zM12 14v4m-2-2h4',
+                permiso: 'registrarApartada',
+                sobre: Solicitud::class,
+            ),
+            new SeccionDelPanel(
                 clave: 'preparaciones',
                 etiqueta: 'Preparaciones',
                 ruta: 'panel.preparaciones',
@@ -81,6 +92,14 @@ final class MenuDelPanel
                 icono: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
                 permiso: 'viewAny',
                 sobre: Evaluacion::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'mis-resultados',
+                etiqueta: 'Mis resultados',
+                ruta: 'panel.mis-resultados',
+                icono: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
+                permiso: 'viewAny',
+                sobre: EvaluacionEstudiante::class,
             ),
             new SeccionDelPanel(
                 clave: 'inventario',
@@ -121,6 +140,22 @@ final class MenuDelPanel
                 icono: 'M12 4v16m8-8H4',
                 permiso: 'create',
                 sobre: PlantillaConfidencialidad::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'bloqueos',
+                etiqueta: 'Bloqueos de acceso',
+                ruta: 'panel.bloqueos',
+                icono: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636',
+                permiso: 'viewAny',
+                sobre: Bloqueo::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'periodo-academico',
+                etiqueta: 'Periodo académico',
+                ruta: 'panel.periodo-academico',
+                icono: 'M8 7V3m8 4V3M3 11h18M5 5h14v16H5zM9 15l2 2 4-4',
+                permiso: 'viewAny',
+                sobre: PeriodoAcademico::class,
             ),
             new SeccionDelPanel(
                 clave: 'usuarios',

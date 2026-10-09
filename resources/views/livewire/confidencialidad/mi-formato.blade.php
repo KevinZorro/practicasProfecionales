@@ -7,7 +7,7 @@
         <div class="flex flex-wrap items-start justify-between gap-2">
             <div class="min-w-0">
                 <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Periodo académico</p>
-                <p class="text-lg font-semibold text-gray-900">{{ $periodo }}</p>
+                <p class="text-lg font-semibold text-gray-900">{{ $periodo ?? 'Sin periodo abierto' }}</p>
             </div>
             <x-etiqueta-estado :estado="$estadoActual" />
         </div>
@@ -30,8 +30,10 @@
             entiende, si no se le dice, que esto se renueva cada semestre.
         --}}
         <x-slot:pie>
-            El formato autoriza la grabación de las prácticas y <span class="font-medium">se renueva cada semestre</span>.
-            El que hayas entregado en periodos anteriores sigue guardado, pero no vale para {{ $periodo }}.
+            El formato autoriza la grabación de las prácticas y <span class="font-medium">se renueva cada periodo académico</span>.
+            @if ($periodo)
+                El que hayas entregado en periodos anteriores sigue guardado, pero no vale para {{ $periodo }}.
+            @endif
         </x-slot:pie>
     </x-tarjeta>
 
@@ -61,8 +63,16 @@
         @endif
     </x-tarjeta>
 
+    {{-- Entre semestres no se recibe nada: no se sabría a qué periodo pertenece. --}}
+    @if ($estadoActual !== \App\Enums\EstadoFormatoConfidencialidad::Verificado && $hayPlantilla && ! $recibeEntregas)
+        <x-mensaje-vacio
+            titulo="El laboratorio todavía no ha abierto el periodo"
+            descripcion="Podrás subir tu formato en cuanto el laboratorio abra el periodo académico."
+        />
+    @endif
+
     {{-- Paso 2: subir --}}
-    @if ($estadoActual !== \App\Enums\EstadoFormatoConfidencialidad::Verificado && $hayPlantilla)
+    @if ($estadoActual !== \App\Enums\EstadoFormatoConfidencialidad::Verificado && $hayPlantilla && $recibeEntregas)
         <x-tarjeta titulo="2 · Sube el documento firmado">
             @if ($errorDeRegla)
                 <p class="mb-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">

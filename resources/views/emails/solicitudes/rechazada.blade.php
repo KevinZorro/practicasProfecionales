@@ -31,8 +31,7 @@
     @if ($solicitud->motivo_rechazo)
         <p><strong>Motivo:</strong> {{ $solicitud->motivo_rechazo }}</p>
     @else
-        <p>No se registró un motivo. Puede consultarlo con la coordinación del
-           laboratorio.</p>
+        <p>No se registró un motivo. Puede consultarlo con el laboratorio.</p>
     @endif
 
     <p>Puede radicar una solicitud nueva con otra fecha u otro horario.</p>

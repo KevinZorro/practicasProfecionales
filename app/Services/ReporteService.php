@@ -56,7 +56,9 @@ final class ReporteService
         return $this->solicitudesAprobadas($filtro)
             ->leftJoin('preparaciones', 'preparaciones.solicitud_id', '=', 'solicitudes.id')
             ->leftJoin('salas', 'salas.id', '=', 'preparaciones.sala_id')
-            ->join('users', 'users.id', '=', 'solicitudes.docente_id')
+            // Las horas son de quien dictó la sesión, que es el reemplazo
+            // si hubo sustitución (RF54, RF73).
+            ->join('users', 'users.id', '=', DB::raw('COALESCE(solicitudes.docente_que_dicta_id, solicitudes.docente_id)'))
             ->join('materias', 'materias.id', '=', 'solicitudes.materia_id')
             ->join('casos_clinicos', 'casos_clinicos.id', '=', 'solicitudes.caso_clinico_id')
             ->when($filtro->salaId !== null, fn (Builder $c) => $c->where('preparaciones.sala_id', $filtro->salaId))
@@ -177,7 +179,10 @@ final class ReporteService
             ->where('solicitudes.estado', EstadoSolicitud::Aprobada)
             ->when($filtro->desde !== null, fn (Builder $c) => $c->whereDate('solicitudes.fecha', '>=', $filtro->desde))
             ->when($filtro->hasta !== null, fn (Builder $c) => $c->whereDate('solicitudes.fecha', '<=', $filtro->hasta))
-            ->when($filtro->docenteId !== null, fn (Builder $c) => $c->where('solicitudes.docente_id', $filtro->docenteId))
+            ->when($filtro->docenteId !== null, fn (Builder $c) => $c->whereRaw(
+                'COALESCE(solicitudes.docente_que_dicta_id, solicitudes.docente_id) = ?',
+                [$filtro->docenteId],
+            ))
             ->when($filtro->materiaId !== null, fn (Builder $c) => $c->where('solicitudes.materia_id', $filtro->materiaId));
     }
 
@@ -218,7 +223,9 @@ final class ReporteService
             'solicitudes.tipo',
             DB::raw('COUNT(solicitudes.id) as sesiones'),
             DB::raw('SUM(EXTRACT(EPOCH FROM (solicitudes.hora_fin - solicitudes.hora_inicio)) / 3600) as horas'),
-            DB::raw('SUM(solicitudes.cantidad_estudiantes) as estudiantes'),
+            DB::raw('SUM(solicitudes.cantidad_estudiantes) as total_estudiantes'),
+            // Cuántas de esas sesiones las dictó en reemplazo de otro (RF54).
+            DB::raw('COUNT(solicitudes.docente_que_dicta_id) as sesiones_por_sustitucion'),
         ];
     }
 }

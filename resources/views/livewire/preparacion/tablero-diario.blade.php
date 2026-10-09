@@ -43,7 +43,7 @@
                                 </p>
                                 <p class="truncate text-sm font-medium text-gray-900">{{ $solicitud->casoClinico->nombre }}</p>
                                 <p class="truncate text-sm text-gray-600">
-                                    {{ $solicitud->docente->nombre }} · {{ $solicitud->materia->nombre }}
+                                    {{ ($solicitud->docenteQueDicta ?? $solicitud->docente)->nombre }}{{ $solicitud->docenteQueDicta ? ' (reemplaza a '.$solicitud->docente->nombre.')' : '' }} · {{ $solicitud->materia->nombre }}
                                 </p>
                             </div>
                             <div class="flex shrink-0 flex-col items-end gap-1">
@@ -53,15 +53,29 @@
                         </div>
 
                         <dl class="mt-3 grid grid-cols-2 gap-3">
-                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}</x-dato>
+                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
                             <x-dato etiqueta="Sala">
                                 @if ($montaje->sala)
-                                    <span class="font-medium">{{ $montaje->sala->nombre }}</span>
+                                    <span class="font-medium">{{ $montaje->sala->nombreCompleto() }}</span>
                                 @else
                                     <span class="text-amber-800">Sin asignar</span>
                                 @endif
                             </x-dato>
                         </dl>
+
+                        {{-- Quién no puede entrar se ve antes de abrir la puerta (RF70). --}}
+                        @php($noPueden = $noPuedenIngresar[$montaje->id] ?? ['docente' => false, 'estudiantes' => 0])
+                        @if ($noPueden['docente'] || $noPueden['estudiantes'] > 0)
+                            <p class="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20">
+                                @if ($noPueden['docente'])
+                                    El docente no puede ingresar.
+                                @endif
+                                @if ($noPueden['estudiantes'] > 0)
+                                    {{ $noPueden['estudiantes'] }} {{ $noPueden['estudiantes'] === 1 ? 'estudiante no puede' : 'estudiantes no pueden' }} ingresar.
+                                @endif
+                                <a href="{{ route('panel.solicitudes.participantes', $solicitud) }}" class="font-medium underline">Ver quiénes</a>
+                            </p>
+                        @endif
 
                         @php($alistados = $montaje->items->where('pivot.alistado', true)->count())
                         @php($total = $montaje->items->count())
@@ -74,11 +88,16 @@
                             </p>
                         @endif
 
-                        <div class="mt-3 border-t border-gray-200 pt-3">
+                        <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-200 pt-3">
                             <x-boton variante="secundario" type="button" wire:click="abrir({{ $montaje->id }})"
                                      class="w-full px-4 py-2.5 sm:w-auto">
                                 {{ $abierta === $montaje->id ? 'Cerrar' : 'Preparar escenario' }}
                             </x-boton>
+                            @can('reprogramar', $solicitud)
+                                <x-boton variante="secundario" href="{{ route('panel.solicitudes.novedades', $solicitud) }}" class="w-full px-4 py-2.5 sm:w-auto">
+                                    Reprogramar o sustituir
+                                </x-boton>
+                            @endcan
                         </div>
 
                         @if ($abierta === $montaje->id && $detalle !== null)

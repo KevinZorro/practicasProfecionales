@@ -1,54 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$caso_clinico_nombre\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$docente_nombre\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$estudiantes\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$horas\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$materia_nombre\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$materia_semestre\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$sala_nombre\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Solicitud\:\:\$sesiones\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Exports/UsoDeEscenariosExport.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
 			identifier: property.notFound
 			count: 1

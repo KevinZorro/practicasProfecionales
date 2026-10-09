@@ -27,7 +27,7 @@
                             class="w-full rounded-md border border-gray-300 px-3 py-2.5 text-base focus:border-sky-600 focus:ring-sky-600">
                         <option value="">Elige una sala libre</option>
                         @foreach ($salasLibres as $sala)
-                            <option value="{{ $sala->id }}">{{ $sala->nombre }}</option>
+                            <option value="{{ $sala->id }}">{{ $sala->nombreCompleto() }}{{ $sala->del_escenario ? ' · recomendada para este escenario' : '' }}</option>
                         @endforeach
                     </select>
                 </div>

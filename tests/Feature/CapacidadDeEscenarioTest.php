@@ -31,7 +31,8 @@ function solicitudPara(CasoClinico $caso, Materia $materia, int $estudiantes): D
         fecha: '2026-10-05',
         horaInicio: '08:00',
         horaFin: '10:00',
-        cantidadEstudiantes: $estudiantes,
+        grupo: 'A',
+        estudianteIds: idsDeEstudiantes($estudiantes),
     );
 }
 
@@ -96,7 +97,7 @@ it('respeta la capacidad de cada escenario por separado', function (): void {
 // El formulario del docente
 // ---------------------------------------------------------------------
 
-it('enseña el error junto al campo de cantidad y no registra nada', function (): void {
+it('enseña el error junto a la lista de estudiantes y no registra nada', function (): void {
     $caso = CasoClinico::factory()->conCapacidad(7)->create();
 
     Livewire::actingAs($this->docente)
@@ -106,9 +107,10 @@ it('enseña el error junto al campo de cantidad y no registra nada', function ()
         ->set('fecha', '2026-10-05')
         ->set('horaInicio', '08:00')
         ->set('horaFin', '10:00')
-        ->set('cantidadEstudiantes', 20)
+        ->set('grupo', 'A')
+        ->set('estudianteIds', idsDeEstudiantes(8))
         ->call('guardar')
-        ->assertHasErrors('cantidadEstudiantes');
+        ->assertHasErrors('estudianteIds');
 
     expect(Solicitud::count())->toBe(0);
 });
@@ -120,7 +122,7 @@ it('avisa del máximo del escenario en cuanto el docente lo elige', function ():
         ->test(FormularioSolicitud::class)
         ->set('casoClinicoId', $caso->id)
         ->assertSet('capacidadDelCaso', 7)
-        ->assertSee('admite 7 estudiantes como máximo');
+        ->assertSee('este escenario admite 7 como máximo');
 });
 
 it('no avisa de ningún máximo si el escenario no tiene capacidad registrada', function (): void {

@@ -5,14 +5,20 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EstadoSolicitud;
+use App\Enums\EstadoUsuario;
+use App\Enums\OrigenSolicitud;
+use App\Enums\Rol;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Exceptions\SolicitudInvalida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Models\CasoClinico;
+use App\Models\EstudianteDeLaSesion;
 use App\Models\ItemInventario;
 use App\Models\Solicitud;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,18 +29,160 @@ use Illuminate\Support\Facades\DB;
  */
 final class SolicitudService
 {
-    public function __construct(private readonly PreparacionService $preparaciones) {}
+    /** Máximo de resultados al buscar estudiantes para una sesión. */
+    public const RESULTADOS_DE_BUSQUEDA = 10;
+
+    public function __construct(
+        private readonly PreparacionService $preparaciones,
+        private readonly BloqueoService $bloqueos,
+    ) {}
 
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
-        $this->garantizarCapacidad($datos);
+        // Un docente bloqueado no pide escenarios nuevos (RF68, D2).
+        $bloqueo = $this->bloqueos->vigenteDe($docente);
 
-        return DB::transaction(function () use ($docente, $datos): Solicitud {
-            $solicitud = Solicitud::create($this->atributosIniciales($docente, $datos));
+        if ($bloqueo !== null) {
+            throw SolicitudInvalida::docenteBloqueado($bloqueo->motivo);
+        }
+
+        $grupo = $this->normalizarGrupo($datos->grupo);
+        $estudianteIds = $this->garantizarEstudiantes($datos->estudianteIds);
+        $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
+
+        return DB::transaction(function () use ($docente, $datos, $grupo, $estudianteIds): Solicitud {
+            // El formato intramural viene con la solicitud del docente (RF59).
+            $solicitud = Solicitud::create([
+                ...$this->atributosIniciales($docente, $datos),
+                'grupo' => $grupo,
+                'cantidad_estudiantes' => count($estudianteIds),
+                'origen' => OrigenSolicitud::Docente,
+                'formato_intramural_at' => now(),
+                'formato_intramural_por' => $docente->id,
+            ]);
             $solicitud->items()->attach($this->itemsAAdjuntar($datos));
+            $solicitud->estudiantes()->attach($estudianteIds);
 
             return $solicitud;
         });
+    }
+
+    /**
+     * Agrega estudiantes a una sesión ya registrada: el docente que completa
+     * su lista, o el laboratorio (RF28, D15). Los que ya estaban se ignoran;
+     * a un retirado no se le vuelve a agregar, porque el retiro queda
+     * registrado (RF69).
+     *
+     * @param  list<int>  $estudianteIds
+     */
+    public function agregarEstudiantes(Solicitud $solicitud, array $estudianteIds, User $actor): Solicitud
+    {
+        $this->garantizarPermiso($actor, 'gestionarParticipantes', $solicitud);
+        $this->garantizarSesionAbierta($solicitud);
+        $estudianteIds = $this->garantizarEstudiantes($estudianteIds);
+
+        return DB::transaction(function () use ($solicitud, $estudianteIds): Solicitud {
+            $enLista = $solicitud->estudiantes()->get();
+            $retirado = $enLista->first(fn (User $e): bool => $this->fueRetirado($e) && in_array($e->id, $estudianteIds, true));
+
+            if ($retirado instanceof User) {
+                throw SolicitudInvalida::yaFueRetirado($retirado->nombre);
+            }
+
+            $nuevos = array_values(array_diff($estudianteIds, $enLista->pluck('id')->all()));
+            $this->garantizarCapacidad($solicitud->caso_clinico_id, $this->presentes($solicitud) + count($nuevos));
+
+            $solicitud->estudiantes()->attach($nuevos);
+            $this->actualizarCantidad($solicitud);
+
+            return $solicitud;
+        });
+    }
+
+    /**
+     * Retira a un estudiante de una sesión en curso o programada (RF69). No
+     * se borra de la lista: queda con el motivo y quién lo decidió.
+     */
+    public function retirarEstudiante(Solicitud $solicitud, User $estudiante, string $motivo, User $actor): Solicitud
+    {
+        $this->garantizarPermiso($actor, 'gestionarParticipantes', $solicitud);
+        $this->garantizarSesionAbierta($solicitud);
+        $motivo = trim($motivo);
+
+        if ($motivo === '') {
+            throw SolicitudInvalida::sinMotivoDeRetiro();
+        }
+
+        return DB::transaction(function () use ($solicitud, $estudiante, $motivo, $actor): Solicitud {
+            $enLista = $solicitud->estudiantes()->whereKey($estudiante->id)->first();
+
+            if (! $enLista instanceof User) {
+                throw SolicitudInvalida::noEstaEnLaSesion($estudiante->nombre);
+            }
+
+            if ($this->fueRetirado($enLista)) {
+                throw SolicitudInvalida::yaFueRetirado($estudiante->nombre);
+            }
+
+            $solicitud->estudiantes()->updateExistingPivot($estudiante->id, [
+                'retirado_at' => now(),
+                'retirado_por' => $actor->id,
+                'motivo_retiro' => $motivo,
+            ]);
+            $this->actualizarCantidad($solicitud);
+
+            return $solicitud;
+        });
+    }
+
+    /**
+     * Estudiantes que el docente puede poner en una sesión, por nombre,
+     * correo o código institucional (RF28). Solo cuentas activas con el rol
+     * de estudiante vigente.
+     *
+     * @param  list<int>  $excluir  los que ya están en la lista
+     * @return Collection<int, User>
+     */
+    public function buscarEstudiantes(string $busqueda, array $excluir = []): Collection
+    {
+        if (trim($busqueda) === '') {
+            return new Collection;
+        }
+
+        $aguja = '%'.mb_strtolower(trim($busqueda)).'%';
+
+        return $this->estudiantesQuePuedenIr()
+            ->whereNotIn('id', $excluir)
+            ->where(static fn (Builder $o) => $o
+                ->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
+                ->orWhereRaw('LOWER(email) LIKE ?', [$aguja])
+                ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]))
+            ->orderBy('nombre')
+            ->limit(self::RESULTADOS_DE_BUSQUEDA)
+            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+    }
+
+    /**
+     * Estudiantes por código institucional, para pegar de una vez la lista
+     * del grupo. Devuelve los encontrados y los códigos que no corresponden a
+     * ningún estudiante activo.
+     *
+     * @param  list<string>  $codigos
+     * @return array{encontrados: Collection<int, User>, desconocidos: list<string>}
+     */
+    public function estudiantesPorCodigo(array $codigos): array
+    {
+        $codigos = array_values(array_unique(array_filter(array_map('trim', $codigos), static fn (string $c): bool => $c !== '')));
+
+        $encontrados = $this->estudiantesQuePuedenIr()
+            ->whereIn('codigo_institucional', $codigos)
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+
+        return [
+            'encontrados' => $encontrados,
+            'desconocidos' => array_values(array_diff($codigos, $encontrados->pluck('codigo_institucional')->all())),
+        ];
     }
 
     /**
@@ -46,16 +194,121 @@ final class SolicitudService
      * llenado sería peor que no limitarla, y en pantalla se lee como
      * "sin definir".
      */
-    private function garantizarCapacidad(DatosNuevaSolicitud $datos): void
+    public function garantizarCapacidad(int $casoClinicoId, int $cantidad): void
     {
-        $caso = CasoClinico::findOrFail($datos->casoClinicoId);
+        $caso = CasoClinico::findOrFail($casoClinicoId);
         $maximo = $caso->capacidad_maxima_estudiantes;
 
-        if ($maximo === null || $datos->cantidadEstudiantes <= $maximo) {
+        if ($maximo === null || $cantidad <= $maximo) {
             return;
         }
 
-        throw CapacidadDeEstudiantesExcedida::para($caso, $datos->cantidadEstudiantes);
+        throw CapacidadDeEstudiantesExcedida::para($caso, $cantidad);
+    }
+
+    /**
+     * Una o dos letras, en mayúscula: "a" y "A" son el mismo grupo.
+     */
+    public function normalizarGrupo(string $grupo): string
+    {
+        $grupo = mb_strtoupper(trim($grupo));
+
+        if (preg_match('/^[A-Z]{1,2}$/', $grupo) !== 1) {
+            throw SolicitudInvalida::grupoInvalido($grupo);
+        }
+
+        return $grupo;
+    }
+
+    /**
+     * Al menos un estudiante, y todos con cuenta activa y el rol de
+     * estudiante vigente. Los repetidos cuentan una vez.
+     *
+     * @param  list<int>  $estudianteIds
+     * @return list<int>
+     */
+    private function garantizarEstudiantes(array $estudianteIds): array
+    {
+        $estudianteIds = array_values(array_unique($estudianteIds));
+
+        if ($estudianteIds === []) {
+            throw SolicitudInvalida::sinEstudiantes();
+        }
+
+        $validos = $this->estudiantesQuePuedenIr()->whereIn('id', $estudianteIds)->pluck('id')->all();
+        $invalidos = array_diff($estudianteIds, $validos);
+
+        if ($invalidos !== []) {
+            throw SolicitudInvalida::noSonEstudiantesActivos(
+                User::query()->whereIn('id', $invalidos)->orderBy('nombre')->pluck('nombre')->all(),
+            );
+        }
+
+        return $estudianteIds;
+    }
+
+    /**
+     * La lista se cambia mientras la sesión no haya pasado ni se haya
+     * rechazado. "Hoy" cuenta: se retira a alguien de la sesión en curso.
+     */
+    private function garantizarSesionAbierta(Solicitud $solicitud): void
+    {
+        $cerrada = $solicitud->estado === EstadoSolicitud::Rechazada
+            || $solicitud->fecha->toDateString() < now()->toDateString();
+
+        if ($cerrada) {
+            throw SolicitudInvalida::sesionCerrada();
+        }
+    }
+
+    /** El dato del retiro viaja en el pivote de la lista ("participacion"). */
+    private function fueRetirado(User $estudiante): bool
+    {
+        $participacion = $estudiante->getRelation('participacion');
+
+        return $participacion instanceof EstudianteDeLaSesion && $participacion->fueRetirado();
+    }
+
+    private function presentes(Solicitud $solicitud): int
+    {
+        return $solicitud->estudiantesPresentes()->count();
+    }
+
+    /**
+     * "cantidad_estudiantes" sigue a la lista: es la que leen los reportes
+     * (RF54). Una sesión apartada sin lista todavía conserva la cantidad que
+     * se registró con ella (RF57).
+     */
+    private function actualizarCantidad(Solicitud $solicitud): void
+    {
+        if (! $solicitud->estudiantes()->exists()) {
+            return;
+        }
+
+        $solicitud->update(['cantidad_estudiantes' => $this->presentes($solicitud)]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function garantizarPermiso(User $actor, string $accion, Solicitud $solicitud): void
+    {
+        if ($actor->cannot($accion, $solicitud)) {
+            throw new AuthorizationException(sprintf('El usuario no tiene permiso para "%s" esta solicitud.', $accion));
+        }
+    }
+
+    /**
+     * El rol pasa por el filtro de vigencia de User::roles() (regla 13), así
+     * que un rol de estudiante vencido tampoco cuenta.
+     *
+     * @return Builder<User>
+     */
+    private function estudiantesQuePuedenIr(): Builder
+    {
+        return User::query()
+            ->role(Rol::Estudiante->value)
+            ->where('estado', EstadoUsuario::Activo);
     }
 
     /**
@@ -78,10 +331,11 @@ final class SolicitudService
      */
     public function historialDelDocente(User $docente, ?EstadoSolicitud $estado = null, int $porPagina = 15): LengthAwarePaginator
     {
+        // Las suyas y las que dicta por sustitución (RF73).
         return Solicitud::query()
-            ->delDocente($docente)
+            ->where(static fn (Builder $c) => $c->delDocente($docente)->orWhere('docente_que_dicta_id', $docente->id))
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['materia', 'casoClinico', 'preparacion.sala', 'docente:id,nombre', 'docenteQueDicta:id,nombre'])
             ->orderByDesc('fecha')
             ->orderByDesc('hora_inicio')
             ->paginate($porPagina);
@@ -108,7 +362,10 @@ final class SolicitudService
      */
     public function paraDetalle(Solicitud $solicitud): Solicitud
     {
-        return $solicitud->load(['docente', 'materia', 'casoClinico', 'preparacion.sala', 'items']);
+        return $solicitud->load([
+            'docente', 'materia', 'casoClinico', 'preparacion.sala', 'items',
+            'estudiantes' => static fn ($consulta) => $consulta->orderBy('nombre'),
+        ]);
     }
 
     public function marcarRevisada(Solicitud $solicitud, User $administrativo): Solicitud
@@ -139,12 +396,17 @@ final class SolicitudService
         return $solicitud;
     }
 
-    public function rechazar(Solicitud $solicitud, User $coordinador, ?string $motivo = null): Solicitud
+    /**
+     * Rechaza en cualquiera de las dos fases (RF30, RF31). Si la rechaza el
+     * administrativo, "revisada_por" queda nulo: así se distingue la que no
+     * pasó la revisión de la que coordinación rechazó después.
+     */
+    public function rechazar(Solicitud $solicitud, User $actor, ?string $motivo = null): Solicitud
     {
         $this->garantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
 
         $solicitud->update([
-            ...$this->atributosDeResolucion(EstadoSolicitud::Rechazada, $coordinador),
+            ...$this->atributosDeResolucion(EstadoSolicitud::Rechazada, $actor),
             'motivo_rechazo' => $motivo,
         ]);
 
@@ -182,7 +444,6 @@ final class SolicitudService
             'fecha' => $datos->fecha,
             'hora_inicio' => $datos->horaInicio,
             'hora_fin' => $datos->horaFin,
-            'cantidad_estudiantes' => $datos->cantidadEstudiantes,
             'estado' => EstadoSolicitud::Pendiente,
             'observaciones' => $datos->observaciones,
         ];
@@ -191,11 +452,11 @@ final class SolicitudService
     /**
      * @return array<string, mixed>
      */
-    private function atributosDeResolucion(EstadoSolicitud $estado, User $coordinador): array
+    private function atributosDeResolucion(EstadoSolicitud $estado, User $actor): array
     {
         return [
             'estado' => $estado,
-            'resuelta_por' => $coordinador->id,
+            'resuelta_por' => $actor->id,
             'resuelta_at' => now(),
         ];
     }
@@ -237,16 +498,17 @@ final class SolicitudService
     }
 
     /**
-     * El docente solicita, el administrativo revisa y el coordinador
-     * resuelve. Sin atajos: una solicitud pendiente no se aprueba sin pasar
-     * por revisión, y una ya resuelta no se reabre.
+     * El docente solicita, el administrativo acepta (revisa) o rechaza, y
+     * el coordinador aprueba o rechaza lo revisado. Sin atajos: una
+     * solicitud pendiente no se aprueba sin pasar por revisión, y una ya
+     * resuelta no se reabre.
      *
      * @return array<string, list<EstadoSolicitud>>
      */
     private function transicionesPermitidas(): array
     {
         return [
-            EstadoSolicitud::Pendiente->value => [EstadoSolicitud::Revisada],
+            EstadoSolicitud::Pendiente->value => [EstadoSolicitud::Revisada, EstadoSolicitud::Rechazada],
             EstadoSolicitud::Revisada->value => [EstadoSolicitud::Aprobada, EstadoSolicitud::Rechazada],
             EstadoSolicitud::Aprobada->value => [],
             EstadoSolicitud::Rechazada->value => [],

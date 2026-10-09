@@ -35,26 +35,36 @@ it('no deja a un docente aprobar ni rechazar', function (): void {
     $docente = usuarioCon(Rol::Docente);
 
     expect($docente->can('aprobar', $this->revisada))->toBeFalse()
+        ->and($docente->can('rechazar', $this->solicitud))->toBeFalse()
         ->and($docente->can('rechazar', $this->revisada))->toBeFalse();
 });
 
-it('deja al administrativo revisar pero no resolver', function (): void {
+it('deja al administrativo aceptar o rechazar una pendiente, pero no resolver una revisada', function (): void {
+    // Primera fase (RF30). Lo que ya aceptó pasa a coordinación.
     $administrativo = usuarioCon(Rol::Administrativo);
 
     expect($administrativo->can('revisar', $this->solicitud))->toBeTrue()
+        ->and($administrativo->can('rechazar', $this->solicitud))->toBeTrue()
         ->and($administrativo->can('aprobar', $this->revisada))->toBeFalse()
         ->and($administrativo->can('rechazar', $this->revisada))->toBeFalse();
 });
 
-it('deja al coordinador revisar y también resolver una solicitud revisada', function (): void {
-    // El coordinador hereda lo del administrativo, así que revisar le
-    // corresponde igual que resolver.
+it('deja al coordinador rechazar en las dos fases y aprobar una revisada', function (): void {
+    // El coordinador hereda lo del administrativo, así que la primera fase
+    // le corresponde igual que la segunda.
     $coordinadora = usuarioCon(Rol::Coordinador);
 
     expect($coordinadora->can('revisar', $this->solicitud))->toBeTrue()
+        ->and($coordinadora->can('rechazar', $this->solicitud))->toBeTrue()
         ->and($coordinadora->can('aprobar', $this->revisada))->toBeTrue()
         ->and($coordinadora->can('rechazar', $this->revisada))->toBeTrue();
 });
+
+it('no deja rechazar una solicitud ya resuelta', function (string $estado, Rol $rol): void {
+    $resuelta = Solicitud::factory()->$estado()->create();
+
+    expect(usuarioCon($rol)->can('rechazar', $resuelta))->toBeFalse();
+})->with(['aprobada', 'rechazada'])->with([Rol::Administrativo, Rol::Coordinador, Rol::Admin]);
 
 // ---------------------------------------------------------------------
 // Aprobación: hace falta revisión administrativa previa
@@ -78,13 +88,15 @@ it('no deja aprobar una solicitud ya resuelta', function (string $estado): void 
         ->and(usuarioCon(Rol::Admin)->can('aprobar', $resuelta))->toBeFalse();
 })->with(['aprobada', 'rechazada']);
 
-it('no deja al ADMIN revisar ni rechazar', function (): void {
-    // Revisar es del administrativo, así que quien aprueba nunca es quien
-    // revisó. Rechazar sigue pendiente de confirmar con el cliente.
+it('deja al ADMIN la segunda fase, pero no la primera', function (): void {
+    // Revisar y rechazar una pendiente es del administrativo, así que quien
+    // aprueba nunca es quien revisó. En ausencia de coordinación, el ADMIN
+    // aprueba o rechaza lo revisado.
     $admin = usuarioCon(Rol::Admin);
 
     expect($admin->can('revisar', $this->solicitud))->toBeFalse()
-        ->and($admin->can('rechazar', $this->revisada))->toBeFalse();
+        ->and($admin->can('rechazar', $this->solicitud))->toBeFalse()
+        ->and($admin->can('rechazar', $this->revisada))->toBeTrue();
 });
 
 it('deja al ADMIN entrar a la bandeja, porque es donde aprueba', function (): void {
