@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 59 | 4 |
+| Completo | 61 | 4 |
 | Solo backend | 0 | 0 |
-| Parcial | 4 | 6 |
+| Parcial | 3 | 6 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 11 | 0 |
+| No iniciado | 10 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -106,7 +106,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 |---|---|---|---|---|---|
 | RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Completo | `PreparacionService::asignarSala()`, `salasLibresPara()`, evento `SalaAsignada` → `EnviarCorreoSalaAsignada`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest`, `UbicacionDeSalasTest` | Solo se ofrecen salas libres; las vinculadas al escenario, primero (D14). El correo sale al asignar y al cambiar la sala, no si se vuelve a elegir la misma |
 | RF37 | Ítems alistados, estado del montaje, observaciones, avance parcial por otra persona | Completo | `PreparacionService`, `/panel/preparaciones` | `TableroDiarioTest`, `PantallaPreparacionTest` | |
-| RF38 | Registrar y actualizar inventario, retirar unidades, distinguir consumibles de **accesorios y repuestos de un simulador** | Parcial | `InventarioService`, `/panel/inventario` | `InventarioTest`, `PantallaInventarioTest`, `EstadoFuncionalInventarioTest` | Los tipos son simulador, equipo clínico y equipo básico; no hay accesorio o repuesto ligado a un simulador (D13) |
+| RF38 | Registrar y actualizar inventario, retirar unidades, distinguir consumibles de **accesorios y repuestos de un simulador** | Completo | `InventarioService`, `/panel/inventario` | `InventarioTest`, `PantallaInventarioTest`, `EstadoFuncionalInventarioTest`, `AccesoriosEIngenieroTest` | Tipo nuevo «Accesorio o repuesto» ligado a un simulador del inventario (D13). Un `CHECK` de PostgreSQL exige que todo accesorio tenga simulador y que nada más lo tenga. El listado dice de qué simulador es |
 | RF39 | Nivel de fidelidad, solo el ADMIN | Completo | `ItemInventarioPolicy` | `PantallaInventarioTest` | |
 | RF40 | Disponibilidad para administrativos y coordinadores | Completo | `InventarioService::disponibilidadEnFranja()`, `/panel/inventario/disponibilidad` | `DisponibilidadInventarioTest`, `PantallaInventarioTest` | |
 
@@ -179,7 +179,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | RF65 | Crear, editar y reubicar salas, vincularlas con escenarios, con histórico de la reubicación | Completo | `/admin/salas`, `SalaService::registrarUbicacion()`, tablas `ubicaciones_sala` y `caso_clinico_sala` | `PantallaSalasTest`, `UbicacionDeSalasTest` | Cada sala tiene bloque, piso y número (únicos en conjunto) y un nombre editable. Cada cambio de ubicación deja una fila con quién la registró |
 | RF66 | Estado funcional por ítem con motivo y responsable | Completo | `InventarioService::cambiarEstado()`, `retirarUnidades()`, `reponerUnidades()`, `darDeBaja()` | `EstadoFuncionalInventarioTest`, `InventarioTest`, `DisponibilidadInventarioTest` | |
 | RF67 | Lista de reposición que alimentan los administrativos y confirma la coordinadora, exportable una vez confirmada | Completo | `ReposicionService`, `/panel/reposicion` | `ListaDeReposicionTest`, `PantallaDeReportesTest` | |
-| RF72 | Distinguir en la preparación lo que monta el administrativo de lo que requiere al ingeniero | No iniciado | — | — | Criterio: D10 |
+| RF72 | Distinguir en la preparación lo que monta el administrativo de lo que requiere al ingeniero | Completo | `PreparacionService::requiereIngeniero()`, `/panel/preparaciones` | `AccesoriosEIngenieroTest` | Los simuladores de alta fidelidad van aparte y primero en el material del montaje, y la tarjeta del día dice cuántos esperan al ingeniero (D10). El administrativo marca el ítem cuando el ingeniero termina |
 | RF74 | Capacidad máxima de estudiantes por caso clínico; la de la sala solo informa | Completo | `SolicitudService::crear()` (`CapacidadDeEstudiantesExcedida`), `/admin/casos-clinicos` | `CapacidadDeEscenarioTest`, `PantallaCasosClinicosTest` | Aplicarla también al registrar sesiones apartadas (RF57) |
 
 ## Control de acceso de participantes (RF68–RF71)

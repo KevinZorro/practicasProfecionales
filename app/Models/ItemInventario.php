@@ -11,6 +11,7 @@ use Database\Factories\ItemInventarioFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -39,6 +40,7 @@ class ItemInventario extends Model
         'tipo',
         'descripcion',
         'activo',
+        'simulador_id',
     ];
 
     /**
@@ -87,6 +89,26 @@ class ItemInventario extends Model
     public function cambiosDeEstado(): HasMany
     {
         return $this->hasMany(CambioEstadoItem::class, 'item_inventario_id')->masRecientesPrimero();
+    }
+
+    /**
+     * El simulador al que pertenece este accesorio o repuesto (RF38).
+     *
+     * @return BelongsTo<ItemInventario, $this>
+     */
+    public function simulador(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'simulador_id');
+    }
+
+    /**
+     * Los accesorios y repuestos de este simulador (RF38).
+     *
+     * @return HasMany<ItemInventario, $this>
+     */
+    public function accesorios(): HasMany
+    {
+        return $this->hasMany(self::class, 'simulador_id');
     }
 
     /** @param Builder<$this> $consulta */

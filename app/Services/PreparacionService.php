@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EstadoPreparacion;
+use App\Enums\NivelFidelidad;
+use App\Enums\TipoItemInventario;
 use App\Events\SalaAsignada;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
@@ -85,6 +87,16 @@ final class PreparacionService
         SalaAsignada::dispatch($preparacion, esCambio: $anterior !== null);
 
         return $preparacion;
+    }
+
+    /**
+     * Lo que requiere al ingeniero: los simuladores de alta fidelidad (RF72,
+     * D10). El ingeniero no tiene cuenta; el administrativo marca el ítem
+     * cuando él termina, como cualquier otro.
+     */
+    public function requiereIngeniero(ItemInventario $item): bool
+    {
+        return $item->tipo === TipoItemInventario::Simulador && $item->nivel_fidelidad === NivelFidelidad::Alta;
     }
 
     public function marcarItemAlistado(Preparacion $preparacion, ItemInventario $item): void

@@ -26,5 +26,7 @@ final readonly class DatosItemInventario
         public ?string $descripcion = null,
         public bool $activo = true,
         public ?NivelFidelidad $nivelFidelidad = null,
+        // Solo para accesorios y repuestos: el simulador al que pertenecen (RF38).
+        public ?int $simuladorId = null,
     ) {}
 }

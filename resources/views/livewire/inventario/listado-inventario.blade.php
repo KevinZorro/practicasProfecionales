@@ -83,6 +83,9 @@
                              etiquetas, y a 390 px dejaban el nombre en «B..». --}}
                         <div class="space-y-2">
                             <p class="text-sm font-semibold text-gray-900">{{ $item->nombre }}</p>
+                            @if ($item->simulador)
+                                <p class="text-xs text-gray-600">De: {{ $item->simulador->nombre }}</p>
+                            @endif
                             <x-desglose-de-unidades :item="$item" />
                         </div>
                         <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -110,7 +113,12 @@
             <x-tabla :encabezados="['Nombre', 'Tipo', 'Fidelidad', 'Unidades', 'Desglose', '']">
                 @foreach ($items as $item)
                     <tr wire:key="item-tabla-{{ $item->id }}" @class(['opacity-75' => ! $item->activo])>
-                        <td class="px-4 py-3 font-medium text-gray-900">{{ $item->nombre }}</td>
+                        <td class="px-4 py-3 font-medium text-gray-900">
+                            {{ $item->nombre }}
+                            @if ($item->simulador)
+                                <span class="block text-xs font-normal text-gray-600">De: {{ $item->simulador->nombre }}</span>
+                            @endif
+                        </td>
                         <td class="px-4 py-3"><x-tipo-de-item :tipo="$item->tipo" /></td>
                         <td class="px-4 py-3"><x-nivel-de-fidelidad :nivel="$item->nivel_fidelidad" :tipo="$item->tipo" /></td>
                         <td class="px-4 py-3 tabular-nums">{{ $item->cantidad_total }}</td>

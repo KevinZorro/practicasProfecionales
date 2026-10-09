@@ -26,6 +26,20 @@
                 @error('tipo') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
             </div>
 
+            @if ($esAccesorio)
+                <div>
+                    <label for="simuladorId" class="mb-1 block text-sm font-medium text-gray-700">De qué simulador</label>
+                    <select wire:model="simuladorId" id="simuladorId"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                        <option value="">Elige el simulador</option>
+                        @foreach ($simuladores as $simulador)
+                            <option value="{{ $simulador->id }}">{{ $simulador->nombre }}</option>
+                        @endforeach
+                    </select>
+                    @error('simuladorId') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                </div>
+            @endif
+
             <div>
                 <label for="cantidadTotal" class="mb-1 block text-sm font-medium text-gray-700">Unidades</label>
                 @if ($esAlta)

@@ -158,6 +158,10 @@ final class TableroDiario extends Component
             'noPuedenIngresar' => $this->noPuedenIngresar($montajes, $participacion),
             'detalle' => $preparacion,
             'salasLibres' => $preparacion === null ? collect() : $preparaciones->salasLibresPara($preparacion),
+            // Por montaje, cuántos elementos esperan al ingeniero (RF72).
+            'delIngeniero' => $montajes->mapWithKeys(static fn (Preparacion $m): array => [
+                $m->id => $m->items->filter(static fn (ItemInventario $item): bool => $preparaciones->requiereIngeniero($item))->pluck('id')->all(),
+            ])->all(),
         ]);
     }
 

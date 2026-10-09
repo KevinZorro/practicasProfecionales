@@ -207,6 +207,7 @@ return [
         'motivoAtencion' => 'motivo',
         'motivoRechazo' => 'motivo del rechazo',
         'motivoLevantamiento' => 'motivo',
+        'simuladorId' => 'simulador',
         'motivoRetiro' => 'motivo del retiro',
         'personaElegida' => 'persona',
         'nombre' => 'nombre',

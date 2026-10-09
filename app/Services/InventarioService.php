@@ -38,6 +38,7 @@ final class InventarioService
     public function crear(User $actor, DatosItemInventario $datos): ItemInventario
     {
         $this->garantizarFidelidadCoherente($datos->tipo, $datos->nivelFidelidad);
+        $this->garantizarSimuladorCoherente($datos);
 
         return DB::transaction(function () use ($actor, $datos): ItemInventario {
             $item = new ItemInventario;
@@ -64,6 +65,7 @@ final class InventarioService
     public function actualizar(User $actor, ItemInventario $item, DatosItemInventario $datos): ItemInventario
     {
         $this->garantizarFidelidadCoherente($datos->tipo, $datos->nivelFidelidad);
+        $this->garantizarSimuladorCoherente($datos, $item);
 
         $item->fill($this->atributosMasivos($datos));
         $this->aplicarNivelFidelidad($actor, $item, $datos->nivelFidelidad);
@@ -259,7 +261,7 @@ final class InventarioService
         return ItemInventario::query()
             // El historial se pinta junto a cada ítem (RF66): sin esto, una
             // página de 15 ítems dispara 31 consultas.
-            ->with(['cambiosDeEstado.registradoPor:id,nombre'])
+            ->with(['cambiosDeEstado.registradoPor:id,nombre', 'simulador:id,nombre'])
             ->when($tipo instanceof TipoItemInventario, fn (Builder $c) => $c->where('tipo', $tipo))
             // Filtrar por estado ahora significa "tiene unidades en ese
             // estado", porque un mismo ítem puede tener unidades en varios.
@@ -293,7 +295,27 @@ final class InventarioService
             'tipo' => $datos->tipo,
             'descripcion' => $datos->descripcion,
             'activo' => $datos->activo,
+            'simulador_id' => $datos->tipo->perteneceAUnSimulador() ? $datos->simuladorId : null,
         ];
+    }
+
+    /**
+     * Un accesorio o repuesto apunta a un simulador del inventario (RF38);
+     * nada más apunta a uno.
+     */
+    private function garantizarSimuladorCoherente(DatosItemInventario $datos, ?ItemInventario $item = null): void
+    {
+        if (! $datos->tipo->perteneceAUnSimulador()) {
+            return;
+        }
+
+        $esSimulador = $datos->simuladorId !== null
+            && $datos->simuladorId !== $item?->id
+            && ItemInventario::query()->whereKey($datos->simuladorId)->where('tipo', TipoItemInventario::Simulador)->exists();
+
+        if (! $esSimulador) {
+            throw InventarioInvalido::accesorioSinSimulador();
+        }
     }
 
     /**
