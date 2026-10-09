@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Enums\EstadoUsuario;
-use App\Enums\TipoSesion;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Solicitud\BandejaRevision;
 use App\Livewire\Solicitud\FormularioSolicitud;
@@ -11,7 +10,6 @@ use App\Models\CasoClinico;
 use App\Models\Materia;
 use App\Models\Solicitud;
 use App\Models\User;
-use App\Services\DatosNuevaSolicitud;
 use App\Services\SolicitudService;
 use Database\Seeders\RolSeeder;
 use Livewire\Livewire;
@@ -26,23 +24,6 @@ beforeEach(function (): void {
     $this->servicio = app(SolicitudService::class);
     $this->docente = User::factory()->docente()->create();
 });
-
-/**
- * @param  list<int>  $estudianteIds
- */
-function sesionCon(array $estudianteIds, string $grupo = 'A'): DatosNuevaSolicitud
-{
-    return new DatosNuevaSolicitud(
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: CasoClinico::factory()->create()->id,
-        tipo: TipoSesion::Practica,
-        fecha: '2026-10-20',
-        horaInicio: '07:00',
-        horaFin: '09:00',
-        grupo: $grupo,
-        estudianteIds: $estudianteIds,
-    );
-}
 
 it('guarda el grupo y los estudiantes, y cuenta la cantidad de la lista', function (): void {
     $ids = idsDeEstudiantes(4);

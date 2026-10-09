@@ -10,11 +10,13 @@ use App\Exceptions\FormatoConfidencialidadInvalido;
 use App\Models\FormatoConfidencialidad;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
+use Closure;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -84,6 +86,10 @@ final class ConfidencialidadService
      * el que entra a la práctica y quien revisa en la puerta los revisa en
      * la misma pasada.
      *
+     * Se puede acotar a una sesión —sus estudiantes no retirados y su
+     * docente, el grupo completo del RF71— o a una materia: quienes van o
+     * dictan sesiones de ella (RF53).
+     *
      * @return LengthAwarePaginator<int, User>
      */
     public function estadoDeLosFirmantes(
@@ -91,6 +97,8 @@ final class ConfidencialidadService
         ?bool $soloSinVigente = null,
         ?string $busqueda = null,
         int $porPagina = self::POR_PAGINA,
+        ?int $solicitudId = null,
+        ?int $materiaId = null,
     ): LengthAwarePaginator {
         // Sin ningún periodo nadie tiene entregas: '' no coincide con ninguna.
         $periodo ??= $this->periodoVigente() ?? '';
@@ -120,8 +128,34 @@ final class ConfidencialidadService
                     fn (Builder $o) => $this->buscarPersona($o, (string) $busqueda),
                 ),
             )
+            ->when($solicitudId !== null, fn (Builder $c) => $this->deLasSesiones(
+                $c,
+                static fn (QueryBuilder $s) => $s->where('id', $solicitudId),
+            ))
+            ->when($materiaId !== null, fn (Builder $c) => $this->deLasSesiones(
+                $c,
+                static fn (QueryBuilder $s) => $s->where('materia_id', $materiaId),
+            ))
             ->orderBy('nombre')
             ->paginate($porPagina);
+    }
+
+    /**
+     * Personas de las sesiones que cumplen el filtro: sus estudiantes no
+     * retirados y su docente.
+     *
+     * @param  Builder<User>  $consulta
+     * @param  Closure(QueryBuilder): mixed  $sesiones
+     */
+    private function deLasSesiones(Builder $consulta, Closure $sesiones): void
+    {
+        $consulta->where(static fn (Builder $o) => $o
+            ->whereIn('id', static fn (QueryBuilder $e) => $e
+                ->select('estudiante_id')
+                ->from('estudiante_solicitud')
+                ->whereNull('retirado_at')
+                ->whereIn('solicitud_id', static fn (QueryBuilder $s) => $sesiones($s->select('id')->from('solicitudes'))))
+            ->orWhereIn('id', static fn (QueryBuilder $d) => $sesiones($d->select('docente_id')->from('solicitudes'))));
     }
 
     /**
@@ -321,15 +355,9 @@ final class ConfidencialidadService
      * respondiendo si el documento está verificado y es lo que persigue la
      * administrativa hasta cerrarlo.
      *
-     * Se engancha donde se decida bloquear —al agregarlo a una evaluación,
-     * al pasar lista, o en un middleware de las vistas de estudiante—, pero
-     * la comprobación vive aquí y no se repite.
-     *
-     * PENDIENTE con el cliente, dos cosas: si esto debe impedir que un
-     * docente agregue al estudiante a una evaluación o solo advertir; y qué
-     * significa para un docente sin el formato al día, porque bloquearlo es
-     * cancelar la clase, no dejar a alguien fuera. Hoy nadie lo llama:
-     * EvaluacionService no lo consulta.
+     * Quien lo combina con el bloqueo de coordinación es
+     * ParticipacionService: eso es lo que deciden la evaluación (RF45) y la
+     * lista de la sesión (RF70).
      */
     public function puedeParticiparEnPracticas(User $firmante): bool
     {
@@ -344,6 +372,31 @@ final class ConfidencialidadService
             ->delPeriodo($periodo)
             ->queHabilitanPracticas()
             ->exists();
+    }
+
+    /**
+     * De estas personas, quiénes pueden entrar a prácticas por el formato:
+     * la misma pregunta que puedeParticiparEnPracticas(), en una sola
+     * consulta para la lista de una sesión.
+     *
+     * @param  list<int>  $firmanteIds
+     * @return list<int>
+     */
+    public function habilitadosParaPracticas(array $firmanteIds): array
+    {
+        $periodo = $this->periodoVigente();
+
+        if ($periodo === null || $firmanteIds === []) {
+            return [];
+        }
+
+        return FormatoConfidencialidad::query()
+            ->whereIn('firmante_id', $firmanteIds)
+            ->delPeriodo($periodo)
+            ->queHabilitanPracticas()
+            ->pluck('firmante_id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->all();
     }
 
     public function entregaDelPeriodo(User $firmante, ?string $periodo = null): ?FormatoConfidencialidad

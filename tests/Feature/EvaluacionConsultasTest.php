@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function (): void {
+    abrirPeriodo();
     $this->seed(RolSeeder::class);
     $this->servicio = app(EvaluacionService::class);
     $this->docente = User::factory()->docente()->create();
@@ -50,7 +51,7 @@ function evaluacionFinalizada(User $docente, TipoEvaluacion $tipo, Materia $mate
 
 it('devuelve el historial de un docente sin mezclar el de otros', function (): void {
     $otroDocente = User::factory()->docente()->create();
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
     evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [[$estudiante, ResultadoEvaluacion::Aprobado]]);
     evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [[$estudiante, ResultadoEvaluacion::Aprobado]]);
     evaluacionFinalizada($otroDocente, $this->tipo, $this->materia, [[$estudiante, ResultadoEvaluacion::Aprobado]]);
@@ -60,7 +61,7 @@ it('devuelve el historial de un docente sin mezclar el de otros', function (): v
 });
 
 it('devuelve al estudiante sus resultados con intento y checklist marcado', function (): void {
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
     evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [[$estudiante, ResultadoEvaluacion::NoAprobado]]);
 
     $historial = $this->servicio->historialDelEstudiante($estudiante);
@@ -75,8 +76,8 @@ it('devuelve al estudiante sus resultados con intento y checklist marcado', func
 });
 
 it('no mezcla en el historial los resultados de otros estudiantes', function (): void {
-    $estudiante = User::factory()->estudiante()->create();
-    $companero = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
+    $companero = User::factory()->estudiante()->habilitado()->create();
     evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [
         [$estudiante, ResultadoEvaluacion::Aprobado],
         [$companero, ResultadoEvaluacion::NoAprobado],
@@ -89,7 +90,7 @@ it('no mezcla en el historial los resultados de otros estudiantes', function ():
 
 it('oculta al estudiante las evaluaciones que siguen en borrador', function (): void {
     // Mientras es borrador el docente todavía está calificando.
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
     $solicitud = Solicitud::factory()->deEvaluacion()->aprobada()->create(['materia_id' => $this->materia->id]);
     $borrador = $this->servicio->crear($solicitud, $this->tipo, $this->docente);
     $registro = $this->servicio->agregarEstudiante($borrador, $estudiante);
@@ -100,7 +101,7 @@ it('oculta al estudiante las evaluaciones que siguen en borrador', function (): 
 
 it('no genera consultas N+1 en el historial del docente', function (): void {
     Model::preventLazyLoading();
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
     foreach (range(1, 4) as $ignorado) {
         evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [[$estudiante, ResultadoEvaluacion::Aprobado]]);
     }
@@ -122,7 +123,7 @@ it('no genera consultas N+1 en el historial del docente', function (): void {
 
 it('mantiene constante el número de consultas al crecer el historial', function (): void {
     Model::preventLazyLoading();
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
 
     $medirDocente = function (): int {
         DB::flushQueryLog();
@@ -154,7 +155,7 @@ it('mantiene constante el número de consultas al crecer el historial', function
 
 it('no genera consultas N+1 en el historial del estudiante', function (): void {
     Model::preventLazyLoading();
-    $estudiante = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
     foreach (range(1, 4) as $ignorado) {
         evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [[$estudiante, ResultadoEvaluacion::Aprobado]]);
     }
@@ -178,7 +179,7 @@ it('no genera consultas N+1 en el historial del estudiante', function (): void {
 it('no deja a un docente ver evaluaciones de otro docente', function (): void {
     $otroDocente = User::factory()->docente()->create();
     $ajena = evaluacionFinalizada($otroDocente, $this->tipo, $this->materia, [
-        [User::factory()->estudiante()->create(), ResultadoEvaluacion::Aprobado],
+        [User::factory()->estudiante()->habilitado()->create(), ResultadoEvaluacion::Aprobado],
     ]);
 
     expect($this->docente->can('view', $ajena))->toBeFalse()
@@ -191,7 +192,7 @@ it('deja a coordinación y al ADMIN ver cualquier evaluación, para reportes', f
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
     $evaluacion = evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [
-        [User::factory()->estudiante()->create(), ResultadoEvaluacion::Aprobado],
+        [User::factory()->estudiante()->habilitado()->create(), ResultadoEvaluacion::Aprobado],
     ]);
 
     expect($usuario->can('view', $evaluacion))->toBeTrue();
@@ -201,15 +202,15 @@ it('no deja a un administrativo ni a un estudiante ver la evaluación completa',
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
     $evaluacion = evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [
-        [User::factory()->estudiante()->create(), ResultadoEvaluacion::Aprobado],
+        [User::factory()->estudiante()->habilitado()->create(), ResultadoEvaluacion::Aprobado],
     ]);
 
     expect($usuario->can('view', $evaluacion))->toBeFalse();
 })->with([Rol::Administrativo, Rol::Estudiante]);
 
 it('deja a cada estudiante ver solo su propio resultado', function (): void {
-    $estudiante = User::factory()->estudiante()->create();
-    $companero = User::factory()->estudiante()->create();
+    $estudiante = User::factory()->estudiante()->habilitado()->create();
+    $companero = User::factory()->estudiante()->habilitado()->create();
     evaluacionFinalizada($this->docente, $this->tipo, $this->materia, [
         [$estudiante, ResultadoEvaluacion::Aprobado],
         [$companero, ResultadoEvaluacion::NoAprobado],
@@ -221,7 +222,7 @@ it('deja a cada estudiante ver solo su propio resultado', function (): void {
     expect($estudiante->can('view', $suyo))->toBeTrue()
         ->and($estudiante->can('view', $ajeno))->toBeFalse()
         ->and($this->docente->can('view', $ajeno))->toBeTrue()
-        ->and(User::factory()->estudiante()->create()->can('view', $suyo))->toBeFalse();
+        ->and(User::factory()->estudiante()->habilitado()->create()->can('view', $suyo))->toBeFalse();
 });
 
 it('solo deja crear evaluaciones al docente', function (): void {

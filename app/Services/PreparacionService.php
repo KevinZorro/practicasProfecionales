@@ -134,7 +134,7 @@ final class PreparacionService
             // RF36 pide —solo escenarios aprobados— y no dependa de que esa
             // regla siga viviendo en SolicitudService.
             ->whereHas('solicitud', static fn (Builder $consulta) => $consulta->aprobadas())
-            ->with(['solicitud.docente', 'solicitud.materia', 'solicitud.casoClinico', 'sala', 'items'])
+            ->with(['solicitud.docente', 'solicitud.materia', 'solicitud.casoClinico', 'solicitud.estudiantesPresentes:users.id', 'sala', 'items'])
             ->orderBy(Solicitud::select('hora_inicio')->whereColumn('solicitudes.id', 'preparaciones.solicitud_id'))
             ->get();
     }

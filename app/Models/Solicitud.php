@@ -89,14 +89,28 @@ class Solicitud extends Model
     }
 
     /**
-     * Los estudiantes que el docente puso en esta sesión (RF28).
+     * Los estudiantes que el docente puso en esta sesión (RF28), también los
+     * retirados (RF69): se marcan, no se quitan de la lista.
      *
-     * @return BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this, EstudianteDeLaSesion, 'participacion'>
      */
     public function estudiantes(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'estudiante_solicitud', 'solicitud_id', 'estudiante_id')
+            ->using(EstudianteDeLaSesion::class)
+            ->as('participacion')
+            ->withPivot(['retirado_at', 'retirado_por', 'motivo_retiro'])
             ->withTimestamps();
+    }
+
+    /**
+     * Los que siguen en la sesión.
+     *
+     * @return BelongsToMany<User, $this, EstudianteDeLaSesion, 'participacion'>
+     */
+    public function estudiantesPresentes(): BelongsToMany
+    {
+        return $this->estudiantes()->wherePivotNull('retirado_at');
     }
 
     /** @return BelongsToMany<ItemInventario, $this> */

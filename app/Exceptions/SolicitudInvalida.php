@@ -24,6 +24,31 @@ final class SolicitudInvalida extends DomainException
         ));
     }
 
+    public static function docenteBloqueado(string $motivo): self
+    {
+        return new self(sprintf('No puede solicitar escenarios mientras tenga un bloqueo vigente. Motivo: %s', $motivo));
+    }
+
+    public static function sesionCerrada(): self
+    {
+        return new self('La lista de estudiantes ya no se puede cambiar: la sesión pasó o fue rechazada.');
+    }
+
+    public static function noEstaEnLaSesion(string $nombre): self
+    {
+        return new self(sprintf('%s no está en la lista de esta sesión.', $nombre));
+    }
+
+    public static function yaFueRetirado(string $nombre): self
+    {
+        return new self(sprintf('%s fue retirado de esta sesión; el retiro queda registrado y no se deshace.', $nombre));
+    }
+
+    public static function sinMotivoDeRetiro(): self
+    {
+        return new self('Escriba el motivo del retiro.');
+    }
+
     public static function grupoInvalido(string $grupo): self
     {
         return new self(sprintf('El grupo se identifica con una o dos letras (A, B, C…); se recibió "%s".', $grupo));

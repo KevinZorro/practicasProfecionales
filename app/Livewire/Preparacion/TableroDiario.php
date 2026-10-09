@@ -11,7 +11,9 @@ use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
 use App\Models\Preparacion;
 use App\Models\Sala;
+use App\Services\ParticipacionService;
 use App\Services\PreparacionService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -146,15 +148,41 @@ final class TableroDiario extends Component
         $this->authorize('viewAny', Preparacion::class);
     }
 
-    public function render(PreparacionService $preparaciones): mixed
+    public function render(PreparacionService $preparaciones, ParticipacionService $participacion): mixed
     {
         $preparacion = $this->abierta === null ? null : $this->preparacion($this->abierta);
+        $montajes = $preparaciones->tableroDelDia($this->fecha);
 
         return view('livewire.preparacion.tablero-diario', [
-            'montajes' => $preparaciones->tableroDelDia($this->fecha),
+            'montajes' => $montajes,
+            'noPuedenIngresar' => $this->noPuedenIngresar($montajes, $participacion),
             'detalle' => $preparacion,
             'salasLibres' => $preparacion === null ? collect() : $preparaciones->salasLibresPara($preparacion),
         ]);
+    }
+
+    /**
+     * Por montaje: si el docente puede entrar y cuántos estudiantes no
+     * pueden. Una sola pasada por ParticipacionService para todo el día.
+     *
+     * @param  Collection<int, Preparacion>  $montajes
+     * @return array<int, array{docente: bool, estudiantes: int}>
+     */
+    private function noPuedenIngresar(Collection $montajes, ParticipacionService $participacion): array
+    {
+        $ids = $montajes->flatMap(static fn (Preparacion $m) => [
+            $m->solicitud->docente_id,
+            ...$m->solicitud->estudiantesPresentes->pluck('id')->all(),
+        ])->unique()->values()->all();
+
+        $impedimentos = $participacion->impedimentos($ids);
+
+        return $montajes->mapWithKeys(static fn (Preparacion $m): array => [$m->id => [
+            'docente' => $impedimentos[$m->solicitud->docente_id] !== [],
+            'estudiantes' => $m->solicitud->estudiantesPresentes
+                ->filter(static fn ($e): bool => $impedimentos[$e->id] !== [])
+                ->count(),
+        ]])->all();
     }
 
     /** Preparación del día en curso, con todo lo que la pantalla enseña. */

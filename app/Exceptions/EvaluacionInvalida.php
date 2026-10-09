@@ -6,6 +6,8 @@ namespace App\Exceptions;
 
 use App\Models\Solicitud;
 use App\Models\TipoEvaluacion;
+use App\Models\User;
+use App\Services\Impedimento;
 use DomainException;
 
 /**
@@ -51,6 +53,18 @@ final class EvaluacionInvalida extends DomainException
             'El tipo de evaluación "%s" no está asociado a la materia %s.',
             $tipo->nombre,
             $solicitud->materia->nombre,
+        ));
+    }
+
+    /**
+     * @param  list<Impedimento>  $impedimentos
+     */
+    public static function noPuedeIngresar(User $estudiante, array $impedimentos): self
+    {
+        return new self(sprintf(
+            'No se puede evaluar a %s: %s.',
+            $estudiante->nombre,
+            implode('; ', array_map(static fn (Impedimento $i): string => mb_strtolower($i->descripcion()), $impedimentos)),
         ));
     }
 

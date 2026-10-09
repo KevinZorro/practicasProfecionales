@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class EvaluacionService
 {
+    public function __construct(private readonly ParticipacionService $participacion) {}
+
     public function crear(Solicitud $solicitud, TipoEvaluacion $tipo, User $docente): Evaluacion
     {
         $this->garantizarSolicitudApta($solicitud);
@@ -50,9 +52,19 @@ final class EvaluacionService
         });
     }
 
+    /**
+     * Solo se evalúa a quien puede entrar al laboratorio: formato de
+     * confidencialidad al día y sin bloqueo (RF45, RF70).
+     */
     public function agregarEstudiante(Evaluacion $evaluacion, User $estudiante): EvaluacionEstudiante
     {
         $this->garantizarBorrador($evaluacion);
+
+        $impedimentos = $this->participacion->impedimentosDe($estudiante);
+
+        if ($impedimentos !== []) {
+            throw EvaluacionInvalida::noPuedeIngresar($estudiante, $impedimentos);
+        }
 
         // Nace sin resultado: lo decide el docente más adelante (RF46).
         return $evaluacion->estudiantes()->create([

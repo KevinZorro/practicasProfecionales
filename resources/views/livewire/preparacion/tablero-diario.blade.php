@@ -63,6 +63,20 @@
                             </x-dato>
                         </dl>
 
+                        {{-- Quién no puede entrar se ve antes de abrir la puerta (RF70). --}}
+                        @php($noPueden = $noPuedenIngresar[$montaje->id] ?? ['docente' => false, 'estudiantes' => 0])
+                        @if ($noPueden['docente'] || $noPueden['estudiantes'] > 0)
+                            <p class="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20">
+                                @if ($noPueden['docente'])
+                                    El docente no puede ingresar.
+                                @endif
+                                @if ($noPueden['estudiantes'] > 0)
+                                    {{ $noPueden['estudiantes'] }} {{ $noPueden['estudiantes'] === 1 ? 'estudiante no puede' : 'estudiantes no pueden' }} ingresar.
+                                @endif
+                                <a href="{{ route('panel.solicitudes.participantes', $solicitud) }}" class="font-medium underline">Ver quiénes</a>
+                            </p>
+                        @endif
+
                         @php($alistados = $montaje->items->where('pivot.alistado', true)->count())
                         @php($total = $montaje->items->count())
 

@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Enums\TipoSesion;
+use App\Models\CasoClinico;
+use App\Models\Materia;
 use App\Models\PeriodoAcademico;
 use App\Models\User;
+use App\Services\DatosNuevaSolicitud;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -107,4 +111,24 @@ function abrirPeriodo(string $nombre = '2026-2'): PeriodoAcademico
 function idsDeEstudiantes(int $cuantos): array
 {
     return User::factory()->estudiante()->count($cuantos)->create()->pluck('id')->all();
+}
+
+/**
+ * Datos de una sesión de práctica con estos estudiantes, sobre un caso y una
+ * materia nuevos.
+ *
+ * @param  list<int>  $estudianteIds
+ */
+function sesionCon(array $estudianteIds, string $grupo = 'A', ?string $fecha = null): DatosNuevaSolicitud
+{
+    return new DatosNuevaSolicitud(
+        materiaId: Materia::factory()->create()->id,
+        casoClinicoId: CasoClinico::factory()->create()->id,
+        tipo: TipoSesion::Practica,
+        fecha: $fecha ?? now()->addWeek()->format('Y-m-d'),
+        horaInicio: '07:00',
+        horaFin: '09:00',
+        grupo: $grupo,
+        estudianteIds: $estudianteIds,
+    );
 }

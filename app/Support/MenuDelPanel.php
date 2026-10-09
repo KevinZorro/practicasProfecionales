@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Models\AsignacionDeRol;
+use App\Models\Bloqueo;
 use App\Models\Evaluacion;
 use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
@@ -122,6 +123,14 @@ final class MenuDelPanel
                 icono: 'M12 4v16m8-8H4',
                 permiso: 'create',
                 sobre: PlantillaConfidencialidad::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'bloqueos',
+                etiqueta: 'Bloqueos de acceso',
+                ruta: 'panel.bloqueos',
+                icono: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636',
+                permiso: 'viewAny',
+                sobre: Bloqueo::class,
             ),
             new SeccionDelPanel(
                 clave: 'periodo-academico',

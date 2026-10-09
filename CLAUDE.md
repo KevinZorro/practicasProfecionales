@@ -149,13 +149,15 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 
 | Service | Responsabilidad |
 |---|---|
-| `SolicitudService` | Crear solicitud, precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
+| `SolicitudService` | Crear solicitud con su grupo y estudiantes, completar o retirar estudiantes de la sesión (RF28, RF69), precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
 | `PreparacionService` | Crear preparación al aprobar, asignar sala entre las libres (las vinculadas al escenario primero) y avisar al docente por correo, marcar ítems alistados |
 | `SalaService` | Rastro de la ubicación de las salas (bloque, piso y número, RF65): una fila en `ubicaciones_sala` cada vez que cambia. Lo llaman las páginas de alta y edición de Filament |
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `PeriodoAcademicoService` | Abrir, cerrar y reabrir el periodo académico (RF75). Es la única fuente del periodo vigente: el abierto, o entre semestres el último cerrado. Nunca se deriva del calendario |
 | `ConfidencialidadService` | Estado del formato de confidencialidad en el periodo vigente; solo recibe entregas con un periodo abierto |
+| `BloqueoService` | Bloquear y levantar el bloqueo de estudiantes y docentes, siempre con motivo (RF68). Se levanta, no se borra |
+| `ParticipacionService` | Quién puede entrar al laboratorio y por qué no: formato al día y sin bloqueo (RF70). Lo consultan la evaluación (RF45) y la lista de cada sesión |
 | `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8) y a qué cuenta corresponde quien vuelve de Google (RF18). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
@@ -192,7 +194,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    Dos preguntas parecidas que **no** son la misma: `puedeParticiparEnPracticas()` (verificado **o** entrega física) decide si entra a la práctica; `tieneFormatoVigente()` (solo verificado) dice si el trámite está cerrado.
 
-   **Quien no tiene el formato o está bloqueado no entra ni puede ser evaluado (RF45, RF70).** Para el estudiante eso es quedar fuera de la práctica. Para el docente, la decisión por defecto (D2 de `docs/trazabilidad.md`, pendiente de confirmar) es avisar sin cancelar la sesión: bloquear al docente cancela la clase. Hoy nadie llama a `puedeParticiparEnPracticas()`.
+   **Quien no tiene el formato o está bloqueado no entra ni puede ser evaluado (RF45, RF70).** Para el estudiante eso es quedar fuera de la práctica. Lo decide **`ParticipacionService`**, el único sitio que junta el formato con los bloqueos de coordinación (RF68): lo consultan la evaluación y la lista de cada sesión. No repitas la comprobación en otro lado. Para el docente, la decisión por defecto (D2 de `docs/trazabilidad.md`) es avisar sin cancelar la sesión: bloquear al docente cancela la clase. Un docente bloqueado sí deja de poder solicitar escenarios.
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 

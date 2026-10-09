@@ -66,6 +66,7 @@
                             <x-boton variante="secundario" type="button" wire:click="abrir({{ $solicitud->id }})">
                                 {{ $abierta === $solicitud->id ? 'Ocultar detalle' : 'Ver detalle' }}
                             </x-boton>
+                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.participantes', $solicitud) }}">Participantes</x-boton>
 
                             @can('revisar', $solicitud)
                                 @if ($solicitud->estado === \App\Enums\EstadoSolicitud::Pendiente)

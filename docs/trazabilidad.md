@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 37 | 4 |
-| Solo backend | 8 | 0 |
-| Parcial | 9 | 6 |
+| Completo | 41 | 4 |
+| Solo backend | 9 | 0 |
+| Parcial | 7 | 6 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 20 | 0 |
+| No iniciado | 17 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -120,7 +120,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF42 | Impedirla sin solicitud aprobada | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
 | RF43 | Tipo de evaluación de la materia, sin editar el checklist | Parcial | `EvaluacionService`, `/admin/tipos-de-evaluacion` | `PantallaTiposEvaluacionTest`, `EvaluacionReglasTest` | La pantalla del docente |
 | RF44 | Copia del checklist vigente | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
-| RF45 | Varios estudiantes; **solo los habilitados** (formato verificado o en físico, sin bloqueo) | Parcial | `EvaluacionService::agregarEstudiante()` | `EvaluacionReglasTest` | La pantalla, y la regla: `agregarEstudiante()` no llama a `ConfidencialidadService::puedeParticiparEnPracticas()` ni existe el bloqueo (RF68). Los estudiantes salen de la lista de la sesión que escribió el docente (P2) |
+| RF45 | Varios estudiantes; **solo los habilitados** (formato verificado o en físico, sin bloqueo) | Solo backend | `EvaluacionService::agregarEstudiante()` → `ParticipacionService` | `EvaluacionReglasTest`, `ParticipantesDeLaSesionTest` | La regla ya se cumple: no se agrega a quien no puede ingresar, con el motivo. Falta la pantalla, y que los evaluados salgan de la lista de la sesión |
 | RF46 | Ítems marcados y resultado decidido por el docente | Solo backend | `EvaluacionService::marcarItem()`, `registrarResultado()` | `EvaluacionReglasTest` | Pantalla |
 | RF47 | Observaciones por estudiante | Solo backend | `EvaluacionService::registrarObservaciones()` | `EvaluacionReglasTest` | Pantalla |
 | RF48 | Un intento por evaluación, sin límite | Solo backend | `EvaluacionService::calcularIntento()` | `EvaluacionIntentoTest` | Pantalla |
@@ -133,7 +133,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 |---|---|---|---|---|---|
 | RF51 | El ADMIN carga la plantilla PDF por periodo | Completo | `ConfidencialidadService::cargarPlantilla()`, `/panel/plantillas-confidencialidad` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | |
 | RF52 | Estudiantes y docentes descargan, firman a mano y cargan, una vez por **periodo académico** | Completo | `ConfidencialidadService::registrarEntrega()`, `periodoVigente()`, `/panel/mi-formato` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest`, `AccesoConfidencialidadTest` | El periodo es el que abrió el laboratorio (RF75), no el del calendario |
-| RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Parcial | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: estados, entrega física y verificación. Falta: agrupar por programa (no hay programa en `users`), por materia y por sesión (la lista de estudiantes de cada solicitud, P2); y que el estado condicione el ingreso (RF45, RF70) |
+| RF53 | Estado por persona, organizado por programa, materia y grupo; la entrega física habilita; verifican los administrativos | Parcial | `ConfidencialidadService::verificar()`, `registrarEntregaFisica()`, `estadoDeLosFirmantes()` (filtros de sesión y materia), `ParticipacionService` | `EntregaFisicaConfidencialidadTest`, `PantallaConfidencialidadTest`, `ParticipantesDeLaSesionTest` | Hecho: estados, entrega física, verificación, filtro por materia y por sesión, y el estado ya condiciona la evaluación y la lista de la sesión. Falta el filtro por programa: `users` no tiene programa hasta que llegue la sincronización (RF20) |
 
 "Entregado en físico" aparece en el enunciado como un estado más. En el código es un hecho que convive con el estado del escaneo (`recibido_fisico_at`, regla 7 del `CLAUDE.md`). El comportamiento es el que pide el enunciado —habilita el ingreso y deja la carga pendiente—; solo cambia cómo se guarda, y así no se pierde al avanzar de estado.
 
@@ -186,10 +186,10 @@ Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apar
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF68 | Coordinación bloquea a un estudiante o docente, con motivo | No iniciado | — | — | Todo. Efecto sobre un docente bloqueado o sin formato: D2 |
-| RF69 | Retirar a un participante de una sesión, con motivo y responsable | No iniciado | — | — | Todo. Los participantes son los estudiantes que el docente puso en la sesión (P2) |
-| RF70 | Mostrar al docente quién no puede asistir y por qué | No iniciado | `ConfidencialidadService::puedeParticiparEnPracticas()` existe, sin uso | — | La pantalla, sobre la lista de estudiantes de la sesión (P2) |
-| RF71 | Verificar el formato de un grupo completo en una pantalla, con búsqueda por persona | Parcial | `ConfidencialidadService::estadoDeLosFirmantes()`, `/panel/formatos-confidencialidad/estado` | `FormatoConfidencialidadTest`, `PantallaConfidencialidadTest` | Hecho: búsqueda por nombre, correo y código. Falta ver de una vez a los estudiantes de una sesión o grupo (P2) |
+| RF68 | Coordinación bloquea a un estudiante o docente, con motivo | Completo | `BloqueoService`, `BloqueoPolicy`, tabla `bloqueos`, `/panel/bloqueos` | `BloqueoDeParticipantesTest` | Coordinación y ADMIN. Sin fecha de fin: se levanta con motivo y queda en el historial. Un bloqueo vigente por persona (índice único parcial). El docente bloqueado no puede solicitar escenarios (D2) |
+| RF69 | Retirar a un participante de una sesión, con motivo y responsable | Completo | `SolicitudService::retirarEstudiante()`, `/panel/solicitudes/{solicitud}/participantes` | `ParticipantesDeLaSesionTest` | El retirado no sale de la lista: queda marcado con motivo, fecha y responsable, y no se le vuelve a agregar. Lo hacen el docente de la sesión y el laboratorio. Retirar al docente es sustituirlo (RF73) |
+| RF70 | Mostrar al docente quién no puede asistir y por qué | Completo | `ParticipacionService::deLaSesion()`, `/panel/solicitudes/{solicitud}/participantes`; aviso en el tablero de preparación | `ParticipantesDeLaSesionTest`, `BloqueoDeParticipantesTest`, `TableroDiarioTest` | Sin formato al día o bloqueado, con el motivo. Incluye al docente: si él no puede entrar, se avisa sin cancelar la sesión (D2) |
+| RF71 | Verificar el formato de un grupo completo en una pantalla, con búsqueda por persona | Completo | `ConfidencialidadService::estadoDeLosFirmantes()`, `/panel/formatos-confidencialidad/estado?sesion=…` | `ParticipantesDeLaSesionTest`, `PantallaConfidencialidadTest` | Desde la lista de la sesión, «Verificar formatos de esta sesión» abre el estado acotado a sus estudiantes y su docente, con la búsqueda por nombre, correo o código |
 
 ## Requerimientos no funcionales (RNF01–RNF10)
 
@@ -291,7 +291,7 @@ Para ponerlo a andar hace falta:
 9. **Tablas que el modelo de datos no describe** (arquitectura §4): `listas_reposicion`, y sin sus campos `lineas_reposicion`, `necesidades_reposicion` y `cambios_estado_item`.
 10. **El encabezado del documento de arquitectura** dice que deriva de "RF01–RF56"; hoy son RF01–RF75.
 11. **La ruta de los formatos de confidencialidad.** La arquitectura (§3) dice `storage/app/confidencialidad/`; la real es `storage/app/private/confidencialidad/{plantillas,firmados}`.
-12. **"Bloquear prácticas si está pendiente"** (arquitectura §2) se le atribuye a `ConfidencialidadService`, que no bloquea nada todavía.
+12. **"Bloquear prácticas si está pendiente"** (arquitectura §2) se le atribuye a `ConfidencialidadService`. Lo decide `ParticipacionService`, que junta el formato con los bloqueos de coordinación.
 13. **Las tablas de Services** de la arquitectura (§2) omiten `AccesoService`, `ConfiguracionLandingService`, `ReposicionService` y `GeneradorDeReportes`, y presentan `UsuarioSyncService` sin advertir que no existe.
 14. **RF22 en Filament.** El `CLAUDE.md`, la arquitectura y `AdminPanelProvider` agrupan "RF22–RF26" en `/admin`. RF22 (usuarios) no está en Filament: lo que hay es la pantalla de roles en `/panel/usuarios`.
 15. **El compose de producción no tiene tareas programadas.** RF20 (sincronización) y RF60 (alertas) las necesitan; hay que añadir un servicio que corra `php artisan schedule:work`.

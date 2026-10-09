@@ -13,6 +13,7 @@ use App\Models\ItemInventario;
 use App\Models\Materia;
 use App\Models\Solicitud;
 use App\Models\User;
+use App\Services\BloqueoService;
 use App\Services\DatosNuevaSolicitud;
 use App\Services\SolicitudService;
 use Illuminate\Database\Eloquent\Collection;
@@ -184,9 +185,10 @@ final class FormularioSolicitud extends Component
         $this->authorize('create', Solicitud::class);
     }
 
-    public function render(SolicitudService $solicitudes): mixed
+    public function render(SolicitudService $solicitudes, BloqueoService $bloqueos): mixed
     {
         return view('livewire.solicitud.formulario-solicitud', [
+            'bloqueo' => $bloqueos->vigenteDe(Auth::user()),
             'seleccionados' => User::query()->whereIn('id', $this->estudianteIds)->orderBy('nombre')->get(['id', 'nombre', 'codigo_institucional']),
             'resultados' => $solicitudes->buscarEstudiantes($this->busquedaEstudiante, $this->estudianteIds),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre', 'semestre']),

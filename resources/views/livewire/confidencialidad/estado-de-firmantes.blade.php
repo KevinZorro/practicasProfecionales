@@ -13,6 +13,16 @@
     @endif
 
     <x-tarjeta>
+        @if ($laSesion)
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-inset ring-sky-600/20">
+                <span>
+                    Solo la sesión de {{ $laSesion->casoClinico->nombre }} del {{ $laSesion->fecha->format('d/m/Y') }}
+                    {{ $laSesion->grupo ? '· grupo '.$laSesion->grupo : '' }}: sus estudiantes y su docente.
+                </span>
+                <button type="button" wire:click="$set('sesion', null)" class="font-medium underline">Ver todos</button>
+            </div>
+        @endif
+
         <div class="grid gap-3 sm:grid-cols-3">
             <div class="sm:col-span-1">
                 <label for="buscar" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Buscar</label>
@@ -33,6 +43,16 @@
                     <option value="{{ \App\Livewire\Confidencialidad\EstadoDeFirmantes::AL_DIA }}">Al día</option>
                 </select>
             </div>
+        </div>
+        <div class="mt-3">
+            <label for="materia" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Materia</label>
+            <select wire:model.live="materia" id="materia"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600 sm:max-w-md">
+                <option value="">Todas</option>
+                @foreach ($materias as $unaMateria)
+                    <option value="{{ $unaMateria->id }}">{{ $unaMateria->nombre }}</option>
+                @endforeach
+            </select>
         </div>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p class="text-sm text-gray-600">

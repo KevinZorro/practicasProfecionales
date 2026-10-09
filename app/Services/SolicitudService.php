@@ -13,9 +13,11 @@ use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Models\CasoClinico;
+use App\Models\EstudianteDeLaSesion;
 use App\Models\ItemInventario;
 use App\Models\Solicitud;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -29,10 +31,20 @@ final class SolicitudService
     /** Máximo de resultados al buscar estudiantes para una sesión. */
     public const RESULTADOS_DE_BUSQUEDA = 10;
 
-    public function __construct(private readonly PreparacionService $preparaciones) {}
+    public function __construct(
+        private readonly PreparacionService $preparaciones,
+        private readonly BloqueoService $bloqueos,
+    ) {}
 
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
+        // Un docente bloqueado no pide escenarios nuevos (RF68, D2).
+        $bloqueo = $this->bloqueos->vigenteDe($docente);
+
+        if ($bloqueo !== null) {
+            throw SolicitudInvalida::docenteBloqueado($bloqueo->motivo);
+        }
+
         $grupo = $this->normalizarGrupo($datos->grupo);
         $estudianteIds = $this->garantizarEstudiantes($datos->estudianteIds);
         $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
@@ -45,6 +57,74 @@ final class SolicitudService
             ]);
             $solicitud->items()->attach($this->itemsAAdjuntar($datos));
             $solicitud->estudiantes()->attach($estudianteIds);
+
+            return $solicitud;
+        });
+    }
+
+    /**
+     * Agrega estudiantes a una sesión ya registrada: el docente que completa
+     * su lista, o el laboratorio (RF28, D15). Los que ya estaban se ignoran;
+     * a un retirado no se le vuelve a agregar, porque el retiro queda
+     * registrado (RF69).
+     *
+     * @param  list<int>  $estudianteIds
+     */
+    public function agregarEstudiantes(Solicitud $solicitud, array $estudianteIds, User $actor): Solicitud
+    {
+        $this->garantizarPermiso($actor, 'gestionarParticipantes', $solicitud);
+        $this->garantizarSesionAbierta($solicitud);
+        $estudianteIds = $this->garantizarEstudiantes($estudianteIds);
+
+        return DB::transaction(function () use ($solicitud, $estudianteIds): Solicitud {
+            $enLista = $solicitud->estudiantes()->get();
+            $retirado = $enLista->first(fn (User $e): bool => $this->fueRetirado($e) && in_array($e->id, $estudianteIds, true));
+
+            if ($retirado instanceof User) {
+                throw SolicitudInvalida::yaFueRetirado($retirado->nombre);
+            }
+
+            $nuevos = array_values(array_diff($estudianteIds, $enLista->pluck('id')->all()));
+            $this->garantizarCapacidad($solicitud->caso_clinico_id, $this->presentes($solicitud) + count($nuevos));
+
+            $solicitud->estudiantes()->attach($nuevos);
+            $this->actualizarCantidad($solicitud);
+
+            return $solicitud;
+        });
+    }
+
+    /**
+     * Retira a un estudiante de una sesión en curso o programada (RF69). No
+     * se borra de la lista: queda con el motivo y quién lo decidió.
+     */
+    public function retirarEstudiante(Solicitud $solicitud, User $estudiante, string $motivo, User $actor): Solicitud
+    {
+        $this->garantizarPermiso($actor, 'gestionarParticipantes', $solicitud);
+        $this->garantizarSesionAbierta($solicitud);
+        $motivo = trim($motivo);
+
+        if ($motivo === '') {
+            throw SolicitudInvalida::sinMotivoDeRetiro();
+        }
+
+        return DB::transaction(function () use ($solicitud, $estudiante, $motivo, $actor): Solicitud {
+            $enLista = $solicitud->estudiantes()->whereKey($estudiante->id)->first();
+
+            if (! $enLista instanceof User) {
+                throw SolicitudInvalida::noEstaEnLaSesion($estudiante->nombre);
+            }
+
+            if ($this->fueRetirado($enLista)) {
+                throw SolicitudInvalida::yaFueRetirado($estudiante->nombre);
+            }
+
+            $solicitud->estudiantes()->updateExistingPivot($estudiante->id, [
+                'retirado_at' => now(),
+                'retirado_por' => $actor->id,
+                'motivo_retiro' => $motivo,
+            ]);
+            $this->actualizarCantidad($solicitud);
 
             return $solicitud;
         });
@@ -160,6 +240,49 @@ final class SolicitudService
         }
 
         return $estudianteIds;
+    }
+
+    /**
+     * La lista se cambia mientras la sesión no haya pasado ni se haya
+     * rechazado. "Hoy" cuenta: se retira a alguien de la sesión en curso.
+     */
+    private function garantizarSesionAbierta(Solicitud $solicitud): void
+    {
+        $cerrada = $solicitud->estado === EstadoSolicitud::Rechazada
+            || $solicitud->fecha->toDateString() < now()->toDateString();
+
+        if ($cerrada) {
+            throw SolicitudInvalida::sesionCerrada();
+        }
+    }
+
+    /** El dato del retiro viaja en el pivote de la lista ("participacion"). */
+    private function fueRetirado(User $estudiante): bool
+    {
+        $participacion = $estudiante->getRelation('participacion');
+
+        return $participacion instanceof EstudianteDeLaSesion && $participacion->fueRetirado();
+    }
+
+    private function presentes(Solicitud $solicitud): int
+    {
+        return $solicitud->estudiantesPresentes()->count();
+    }
+
+    /** "cantidad_estudiantes" sigue a la lista: es la que leen los reportes (RF54). */
+    private function actualizarCantidad(Solicitud $solicitud): void
+    {
+        $solicitud->update(['cantidad_estudiantes' => $this->presentes($solicitud)]);
+    }
+
+    /**
+     * @throws AuthorizationException
+     */
+    private function garantizarPermiso(User $actor, string $accion, Solicitud $solicitud): void
+    {
+        if ($actor->cannot($accion, $solicitud)) {
+            throw new AuthorizationException(sprintf('El usuario no tiene permiso para "%s" esta solicitud.', $accion));
+        }
     }
 
     /**

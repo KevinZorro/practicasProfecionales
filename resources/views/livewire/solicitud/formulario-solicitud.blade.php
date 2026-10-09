@@ -1,5 +1,13 @@
 <div class="space-y-6">
 
+    {{-- Un docente bloqueado no pide escenarios (RF68): se le dice antes de que llene nada. --}}
+    @if ($bloqueo)
+        <div class="rounded-md bg-rose-50 px-4 py-3 ring-1 ring-inset ring-rose-600/20" role="alert">
+            <p class="text-sm font-medium text-rose-900">No puedes solicitar escenarios mientras tengas un bloqueo vigente.</p>
+            <p class="mt-1 text-sm text-rose-900">Motivo: {{ $bloqueo->motivo }}. Consulta con la coordinación del laboratorio.</p>
+        </div>
+    @endif
+
     {{-- 1 · Escenario y horario --}}
     <x-tarjeta titulo="1 · Escenario y horario">
         <div class="grid gap-4 sm:grid-cols-2">
@@ -181,7 +189,9 @@
     </x-tarjeta>
 
     <div class="flex flex-wrap gap-2">
-        <x-boton wire:click="guardar" wire:loading.attr="disabled">Enviar solicitud</x-boton>
+        @unless ($bloqueo)
+            <x-boton wire:click="guardar" wire:loading.attr="disabled">Enviar solicitud</x-boton>
+        @endunless
         <x-boton variante="secundario" href="{{ route('panel.mis-solicitudes') }}">Cancelar</x-boton>
     </div>
 </div>

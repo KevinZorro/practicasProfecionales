@@ -40,4 +40,15 @@ final class SolicitudController extends Controller
 
         return view('panel.solicitudes.bandeja');
     }
+
+    /**
+     * Los participantes de una sesión: quién no puede asistir y por qué
+     * (RF70), y retirar o agregar estudiantes (RF69, RF28).
+     */
+    public function participantes(Request $peticion, Solicitud $solicitud): View
+    {
+        abort_unless($peticion->user()->can('view', $solicitud), 403);
+
+        return view('panel.solicitudes.participantes', ['solicitud' => $solicitud]);
+    }
 }

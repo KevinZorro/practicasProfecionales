@@ -12,10 +12,11 @@ use App\Services\EvaluacionService;
 use Database\Seeders\RolSeeder;
 
 beforeEach(function (): void {
+    abrirPeriodo();
     $this->seed(RolSeeder::class);
     $this->servicio = app(EvaluacionService::class);
     $this->docente = User::factory()->docente()->create();
-    $this->estudiante = User::factory()->estudiante()->create();
+    $this->estudiante = User::factory()->estudiante()->habilitado()->create();
     $this->materia = Materia::factory()->create();
     $this->tipo = TipoEvaluacion::factory()->create();
     $this->tipo->materias()->attach($this->materia->id);
@@ -76,7 +77,7 @@ it('lleva la cuenta por separado en cada tipo de evaluación', function (): void
 
 it('lleva la cuenta por separado en cada estudiante', function (): void {
     presentar($this->estudiante, $this->tipo, $this->materia, $this->docente, ResultadoEvaluacion::NoAprobado);
-    $otro = User::factory()->estudiante()->create();
+    $otro = User::factory()->estudiante()->habilitado()->create();
 
     $suyo = presentar($otro, $this->tipo, $this->materia, $this->docente, ResultadoEvaluacion::Aprobado);
 

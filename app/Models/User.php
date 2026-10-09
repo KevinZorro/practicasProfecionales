@@ -178,6 +178,12 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->hasOne(PerfilDocente::class);
     }
 
+    /** @return HasMany<Bloqueo, $this> */
+    public function bloqueos(): HasMany
+    {
+        return $this->hasMany(Bloqueo::class);
+    }
+
     /** @param Builder<$this> $consulta */
     public function scopeActivos(Builder $consulta): void
     {

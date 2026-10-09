@@ -105,8 +105,9 @@ it('no genera consultas N+1 al recorrer el tablero', function (): void {
     DB::disableQueryLog();
 
     expect($tablero)->toHaveCount(4)
-        // 1 por las preparaciones + 1 por cada relación precargada.
-        ->and($consultas)->toBeLessThanOrEqual(7);
+        // 1 por las preparaciones + 1 por cada relación precargada, la
+        // lista de estudiantes incluida (RF70).
+        ->and($consultas)->toBeLessThanOrEqual(8);
 });
 
 it('mantiene constante el número de consultas al crecer el tablero', function (): void {
@@ -143,6 +144,7 @@ function recorrerTablero(iterable $tablero): void
         $montaje->solicitud->materia->nombre;
         $montaje->solicitud->casoClinico->nombre;
         $montaje->solicitud->cantidad_estudiantes;
+        $montaje->solicitud->estudiantesPresentes->count();
         $montaje->sala?->nombre;
         foreach ($montaje->items as $item) {
             $item->nombre;

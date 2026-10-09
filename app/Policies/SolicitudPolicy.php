@@ -98,6 +98,16 @@ final class SolicitudPolicy
     }
 
     /**
+     * Completar o retirar estudiantes de la lista de una sesión (RF28,
+     * RF69): el docente de la sesión y quien entra a la bandeja. Lo que se
+     * puede cambiar y cuándo lo decide SolicitudService.
+     */
+    public function gestionarParticipantes(User $usuario, Solicitud $solicitud): bool
+    {
+        return $this->esSuya($usuario, $solicitud) || $this->accedeALaBandeja($usuario);
+    }
+
+    /**
      * El calendario de reservas aprobadas (RF34) es la única vista que
      * comparten los cinco roles.
      */

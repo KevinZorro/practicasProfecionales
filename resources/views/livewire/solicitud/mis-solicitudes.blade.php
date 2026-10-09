@@ -42,7 +42,7 @@
                             <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
                             <x-dato etiqueta="Sala">
                                 @if ($solicitud->preparacion?->sala)
-                                    {{ $solicitud->preparacion->sala->nombre }}
+                                    {{ $solicitud->preparacion->sala->nombreCompleto() }}
                                 @else
                                     <span class="text-gray-500">Aún sin asignar</span>
                                 @endif
@@ -54,6 +54,12 @@
                                 <span class="font-medium">Motivo del rechazo:</span>
                                 {{ $solicitud->motivo_rechazo ?: 'No se dejó un motivo escrito.' }}
                             </div>
+                        @else
+                            <div class="mt-3 border-t border-gray-200 pt-3">
+                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.participantes', $solicitud) }}" class="px-3 py-2">
+                                Participantes
+                            </x-boton>
+                        </div>
                         @endif
                     </x-tarjeta>
                 </li>

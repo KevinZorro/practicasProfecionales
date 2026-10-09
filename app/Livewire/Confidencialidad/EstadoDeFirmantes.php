@@ -7,6 +7,8 @@ namespace App\Livewire\Confidencialidad;
 use App\Exceptions\FormatoConfidencialidadInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\FormatoConfidencialidad;
+use App\Models\Materia;
+use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +42,14 @@ final class EstadoDeFirmantes extends Component
     #[Url(as: 'situacion', keep: false)]
     public string $situacion = '';
 
+    /** Una sesión: sus estudiantes y su docente (RF71). Llega desde la lista de la sesión. */
+    #[Url(as: 'sesion', keep: false)]
+    public ?int $sesion = null;
+
+    /** Quienes van o dictan sesiones de una materia (RF53). */
+    #[Url(as: 'materia', keep: false)]
+    public ?int $materia = null;
+
     public ?string $errorDeRegla = null;
 
     public function mount(ConfidencialidadService $confidencialidad): void
@@ -51,7 +61,7 @@ final class EstadoDeFirmantes extends Component
 
     public function updated(string $propiedad): void
     {
-        if (in_array($propiedad, ['busqueda', 'periodo', 'situacion'], true)) {
+        if (in_array($propiedad, ['busqueda', 'periodo', 'situacion', 'sesion', 'materia'], true)) {
             $this->resetPage();
         }
     }
@@ -78,7 +88,7 @@ final class EstadoDeFirmantes extends Component
 
     public function limpiarFiltros(): void
     {
-        $this->reset('busqueda', 'situacion');
+        $this->reset('busqueda', 'situacion', 'sesion', 'materia');
         $this->resetPage();
     }
 
@@ -95,7 +105,11 @@ final class EstadoDeFirmantes extends Component
                 periodo: $this->periodo,
                 soloSinVigente: $this->soloSinVigente(),
                 busqueda: $this->busqueda,
+                solicitudId: $this->sesion,
+                materiaId: $this->materia,
             ),
+            'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre']),
+            'laSesion' => $this->sesion === null ? null : Solicitud::with(['casoClinico:id,nombre', 'materia:id,nombre'])->find($this->sesion),
         ]);
     }
 
