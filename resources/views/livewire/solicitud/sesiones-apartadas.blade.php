@@ -127,6 +127,7 @@
                             @else
                                 <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-inset ring-amber-600/20">Sin formato intramural</span>
                             @endif
+                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.novedades', $sesion) }}" class="px-3 py-2">Novedades</x-boton>
                             <x-boton variante="secundario" href="{{ route('panel.solicitudes.formato-intramural', $sesion) }}" class="px-3 py-2">
                                 {{ $sesion->tieneFormatoIntramural() ? 'Ver insumos' : 'Registrar insumos' }}
                             </x-boton>

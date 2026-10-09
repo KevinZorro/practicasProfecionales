@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 55 | 4 |
+| Completo | 58 | 4 |
 | Solo backend | 0 | 0 |
-| Parcial | 6 | 6 |
+| Parcial | 5 | 6 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 13 | 0 |
+| No iniciado | 11 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -141,7 +141,7 @@ Pantallas: `/panel/evaluaciones` (el docente registra sobre sus sesiones de eval
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF54 | Uso de escenarios, con horas atribuidas al docente que dictó e indicando sustitución | Parcial | `ReporteService::usoDeEscenarios()`, `/panel/reportes` | `ReporteUsoDeEscenariosTest`, `PantallaDeReportesTest`, `ReporteExportacionTest` | La atribución por sustitución, que depende de RF73 |
+| RF54 | Uso de escenarios, con horas atribuidas al docente que dictó e indicando sustitución | Completo | `ReporteService::usoDeEscenarios()`, `/panel/reportes` | `ReporteUsoDeEscenariosTest`, `PantallaDeReportesTest`, `ReporteExportacionTest`, `NovedadesDeSesionTest` | Las horas van a quien dictó (el reemplazo si lo hubo) y la columna «Por sustitución» cuenta las que dictó en reemplazo. El filtro por docente también usa a quien dictó |
 | RF55 | Resultados de evaluación, PDF y Excel | Completo | `ReporteService::resultadosDeEvaluacion()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | |
 | RF56 | Sesiones de evaluación aprobadas sin evaluación registrada | Completo | `ReporteService::evaluacionesNoRegistradas()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | |
 
@@ -155,8 +155,8 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | RF58 | Validar sala y simuladores al registrar, con aviso de cruces; sin tiempo de montaje impuesto | Completo | `RegistroPrevioService::advertencias()`, `registrarFormatoIntramural()` | `SesionesApartadasTest` | Mientras se llena el formulario se avisa de sesiones en la misma franja, del docente con otra sesión y de que no quedaría sala libre (D17). Son avisos, no impedimentos. Los simuladores se validan al registrar el formato intramural, que es cuando se conocen: se avisa de lo que no alcanza en la franja. La sala se elige en la preparación entre las libres (P4) |
 | RF59 | Formato intramural como paso posterior a la fecha | Completo | `RegistroPrevioService::registrarFormatoIntramural()`, `/panel/solicitudes/{solicitud}/formato-intramural` | `SesionesApartadasTest` | Lo digita el administrativo (P3). Se precarga el inventario del escenario y se ajusta; al guardar pasa a la preparación. La solicitud del docente lo trae desde que se crea |
 | RF60 | Alerta a administrativos y docente de sesiones próximas sin formato intramural, con antelación configurable | Completo | `RegistroPrevioService::avisarSinFormatoIntramural()`, comando `sesiones:avisar-formato-intramural` (diario, 6:00), servicio `programador` del compose, ajuste en `/admin/ajustes-del-laboratorio` | `SesionesApartadasTest` | Un correo diario por persona con todas sus sesiones (D16): al docente las suyas, a cada administrativo activo todas. Antelación de 3 días por defecto, la cambia el ADMIN (D5). La lista de sesiones apartadas marca las que no lo tienen |
-| RF61 | Reprogramar una sesión aprobada con motivo, constancia de comunicación y correo al docente | No iniciado | — | — | Qué es la constancia: D4 |
-| RF73 | Sustituir al docente de una sesión, con el original y el reemplazo | No iniciado | — | — | Quién la registra: D11 |
+| RF61 | Reprogramar una sesión aprobada con motivo, constancia de comunicación y correo al docente | Completo | `NovedadesDeSesionService::reprogramar()`, tabla `reprogramaciones`, `/panel/solicitudes/{solicitud}/novedades` | `NovedadesDeSesionTest` | Administrativos y coordinación. Fecha, franja o escenario, con motivo y constancia obligatorios (D4); avisa de cruces en la franja nueva. Sigue aprobada; si cambia la franja se libera la sala, si cambia el escenario se revalida la capacidad y se borra el formato intramural. Correo al docente que dicta |
+| RF73 | Sustituir al docente de una sesión, con el original y el reemplazo | Completo | `NovedadesDeSesionService::sustituir()`, tabla `sustituciones`, `solicitudes.docente_que_dicta_id` | `NovedadesDeSesionTest` | Administrativos y coordinación (D11). El reemplazo es un docente activo y recibe un correo; ve la sesión en su historial, gestiona los participantes y registra la evaluación. Elegir al titular deshace la sustitución |
 
 ## Periodo académico (RF75)
 
@@ -168,7 +168,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF62 | Bitácora de aprobaciones, rechazos, reprogramaciones, retiros y cambios de rol, con usuario, fecha y motivo | Parcial | `asignaciones_de_rol` (roles), `cambios_estado_item` (retiros de inventario), `revisada_por`/`resuelta_por` en `solicitudes` | `RolesConVigenciaTest`, `EstadoFuncionalInventarioTest` | Una bitácora consultable. Hoy el rastro existe pero repartido, la aprobación no guarda motivo y no hay reprogramaciones ni retiros de participantes. Alcance de "retiro" y quién la consulta: D9 |
+| RF62 | Bitácora de aprobaciones, rechazos, reprogramaciones, retiros y cambios de rol, con usuario, fecha y motivo | Parcial | `asignaciones_de_rol` (roles), `cambios_estado_item` (retiros de inventario), `revisada_por`/`resuelta_por` en `solicitudes` | `RolesConVigenciaTest`, `EstadoFuncionalInventarioTest` | Una bitácora consultable. Hoy el rastro existe pero repartido —roles, inventario, retiros de participantes en `estudiante_solicitud`, `reprogramaciones`, `sustituciones`, `bloqueos`— y la aprobación no guarda motivo. Alcance de "retiro" y quién la consulta: D9 |
 | RF63 | Elevar a coordinador temporalmente, con vigencia y registro | Completo | `AsignacionDeRolService`, `/panel/usuarios` | `RolesConVigenciaTest`, `RolActivoEnLivewireTest` | Hoy la fecha de fin es opcional también para coordinador (D12) |
 | RF64 | Rol administrativo temporal para pasantes | Completo | `AsignacionDeRolService`, filtro en `User::roles()` | `RolesConVigenciaTest` | |
 

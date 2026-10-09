@@ -162,6 +162,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): las registra un administrativo y nacen aprobadas; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
 | `AjustesService` | Valores que el ADMIN cambia sin desplegar (`ajustes_laboratorio`, claves fijas en `AjusteDelLaboratorio`), como la antelación del aviso del RF60 |
+| `NovedadesDeSesionService` | Reprogramar una sesión aprobada (RF61) y sustituir a su docente (RF73), con rastro de solo añadir y correo. `solicitudes.docente_que_dicta_id` es el reemplazo vigente: quien dicta es quien evalúa, gestiona la lista y suma las horas del reporte |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |

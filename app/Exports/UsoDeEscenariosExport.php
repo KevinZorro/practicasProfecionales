@@ -20,7 +20,7 @@ final class UsoDeEscenariosExport extends ReporteExport
      */
     public function headings(): array
     {
-        return ['Docente', 'Materia', 'Semestre', 'Caso clínico', 'Sala', 'Tipo de sesión', 'Sesiones', 'Horas', 'Estudiantes'];
+        return ['Docente', 'Materia', 'Semestre', 'Caso clínico', 'Sala', 'Tipo de sesión', 'Sesiones', 'Horas', 'Estudiantes', 'Por sustitución'];
     }
 
     /**
@@ -43,6 +43,7 @@ final class UsoDeEscenariosExport extends ReporteExport
             (int) $fila->getAttribute('sesiones'),
             round((float) $fila->getAttribute('horas'), 2),
             (int) $fila->getAttribute('total_estudiantes'),
+            (int) $fila->getAttribute('sesiones_por_sustitucion'),
         ];
     }
 }

@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Solicitud extends Model
@@ -46,6 +47,7 @@ class Solicitud extends Model
         'registrada_por',
         'formato_intramural_at',
         'formato_intramural_por',
+        'docente_que_dicta_id',
     ];
 
     /**
@@ -79,6 +81,34 @@ class Solicitud extends Model
     public function registradaPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registrada_por');
+    }
+
+    /**
+     * El reemplazo vigente (RF73). Nulo mientras dicte el titular.
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function docenteQueDicta(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'docente_que_dicta_id');
+    }
+
+    /** Quién dicta la sesión: el reemplazo si lo hay, si no el titular. */
+    public function idDelDocenteQueDicta(): int
+    {
+        return $this->docente_que_dicta_id ?? $this->docente_id;
+    }
+
+    /** @return HasMany<Reprogramacion, $this> */
+    public function reprogramaciones(): HasMany
+    {
+        return $this->hasMany(Reprogramacion::class)->latest('created_at')->latest('id');
+    }
+
+    /** @return HasMany<Sustitucion, $this> */
+    public function sustituciones(): HasMany
+    {
+        return $this->hasMany(Sustitucion::class)->latest('created_at')->latest('id');
     }
 
     /** @return BelongsTo<User, $this> */
@@ -209,6 +239,17 @@ class Solicitud extends Model
     public function scopeDelDocente(Builder $consulta, User $docente): void
     {
         $consulta->where('docente_id', $docente->id);
+    }
+
+    /**
+     * Las que dicta este docente: las suyas sin reemplazo y las que le
+     * pasaron por sustitución (RF73).
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeQueDicta(Builder $consulta, User $docente): void
+    {
+        $consulta->whereRaw('COALESCE(docente_que_dicta_id, docente_id) = ?', [$docente->id]);
     }
 
     /** @param Builder<$this> $consulta */

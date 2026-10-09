@@ -173,8 +173,9 @@ final class EvaluacionService
      */
     public function sesionesPorEvaluar(User $docente): Collection
     {
+        // Quien dicta la sesión es quien la evalúa, también por sustitución (RF73).
         return Solicitud::query()
-            ->where('docente_id', $docente->id)
+            ->queDicta($docente)
             ->deEvaluacion()
             ->aprobadas()
             ->whereDoesntHave('evaluacion')

@@ -98,6 +98,21 @@ final class SolicitudPolicy
     }
 
     /**
+     * Reprogramar una sesión aprobada (RF61) y sustituir a su docente
+     * (RF73): los administrativos y coordinación (D11). Que la sesión no
+     * haya pasado lo decide NovedadesDeSesionService.
+     */
+    public function reprogramar(User $usuario, Solicitud $solicitud): bool
+    {
+        return $this->revisaSolicitudes($usuario) && $solicitud->estado === EstadoSolicitud::Aprobada;
+    }
+
+    public function sustituirDocente(User $usuario, Solicitud $solicitud): bool
+    {
+        return $this->reprogramar($usuario, $solicitud);
+    }
+
+    /**
      * Registrar las sesiones apartadas antes del semestre (RF57) y su
      * formato intramural (RF59): los administrativos, que reciben el formato
      * físico de coordinación, y coordinación por herencia.
@@ -156,8 +171,9 @@ final class SolicitudPolicy
         return $this->revisaSolicitudes($usuario) || $usuario->hasRole(Rol::Admin->value);
     }
 
+    /** El titular, o quien la dicta por sustitución (RF73). */
     private function esSuya(User $usuario, Solicitud $solicitud): bool
     {
-        return $solicitud->docente_id === $usuario->id;
+        return $solicitud->docente_id === $usuario->id || $solicitud->docente_que_dicta_id === $usuario->id;
     }
 }

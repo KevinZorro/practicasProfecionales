@@ -84,9 +84,11 @@ final class RegistroPrevioService
      *
      * @return list<string>
      */
-    public function advertencias(string $fecha, string $horaInicio, string $horaFin, ?int $docenteId = null): array
+    public function advertencias(string $fecha, string $horaInicio, string $horaFin, ?int $docenteId = null, ?int $excluirId = null): array
     {
+        // Al reprogramar, la sesión no choca consigo misma.
         $cruces = Solicitud::query()
+            ->when($excluirId !== null, static fn (Builder $c) => $c->whereKeyNot($excluirId))
             ->whereIn('estado', [EstadoSolicitud::Pendiente, EstadoSolicitud::Revisada, EstadoSolicitud::Aprobada])
             ->queSeSolapanCon($fecha, $horaInicio, $horaFin)
             ->with(['docente:id,nombre', 'casoClinico:id,nombre'])

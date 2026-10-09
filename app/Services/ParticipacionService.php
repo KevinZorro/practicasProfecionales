@@ -80,10 +80,13 @@ final class ParticipacionService
     {
         $solicitud->loadMissing([
             'docente',
+            'docenteQueDicta',
             'estudiantes' => static fn ($consulta) => $consulta->orderBy('nombre'),
         ]);
 
-        $ids = [$solicitud->docente_id, ...$solicitud->estudiantes->pluck('id')->all()];
+        // El docente que entra es quien dicta, también por sustitución (RF73).
+        $docente = $solicitud->docenteQueDicta ?? $solicitud->docente;
+        $ids = [$docente->id, ...$solicitud->estudiantes->pluck('id')->all()];
         $impedimentos = $this->impedimentos(array_values(array_unique($ids)));
 
         // Quién retiró a cada uno, en una consulta y no una por fila.
@@ -93,8 +96,8 @@ final class ParticipacionService
             ->all();
 
         return [
-            'docente' => $solicitud->docente,
-            'impedimentosDelDocente' => $impedimentos[$solicitud->docente_id],
+            'docente' => $docente,
+            'impedimentosDelDocente' => $impedimentos[$docente->id],
             'estudiantes' => $solicitud->estudiantes,
             'impedimentos' => $impedimentos,
             'responsablesDeRetiro' => $responsables,

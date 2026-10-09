@@ -171,14 +171,14 @@ final class TableroDiario extends Component
     private function noPuedenIngresar(Collection $montajes, ParticipacionService $participacion): array
     {
         $ids = $montajes->flatMap(static fn (Preparacion $m) => [
-            $m->solicitud->docente_id,
+            $m->solicitud->idDelDocenteQueDicta(),
             ...$m->solicitud->estudiantesPresentes->pluck('id')->all(),
         ])->unique()->values()->all();
 
         $impedimentos = $participacion->impedimentos($ids);
 
         return $montajes->mapWithKeys(static fn (Preparacion $m): array => [$m->id => [
-            'docente' => $impedimentos[$m->solicitud->docente_id] !== [],
+            'docente' => $impedimentos[$m->solicitud->idDelDocenteQueDicta()] !== [],
             'estudiantes' => $m->solicitud->estudiantesPresentes
                 ->filter(static fn ($e): bool => $impedimentos[$e->id] !== [])
                 ->count(),

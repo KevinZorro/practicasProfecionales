@@ -29,6 +29,11 @@
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-semibold text-gray-900">{{ $solicitud->casoClinico->nombre }}</p>
                                 <p class="truncate text-sm text-gray-600">{{ $solicitud->materia->nombre }}</p>
+                                @if ($solicitud->docente_que_dicta_id === auth()->id())
+                                    <p class="text-xs font-medium text-sky-800">La dictas en reemplazo de {{ $solicitud->docente->nombre }}</p>
+                                @elseif ($solicitud->docenteQueDicta)
+                                    <p class="text-xs font-medium text-amber-800">La dicta {{ $solicitud->docenteQueDicta->nombre }} en tu reemplazo</p>
+                                @endif
                             </div>
                             <div class="flex shrink-0 items-center gap-2">
                                 <span class="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">{{ $solicitud->tipo->etiqueta() }}</span>

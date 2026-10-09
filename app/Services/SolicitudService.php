@@ -331,10 +331,11 @@ final class SolicitudService
      */
     public function historialDelDocente(User $docente, ?EstadoSolicitud $estado = null, int $porPagina = 15): LengthAwarePaginator
     {
+        // Las suyas y las que dicta por sustitución (RF73).
         return Solicitud::query()
-            ->delDocente($docente)
+            ->where(static fn (Builder $c) => $c->delDocente($docente)->orWhere('docente_que_dicta_id', $docente->id))
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['materia', 'casoClinico', 'preparacion.sala', 'docente:id,nombre', 'docenteQueDicta:id,nombre'])
             ->orderByDesc('fecha')
             ->orderByDesc('hora_inicio')
             ->paginate($porPagina);

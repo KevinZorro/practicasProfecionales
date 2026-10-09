@@ -69,6 +69,7 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('solicitudes', [SolicitudController::class, 'bandeja'])->name('solicitudes');
     Route::get('solicitudes/{solicitud}/participantes', [SolicitudController::class, 'participantes'])->name('solicitudes.participantes');
     Route::get('solicitudes/{solicitud}/formato-intramural', [SolicitudController::class, 'formatoIntramural'])->name('solicitudes.formato-intramural');
+    Route::get('solicitudes/{solicitud}/novedades', [SolicitudController::class, 'novedades'])->name('solicitudes.novedades');
 
     /* Sesiones apartadas antes del semestre (RF57-RF59). */
     Route::get('sesiones-apartadas', [SolicitudController::class, 'apartadas'])->name('sesiones-apartadas');

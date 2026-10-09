@@ -41,6 +41,14 @@ final class SolicitudController extends Controller
         return view('panel.solicitudes.bandeja');
     }
 
+    /** Reprogramar la sesión y sustituir al docente (RF61, RF73). */
+    public function novedades(Request $peticion, Solicitud $solicitud): View
+    {
+        abort_unless($peticion->user()->can('reprogramar', $solicitud), 403);
+
+        return view('panel.solicitudes.novedades', ['solicitud' => $solicitud]);
+    }
+
     /** Sesiones apartadas antes del semestre (RF57). */
     public function apartadas(Request $peticion): View
     {

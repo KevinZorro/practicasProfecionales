@@ -43,7 +43,7 @@
                                 </p>
                                 <p class="truncate text-sm font-medium text-gray-900">{{ $solicitud->casoClinico->nombre }}</p>
                                 <p class="truncate text-sm text-gray-600">
-                                    {{ $solicitud->docente->nombre }} · {{ $solicitud->materia->nombre }}
+                                    {{ ($solicitud->docenteQueDicta ?? $solicitud->docente)->nombre }}{{ $solicitud->docenteQueDicta ? ' (reemplaza a '.$solicitud->docente->nombre.')' : '' }} · {{ $solicitud->materia->nombre }}
                                 </p>
                             </div>
                             <div class="flex shrink-0 flex-col items-end gap-1">
@@ -88,11 +88,16 @@
                             </p>
                         @endif
 
-                        <div class="mt-3 border-t border-gray-200 pt-3">
+                        <div class="mt-3 flex flex-wrap gap-2 border-t border-gray-200 pt-3">
                             <x-boton variante="secundario" type="button" wire:click="abrir({{ $montaje->id }})"
                                      class="w-full px-4 py-2.5 sm:w-auto">
                                 {{ $abierta === $montaje->id ? 'Cerrar' : 'Preparar escenario' }}
                             </x-boton>
+                            @can('reprogramar', $solicitud)
+                                <x-boton variante="secundario" href="{{ route('panel.solicitudes.novedades', $solicitud) }}" class="w-full px-4 py-2.5 sm:w-auto">
+                                    Reprogramar o sustituir
+                                </x-boton>
+                            @endcan
                         </div>
 
                         @if ($abierta === $montaje->id && $detalle !== null)

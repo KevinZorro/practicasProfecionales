@@ -33,7 +33,7 @@ final class Evaluaciones extends Component
     {
         $this->authorize('create', Evaluacion::class);
         $solicitud = Solicitud::findOrFail($solicitudId);
-        abort_unless($solicitud->docente_id === Auth::id(), 403);
+        abort_unless($solicitud->idDelDocenteQueDicta() === Auth::id(), 403);
 
         $tipoId = (int) ($this->tipoElegido[$solicitudId] ?? 0);
 
