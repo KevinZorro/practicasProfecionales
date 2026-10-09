@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 58 | 4 |
+| Completo | 59 | 4 |
 | Solo backend | 0 | 0 |
-| Parcial | 5 | 6 |
+| Parcial | 4 | 6 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 11 | 0 |
 | **Total** | **75** | **10** |
@@ -168,8 +168,8 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF62 | Bitácora de aprobaciones, rechazos, reprogramaciones, retiros y cambios de rol, con usuario, fecha y motivo | Parcial | `asignaciones_de_rol` (roles), `cambios_estado_item` (retiros de inventario), `revisada_por`/`resuelta_por` en `solicitudes` | `RolesConVigenciaTest`, `EstadoFuncionalInventarioTest` | Una bitácora consultable. Hoy el rastro existe pero repartido —roles, inventario, retiros de participantes en `estudiante_solicitud`, `reprogramaciones`, `sustituciones`, `bloqueos`— y la aprobación no guarda motivo. Alcance de "retiro" y quién la consulta: D9 |
-| RF63 | Elevar a coordinador temporalmente, con vigencia y registro | Completo | `AsignacionDeRolService`, `/panel/usuarios` | `RolesConVigenciaTest`, `RolActivoEnLivewireTest` | Hoy la fecha de fin es opcional también para coordinador (D12) |
+| RF62 | Bitácora de aprobaciones, rechazos, reprogramaciones, retiros y cambios de rol, con usuario, fecha y motivo | Completo | `BitacoraService`, tabla `bitacora`, `/panel/bitacora` | `BitacoraTest` | Cada Service escribe su entrada en la misma transacción que la acción: aprobación, rechazo (con la fase), sesión apartada registrada, reprogramación, sustitución, retiro de participante, retiro y baja de unidades, asignación y revocación de rol, bloqueo y levantamiento. La descripción se guarda escrita, con los nombres de ese día. La consultan coordinación y el ADMIN, con filtros por acción, persona y fechas (D9). No se reconstruyó lo anterior a esta versión |
+| RF63 | Elevar a coordinador temporalmente, con vigencia y registro | Completo | `AsignacionDeRolService`, `/panel/usuarios` | `RolesConVigenciaTest`, `RolActivoEnLivewireTest`, `BitacoraTest` | La elevación lleva fecha de fin y motivo, y queda en `asignaciones_de_rol` y en la bitácora. La fecha de fin no se obliga: ver D12 |
 | RF64 | Rol administrativo temporal para pasantes | Completo | `AsignacionDeRolService`, filtro en `User::roles()` | `RolesConVigenciaTest` | |
 
 ## Espacios, inventario y preparación (RF65–RF67, RF72, RF74)
@@ -235,7 +235,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | D9 | "Retiro" en la bitácora cubre el retiro de participantes (RF69) y el de unidades de inventario (RF38). La bitácora la consultan coordinación y el ADMIN | RF62 |
 | D10 | Lo que requiere al ingeniero se deduce del nivel de fidelidad alta. El ingeniero no tiene cuenta: el administrativo marca el ítem cuando él termina | RF72 |
 | D11 | La sustitución la registran los administrativos (y coordinación). El reemplazo debe ser un docente con cuenta | RF73 |
-| D12 | Elevar a coordinador exige fecha de fin, porque el enunciado dice "temporalmente" | RF63 |
+| D12 | ~~Elevar a coordinador exige fecha de fin~~. **Revisada:** no se obliga, porque RF22 deja al ADMIN asignar roles permanentes, y exigir la fecha impediría nombrar a la coordinadora titular mientras no exista la sincronización. La elevación temporal se hace poniendo la fecha, y exige motivo | RF22, RF63 |
 | D13 | Accesorio o repuesto es un tipo nuevo de ítem de inventario, ligado a un simulador del inventario | RF38 |
 | D14 | El vínculo sala–escenario es informativo: en la preparación las salas vinculadas al escenario aparecen primero, pero el administrativo puede elegir cualquier sala libre. Así un vínculo sin llenar no bloquea una clase, igual que la capacidad sin definir de la regla 10 | RF36, RF65 |
 | D15 | En las sesiones apartadas, los estudiantes los pone el docente desde su historial de solicitudes antes de la sesión; el administrativo también puede hacerlo. Sin lista, RF70 no tiene a quién revisar y la sesión se marca | RF57, RF70 |

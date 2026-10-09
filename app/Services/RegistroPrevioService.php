@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoSolicitud;
 use App\Enums\OrigenSolicitud;
 use App\Enums\Rol;
@@ -39,6 +40,7 @@ final class RegistroPrevioService
         private readonly PreparacionService $preparaciones,
         private readonly InventarioService $inventario,
         private readonly AjustesService $ajustes,
+        private readonly BitacoraService $bitacora,
     ) {}
 
     /**
@@ -70,6 +72,12 @@ final class RegistroPrevioService
             ]);
 
             $this->preparaciones->crearDesdeSolicitud($solicitud);
+            $this->bitacora->registrar(
+                AccionAuditada::SesionApartadaRegistrada,
+                $actor,
+                $solicitud,
+                sprintf('Registró aprobada %s, del formato de sesiones apartadas de coordinación.', $this->solicitudes->describir($solicitud)),
+            );
 
             return $solicitud;
         });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\Rol;
 use App\Exceptions\AsignacionDeRolInvalida;
 use App\Models\AsignacionDeRol;
@@ -44,6 +45,8 @@ final class AsignacionDeRolService
 
     public const POR_PAGINA = 15;
 
+    public function __construct(private readonly BitacoraService $bitacora) {}
+
     /**
      * Asigna un rol. Sin "hasta" es permanente; con "hasta" vence al final
      * de ese día.
@@ -74,6 +77,19 @@ final class AsignacionDeRolService
                 'motivo' => $motivo,
                 'asignado_por' => $actor->id,
             ]);
+
+            $this->bitacora->registrar(
+                AccionAuditada::RolAsignado,
+                $actor,
+                $usuario,
+                sprintf(
+                    'Asignó el rol %s a %s%s.',
+                    Rol::from($role->name)->etiqueta(),
+                    $usuario->nombre,
+                    $hasta === null ? ', sin fecha de fin' : ' hasta el '.CarbonImmutable::parse($hasta)->format('d/m/Y'),
+                ),
+                $motivo,
+            );
 
             $this->olvidarRolesCargados($usuario);
 
@@ -120,6 +136,8 @@ final class AsignacionDeRolService
                 'revocada_por' => $actor->id,
                 'motivo' => $this->motivoDeLaRevocacion($asignacion, $motivo),
             ]);
+
+            $this->bitacora->registrar(AccionAuditada::RolRevocado, $actor, $usuario, sprintf('Revocó el rol %s a %s.', Rol::from($role->name)->etiqueta(), $usuario->nombre), $motivo);
 
             $this->olvidarRolesCargados($usuario);
 

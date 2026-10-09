@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\Rol;
 use App\Exceptions\BloqueoInvalido;
 use App\Models\Bloqueo;
@@ -27,6 +28,8 @@ final class BloqueoService
 
     public const RESULTADOS_DE_BUSQUEDA = 10;
 
+    public function __construct(private readonly BitacoraService $bitacora) {}
+
     public function bloquear(User $persona, string $motivo, User $actor): Bloqueo
     {
         $this->garantizarPermiso($actor, 'create', Bloqueo::class);
@@ -41,11 +44,14 @@ final class BloqueoService
                 throw BloqueoInvalido::yaEstaBloqueado($persona);
             }
 
-            return Bloqueo::create([
+            $bloqueo = Bloqueo::create([
                 'user_id' => $persona->id,
                 'motivo' => $motivo,
                 'bloqueado_por' => $actor->id,
             ]);
+            $this->bitacora->registrar(AccionAuditada::BloqueoRegistrado, $actor, $persona, sprintf('Bloqueó a %s para el uso del laboratorio.', $persona->nombre), $motivo);
+
+            return $bloqueo;
         });
     }
 
@@ -58,12 +64,17 @@ final class BloqueoService
             throw BloqueoInvalido::yaFueLevantado();
         }
 
-        $bloqueo->levantado_at = now();
-        $bloqueo->levantado_por = $actor->id;
-        $bloqueo->motivo_levantamiento = $motivo;
-        $bloqueo->save();
+        return DB::transaction(function () use ($bloqueo, $motivo, $actor): Bloqueo {
+            $bloqueo->levantado_at = now();
+            $bloqueo->levantado_por = $actor->id;
+            $bloqueo->motivo_levantamiento = $motivo;
+            $bloqueo->save();
 
-        return $bloqueo;
+            $persona = $bloqueo->persona;
+            $this->bitacora->registrar(AccionAuditada::BloqueoLevantado, $actor, $persona, sprintf('Levantó el bloqueo de %s.', $persona->nombre), $motivo);
+
+            return $bloqueo;
+        });
     }
 
     public function vigenteDe(User $persona): ?Bloqueo

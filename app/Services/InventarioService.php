@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoItemInventario;
 use App\Enums\EstadoSolicitud;
 use App\Enums\NivelFidelidad;
@@ -31,6 +32,8 @@ use Illuminate\Support\Facades\DB;
 final class InventarioService
 {
     public const POR_PAGINA = 15;
+
+    public function __construct(private readonly BitacoraService $bitacora) {}
 
     public function crear(User $actor, DatosItemInventario $datos): ItemInventario
     {
@@ -99,14 +102,19 @@ final class InventarioService
      */
     public function darDeBaja(User $actor, ItemInventario $item, int $cantidad, string $motivo): ItemInventario
     {
-        return $this->cambiarEstado(
-            $actor,
-            $item,
-            EstadoItemInventario::Defectuoso,
-            EstadoItemInventario::DadoDeBaja,
-            $cantidad,
-            $motivo,
-        );
+        return DB::transaction(function () use ($actor, $item, $cantidad, $motivo): ItemInventario {
+            $item = $this->cambiarEstado(
+                $actor,
+                $item,
+                EstadoItemInventario::Defectuoso,
+                EstadoItemInventario::DadoDeBaja,
+                $cantidad,
+                $motivo,
+            );
+            $this->bitacora->registrar(AccionAuditada::UnidadesDadasDeBaja, $actor, $item, sprintf('Dio de baja %d %s de %s.', $cantidad, $cantidad === 1 ? 'unidad defectuosa' : 'unidades defectuosas', $item->nombre), $motivo);
+
+            return $item;
+        });
     }
 
     /**
@@ -127,14 +135,19 @@ final class InventarioService
     {
         $this->garantizarPermiso($actor, $item, 'cambiarEstadoFuncional');
 
-        return $this->mover(
-            $actor,
-            $item,
-            EstadoItemInventario::Operativo,
-            EstadoItemInventario::DadoDeBaja,
-            $cantidad,
-            $motivo,
-        );
+        return DB::transaction(function () use ($actor, $item, $cantidad, $motivo): ItemInventario {
+            $item = $this->mover(
+                $actor,
+                $item,
+                EstadoItemInventario::Operativo,
+                EstadoItemInventario::DadoDeBaja,
+                $cantidad,
+                $motivo,
+            );
+            $this->bitacora->registrar(AccionAuditada::UnidadesRetiradas, $actor, $item, sprintf('Retiró %d %s de %s.', $cantidad, $cantidad === 1 ? 'unidad operativa' : 'unidades operativas', $item->nombre), $motivo);
+
+            return $item;
+        });
     }
 
     /** Entran N unidades nuevas al inventario, siempre operativas. */

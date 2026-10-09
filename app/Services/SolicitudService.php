@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoSolicitud;
 use App\Enums\EstadoUsuario;
 use App\Enums\OrigenSolicitud;
@@ -35,6 +36,7 @@ final class SolicitudService
     public function __construct(
         private readonly PreparacionService $preparaciones,
         private readonly BloqueoService $bloqueos,
+        private readonly BitacoraService $bitacora,
     ) {}
 
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
@@ -130,6 +132,13 @@ final class SolicitudService
                 'motivo_retiro' => $motivo,
             ]);
             $this->actualizarCantidad($solicitud);
+            $this->bitacora->registrar(
+                AccionAuditada::EstudianteRetirado,
+                $actor,
+                $solicitud,
+                sprintf('Retiró a %s de %s.', $estudiante->nombre, $this->describir($solicitud)),
+                $motivo,
+            );
 
             return $solicitud;
         });
@@ -261,6 +270,22 @@ final class SolicitudService
         }
     }
 
+    /**
+     * "la solicitud de Atención de parto del 20/10/2026 de Ana Ruiz", como
+     * se escribe en la bitácora.
+     */
+    public function describir(Solicitud $solicitud): string
+    {
+        $solicitud->loadMissing(['casoClinico:id,nombre', 'docente:id,nombre']);
+
+        return sprintf(
+            'la sesión de %s del %s de %s',
+            $solicitud->casoClinico->nombre,
+            $solicitud->fecha->format('d/m/Y'),
+            $solicitud->docente->nombre,
+        );
+    }
+
     /** El dato del retiro viaja en el pivote de la lista ("participacion"). */
     private function fueRetirado(User $estudiante): bool
     {
@@ -388,6 +413,7 @@ final class SolicitudService
         DB::transaction(function () use ($solicitud, $coordinador): void {
             $solicitud->update($this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador));
             $this->preparaciones->crearDesdeSolicitud($solicitud);
+            $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.');
         });
 
         // Fuera de la transacción: si algo la revierte, no debe salir correo.
@@ -405,10 +431,15 @@ final class SolicitudService
     {
         $this->garantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
 
-        $solicitud->update([
-            ...$this->atributosDeResolucion(EstadoSolicitud::Rechazada, $actor),
-            'motivo_rechazo' => $motivo,
-        ]);
+        DB::transaction(function () use ($solicitud, $actor, $motivo): void {
+            $fase = $solicitud->estado === EstadoSolicitud::Pendiente ? 'en la revisión' : 'en la aprobación';
+
+            $solicitud->update([
+                ...$this->atributosDeResolucion(EstadoSolicitud::Rechazada, $actor),
+                'motivo_rechazo' => $motivo,
+            ]);
+            $this->bitacora->registrar(AccionAuditada::SolicitudRechazada, $actor, $solicitud, sprintf('Rechazó %s, %s.', $this->describir($solicitud), $fase), $motivo);
+        });
 
         SolicitudRechazada::dispatch($solicitud);
 
