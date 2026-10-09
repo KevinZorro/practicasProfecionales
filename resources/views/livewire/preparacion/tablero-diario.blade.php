@@ -56,7 +56,7 @@
                             <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}</x-dato>
                             <x-dato etiqueta="Sala">
                                 @if ($montaje->sala)
-                                    <span class="font-medium">{{ $montaje->sala->nombre }}</span>
+                                    <span class="font-medium">{{ $montaje->sala->nombreCompleto() }}</span>
                                 @else
                                     <span class="text-amber-800">Sin asignar</span>
                                 @endif

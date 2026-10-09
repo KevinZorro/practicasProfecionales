@@ -81,7 +81,7 @@ it('lista las salas activas y las inactivas', function (): void {
 it('crea una sala', function (): void {
     Livewire::actingAs($this->admin)
         ->test(CreateSala::class)
-        ->fillForm(['codigo' => 'SIM-01', 'nombre' => 'Sala de partos', 'capacidad' => 12, 'activo' => true])
+        ->fillForm(['codigo' => 'SIM-01', 'nombre' => 'Sala de partos', 'capacidad' => 12, 'activo' => true, 'bloque' => 'A', 'piso' => '1', 'numero' => '1'])
         ->call('create')
         ->assertHasNoFormErrors();
 

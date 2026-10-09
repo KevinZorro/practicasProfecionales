@@ -1,13 +1,20 @@
+@php($solicitud = $preparacion->solicitud)
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>Solicitud aprobada</title>
+    <title>{{ $esCambio ? 'Cambio de sala' : 'Sala asignada' }}</title>
 </head>
 <body style="font-family: sans-serif; color: #1f2937; line-height: 1.5;">
     <p>Buen día, {{ $solicitud->docente->nombre }}:</p>
 
-    <p>Su solicitud de escenario fue <strong>aprobada</strong>.</p>
+    @if ($esCambio)
+        <p>La sala de su sesión <strong>cambió</strong>. La nueva es:</p>
+    @else
+        <p>Su sesión ya tiene sala:</p>
+    @endif
+
+    <p style="font-size: 1.25em;"><strong>{{ $preparacion->sala->nombreCompleto() }}</strong></p>
 
     <table cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
         <tr>
@@ -19,10 +26,6 @@
             <td>{{ $solicitud->materia->nombre }}</td>
         </tr>
         <tr>
-            <td><strong>Tipo de sesión</strong></td>
-            <td>{{ $solicitud->tipo->etiqueta() }}</td>
-        </tr>
-        <tr>
             <td><strong>Fecha</strong></td>
             <td>{{ $solicitud->fecha->format('d/m/Y') }}</td>
         </tr>
@@ -30,15 +33,7 @@
             <td><strong>Hora</strong></td>
             <td>{{ $solicitud->hora_inicio }} a {{ $solicitud->hora_fin }}</td>
         </tr>
-        <tr>
-            <td><strong>Estudiantes</strong></td>
-            <td>{{ $solicitud->cantidad_estudiantes }}</td>
-        </tr>
     </table>
-
-    {{-- La sala se asigna durante la preparación (RF36), y llega en otro correo. --}}
-    <p>La sala la elige el laboratorio al preparar el escenario. Le llegará
-       otro correo en cuanto la asigne.</p>
 
     <p>{{ config('app.name') }}</p>
 </body>

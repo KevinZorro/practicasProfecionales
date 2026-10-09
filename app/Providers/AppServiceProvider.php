@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Enums\Rol;
+use App\Events\SalaAsignada;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Listeners\EnviarCorreoResultadoSolicitud;
+use App\Listeners\EnviarCorreoSalaAsignada;
 use App\Models\User;
 use App\Support\RolActivo;
 use Illuminate\Support\Facades\Event;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         // enlace entre evento y listener se lee de un vistazo.
         Event::listen(SolicitudAprobada::class, EnviarCorreoResultadoSolicitud::class);
         Event::listen(SolicitudRechazada::class, EnviarCorreoResultadoSolicitud::class);
+        Event::listen(SalaAsignada::class, EnviarCorreoSalaAsignada::class);
 
         $this->registrarPermisoDeReportes();
         $this->registrarAccesoAlPanelDelAdmin();

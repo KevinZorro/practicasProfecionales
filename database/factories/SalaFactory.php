@@ -24,6 +24,9 @@ class SalaFactory extends Factory
             'codigo' => strtoupper($this->faker->unique()->bothify('SIM-##')),
             'capacidad' => $this->faker->numberBetween(6, 30),
             'activo' => true,
+            'bloque' => 'A',
+            'piso' => '1',
+            'numero' => (string) $this->faker->unique()->numberBetween(1, 999),
         ];
     }
 

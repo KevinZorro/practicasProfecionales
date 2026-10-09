@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 34 | 4 |
+| Completo | 36 | 4 |
 | Solo backend | 8 | 0 |
-| Parcial | 12 | 6 |
+| Parcial | 10 | 6 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 20 | 0 |
 | **Total** | **75** | **10** |
@@ -104,7 +104,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Parcial | `PreparacionService::asignarSala()`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest` | El correo al asignar o cambiar la sala. Ya está hecho que solo se ofrezcan las salas libres (`PreparacionService::salasLibresPara()`, excepción `SalaOcupada`) |
+| RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Completo | `PreparacionService::asignarSala()`, `salasLibresPara()`, evento `SalaAsignada` → `EnviarCorreoSalaAsignada`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest`, `UbicacionDeSalasTest` | Solo se ofrecen salas libres; las vinculadas al escenario, primero (D14). El correo sale al asignar y al cambiar la sala, no si se vuelve a elegir la misma |
 | RF37 | Ítems alistados, estado del montaje, observaciones, avance parcial por otra persona | Completo | `PreparacionService`, `/panel/preparaciones` | `TableroDiarioTest`, `PantallaPreparacionTest` | |
 | RF38 | Registrar y actualizar inventario, retirar unidades, distinguir consumibles de **accesorios y repuestos de un simulador** | Parcial | `InventarioService`, `/panel/inventario` | `InventarioTest`, `PantallaInventarioTest`, `EstadoFuncionalInventarioTest` | Los tipos son simulador, equipo clínico y equipo básico; no hay accesorio o repuesto ligado a un simulador (D13) |
 | RF39 | Nivel de fidelidad, solo el ADMIN | Completo | `ItemInventarioPolicy` | `PantallaInventarioTest` | |
@@ -176,7 +176,7 @@ Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apar
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF65 | Crear, editar y reubicar salas, vincularlas con escenarios, con histórico de la reubicación | Parcial | `/admin/salas` | `PantallaSalasTest` | Bloque, piso y número de sala (P5), el histórico de cambios de ubicación y el vínculo sala–escenario (D14). El nombre ya es editable |
+| RF65 | Crear, editar y reubicar salas, vincularlas con escenarios, con histórico de la reubicación | Completo | `/admin/salas`, `SalaService::registrarUbicacion()`, tablas `ubicaciones_sala` y `caso_clinico_sala` | `PantallaSalasTest`, `UbicacionDeSalasTest` | Cada sala tiene bloque, piso y número (únicos en conjunto) y un nombre editable. Cada cambio de ubicación deja una fila con quién la registró |
 | RF66 | Estado funcional por ítem con motivo y responsable | Completo | `InventarioService::cambiarEstado()`, `retirarUnidades()`, `reponerUnidades()`, `darDeBaja()` | `EstadoFuncionalInventarioTest`, `InventarioTest`, `DisponibilidadInventarioTest` | |
 | RF67 | Lista de reposición que alimentan los administrativos y confirma la coordinadora, exportable una vez confirmada | Completo | `ReposicionService`, `/panel/reposicion` | `ListaDeReposicionTest`, `PantallaDeReportesTest` | |
 | RF72 | Distinguir en la preparación lo que monta el administrativo de lo que requiere al ingeniero | No iniciado | — | — | Criterio: D10 |

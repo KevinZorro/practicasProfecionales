@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EstadoPreparacion;
+use App\Events\SalaAsignada;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
 use App\Models\ItemInventario;
@@ -61,6 +62,10 @@ final class PreparacionService
         )->all());
     }
 
+    /**
+     * El administrativo elige la sala (RF36). Si la sala cambia, el docente
+     * recibe un correo con la nueva; si se vuelve a elegir la misma, no.
+     */
     public function asignarSala(Preparacion $preparacion, Sala $sala): Preparacion
     {
         $conflicto = $this->preparacionSolapada($preparacion, $sala);
@@ -69,7 +74,15 @@ final class PreparacionService
             throw SalaOcupada::por($sala, $conflicto);
         }
 
+        $anterior = $preparacion->sala_id;
+
+        if ($anterior === $sala->id) {
+            return $preparacion;
+        }
+
         $preparacion->update(['sala_id' => $sala->id]);
+
+        SalaAsignada::dispatch($preparacion, esCambio: $anterior !== null);
 
         return $preparacion;
     }
@@ -134,6 +147,10 @@ final class PreparacionService
      * el cálculo de disponibilidad de inventario. Si el criterio cambia,
      * cambia en los tres a la vez.
      *
+     * Las salas vinculadas al escenario van primero y vienen marcadas en
+     * "del_escenario", pero no se filtra por ellas: un vínculo sin llenar no
+     * puede dejar una clase sin sala (D14 de docs/trazabilidad.md).
+     *
      * @return Collection<int, Sala>
      */
     public function salasLibresPara(Preparacion $preparacion): Collection
@@ -142,6 +159,7 @@ final class PreparacionService
 
         return Sala::query()
             ->activas()
+            ->withExists(['casosClinicos as del_escenario' => static fn (Builder $caso) => $caso->whereKey($solicitud->caso_clinico_id)])
             ->whereDoesntHave('preparaciones', fn (Builder $consulta) => $consulta
                 ->whereKeyNot($preparacion->getKey())
                 ->whereHas('solicitud', static fn (Builder $suya) => $suya->queSeSolapanCon(
@@ -149,6 +167,7 @@ final class PreparacionService
                     $solicitud->hora_inicio,
                     $solicitud->hora_fin,
                 )))
+            ->orderByDesc('del_escenario')
             ->orderBy('nombre')
             ->get();
     }

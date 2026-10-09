@@ -50,6 +50,16 @@ class CasoClinico extends Model
         return $this->belongsToMany(Materia::class, 'caso_clinico_materia');
     }
 
+    /**
+     * Salas en las que se monta este escenario (RF65).
+     *
+     * @return BelongsToMany<Sala, $this>
+     */
+    public function salas(): BelongsToMany
+    {
+        return $this->belongsToMany(Sala::class, 'caso_clinico_sala');
+    }
+
     /** @return BelongsToMany<Capacidad, $this> */
     public function capacidades(): BelongsToMany
     {

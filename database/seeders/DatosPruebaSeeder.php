@@ -93,11 +93,15 @@ class DatosPruebaSeeder extends Seeder
             'SIM-05' => ['Consultorio de semiología', 8],
         ];
 
+        // Todas en el bloque A, primer piso; el número sale del código.
         return collect($definicion)->map(fn (array $datos, string $codigo): Sala => Sala::create([
             'nombre' => $datos[0],
             'codigo' => $codigo,
             'capacidad' => $datos[1],
             'activo' => true,
+            'bloque' => 'A',
+            'piso' => '1',
+            'numero' => substr($codigo, -2),
         ]));
     }
 
