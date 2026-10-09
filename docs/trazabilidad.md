@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 64 | 4 |
+| Completo | 64 | 5 |
 | Solo backend | 0 | 0 |
-| Parcial | 0 | 6 |
+| Parcial | 0 | 5 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 10 | 0 |
 | **Total** | **75** | **10** |
@@ -200,7 +200,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | RNF03 | Docker sobre Debian 13 | Completo | `docker-compose.produccion.yml`, `docker/php/Dockerfile`, job de Docker en la CI | Falta desplegarlo en el servidor real (ver [Bloqueos externos](#bloqueos-externos)) |
 | RNF04 | Acceso por rol, herencia coordinador → administrativo, control total del ADMIN | Completo | Policies, `RecursoDelAdmin`, middleware persistentes de Livewire | |
 | RNF05 | Responsiva en computador y celular | Parcial | Panel con Tailwind, móvil primero | La landing no existe, y no hay revisión sistemática a ancho de celular |
-| RNF06 | Arquitectura por capas documentada para terceros | Parcial | `CLAUDE.md`, `README.md`, `arquitectura-y-modelo-datos.md`, Larastan nivel 6 | El documento de arquitectura está desfasado (ver [Diferencias](#diferencias-entre-los-documentos-y-el-código)) |
+| RNF06 | Arquitectura por capas documentada para terceros | Completo | `CLAUDE.md`, `README.md`, `arquitectura-y-modelo-datos.md`, Larastan nivel 6 | El documento de arquitectura quedó al día con el código el 9-oct-2026 (RF01–RF75, todos los Services, el modelo de datos completo y la matriz de permisos). Mantenerlo es parte de cada cambio de esquema |
 | RNF07 | Información de estudiantes y evaluaciones solo para roles autorizados | Completo | Disco privado, `DescargaConfidencialidadController`, Policies, `EvaluacionEstudiantePolicy` | |
 | RNF08 | Chrome, Firefox y Edge | Parcial | Sin dependencias exóticas de JavaScript | Nunca se ha probado en Firefox ni en Edge |
 | RNF09 | Agregar módulos sin afectar los existentes | Completo | Capas Service/Policy, tests por módulo | |
@@ -286,12 +286,12 @@ Para ponerlo a andar hace falta:
 4. **Pendientes del `CLAUDE.md` ya cerrados por el enunciado:** el 1 (autoaprobación, RF31: no se bloquea) y el 3 (cómo se entera el docente de la sala, RF36: por correo). Ya se quitaron de `SolicitudPolicy` el bloque comentado y los avisos de pendiente.
 5. **Números de RF19 y RF20.** La versión anterior de esta matriz los tenía al revés: RF19 es el criterio de acceso y RF20 la sincronización.
 6. ~~**Número de RF30.**~~ Corregido: `FormularioSolicitud` y `SolicitudController` citan RF27–RF29.
-7. **`items_inventario` en el modelo de datos** (arquitectura §4.3) todavía tiene la columna `estado` y no los tres contadores. La migración `2026_09_21_180000_pasa_el_estado_del_inventario_a_cantidades` la reemplazó (regla 11 del `CLAUDE.md`).
-8. **`casos_clinicos` en el modelo de datos** (arquitectura §4.2) no tiene `capacidad_maxima_estudiantes`, que existe (RF74).
-9. **Tablas que el modelo de datos no describe** (arquitectura §4): `listas_reposicion`, y sin sus campos `lineas_reposicion`, `necesidades_reposicion` y `cambios_estado_item`.
-10. **El encabezado del documento de arquitectura** dice que deriva de "RF01–RF56"; hoy son RF01–RF75.
-11. **La ruta de los formatos de confidencialidad.** La arquitectura (§3) dice `storage/app/confidencialidad/`; la real es `storage/app/private/confidencialidad/{plantillas,firmados}`.
-12. **"Bloquear prácticas si está pendiente"** (arquitectura §2) se le atribuye a `ConfidencialidadService`. Lo decide `ParticipacionService`, que junta el formato con los bloqueos de coordinación.
-13. **Las tablas de Services** de la arquitectura (§2) omiten `AccesoService`, `ConfiguracionLandingService`, `ReposicionService` y `GeneradorDeReportes`, y presentan `UsuarioSyncService` sin advertir que no existe.
-14. **RF22 en Filament.** El `CLAUDE.md`, la arquitectura y `AdminPanelProvider` agrupan "RF22–RF26" en `/admin`. RF22 (usuarios) no está en Filament: está en `/panel/usuarios`, junto al reparto de roles, porque deshabilitar y asignar roles tienen reglas de negocio (motivo, bitácora, vigencia).
+7. ~~**`items_inventario` en el modelo de datos**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+8. ~~**`casos_clinicos` en el modelo de datos**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+9. ~~**Tablas que el modelo de datos no describe**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+10. ~~**El encabezado del documento de arquitectura**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+11. ~~**La ruta de los formatos de confidencialidad.**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+12. ~~**"Bloquear prácticas si está pendiente"**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+13. ~~**Las tablas de Services**~~ Corregido: el documento de arquitectura se puso al día (RNF06).
+14. ~~**RF22 en Filament.**~~ Corregido: el `CLAUDE.md`, la arquitectura y `AdminPanelProvider` dicen ahora RF23–RF26 para Filament; RF22 está en `/panel/usuarios`, porque deshabilitar y asignar roles tienen reglas de negocio.
 15. ~~**El compose de producción no tiene tareas programadas.**~~ Corregido: servicio `programador` (`schedule:work`) en los dos compose; la CI comprueba que esté arriba y lo detiene durante la restauración de copias.

@@ -1,7 +1,7 @@
 # Arquitectura y Modelo de Datos
 ## Plataforma de Gestión del Laboratorio de Simulación Clínica
 
-Documento técnico de referencia. Deriva de los requerimientos funcionales RF01–RF56 y no funcionales RNF01–RNF10.
+Documento técnico de referencia. Deriva de los requerimientos funcionales RF01–RF75 y no funcionales RNF01–RNF10 (`docs/requerimientos.md`). El estado de cada uno contra el código está en `docs/trazabilidad.md`; las reglas de trabajo, en `CLAUDE.md`.
 
 ---
 
@@ -42,7 +42,7 @@ Se eligió monolito y no arquitectura de servicios separados porque el sistema t
 
 **Solo PostgreSQL.** El plan inicial admitía MySQL 8 como alternativa; ya no es posible. Las invariantes críticas se garantizan con `CHECK` de PostgreSQL (regla 11 del `CLAUDE.md`: las cantidades del inventario siempre suman el total) y hay migraciones con SQL propio de PostgreSQL.
 
-**Por qué Filament, y solo para el ADMIN:** el ADMIN gestiona 8 módulos de contenido público (RF10–RF17) más la estructura académica (RF22–RF26). Son pantallas de alta, baja y edición sin reglas de negocio, y construirlas a mano consumiría gran parte del presupuesto de horas. Filament las genera a partir de los modelos, con carga de imágenes, orden y filtros, y respeta las Policies de Laravel, así que la disciplina de permisos se mantiene. Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad— tienen lógica de dominio propia y siguen en Livewire.
+**Por qué Filament, y solo para el ADMIN:** el ADMIN gestiona 8 módulos de contenido público (RF10–RF17) más la estructura académica (RF23–RF26). Son pantallas de alta, baja y edición sin reglas de negocio, y construirlas a mano consumiría gran parte del presupuesto de horas. Filament las genera a partir de los modelos, con carga de imágenes, orden y filtros, y respeta las Policies de Laravel, así que la disciplina de permisos se mantiene. Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— tienen lógica de dominio propia y siguen en Livewire. Las cuentas de usuario (RF22) también: deshabilitar y repartir roles llevan motivo, bitácora y vigencia, así que viven en `/panel/usuarios` y no en Filament.
 
 La versión es la 3.3: la 4 exige Tailwind 4 para cualquier tema propio, y el panel usa Tailwind 3. Filament trae su CSS compilado y no toca la configuración de Tailwind del panel. Las condiciones con las que se instaló —clase base que deniega lo no definido, acceso solo del ADMIN con el rol activo, sin entrada por contraseña, assets fuera del repositorio— están en el §2 del `CLAUDE.md`.
 
@@ -54,7 +54,7 @@ La versión es la 3.3: la 4 exige Tailwind 4 para cualquier tema propio, y el pa
 HTTP Request
     │
     ▼
-Route ──► Middleware (auth, rol activo)
+Route ──► Middleware (auth, usuario activo, rol activo)
     │
     ▼
 Form Request ──────► validación de entrada
@@ -77,25 +77,38 @@ Event ─────────────► Listener ──► Mail (notifi
 
 ### Responsabilidad de cada capa
 
-- **Form Request** — valida formato y obligatoriedad de los datos que entran.
-- **Policy** — decide si el usuario puede ejecutar la acción según su rol activo. Aquí se implementa la herencia coordinador → administrativo (RNF04).
-- **Service** — concentra las reglas de negocio: aprobar una solicitud, calcular el número de intento, copiar el checklist al crear una evaluación, precargar inventario desde un caso clínico. No se escriben en controladores ni en modelos.
+- **Form Request** — valida formato y obligatoriedad de los datos que entran. Casi siempre lo hace la validación de Livewire (ver el §3).
+- **Policy** — decide si el usuario puede ejecutar la acción según su rol activo. Aquí se implementa la herencia coordinador → administrativo (RNF04). Los componentes Livewire vuelven a pedir el permiso de su pantalla en cada petición (`AutorizaEnCadaPeticion`).
+- **Service** — concentra las reglas de negocio: aprobar una solicitud, calcular el número de intento, copiar el checklist al crear una evaluación, precargar inventario desde un caso clínico. No se escriben en controladores ni en modelos. Quien actúa llega como parámetro (`User $actor`); un Service no lee la sesión ni la petición, para funcionar igual desde una pantalla, un comando o la cola.
 - **Model** — relaciones, scopes y accessors. Sin lógica de negocio.
-- **Event / Listener** — el correo de resultado de solicitud (RF33) se dispara como evento para no bloquear la respuesta HTTP.
+- **Event / Listener** — el correo de resultado de solicitud (RF33) y el de sala asignada (RF36) se disparan como evento. Los demás correos (reprogramación, sustitución, aviso del formato intramural, sincronización detenida) los encola el propio Service con `Mail::queue`. Ninguno bloquea la respuesta HTTP.
+- **Bitácora** — las acciones sensibles (aprobar, rechazar, reprogramar, sustituir, retirar, dar de baja, repartir roles, bloquear, deshabilitar) dejan una fila en `bitacora` dentro de la misma transacción que las hace (RF62).
 
 ### Reglas que viven en Services
 
 | Service | Reglas que encapsula |
 |---|---|
-| `SolicitudService` | Crear solicitud, precargar inventario del caso clínico, transiciones de estado (pendiente → revisada → aprobada/rechazada), disparar notificación |
-| `PreparacionService` | Crear preparación al aprobarse una solicitud, asignar sala, marcar ítems alistados, cambiar estado de montaje |
+| `SolicitudService` | Crear solicitud con su grupo y estudiantes, completar o retirar estudiantes de la sesión, precargar inventario del caso clínico, transiciones de estado (pendiente → revisada → aprobada/rechazada, con rechazo en las dos fases), disparar notificaciones, capacidad máxima del escenario (RF74) |
+| `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): nacen aprobadas y queda quién las registró; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
+| `NovedadesDeSesionService` | Reprogramar una sesión aprobada (RF61) y sustituir a su docente (RF73), con rastro de solo añadir y correo |
+| `PreparacionService` | Crear preparación al aprobarse una solicitud, asignar sala entre las libres (las vinculadas al escenario primero) y avisar al docente (RF36), marcar ítems alistados, cambiar estado de montaje, señalar lo que monta el ingeniero (RF72) |
+| `SalaService` | Rastro de la ubicación de las salas: bloque, piso y número (RF65) |
 | `EvaluacionService` | Validar que exista solicitud aprobada de tipo evaluación, copiar ítems del checklist, calcular número de intento por estudiante |
-| `InventarioService` | Altas y bajas, cálculo de disponibilidad por fecha y franja horaria |
-| `ConfidencialidadService` | Determinar el periodo académico vigente, verificar si el firmante ya entregó el formato de confidencialidad en ese periodo, bloquear prácticas si está pendiente |
-| `AsignacionDeRolService` | Asignar y revocar roles con o sin vigencia, y registrar el rastro. Única puerta de escritura de roles |
-| `ReporteService` | Agregaciones de uso de escenarios y de resultados de evaluación, y generación de los archivos PDF y Excel |
+| `InventarioService` | Altas y ediciones, movimiento de unidades entre estados con cantidad, motivo y responsable (RF66), retiro y baja, accesorios ligados a un simulador (RF38), disponibilidad por fecha y franja horaria |
+| `ReposicionService` | Lista de insumos por pedir: borrador calculado, necesidades anotadas a mano, cierre que congela las líneas (RF67) |
+| `PeriodoAcademicoService` | Abrir, cerrar y reabrir el periodo académico (RF75). Única fuente del periodo vigente |
+| `ConfidencialidadService` | Plantillas, entregas, verificación y entrega en físico del formato de confidencialidad; estado por persona, filtrable por sesión, materia y programa (RF51–RF53) |
+| `ParticipacionService` | Quién puede entrar al laboratorio y por qué no: formato al día y sin bloqueo (RF45, RF70). Lo consultan la evaluación y la lista de cada sesión |
+| `BloqueoService` | Bloquear y levantar el bloqueo de estudiantes y docentes, siempre con motivo (RF68) |
+| `AccesoService` | Quién puede entrar: vigencia institucional y cuenta sin deshabilitar (regla 8); a qué cuenta corresponde quien vuelve de Google (RF18) |
+| `AsignacionDeRolService` | Asignar y revocar roles con o sin vigencia, y registrar el rastro. Única puerta de escritura de roles (RF63, RF64) |
+| `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (origen `manual`); deshabilitar y volver a habilitar, con motivo (RF22) |
+| `UsuarioSyncService` | Sincronizar con la base institucional a través de una `FuenteInstitucional`: altas, cambios, desactivar sin borrar, roles permanentes, freno ante desactivaciones masivas (RF19, RF20). Hoy solo existe la fuente simulada |
+| `BitacoraService` | Escribir y consultar la bitácora de auditoría (RF62) |
+| `AjustesService` | Valores que el ADMIN cambia sin desplegar, como la antelación del aviso del RF60 |
+| `ReporteService` y `GeneradorDeReportes` | Agregaciones de uso de escenarios y de resultados de evaluación; una sola consulta alimenta pantalla, PDF y Excel (RF54–RF56) |
+| `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11) |
 | `ImagenPublicaService` | Imágenes del contenido público: validar tipo y tamaño, enderezar según el EXIF, reducir a 1600 px de lado mayor y guardar en WebP (RNF10); borrar la reemplazada al confirmar la transacción |
-| `UsuarioSyncService` | Sincronizar contra la vista institucional, activar y desactivar usuarios |
 
 ---
 
@@ -107,16 +120,14 @@ Lo que existe hoy. Lo previsto va aparte, abajo, para que el árbol no afirme lo
 proyecto/
 ├── app/
 │   ├── Enums/                                 # estados y tipos del dominio
-│   ├── Events/
-│   │   ├── SolicitudAprobada.php
-│   │   └── SolicitudRechazada.php
+│   ├── Events/                                # SolicitudAprobada, SolicitudRechazada, SalaAsignada
 │   ├── Exceptions/                            # una por familia de regla rota
 │   ├── Exports/                               # Excel de reportes y de la lista de reposición
 │   ├── Filament/
 │   │   ├── RecursoDelAdmin.php                # base de todo recurso: deniega lo que la Policy no define
 │   │   ├── Formularios/CampoDeImagen.php      # toda imagen pública pasa por ImagenPublicaService
 │   │   ├── Concerns/                          # BorraLasImagenesReemplazadas
-│   │   └── Resources/                         # pantallas del ADMIN (RF10–RF17, RF22–RF26)
+│   │   └── Resources/                         # pantallas del ADMIN (RF10–RF16, RF23–RF26)
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Auth/
@@ -127,27 +138,33 @@ proyecto/
 │   │   ├── Requests/
 │   │   │   └── FiltroDeReporteRequest.php     # filtros de las descargas de reportes, los mismos de la pantalla
 │   │   └── Middleware/
+│   │       ├── CabecerasDeSeguridad.php       # CSP y demás cabeceras, probadas en Laravel
 │   │       ├── EstablecerRolActivo.php        # selector de vista RF21
 │   │       ├── SoloEnDesarrollo.php
 │   │       └── VerificarUsuarioActivo.php     # regla 8: corta al inactivo, también en Livewire
-│   ├── Listeners/
-│   │   └── EnviarCorreoResultadoSolicitud.php # en cola (RF33)
+│   ├── Listeners/                             # registrados a mano en AppServiceProvider, en cola
 │   ├── Livewire/
+│   │   ├── Concerns/AutorizaEnCadaPeticion.php
+│   │   ├── Bitacora/                          # consulta de la bitácora RF62
+│   │   ├── Bloqueo/                           # bloqueos de acceso RF68
 │   │   ├── Confidencialidad/                  # formato de confidencialidad RF51–RF53
+│   │   ├── Evaluacion/                        # evaluaciones y resultados RF41–RF50
 │   │   ├── Inventario/                        # RF38–RF40, RF66
-│   │   ├── Preparacion/                       # tablero diario RF36–RF37
+│   │   ├── PeriodoAcademico/                  # abrir y cerrar el periodo RF75
+│   │   ├── Preparacion/                       # tablero diario RF36–RF37, RF72
 │   │   ├── Reportes/                          # pantalla de reportes RF54–RF56
 │   │   ├── Reposicion/                        # lista de insumos por pedir RF67
-│   │   ├── Solicitud/                         # formulario, bandeja, mis solicitudes
-│   │   └── Usuario/                           # roles con vigencia RF63–RF64
+│   │   ├── Solicitud/                         # formulario, bandeja, participantes, sesiones apartadas, novedades
+│   │   └── Usuario/                           # cuentas RF22 y roles con vigencia RF63–RF64
 │   ├── Mail/
 │   ├── Models/
 │   ├── Policies/
 │   ├── Providers/
 │   │   └── Filament/AdminPanelProvider.php    # panel /admin: solo ADMIN, sin login propio
-│   ├── Services/
+│   ├── Services/                              # también los objetos de datos (Datos*) y la FuenteInstitucional
 │   └── Support/                               # menú del panel y rol activo
 ├── database/
+│   ├── datos/institucional-simulada.json      # fuente simulada de la sincronización (RF20)
 │   ├── factories/
 │   ├── migrations/
 │   └── seeders/                               # RolSeeder, DatosPruebaSeeder
@@ -165,11 +182,11 @@ proyecto/
 ├── lang/es/ y lang/es.json                   # la aplicación en español: validación, paginación, páginas de error
 ├── routes/
 │   ├── web.php
-│   └── console.php
-├── storage/app/confidencialidad/              # privado, no público
+│   └── console.php                            # comandos y tareas programadas (RF20, RF60)
+├── storage/app/private/confidencialidad/      # plantillas/ y firmados/: privado, nunca público
 ├── tests/
-├── docker-compose.yml                         # entorno de desarrollo, con trabajador de cola
-├── docker-compose.produccion.yml              # producción: imágenes con el código, copias de seguridad
+├── docker-compose.yml                         # entorno de desarrollo, con trabajador de cola y programador
+├── docker-compose.produccion.yml              # producción: imágenes con el código, programador, copias de seguridad
 └── .env.example
 ```
 
@@ -177,14 +194,13 @@ proyecto/
 
 | Pieza | Para qué | Depende de |
 |---|---|---|
-| `Services/UsuarioSyncService.php` y su comando programado | Sincronización institucional (RF19–RF20) | Pendiente 2 del `CLAUDE.md` |
-| `Filament/Resources/` | Pantallas del ADMIN, en este orden: materias, casos clínicos (con materias e inventario), tipos de evaluación con su checklist, salas; después el contenido público (RF10–RF17, RF22–RF26). Hechos: el panel, `Filament/RecursoDelAdmin.php`, materias, casos clínicos (que absorben la capacidad máxima de estudiantes, RF74), tipos de evaluación con su checklist y salas. Del contenido público: galería de fotos y estadísticas (RF10), talleres (RF13), certificaciones (RF15), perfiles docentes (RF16), configuración de la landing (RF11), campos públicos de los casos clínicos (RF12), tipos de evento y eventos (RF14). Falta la galería de videos (RF17), pendiente de confirmar con el cliente | Una Policy por modelo antes de cada pantalla |
-| `Livewire/Evaluacion/` | Registro de evaluaciones (RF41–RF50). `EvaluacionService` ya existe y está probado | Qué pasa con el docente sin formato de confidencialidad (RF68–RF70) |
-| Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php` | — |
+| Una `FuenteInstitucional` real | Conectar la sincronización (RF20) a la base de la universidad: traducir sus columnas a `PersonaInstitucional` y elegirla con `SINCRONIZACION_FUENTE` | Motor, acceso y estructura de la base institucional (pendiente 2 del `CLAUDE.md`) |
+| Recurso de Filament de la galería de videos | Videos subidos al servidor, con portada y tope configurable (RF17) | — |
+| Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php`. Incluye el formulario de información por taller (RF09) | El diseño nuevo |
 
 **Un solo Form Request.** El diagrama de capas los nombra, pero en este proyecto su papel lo cumple casi siempre la validación de Livewire (`#[Validate]` y `validate()`): las pantallas que reciben datos son componentes Livewire. La excepción son las descargas de reportes, que son enlaces normales con los filtros en la URL: `FiltroDeReporteRequest` las valida, y la pantalla de reportes usa sus mismas reglas y su mismo método para armar el filtro, así que la tabla y el archivo no pueden entender los filtros de forma distinta.
 
-**Nota sobre `storage`:** los formatos de confidencialidad firmados contienen datos personales y no deben quedar en la carpeta pública (RNF07). Se sirven mediante una ruta protegida por Policy, nunca por enlace directo.
+**Nota sobre `storage`:** los formatos de confidencialidad firmados contienen datos personales y no deben quedar en la carpeta pública (RNF07). Viven en el disco `local` (`storage/app/private/confidencialidad/`, carpetas configurables en `config/laboratorio.php`) y se sirven mediante rutas protegidas por Policy, nunca por enlace directo.
 
 ---
 
@@ -200,16 +216,22 @@ proyecto/
 | google_id | string, nullable, unique | identificador devuelto por Google |
 | email | string, unique | correo institucional |
 | nombre | string | |
-| documento | string, nullable | proviene de la vista institucional |
+| documento | string, nullable, indexado | proviene de la vista institucional; con él se reconoce a la persona al sincronizar |
 | codigo_institucional | string, nullable | código de estudiante o docente |
-| estado | enum(`activo`,`inactivo`) | RF20 |
-| origen | enum(`matriculado`,`contratado`), nullable | según la vista institucional |
+| programa | string, nullable, indexado | programa académico (RF19, RF53) |
+| estado | enum(`activo`,`inactivo`) | vigencia institucional: solo la escribe la sincronización (RF20) |
+| origen | enum(`matriculado`,`contratado`,`manual`), nullable | las dos primeras las trae la sincronización; `manual` es una cuenta creada por el ADMIN, que la sincronización no toca (RF22) |
 | ultima_sincronizacion | timestamp, nullable | |
+| deshabilitado_at | timestamp, nullable | marca del ADMIN, aparte de `estado`; la sincronización no la revierte (RF22, D6) |
+| deshabilitado_por | FK → users, nullable | |
+| motivo_deshabilitacion | text, nullable | |
 | timestamps | | |
+
+Puede entrar quien tiene `estado = activo` **y** `deshabilitado_at` nulo; lo decide `AccesoService::puedeEntrar()`. La sincronización nunca borra: quien deja de estar vigente queda inactivo, y sus solicitudes, evaluaciones y formatos siguen apuntando a él.
 
 **Roles y permisos** — los gestiona `spatie/laravel-permission` con sus propias tablas (`roles`, `permissions`, `model_has_roles`, `model_has_permissions`, `role_has_permissions`). El proyecto no define tablas de roles propias: mantener dos catálogos en paralelo generaría inconsistencias. A la tabla `roles` del paquete se le añadió la columna `descripcion`.
 
-Los cinco roles se siembran en `RolSeeder`: `admin`, `coordinador`, `administrativo`, `docente`, `estudiante`. Un usuario puede tener varios simultáneamente (RF22).
+Los cinco roles se siembran en `RolSeeder`: `admin`, `coordinador`, `administrativo`, `docente`, `estudiante`. Un usuario puede tener varios simultáneamente (RF22). La sincronización da el rol permanente según la vinculación (matriculado → estudiante, contratado → docente) y nunca revoca; los demás roles los reparte el ADMIN.
 
 > El selector de vista (RF21) no se persiste como columna: el rol activo se guarda en sesión y lo aplica el middleware `EstablecerRolActivo`.
 
@@ -228,6 +250,7 @@ Los cinco roles se siembran en `RolSeeder`: `admin`, `coordinador`, `administrat
 | visible_publico | boolean | RF03 |
 | orden | int | orden de aparición pública |
 | activo | boolean | |
+| capacidad_maxima_estudiantes | int, nullable | RF74. Nulo = sin definir, no limita. No confundir con `salas.capacidad` ni con `capacidades` |
 
 **`caso_clinico_materia`** — `caso_clinico_id`, `materia_id` · muchos a muchos (RF24)
 
@@ -238,24 +261,49 @@ Los cinco roles se siembran en `RolSeeder`: `admin`, `coordinador`, `administrat
 **`caso_clinico_item`** — `caso_clinico_id`, `item_inventario_id`, `cantidad` (RF25)
 Esta tabla es la que permite la precarga automática de equipos al crear una solicitud (RF29).
 
+**`caso_clinico_sala`** — `caso_clinico_id`, `sala_id` · salas donde suele montarse el escenario; al asignar sala se ofrecen primero (D14)
+
+**`periodos_academicos`** — `nombre` (ej. `2026-2`), `abierto_at`, `abierto_por`, `cerrado_at`, `cerrado_por` (RF75). Un índice único parcial impide dos periodos abiertos a la vez. El periodo vigente es el abierto, o entre semestres el último cerrado; nunca se deriva del calendario.
+
 ### 4.3 Inventario y salas
 
-**`items_inventario`** (RF38, RF39)
+**`items_inventario`** (RF38, RF39, RF66)
 
 | Campo | Tipo | Notas |
 |---|---|---|
 | id | bigint PK | |
 | nombre | string | |
-| tipo | enum(`simulador`,`equipo_clinico`,`equipo_basico`) | |
-| nivel_fidelidad | enum(`baja`,`media`,`alta`), nullable | solo aplica a simuladores |
+| tipo | enum(`simulador`,`equipo_clinico`,`equipo_basico`,`accesorio`) | `accesorio` es «accesorio o repuesto» de un simulador |
+| nivel_fidelidad | enum(`baja`,`media`,`alta`), nullable | solo aplica a simuladores; solo lo edita el ADMIN (RF39) |
+| simulador_id | FK → items_inventario, nullable | el simulador del que es accesorio o repuesto (RF38) |
 | cantidad_total | int | |
+| cantidad_operativa | int | |
+| cantidad_en_revision | int | |
+| cantidad_defectuosa | int | |
 | descripcion | text, nullable | |
-| estado | enum(`disponible`,`mantenimiento`,`baja`) | |
 | activo | boolean | |
 
-Se modela en una sola tabla con discriminador `tipo` en lugar de tres tablas separadas, porque los tres comparten los mismos atributos y se solicitan de la misma forma. `nivel_fidelidad` queda nulo para equipos.
+Se modela en una sola tabla con discriminador `tipo` en lugar de tablas separadas, porque comparten los mismos atributos y se solicitan de la misma forma. Dos `CHECK` de PostgreSQL:
 
-**`salas`** — `id`, `nombre`, `codigo`, `capacidad`, `activo`
+- `cantidad_total = cantidad_operativa + cantidad_en_revision + cantidad_defectuosa`: el estado funcional es de las unidades, no del ítem (RF66). No hay columna `estado`.
+- `(tipo = 'accesorio') = (simulador_id IS NOT NULL)`: todo accesorio tiene simulador y nada más lo tiene.
+
+Las cantidades y `nivel_fidelidad` están fuera de `$fillable`: solo las mueve `InventarioService`. La disponibilidad por franja no se almacena: se calcula como `cantidad_operativa` menos lo comprometido en solicitudes aprobadas.
+
+**`cambios_estado_item`** — `item_inventario_id`, `estado_anterior` (nulo = entrada), `estado_nuevo` (`operativo`, `en_revision`, `defectuoso`, `dado_de_baja`), `cantidad`, `motivo`, `registrado_por`. Historial de solo añadir: reconstruye los contadores por sí solo.
+
+**`salas`** — `id`, `nombre`, `codigo`, `capacidad` (cuánta gente cabe), `bloque`, `piso`, `numero`, `activo` (RF65)
+
+**`ubicaciones_sala`** — `sala_id`, `bloque`, `piso`, `numero`, `registrada_por`, `created_at`. Una fila cada vez que cambia la ubicación (`SalaService`).
+
+**Lista de insumos por pedir (RF67)**
+
+| Tabla | Campos principales |
+|---|---|
+| `listas_reposicion` | `desde`, `hasta`, `observaciones`, `cerrada_por`, `cerrada_at`. En borrador no guarda líneas; cada lista arranca el día siguiente al cierre de la anterior |
+| `lineas_reposicion` | `lista_reposicion_id`, `item_inventario_id` (nullable), `descripcion` (congelada), `motivo`, `cantidad`. Se escriben al cerrar y no cambian después |
+| `necesidades_reposicion` | `item_inventario_id` (nullable), `descripcion` (nullable), `cantidad`, `justificacion`, `fecha`, `registrada_por`, `atendida_at`, `atendida_por`, `motivo_atencion`. `CHECK`: ítem o descripción. Lo que se pidió y no había; nunca un ítem con cero unidades |
+| `lista_reposicion_necesidad` | qué necesidades entraron en qué lista cerrada |
 
 ### 4.4 Solicitudes de escenario
 
@@ -271,8 +319,14 @@ Se modela en una sola tabla con discriminador `tipo` en lugar de tres tablas sep
 | fecha | date | |
 | hora_inicio | time | |
 | hora_fin | time | |
-| cantidad_estudiantes | int | |
+| grupo | string, nullable | A, B, C… (RF28) |
+| cantidad_estudiantes | int | sale de la lista de estudiantes |
 | estado | enum(`pendiente`,`revisada`,`aprobada`,`rechazada`) | |
+| origen | enum(`docente`,`registro_previo`) | `registro_previo` = sesión apartada antes del semestre, nace aprobada (RF57) |
+| registrada_por | FK → users, nullable | el administrativo que cargó la sesión apartada |
+| formato_intramural_at | timestamp, nullable | RF59 |
+| formato_intramural_por | FK → users, nullable | |
+| docente_que_dicta_id | FK → users, nullable | reemplazo vigente (RF73): evalúa, gestiona la lista y suma las horas |
 | revisada_por | FK → users, nullable | administrativo (RF30) |
 | revisada_at | timestamp, nullable | |
 | resuelta_por | FK → users, nullable | coordinador (RF31) |
@@ -284,6 +338,12 @@ Se modela en una sola tabla con discriminador `tipo` en lugar de tres tablas sep
 > **No lleva `sala_id`.** La sala la asigna el administrativo durante la preparación, después de la aprobación del coordinador.
 
 **`solicitud_item`** — `solicitud_id`, `item_inventario_id`, `cantidad` (RF28, RF29)
+
+**`estudiante_solicitud`** — `solicitud_id`, `estudiante_id`, `retirado_at`, `retirado_por`, `motivo_retiro`. Los estudiantes de la sesión (RF28, RF69). Retirar no borra la fila.
+
+**`reprogramaciones`** — `solicitud_id`, fecha, horas y caso clínico anteriores y nuevos, `motivo`, `constancia_comunicacion`, `reprogramada_por`, `created_at`. Solo añadir (RF61).
+
+**`sustituciones`** — `solicitud_id`, `docente_anterior_id`, `docente_nuevo_id`, `motivo`, `registrada_por`, `created_at`. Solo añadir (RF73).
 
 ### 4.5 Preparación de escenarios
 
@@ -397,6 +457,14 @@ Nulo significa "sin límite por ese lado": `hasta` nulo es un rol permanente, `d
 
 Hace falta aparte del pivote porque la llave primaria de este es (`role_id`, `model_id`, `model_type`): solo cabe una fila por usuario y rol, así que un segundo paso del mismo pasante pisaría las fechas del primero.
 
+### 4.7.2 Control de acceso y auditoría
+
+**`bloqueos`** — `user_id`, `motivo`, `bloqueado_por`, `levantado_at`, `levantado_por`, `motivo_levantamiento` (RF68). Un bloqueo se levanta, no se borra. Un índice único parcial deja un solo bloqueo vigente por persona.
+
+**`bitacora`** — `accion` (enum `AccionAuditada`), `user_id` (quién), morph `auditable` (sobre qué), `descripcion`, `motivo`, `created_at` (RF62). Solo añadir; la escribe el Service en la misma transacción que la acción.
+
+**`ajustes_laboratorio`** — `clave`, `valor`. Claves fijas en el enum `AjusteDelLaboratorio`; las cambia el ADMIN sin desplegar.
+
 ### 4.8 Contenido público (CMS)
 
 | Tabla | Campos principales | RF |
@@ -404,7 +472,7 @@ Hace falta aparte del pivote porque la llave primaria de este es (`role_id`, `mo
 | `configuracion_landing` | `clave`, `valor` (pares clave-valor). Las claves las fija el enum `ClaveConfiguracionLanding`: título y subtítulo del hero, ruta del video del hero en el disco público, correo, teléfono y dirección de contacto. Se editan en una sola página de Filament | RF02, RF11 |
 | `estadisticas_landing` | `etiqueta`, `valor` (texto, se publica tal cual: `22`, `+700`), `orden`, `activo`. Valores manuales del ADMIN, no calculados de las tablas | RF01, RF10 |
 | `galeria_fotos` | `titulo`, `imagen_path`, `orden`, `activo` | RF01, RF10 |
-| `videos_institucionales` | `titulo`, `url`, `orden`, `activo` | RF08, RF17 |
+| `videos_institucionales` | `titulo`, `url`, `orden`, `activo`. Le faltan el archivo y la portada que pide el RF17 | RF08, RF17 |
 | `talleres` | `titulo`, `descripcion`, `imagen`, `tema`, `fecha`, `modalidad` (`virtual` \| `presencial`), `muestra_formulario`, `orden`, `activo` | RF04, RF13 |
 | `eventos` | `titulo`, `descripcion`, `imagen`, `fecha`, `tipo_evento_id` (FK → `tipos_evento`, restrict), `abierto_publico`, `orden`, `activo` | RF05, RF14 |
 | `tipos_evento` | `nombre` (único), `activo`. Catálogo que gestiona el ADMIN desde Filament; no se borran, se desactivan | RF05, RF14 |
@@ -420,18 +488,29 @@ Todas las tablas de contenido llevan `activo` y `orden`: publicar, despublicar y
 ## 5. Relaciones principales
 
 ```
-users ──< role_user >── roles
+users ──< model_has_roles >── roles                (vigencia: desde / hasta)
+users ──< asignaciones_de_rol >── roles            (rastro, solo añadir)
+users ──< bloqueos
+users ──< bitacora ──> auditable                   (morph: solicitud, ítem, usuario, bloqueo…)
 
 materias ──< caso_clinico_materia >── casos_clinicos
 materias ──< materia_tipo_evaluacion >── tipos_evaluacion
 
 casos_clinicos ──< caso_clinico_capacidad >── capacidades
 casos_clinicos ──< caso_clinico_item >── items_inventario
+casos_clinicos ──< caso_clinico_sala >── salas
+items_inventario ──> items_inventario              (accesorio → su simulador)
+items_inventario ──< cambios_estado_item
+salas ──< ubicaciones_sala
 
 solicitudes ──> users (docente)
 solicitudes ──> materias
 solicitudes ──> casos_clinicos
+solicitudes ──> users (docente que dicta, si hubo sustitución)
 solicitudes ──< solicitud_item >── items_inventario
+solicitudes ──< estudiante_solicitud >── users (estudiante)
+solicitudes ──< reprogramaciones
+solicitudes ──< sustituciones
 solicitudes ──1:1── preparaciones ──> salas
 preparaciones ──< preparacion_item >── items_inventario
 
@@ -442,8 +521,9 @@ evaluaciones ──< evaluacion_estudiantes ──> users (estudiante)
 evaluacion_estudiantes ──< evaluacion_estudiante_item >── evaluacion_items
 
 users ──< formatos_confidencialidad >── plantillas_confidencialidad
-users ──< model_has_roles >── roles                (vigencia: desde / hasta)
-users ──< asignaciones_de_rol >── roles            (rastro, solo añadir)
+
+listas_reposicion ──< lineas_reposicion            (copia congelada al cerrar)
+listas_reposicion ──< lista_reposicion_necesidad >── necesidades_reposicion
 ```
 
 ---
@@ -455,8 +535,13 @@ users ──< asignaciones_de_rol >── roles            (rastro, solo añadir
 3. **El resultado lo decide el docente.** `resultado` no se deriva de `evaluacion_estudiante_item.cumplido` (RF46).
 4. **La sala no se elige al solicitar.** Solo aparece en `preparaciones`, completada por el administrativo (RF28, RF36).
 5. **La disponibilidad de inventario no la ve el docente.** El acceso a `items_inventario` se restringe por Policy a administrativo y coordinador (RF40).
-6. **El acceso depende de la vigencia institucional.** `users.estado` se actualiza por sincronización programada, no manualmente (RF19, RF20).
-7. **El formato de confidencialidad se renueva cada semestre.** El índice único por firmante y periodo impide duplicados dentro del mismo semestre y obliga a un registro nuevo al cambiar de periodo (RF52). Lo firman estudiantes y docentes.
+6. **El acceso depende de la vigencia institucional.** `users.estado` se actualiza por sincronización, no manualmente (RF19, RF20). La deshabilitación del ADMIN es otra columna, que la sincronización no revierte (RF22).
+7. **El formato de confidencialidad se renueva cada periodo académico**, el que abre el laboratorio (RF75). El índice único por firmante y periodo impide duplicados dentro del mismo periodo (RF52). Lo firman estudiantes y docentes.
+8. **Quien no tiene el formato o está bloqueado no entra ni puede ser evaluado** (RF45, RF70). Lo decide `ParticipacionService`.
+9. **Ningún escenario admite más estudiantes de los que el ADMIN le registró** (RF74), salvo que el dato esté sin definir.
+10. **Las unidades del inventario siempre suman el total**, por `CHECK` (RF66), y todo movimiento queda en `cambios_estado_item`.
+11. **Una lista de insumos por pedir cerrada no cambia** (RF67): sus líneas se congelan, como los ítems del checklist.
+12. **Un rol con fecha de fin vence solo** (RF63, RF64): el filtro está en `User::roles()`, en SQL.
 
 ---
 
@@ -467,7 +552,7 @@ Resume qué rol ejecuta cada acción sensible. El coordinador hereda todo lo del
 | Acción | ADMIN | Coordinador | Administrativo | Docente | Estudiante |
 |---|:--:|:--:|:--:|:--:|:--:|
 | Gestionar contenido de la landing | ✓ | | | | |
-| Gestionar usuarios y roles | ✓ | | | | |
+| Crear, editar y deshabilitar cuentas | ✓ | | | | |
 | Gestionar materias, casos clínicos y tipos de evaluación | ✓ | | | | |
 | Registrar nivel de fidelidad de simuladores | ✓ | | | | |
 | Registrar y actualizar inventario | ✓ | ✓ | ✓ | | |
@@ -477,16 +562,20 @@ Resume qué rol ejecuta cada acción sensible. El coordinador hereda todo lo del
 | Dar de baja un ítem | ✓ | ✓ | | | |
 | Consultar disponibilidad de inventario | ✓ | ✓ | ✓ | | |
 | Solicitar escenario | | | | ✓ | |
-| Revisar solicitudes | | ✓ | ✓ | | |
-| Aprobar solicitudes revisadas | ✓ | ✓ | | | |
-| Rechazar solicitudes revisadas | | ✓ | | | |
+| Revisar o rechazar solicitudes pendientes | | ✓ | ✓ | | |
+| Aprobar o rechazar solicitudes revisadas | ✓ | ✓ | | | |
+| Registrar sesiones apartadas y su formato intramural | | ✓ | ✓ | | |
+| Reprogramar una sesión o sustituir a su docente | | ✓ | ✓ | | |
 | Asignar sala y preparar escenario | | ✓ | ✓ | | |
+| Abrir, cerrar y reabrir el periodo académico | ✓ | ✓ | ✓ | | |
 | Ver calendario de reservas aprobadas | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Crear y registrar evaluaciones | | | | ✓ | |
 | Consultar resultados propios | | | | | ✓ |
 | Cargar plantilla del formato de confidencialidad | ✓ | | | | |
 | Entregar el formato de confidencialidad firmado | | | | ✓ | ✓ |
 | Verificar un formato de confidencialidad entregado | ✓ | ✓ | ✓ | | |
+| Bloquear y levantar bloqueos | ✓ | ✓ | | | |
+| Consultar la bitácora | ✓ | ✓ | | | |
 | Generar reportes | ✓ | ✓ | | | |
 | Asignar o revocar roles | ✓ | | | | |
 
@@ -501,7 +590,8 @@ Notas de implementación:
 - La **entrega en físico del formato** (RF53) se modela como dos columnas de `formatos_confidencialidad` (`recibido_fisico_at`, `recibido_fisico_por`), no como un caso del enum `EstadoFormatoConfidencialidad`. Son dos ejes distintos que se cruzan libremente: el estado describe el ciclo del documento escaneado y la entrega física describe un hecho del mundo que sobrevive a todas sus transiciones. Marcarla es del administrativo, y habilita el ingreso a prácticas igual que un documento verificado. Vale igual para un docente: llega a la misma puerta, con el mismo papel.
 - La **capacidad máxima de estudiantes** de un escenario (RF74) es parte de la gestión de casos clínicos, reservada al ADMIN. Se comprueba en `SolicitudService` al crear la solicitud. Un caso sin capacidad registrada no limita: `null` se lee como "sin definir".
 - Los **roles con vigencia** (RF63–RF64) se hacen cumplir en `User::roles()`, que filtra `desde`/`hasta` del pivote en SQL: el vencimiento alcanza `hasRole()`, `can()`, las Policies, el scope `role()` y el `loadMissing()` de spatie, sin ningún job de por medio. Revocar borra la fila del pivote en vez de acortar `hasta`, porque con vigencia por día acortarla dejaría el rol vivo hasta medianoche. Toda escritura pasa por `AsignacionDeRolService`: `assignRole()` de spatie revienta contra la llave primaria si queda una fila vencida. Asignar y revocar es solo del ADMIN, y elevar a coordinador exige motivo. El selector de rol (RF21) no ofrece roles vencidos y entra por el permanente, no por el temporal.
-- La **vigencia institucional** (regla 8) se decide en `AccesoService` y se comprueba en la entrada y en cada petición, con `VerificarUsuarioActivo`. Ese middleware también está registrado como persistente en Livewire, porque las acciones de una pantalla ya abierta van a `/livewire/update` y no pasan por las rutas del panel.
+- La **vigencia institucional** (regla 8) se decide en `AccesoService` y se comprueba en la entrada y en cada petición, con `VerificarUsuarioActivo`. Ese middleware también está registrado como persistente en Livewire, porque las acciones de una pantalla ya abierta van a `/livewire/update` y no pasan por las rutas del panel. Una cuenta deshabilitada por el ADMIN queda fuera por la misma puerta, con su propio mensaje.
+- La **sincronización institucional** (RF20) solo toca cuentas de origen `matriculado` o `contratado`, no borra, solo da roles permanentes y se frena si una pasada fuera a desactivar más del umbral configurado, avisando a cada ADMIN. La fuente es intercambiable (`FuenteInstitucional`); hoy solo existe la simulada, y la pasada programada está apagada por defecto.
 - El **calendario** (RF34) es la única vista compartida por los cinco roles.
 
 ---
@@ -525,7 +615,7 @@ Los reportes con muchos registros se exportan mediante consultas por lotes (`chu
 - `solicitudes`: (`fecha`, `estado`), (`docente_id`), (`materia_id`)
 - `evaluacion_estudiantes`: (`estudiante_id`), (`evaluacion_id`)
 - `preparaciones`: (`sala_id`, `estado`)
-- `users`: (`email`), (`estado`)
+- `users`: (`email`, `estado`), (`documento`), (`programa`)
 
 ---
 
@@ -540,6 +630,7 @@ Dos compose sobre un mismo `docker/php/Dockerfile` de varias etapas:
 |---|---|---|
 | `app` | etapa `produccion` (php:8.3-fpm) | la aplicación. Al arrancar guarda en caché configuración, rutas y vistas (`docker/produccion/arrancar.sh`) |
 | `queue` | la misma | `queue:work`, reiniciado cada hora |
+| `programador` | la misma | `schedule:work`: aviso diario del formato intramural (RF60) y, si se activa, la sincronización de usuarios (RF20) |
 | `web` | etapa `web` (nginx:alpine) | los archivos de `public/` y `/storage`; lo demás a PHP-FPM |
 | `db` | postgres:16 | sin puertos publicados fuera de Docker |
 | `copias` | postgres:16-alpine | copia diaria de la base, las imágenes públicas y los documentos privados, con retención y sumas SHA-256 |
@@ -549,25 +640,15 @@ Tres volúmenes: `datos_postgres`, `archivos_publicos` (`storage/app/public`) y 
 
 El HTTPS lo termina quien esté delante del nginx del compose; su IP va en `PROXIES_DE_CONFIANZA` (`config/trustedproxy.php`). Las cabeceras de seguridad las pone el middleware `CabecerasDeSeguridad` (`config/seguridad.php`), y la CI levanta el compose de producción y comprueba cabeceras, assets, que los errores no enseñen trazas y una copia restaurada de punta a punta.
 
-La sincronización de usuarios contra la vista institucional correrá como tarea programada de Laravel: cuando exista, el compose de producción necesita un servicio más con `php artisan schedule:work`. Hoy no hay ninguna tarea programada.
+La sincronización de usuarios es el comando `usuarios:sincronizar`, que el servicio `programador` corre con la frecuencia de `SINCRONIZACION_FRECUENCIA` solo si `SINCRONIZACION_PROGRAMADA=true`. Está apagada por defecto mientras la fuente sea la simulada.
 
 Las métricas del sitio público (Plausible o Matomo) siguen sin decidir.
-
----|---|---|
-| `app` | php:8.3-fpm | aplicación Laravel |
-| `nginx` | nginx:alpine | servidor web y archivos estáticos |
-| `db` | postgres:16 | base de datos, con volumen persistente |
-| `metrics` | plausible o matomo | métricas del sitio público |
-
-Volúmenes persistentes para la base de datos y para `storage/app`. Variables sensibles (credenciales de Google OAuth, base de datos, SMTP) en `.env`, fuera del control de versiones.
-
-La sincronización de usuarios contra la vista institucional corre como tarea programada de Laravel (`schedule:run` vía cron dentro del contenedor `app`).
 
 ---
 
 ## 9. Pendientes que pueden afectar el modelo
 
-1. **Autoaprobación:** si se decide impedir que un usuario con rol docente y coordinador apruebe su propia solicitud, se agrega la validación en `SolicitudService`. No requiere cambios de esquema.
-2. **Estructura de la vista institucional:** los campos exactos que entregue la universidad pueden obligar a ajustar `users.documento`, `codigo_institucional` y `origen`.
-3. **Aviso de sala al docente:** si se decide notificar la asignación de sala, se agrega un evento sobre `preparaciones`. No requiere cambios de esquema.
+1. ~~**Autoaprobación.**~~ Resuelto (RF31): no se bloquea, porque siempre media la revisión administrativa.
+2. **Estructura de la vista institucional:** los campos exactos que entregue la universidad pueden obligar a ajustar `users.documento`, `codigo_institucional`, `programa` y `origen`. El contrato con la sincronización es `PersonaInstitucional`: la fuente real traduce sus columnas a ese formato.
+3. ~~**Aviso de sala al docente.**~~ Resuelto (RF36): evento `SalaAsignada` y correo al asignar o cambiar la sala.
 4. ~~**Volumen real de usuarios.**~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes (RNF01 actualizado). El dimensionamiento no cambia la arquitectura ni el esquema; si alguna vez hiciera falta más capacidad, la vía sigue siendo Laravel Octane, que es configuración del contenedor.

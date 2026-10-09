@@ -72,7 +72,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Autenticación | Laravel Socialite 5 (Google OAuth, RF18) |
 | Contenedores | Docker + Docker Compose |
 
-**Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF22–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament.
+**Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF23–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament. Las cuentas de usuario (RF22) tampoco: deshabilitar y repartir roles tienen reglas (motivo, bitácora, vigencia), así que viven en `/panel/usuarios`.
 
 **Filament, cinco cosas que no son las de su plantilla:**
 
