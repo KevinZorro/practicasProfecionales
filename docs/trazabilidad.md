@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 31 | 4 |
+| Completo | 32 | 4 |
 | Solo backend | 8 | 0 |
-| Parcial | 14 | 6 |
+| Parcial | 13 | 6 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 21 | 0 |
 | **Total** | **75** | **10** |
@@ -93,7 +93,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF27 | El docente solicita, con tipo práctica o evaluación | Completo | `SolicitudService::crear()`, `/panel/solicitudes/nueva` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | |
 | RF28 | Caso, fecha y hora, materia, **grupo** y cantidad; sin sala; fecha del registro previo en sesiones apartadas | Parcial | `SolicitudService::crear()` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | No existe el grupo (letra A, B, C…) ni la lista de estudiantes de la sesión, que según la aclaración de P2 la escribe el docente al solicitar. La fecha desde el registro previo depende de RF57 |
 | RF29 | Precarga del inventario del caso | Completo | `SolicitudService::itemsSugeridos()` | `PantallaSolicitudDocenteTest`, `FlujoSolicitudTest` | |
-| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza** | Parcial | `SolicitudService::marcarRevisada()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | Hoy solo rechaza coordinación (`SolicitudPolicy::rechazar()`). Hay que dejar rechazar también al administrativo en la primera fase; coordinación conserva el rechazo en la segunda. La bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). Si el ADMIN rechaza: D1 |
+| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza** | Completo | `SolicitudService::marcarRevisada()`, `rechazar()`, `SolicitudPolicy::rechazar()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest`, `SolicitudPolicyTest` | Rechazo en dos fases hecho. Mejora pendiente, no exigida para cerrar el RF: la bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). |
 | RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Queda borrar el bloque comentado de `SolicitudPolicy::aprobar()` |
 | RF32 | Comentario opcional al rechazar | Completo | `SolicitudService::rechazar()` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | |
 | RF33 | Correo al docente con el resultado | Completo | Eventos `SolicitudAprobada`/`SolicitudRechazada`, listener en cola | `FlujoSolicitudTest`, `ListenersRegistradosTest` | |
@@ -281,11 +281,11 @@ Para ponerlo a andar hace falta:
 ## Diferencias entre los documentos y el código
 
 1. **La portada pública es la página de ejemplo de Laravel**, con una imagen de laravel.com que la Content-Security-Policy bloquea. Si se despliega antes de la landing, eso verá el público.
-2. **Quién rechaza.** `SolicitudPolicy::rechazar()` deja rechazar solo a coordinación; RF30 y RF31 piden dos fases, con rechazo del administrativo en la primera y de coordinación en la segunda. El `CLAUDE.md` (regla 9) ya lo dice así.
+2. ~~**Quién rechaza.**~~ Corregido: rechazo en dos fases (RF30, RF31).
 3. **El periodo académico.** `ConfidencialidadService::periodoVigente()` y `config/laboratorio.php` lo calculan del calendario. RF52 y RF75 lo dejan en manos del laboratorio.
-4. **Pendientes del `CLAUDE.md` ya cerrados por el enunciado:** el 1 (autoaprobación, RF31: no se bloquea) y el 3 (cómo se entera el docente de la sala, RF36: por correo). Siguen en `SolicitudPolicy::aprobar()` un bloque comentado y un aviso de "pendiente con el cliente" sobre esto.
+4. **Pendientes del `CLAUDE.md` ya cerrados por el enunciado:** el 1 (autoaprobación, RF31: no se bloquea) y el 3 (cómo se entera el docente de la sala, RF36: por correo). Ya se quitaron de `SolicitudPolicy` el bloque comentado y los avisos de pendiente.
 5. **Números de RF19 y RF20.** La versión anterior de esta matriz los tenía al revés: RF19 es el criterio de acceso y RF20 la sincronización.
-6. **Número de RF30.** `FormularioSolicitud` y `SolicitudController` dicen que el formulario del docente cubre "RF27–RF30". RF30 es la revisión administrativa: el formulario cubre RF27–RF29.
+6. ~~**Número de RF30.**~~ Corregido: `FormularioSolicitud` y `SolicitudController` citan RF27–RF29.
 7. **`items_inventario` en el modelo de datos** (arquitectura §4.3) todavía tiene la columna `estado` y no los tres contadores. La migración `2026_09_21_180000_pasa_el_estado_del_inventario_a_cantidades` la reemplazó (regla 11 del `CLAUDE.md`).
 8. **`casos_clinicos` en el modelo de datos** (arquitectura §4.2) no tiene `capacidad_maxima_estudiantes`, que existe (RF74).
 9. **Tablas que el modelo de datos no describe** (arquitectura §4): `listas_reposicion`, y sin sus campos `lineas_reposicion`, `necesidades_reposicion` y `cambios_estado_item`.

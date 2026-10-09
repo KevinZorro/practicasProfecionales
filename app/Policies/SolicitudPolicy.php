@@ -15,13 +15,18 @@ use App\Models\User;
  * | Acción                 | ADMIN | Coordinador | Administrativo | Docente | Estudiante |
  * | Solicitar escenario    |       |             |                |    ✓    |            |
  * | Revisar solicitudes    |       |      ✓      |       ✓        |         |            |
+ * | Rechazar una pendiente |       |      ✓      |       ✓        |         |            |
  * | Aprobar una revisada   |   ✓   |      ✓      |                |         |            |
- * | Rechazar               |       |      ✓      |                |         |            |
+ * | Rechazar una revisada  |   ✓   |      ✓      |                |         |            |
  * | Ver calendario         |   ✓   |      ✓      |       ✓        |    ✓    |     ✓      |
  *
  * El ADMIN aprueba cuando la coordinadora no está disponible, pero no revisa:
  * la revisión administrativa previa es condición para aprobar, así que quien
  * aprueba nunca es quien revisó (cliente, reunión del 2026-09).
+ *
+ * La solicitud pasa por dos fases y en las dos se puede rechazar (RF30,
+ * RF31): el administrativo acepta o rechaza la pendiente, y coordinación
+ * aprueba o rechaza la revisada.
  */
 final class SolicitudPolicy
 {
@@ -71,28 +76,25 @@ final class SolicitudPolicy
      */
     public function aprobar(User $usuario, Solicitud $solicitud): bool
     {
-        // PENDIENTE (§11.1 de CLAUDE.md): está sin decidir con el cliente si
-        // un usuario con rol docente y coordinador puede aprobar su propia
-        // solicitud. Hoy sí puede. Cuando se resuelva, la restricción entra
-        // aquí y en rechazar():
-        //     if ($this->esSuya($usuario, $solicitud)) { return false; }
         if ($solicitud->estado !== EstadoSolicitud::Revisada) {
             return false;
         }
 
-        return $usuario->hasAnyRole([Rol::Coordinador->value, Rol::Admin->value]);
+        return $this->resuelveSolicitudes($usuario);
     }
 
     /**
-     * PENDIENTE con el cliente: el ADMIN puede aprobar en ausencia de la
-     * coordinadora, pero solo se habló de aprobar. Rechazar sigue siendo suyo
-     * hasta que lo confirme, así que en la bandeja el ADMIN ve "Aprobar" y no
-     * ve "Rechazar". La asimetría es intencional, no un olvido.
+     * Cada fase rechaza lo suyo: la pendiente, quien revisa; la revisada,
+     * quien aprueba. El administrativo no rechaza lo que ya aceptó, porque
+     * esa decisión pasó a coordinación.
      */
     public function rechazar(User $usuario, Solicitud $solicitud): bool
     {
-        // Mismo pendiente del §11.1 que en aprobar().
-        return $usuario->hasRole(Rol::Coordinador->value);
+        return match ($solicitud->estado) {
+            EstadoSolicitud::Pendiente => $this->revisaSolicitudes($usuario),
+            EstadoSolicitud::Revisada => $this->resuelveSolicitudes($usuario),
+            default => false,
+        };
     }
 
     /**
@@ -113,7 +115,17 @@ final class SolicitudPolicy
         return $usuario->hasAnyRole([Rol::Administrativo->value, Rol::Coordinador->value]);
     }
 
-    /** Quien revisa, más el ADMIN, que entra solo a aprobar. */
+    /**
+     * La segunda fase. El ADMIN la ejerce cuando coordinación no está, y
+     * puede aprobar su propia solicitud: siempre media la revisión
+     * administrativa (RF31).
+     */
+    private function resuelveSolicitudes(User $usuario): bool
+    {
+        return $usuario->hasAnyRole([Rol::Coordinador->value, Rol::Admin->value]);
+    }
+
+    /** Quien revisa, más el ADMIN, que entra solo a resolver lo revisado. */
     private function accedeALaBandeja(User $usuario): bool
     {
         return $this->revisaSolicitudes($usuario) || $usuario->hasRole(Rol::Admin->value);

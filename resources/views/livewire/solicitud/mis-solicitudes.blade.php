@@ -52,7 +52,7 @@
                         @if ($solicitud->estado === \App\Enums\EstadoSolicitud::Rechazada)
                             <div class="mt-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20">
                                 <span class="font-medium">Motivo del rechazo:</span>
-                                {{ $solicitud->motivo_rechazo ?: 'El coordinador no dejó un motivo escrito.' }}
+                                {{ $solicitud->motivo_rechazo ?: 'No se dejó un motivo escrito.' }}
                             </div>
                         @endif
                     </x-tarjeta>

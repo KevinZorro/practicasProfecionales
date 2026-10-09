@@ -19,7 +19,7 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 /**
- * Formulario con el que el docente pide un escenario (RF27-RF30).
+ * Formulario con el que el docente pide un escenario (RF27-RF29).
  *
  * No decide nada: valida formato, arma el objeto de datos y llama al
  * Service. Tampoco enseña disponibilidad de inventario, que el RF40 reserva

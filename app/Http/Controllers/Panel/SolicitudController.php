@@ -25,7 +25,7 @@ final class SolicitudController extends Controller
         return view('panel.solicitudes.mias');
     }
 
-    /** Formulario de nueva solicitud (RF27-RF30). */
+    /** Formulario de nueva solicitud (RF27-RF29). */
     public function nueva(Request $peticion): View
     {
         abort_unless($peticion->user()->can('create', Solicitud::class), 403);

@@ -139,12 +139,17 @@ final class SolicitudService
         return $solicitud;
     }
 
-    public function rechazar(Solicitud $solicitud, User $coordinador, ?string $motivo = null): Solicitud
+    /**
+     * Rechaza en cualquiera de las dos fases (RF30, RF31). Si la rechaza el
+     * administrativo, "revisada_por" queda nulo: así se distingue la que no
+     * pasó la revisión de la que coordinación rechazó después.
+     */
+    public function rechazar(Solicitud $solicitud, User $actor, ?string $motivo = null): Solicitud
     {
         $this->garantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
 
         $solicitud->update([
-            ...$this->atributosDeResolucion(EstadoSolicitud::Rechazada, $coordinador),
+            ...$this->atributosDeResolucion(EstadoSolicitud::Rechazada, $actor),
             'motivo_rechazo' => $motivo,
         ]);
 
@@ -191,11 +196,11 @@ final class SolicitudService
     /**
      * @return array<string, mixed>
      */
-    private function atributosDeResolucion(EstadoSolicitud $estado, User $coordinador): array
+    private function atributosDeResolucion(EstadoSolicitud $estado, User $actor): array
     {
         return [
             'estado' => $estado,
-            'resuelta_por' => $coordinador->id,
+            'resuelta_por' => $actor->id,
             'resuelta_at' => now(),
         ];
     }
@@ -237,16 +242,17 @@ final class SolicitudService
     }
 
     /**
-     * El docente solicita, el administrativo revisa y el coordinador
-     * resuelve. Sin atajos: una solicitud pendiente no se aprueba sin pasar
-     * por revisión, y una ya resuelta no se reabre.
+     * El docente solicita, el administrativo acepta (revisa) o rechaza, y
+     * el coordinador aprueba o rechaza lo revisado. Sin atajos: una
+     * solicitud pendiente no se aprueba sin pasar por revisión, y una ya
+     * resuelta no se reabre.
      *
      * @return array<string, list<EstadoSolicitud>>
      */
     private function transicionesPermitidas(): array
     {
         return [
-            EstadoSolicitud::Pendiente->value => [EstadoSolicitud::Revisada],
+            EstadoSolicitud::Pendiente->value => [EstadoSolicitud::Revisada, EstadoSolicitud::Rechazada],
             EstadoSolicitud::Revisada->value => [EstadoSolicitud::Aprobada, EstadoSolicitud::Rechazada],
             EstadoSolicitud::Aprobada->value => [],
             EstadoSolicitud::Rechazada->value => [],

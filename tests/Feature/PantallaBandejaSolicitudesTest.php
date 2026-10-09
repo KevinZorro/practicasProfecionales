@@ -28,12 +28,21 @@ afterEach(function (): void {
 // Qué controles ve cada rol
 // ---------------------------------------------------------------------
 
-it('enseña al administrativo el control de revisar pero no el de aprobar', function (): void {
+it('enseña al administrativo revisar y rechazar una pendiente, pero no aprobar', function (): void {
     Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]);
 
     Livewire::actingAs($this->administrativo)
         ->test(BandejaRevision::class)
         ->assertSee('Marcar como revisada')
+        ->assertSee('Rechazar')
+        ->assertDontSee('Aprobar');
+});
+
+it('no le enseña al administrativo ningún control sobre lo que ya aceptó', function (): void {
+    Solicitud::factory()->revisada()->create();
+
+    Livewire::actingAs($this->administrativo)
+        ->test(BandejaRevision::class)
         ->assertDontSee('Aprobar')
         ->assertDontSee('Rechazar');
 });
@@ -59,13 +68,21 @@ it('no enseña el control de aprobar mientras la solicitud no esté revisada', f
         ->assertDontSee('Aprobar');
 });
 
-it('enseña al ADMIN el control de aprobar pero no el de revisar', function (): void {
+it('enseña al ADMIN aprobar y rechazar lo revisado, pero no revisar', function (): void {
     Solicitud::factory()->revisada()->create();
 
     Livewire::actingAs($this->admin)
         ->test(BandejaRevision::class)
         ->assertSee('Aprobar')
-        ->assertDontSee('Marcar como revisada')
+        ->assertSee('Rechazar')
+        ->assertDontSee('Marcar como revisada');
+});
+
+it('no le enseña al ADMIN el rechazo de una pendiente, que es de la primera fase', function (): void {
+    Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]);
+
+    Livewire::actingAs($this->admin)
+        ->test(BandejaRevision::class)
         ->assertDontSee('Rechazar');
 });
 
@@ -80,7 +97,22 @@ it('no deja al administrativo aprobar aunque llame al método a mano', function 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Revisada);
 });
 
-it('no deja al administrativo rechazar aunque llame al método a mano', function (): void {
+it('deja al administrativo rechazar una pendiente desde la bandeja', function (): void {
+    $solicitud = Solicitud::factory()->create();
+
+    Livewire::actingAs($this->administrativo)
+        ->test(BandejaRevision::class)
+        ->assertSee('Rechazar')
+        ->call('pedirMotivo', $solicitud->id)
+        ->set('motivoRechazo', 'El docente pidió un simulador que está dado de baja.')
+        ->call('rechazar', $solicitud->id)
+        ->assertHasNoErrors();
+
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Rechazada)
+        ->and($solicitud->fresh()->resuelta_por)->toBe($this->administrativo->id);
+});
+
+it('no deja al administrativo rechazar lo que ya aceptó aunque llame al método a mano', function (): void {
     $solicitud = Solicitud::factory()->revisada()->create();
 
     Livewire::actingAs($this->administrativo)
