@@ -8,6 +8,8 @@ Instrucciones permanentes para trabajar en este repositorio. Léelas antes de es
 
 Plataforma web de gestión del Laboratorio de Simulación Clínica de la Facultad de Ciencias de la Salud. Reemplaza procesos manuales de reserva de escenarios, evaluación de habilidades e inventario de simuladores.
 
+**Los enunciados de los requerimientos están en `docs/requerimientos.md`**, y el estado de cada uno contra el código, con las preguntas abiertas, en `docs/trazabilidad.md`. Si este archivo y el enunciado no coinciden, manda el enunciado: dilo y anótalo en la matriz.
+
 **Usuarios:** ~700 estudiantes y ~150 docentes, más personal administrativo, coordinación y un administrador de la plataforma (RNF01, cifra confirmada con el cliente).
 
 **Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago.
@@ -185,7 +187,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    Dos preguntas parecidas que **no** son la misma: `puedeParticiparEnPracticas()` (verificado **o** entrega física) decide si entra a la práctica; `tieneFormatoVigente()` (solo verificado) dice si el trámite está cerrado.
 
-   **PENDIENTE con el cliente:** qué significa que a un docente le falte el formato. Bloquear a un estudiante lo deja fuera de la práctica; bloquear al docente cancela la clase. Hoy nadie llama a `puedeParticiparEnPracticas()`, así que la pregunta no aprieta todavía, pero no la resuelvas por tu cuenta cuando llegue el RF68-RF70.
+   **Quien no tiene el formato o está bloqueado no entra ni puede ser evaluado (RF45, RF70).** Para el estudiante eso es quedar fuera de la práctica. Para el docente, la decisión por defecto (D2 de `docs/trazabilidad.md`, pendiente de confirmar) es avisar sin cancelar la sesión: bloquear al docente cancela la clase. Hoy nadie llama a `puedeParticiparEnPracticas()`.
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
 
@@ -193,7 +195,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 
-9. **El flujo de una solicitud es:** docente solicita → administrativo revisa → coordinador (o el ADMIN, si coordinación no está) aprueba, o coordinador rechaza → administrativo asigna sala y prepara. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
+9. **El flujo de una solicitud es:** docente solicita → administrativo revisa, y si corresponde rechaza (RF30) → coordinador (o el ADMIN, si coordinación no está) aprueba → administrativo asigna sala, se avisa al docente por correo (RF36) y prepara. **El código todavía deja rechazar solo a coordinación** (`SolicitudPolicy::rechazar()`); el cambio está en `docs/trazabilidad.md`. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados.
 
 10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
@@ -368,7 +370,8 @@ docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia
 
 No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 
-1. Si un usuario con rol docente y coordinador debe poder aprobar su propia solicitud.
-2. Estructura exacta de la vista de la base de datos institucional para la sincronización de usuarios.
-3. Cómo se entera hoy el docente de la sala asignada al llegar a clase.
+1. ~~Si un usuario con rol docente y coordinador debe poder aprobar su propia solicitud.~~ Resuelto (RF31): sí, porque siempre media la revisión administrativa.
+2. Motor, acceso y estructura de la base de datos institucional para la sincronización de usuarios (RF19, RF20). Se desarrolla con datos simulados.
+3. ~~Cómo se entera hoy el docente de la sala asignada al llegar a clase.~~ Resuelto (RF36): por correo, al asignar o cambiar la sala.
 4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
+5. Las preguntas P1–P5 y las decisiones por defecto D1–D13 de `docs/trazabilidad.md` (grupos y participantes, sesiones apartadas, diseño de la landing, entre otras). Las D se aplican si nadie las corrige; las P no se construyen sin respuesta.
