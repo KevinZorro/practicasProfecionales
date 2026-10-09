@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoItemInventario;
 use App\Enums\EstadoSolicitud;
 use App\Enums\NivelFidelidad;
@@ -32,9 +33,12 @@ final class InventarioService
 {
     public const POR_PAGINA = 15;
 
+    public function __construct(private readonly BitacoraService $bitacora) {}
+
     public function crear(User $actor, DatosItemInventario $datos): ItemInventario
     {
         $this->garantizarFidelidadCoherente($datos->tipo, $datos->nivelFidelidad);
+        $this->garantizarSimuladorCoherente($datos);
 
         return DB::transaction(function () use ($actor, $datos): ItemInventario {
             $item = new ItemInventario;
@@ -61,6 +65,7 @@ final class InventarioService
     public function actualizar(User $actor, ItemInventario $item, DatosItemInventario $datos): ItemInventario
     {
         $this->garantizarFidelidadCoherente($datos->tipo, $datos->nivelFidelidad);
+        $this->garantizarSimuladorCoherente($datos, $item);
 
         $item->fill($this->atributosMasivos($datos));
         $this->aplicarNivelFidelidad($actor, $item, $datos->nivelFidelidad);
@@ -99,14 +104,19 @@ final class InventarioService
      */
     public function darDeBaja(User $actor, ItemInventario $item, int $cantidad, string $motivo): ItemInventario
     {
-        return $this->cambiarEstado(
-            $actor,
-            $item,
-            EstadoItemInventario::Defectuoso,
-            EstadoItemInventario::DadoDeBaja,
-            $cantidad,
-            $motivo,
-        );
+        return DB::transaction(function () use ($actor, $item, $cantidad, $motivo): ItemInventario {
+            $item = $this->cambiarEstado(
+                $actor,
+                $item,
+                EstadoItemInventario::Defectuoso,
+                EstadoItemInventario::DadoDeBaja,
+                $cantidad,
+                $motivo,
+            );
+            $this->bitacora->registrar(AccionAuditada::UnidadesDadasDeBaja, $actor, $item, sprintf('Dio de baja %d %s de %s.', $cantidad, $cantidad === 1 ? 'unidad defectuosa' : 'unidades defectuosas', $item->nombre), $motivo);
+
+            return $item;
+        });
     }
 
     /**
@@ -127,14 +137,19 @@ final class InventarioService
     {
         $this->garantizarPermiso($actor, $item, 'cambiarEstadoFuncional');
 
-        return $this->mover(
-            $actor,
-            $item,
-            EstadoItemInventario::Operativo,
-            EstadoItemInventario::DadoDeBaja,
-            $cantidad,
-            $motivo,
-        );
+        return DB::transaction(function () use ($actor, $item, $cantidad, $motivo): ItemInventario {
+            $item = $this->mover(
+                $actor,
+                $item,
+                EstadoItemInventario::Operativo,
+                EstadoItemInventario::DadoDeBaja,
+                $cantidad,
+                $motivo,
+            );
+            $this->bitacora->registrar(AccionAuditada::UnidadesRetiradas, $actor, $item, sprintf('Retiró %d %s de %s.', $cantidad, $cantidad === 1 ? 'unidad operativa' : 'unidades operativas', $item->nombre), $motivo);
+
+            return $item;
+        });
     }
 
     /** Entran N unidades nuevas al inventario, siempre operativas. */
@@ -246,7 +261,7 @@ final class InventarioService
         return ItemInventario::query()
             // El historial se pinta junto a cada ítem (RF66): sin esto, una
             // página de 15 ítems dispara 31 consultas.
-            ->with(['cambiosDeEstado.registradoPor:id,nombre'])
+            ->with(['cambiosDeEstado.registradoPor:id,nombre', 'simulador:id,nombre'])
             ->when($tipo instanceof TipoItemInventario, fn (Builder $c) => $c->where('tipo', $tipo))
             // Filtrar por estado ahora significa "tiene unidades en ese
             // estado", porque un mismo ítem puede tener unidades en varios.
@@ -280,7 +295,27 @@ final class InventarioService
             'tipo' => $datos->tipo,
             'descripcion' => $datos->descripcion,
             'activo' => $datos->activo,
+            'simulador_id' => $datos->tipo->perteneceAUnSimulador() ? $datos->simuladorId : null,
         ];
+    }
+
+    /**
+     * Un accesorio o repuesto apunta a un simulador del inventario (RF38);
+     * nada más apunta a uno.
+     */
+    private function garantizarSimuladorCoherente(DatosItemInventario $datos, ?ItemInventario $item = null): void
+    {
+        if (! $datos->tipo->perteneceAUnSimulador()) {
+            return;
+        }
+
+        $esSimulador = $datos->simuladorId !== null
+            && $datos->simuladorId !== $item?->id
+            && ItemInventario::query()->whereKey($datos->simuladorId)->where('tipo', TipoItemInventario::Simulador)->exists();
+
+        if (! $esSimulador) {
+            throw InventarioInvalido::accesorioSinSimulador();
+        }
     }
 
     /**

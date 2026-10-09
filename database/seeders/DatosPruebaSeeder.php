@@ -430,7 +430,10 @@ class DatosPruebaSeeder extends Seeder
 
         $estudiantes = User::factory()
             ->count(24)
-            ->state(fn (): array => ['origen' => OrigenUsuario::Matriculado])
+            ->state(fn (): array => [
+                'origen' => OrigenUsuario::Matriculado,
+                'programa' => fake()->randomElement((array) config('laboratorio.sincronizacion.programas')),
+            ])
             ->create()
             ->each(fn (User $usuario) => $usuario->assignRole(Rol::Estudiante->value));
 

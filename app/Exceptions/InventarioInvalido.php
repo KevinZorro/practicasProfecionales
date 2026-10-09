@@ -10,6 +10,11 @@ use DomainException;
 
 final class InventarioInvalido extends DomainException
 {
+    public static function accesorioSinSimulador(): self
+    {
+        return new self('Un accesorio o repuesto tiene que pertenecer a un simulador del inventario.');
+    }
+
     public static function nivelDeFidelidadReservadoAlAdmin(): self
     {
         return new self('El nivel de fidelidad de un simulador solo lo registra el ADMIN.');

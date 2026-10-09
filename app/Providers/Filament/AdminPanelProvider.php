@@ -24,7 +24,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
- * Pantallas del ADMIN: estructura académica (RF22-RF26) y contenido público
+ * Pantallas del ADMIN: estructura académica (RF23-RF26) y contenido público
  * (RF10-RF17). Los flujos operativos siguen en el panel de Livewire.
  *
  * Tres decisiones que no son las de la plantilla de Filament:

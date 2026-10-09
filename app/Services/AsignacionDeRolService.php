@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\Rol;
 use App\Exceptions\AsignacionDeRolInvalida;
 use App\Models\AsignacionDeRol;
@@ -44,6 +45,8 @@ final class AsignacionDeRolService
 
     public const POR_PAGINA = 15;
 
+    public function __construct(private readonly BitacoraService $bitacora) {}
+
     /**
      * Asigna un rol. Sin "hasta" es permanente; con "hasta" vence al final
      * de ese día.
@@ -73,6 +76,55 @@ final class AsignacionDeRolService
                 'hasta' => $hasta,
                 'motivo' => $motivo,
                 'asignado_por' => $actor->id,
+            ]);
+
+            $this->bitacora->registrar(
+                AccionAuditada::RolAsignado,
+                $actor,
+                $usuario,
+                sprintf(
+                    'Asignó el rol %s a %s%s.',
+                    Rol::from($role->name)->etiqueta(),
+                    $usuario->nombre,
+                    $hasta === null ? ', sin fecha de fin' : ' hasta el '.CarbonImmutable::parse($hasta)->format('d/m/Y'),
+                ),
+                $motivo,
+            );
+
+            $this->olvidarRolesCargados($usuario);
+
+            return $asignacion;
+        });
+    }
+
+    /**
+     * Rol permanente que pone la sincronización institucional (RF20), según
+     * la vinculación. No pasa por la Policy porque no la ejerce una persona:
+     * en asignaciones_de_rol queda con "asignado_por" nulo, que es como se
+     * lee "lo puso la sincronización".
+     *
+     * Si ya lo tiene vigente, no hace nada. Nunca revoca ni acorta: las
+     * filas con fecha de fin son del ADMIN.
+     */
+    public function asignarPorSincronizacion(User $usuario, Rol $rol): ?AsignacionDeRol
+    {
+        if ($usuario->hasRole($rol->value)) {
+            return null;
+        }
+
+        $role = $this->role($rol);
+        $desde = CarbonImmutable::now()->toDateString();
+
+        return DB::transaction(function () use ($usuario, $role, $desde): AsignacionDeRol {
+            $this->escribirPivote($usuario, $role, $desde, null);
+
+            $asignacion = AsignacionDeRol::create([
+                'user_id' => $usuario->id,
+                'role_id' => $role->id,
+                'desde' => $desde,
+                'hasta' => null,
+                'motivo' => 'Vinculación institucional (sincronización).',
+                'asignado_por' => null,
             ]);
 
             $this->olvidarRolesCargados($usuario);
@@ -120,6 +172,8 @@ final class AsignacionDeRolService
                 'revocada_por' => $actor->id,
                 'motivo' => $this->motivoDeLaRevocacion($asignacion, $motivo),
             ]);
+
+            $this->bitacora->registrar(AccionAuditada::RolRevocado, $actor, $usuario, sprintf('Revocó el rol %s a %s.', Rol::from($role->name)->etiqueta(), $usuario->nombre), $motivo);
 
             $this->olvidarRolesCargados($usuario);
 
@@ -204,7 +258,8 @@ final class AsignacionDeRolService
                     $consulta->where(static function (Builder $o) use ($aguja): void {
                         $o->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
                             ->orWhereRaw('LOWER(email) LIKE ?', [$aguja])
-                            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]);
+                            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja])
+                            ->orWhereRaw('LOWER(documento) LIKE ?', [$aguja]);
                     });
                 },
             )

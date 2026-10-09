@@ -82,6 +82,17 @@ class ItemInventarioFactory extends Factory
         ]);
     }
 
+    /** Accesorio o repuesto de un simulador (RF38). */
+    public function accesorio(?ItemInventario $simulador = null): static
+    {
+        return $this->state(fn (array $atributos): array => [
+            'nombre' => $this->faker->randomElement(['Piel de reemplazo', 'Brazo de venopunción', 'Batería del maniquí']),
+            'tipo' => TipoItemInventario::Accesorio,
+            'nivel_fidelidad' => null,
+            'simulador_id' => $simulador?->id ?? ItemInventario::factory()->simulador(),
+        ]);
+    }
+
     public function equipoBasico(): static
     {
         return $this->state(fn (array $atributos): array => [

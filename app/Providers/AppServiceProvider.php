@@ -13,11 +13,14 @@ use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Listeners\EnviarCorreoResultadoSolicitud;
 use App\Listeners\EnviarCorreoSalaAsignada;
 use App\Models\User;
+use App\Services\FuenteInstitucional;
+use App\Services\FuenteInstitucionalSimulada;
 use App\Support\RolActivo;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -26,6 +29,18 @@ class AppServiceProvider extends ServiceProvider
         // Una instancia por petición: cachea los roles asignados del usuario
         // para no repetir la consulta en cada comprobación.
         $this->app->scoped(RolActivo::class);
+
+        $this->app->bind(FuenteInstitucional::class, static function (): FuenteInstitucional {
+            $fuente = config('laboratorio.sincronizacion.fuente');
+
+            // La fuente real depende de la vista institucional (pendiente 2):
+            // cuando exista, se agrega aquí y se elige con SINCRONIZACION_FUENTE.
+            if ($fuente !== 'simulada') {
+                throw new RuntimeException(sprintf('La fuente institucional "%s" no existe todavía; solo está la simulada.', (string) $fuente));
+            }
+
+            return new FuenteInstitucionalSimulada((string) config('laboratorio.sincronizacion.archivo_simulado'));
+        });
     }
 
     public function boot(): void

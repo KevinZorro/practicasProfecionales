@@ -43,11 +43,12 @@
     <div>
         <h3 class="mb-2 text-sm font-semibold text-gray-900">Material</h3>
 
-        @php($porTipo = $montaje->items->groupBy(fn ($item) => $item->tipo->value))
+        {{-- Lo que monta el ingeniero va aparte y primero: hay que llamarlo antes (RF72). --}}
+        @php($grupos = $montaje->items->groupBy(fn ($item) => in_array($item->id, $delIngeniero, true) ? 'ingeniero' : $item->tipo->value)->sortKeysUsing(fn ($a, $b) => ($b === 'ingeniero') <=> ($a === 'ingeniero')))
 
-        @forelse ($porTipo as $tipo => $delTipo)
-            <h4 class="mb-2 mt-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {{ \App\Enums\TipoItemInventario::from($tipo)->etiqueta() }}
+        @forelse ($grupos as $tipo => $delTipo)
+            <h4 @class(['mb-2 mt-3 text-xs font-semibold uppercase tracking-wide', 'text-violet-800' => $tipo === 'ingeniero', 'text-gray-500' => $tipo !== 'ingeniero'])>
+                {{ $tipo === 'ingeniero' ? 'Requiere al ingeniero (alta fidelidad)' : \App\Enums\TipoItemInventario::from($tipo)->etiqueta() }}
             </h4>
             <ul class="space-y-2">
                 @foreach ($delTipo as $item)

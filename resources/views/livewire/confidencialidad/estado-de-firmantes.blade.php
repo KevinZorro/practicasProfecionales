@@ -44,15 +44,27 @@
                 </select>
             </div>
         </div>
-        <div class="mt-3">
-            <label for="materia" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Materia</label>
-            <select wire:model.live="materia" id="materia"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600 sm:max-w-md">
-                <option value="">Todas</option>
-                @foreach ($materias as $unaMateria)
-                    <option value="{{ $unaMateria->id }}">{{ $unaMateria->nombre }}</option>
-                @endforeach
-            </select>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div>
+                <label for="materia" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Materia</label>
+                <select wire:model.live="materia" id="materia"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    <option value="">Todas</option>
+                    @foreach ($materias as $unaMateria)
+                        <option value="{{ $unaMateria->id }}">{{ $unaMateria->nombre }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label for="programa" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Programa</label>
+                <select wire:model.live="programa" id="programa"
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                    <option value="">Todos</option>
+                    @foreach ($programas as $unPrograma)
+                        <option value="{{ $unPrograma }}">{{ $unPrograma }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
         <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p class="text-sm text-gray-600">

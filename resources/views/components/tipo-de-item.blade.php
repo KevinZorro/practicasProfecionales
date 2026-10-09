@@ -1,5 +1,5 @@
 {{--
-    Simulador, equipo clínico o equipo básico. Se distingue por icono y por
+    Simulador, equipo clínico, equipo básico o accesorio. Se distingue por icono y por
     texto además del color: el color solo no basta para quien no lo percibe.
 --}}
 @props(['tipo'])
@@ -9,6 +9,7 @@
         \App\Enums\TipoItemInventario::Simulador => 'bg-indigo-50 text-indigo-800 ring-indigo-600/20',
         \App\Enums\TipoItemInventario::EquipoClinico => 'bg-teal-50 text-teal-800 ring-teal-600/20',
         \App\Enums\TipoItemInventario::EquipoBasico => 'bg-stone-100 text-stone-800 ring-stone-600/20',
+        \App\Enums\TipoItemInventario::Accesorio => 'bg-violet-50 text-violet-800 ring-violet-600/20',
     };
 
     $icono = match ($tipo) {
@@ -18,6 +19,8 @@
         \App\Enums\TipoItemInventario::EquipoClinico => 'M3 12h4l2-7 4 14 2-7h6',
         // Caja: el equipo básico.
         \App\Enums\TipoItemInventario::EquipoBasico => 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+        // Llave: el repuesto.
+        \App\Enums\TipoItemInventario::Accesorio => 'M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z',
     };
 @endphp
 

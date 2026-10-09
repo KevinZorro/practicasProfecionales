@@ -1,6 +1,6 @@
 @extends('layouts.panel')
 
-@section('titulo', 'Roles de los usuarios')
+@section('titulo', 'Usuarios y roles')
 
 @section('contenido')
     <livewire:usuario.roles-de-usuarios />

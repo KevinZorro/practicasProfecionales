@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoSolicitud;
 use App\Enums\Rol;
 use App\Exceptions\NovedadInvalida;
@@ -24,7 +25,10 @@ use Illuminate\Support\Facades\Mail;
  */
 final class NovedadesDeSesionService
 {
-    public function __construct(private readonly SolicitudService $solicitudes) {}
+    public function __construct(
+        private readonly SolicitudService $solicitudes,
+        private readonly BitacoraService $bitacora,
+    ) {}
 
     /**
      * Cambia fecha, franja o escenario. La sesión sigue aprobada; se
@@ -90,6 +94,22 @@ final class NovedadesDeSesionService
                 $preparacion?->items()->detach();
             }
 
+            $this->bitacora->registrar(
+                AccionAuditada::SesionReprogramada,
+                $actor,
+                $solicitud,
+                sprintf(
+                    'Reprogramó %s: del %s %s al %s %s. Comunicación: %s',
+                    $this->solicitudes->describir($solicitud->refresh()),
+                    $reprogramacion->fecha_anterior->format('d/m/Y'),
+                    substr($reprogramacion->hora_inicio_anterior, 0, 5),
+                    $reprogramacion->fecha_nueva->format('d/m/Y'),
+                    substr($reprogramacion->hora_inicio_nueva, 0, 5),
+                    $constancia,
+                ),
+                $motivo,
+            );
+
             return $reprogramacion;
         });
 
@@ -132,6 +152,14 @@ final class NovedadesDeSesionService
             $solicitud->update([
                 'docente_que_dicta_id' => $nuevo->id === $solicitud->docente_id ? null : $nuevo->id,
             ]);
+
+            $this->bitacora->registrar(
+                AccionAuditada::DocenteSustituido,
+                $actor,
+                $solicitud,
+                sprintf('En %s, dicta %s en lugar de %s.', $this->solicitudes->describir($solicitud), $nuevo->nombre, User::findOrFail($anterior)->nombre),
+                $motivo,
+            );
 
             return $sustitucion;
         });

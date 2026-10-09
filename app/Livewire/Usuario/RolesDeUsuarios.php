@@ -6,10 +6,12 @@ namespace App\Livewire\Usuario;
 
 use App\Enums\Rol;
 use App\Exceptions\AsignacionDeRolInvalida;
+use App\Exceptions\UsuarioInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\AsignacionDeRol;
 use App\Models\User;
 use App\Services\AsignacionDeRolService;
+use App\Services\UsuarioService;
 use App\Support\RolActivo;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
@@ -17,13 +19,12 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 /**
- * Reparto de roles, con y sin vigencia (RF63, RF64).
+ * Usuarios y roles: reparto de roles, con y sin vigencia (RF63, RF64), y
+ * deshabilitar o volver a habilitar una cuenta (RF22). El alta y la edición
+ * de los datos van en FormularioDeCuenta.
  *
- * Es lo mínimo para asignar, revocar y ver quién tiene qué; la gestión
- * completa de usuarios es el RF22 y no va aquí, porque los usuarios van a
- * llegar de la sincronización institucional.
- *
- * Aquí no se comprueba ningún rol: lo decide AsignacionDeRolPolicy.
+ * Aquí no se comprueba ningún rol: lo deciden AsignacionDeRolPolicy y
+ * UserPolicy.
  */
 final class RolesDeUsuarios extends Component
 {
@@ -43,6 +44,11 @@ final class RolesDeUsuarios extends Component
     public string $motivo = '';
 
     public ?string $errorDeRegla = null;
+
+    /** Cuenta cuyo formulario para deshabilitar o habilitar está abierto. */
+    public ?int $cambiandoAcceso = null;
+
+    public string $motivoDeAcceso = '';
 
     public function updatedBusqueda(): void
     {
@@ -128,6 +134,40 @@ final class RolesDeUsuarios extends Component
         }
 
         session()->flash('estado', 'Rol revocado. Deja de tener efecto ahora mismo, no al final del día.');
+    }
+
+    public function abrirAcceso(int $usuarioId): void
+    {
+        $this->cambiandoAcceso = $this->cambiandoAcceso === $usuarioId ? null : $usuarioId;
+        $this->reset('motivoDeAcceso', 'errorDeRegla');
+    }
+
+    public function deshabilitar(UsuarioService $usuarios): void
+    {
+        $this->cambiarAcceso(static fn (User $cuenta, string $motivo) => $usuarios->deshabilitar($cuenta, $motivo, Auth::user()), 'Cuenta deshabilitada. No podrá entrar hasta que se vuelva a habilitar.');
+    }
+
+    public function habilitar(UsuarioService $usuarios): void
+    {
+        $this->cambiarAcceso(static fn (User $cuenta, string $motivo) => $usuarios->habilitar($cuenta, $motivo, Auth::user()), 'Cuenta habilitada de nuevo.');
+    }
+
+    /** @param  callable(User, string): User  $accion */
+    private function cambiarAcceso(callable $accion, string $mensaje): void
+    {
+        $this->validate(['motivoDeAcceso' => ['required', 'string', 'max:1000']]);
+        $this->errorDeRegla = null;
+
+        try {
+            $accion(User::findOrFail($this->cambiandoAcceso), $this->motivoDeAcceso);
+        } catch (UsuarioInvalido $invalido) {
+            $this->errorDeRegla = $invalido->getMessage();
+
+            return;
+        }
+
+        $this->reset('cambiandoAcceso', 'motivoDeAcceso');
+        session()->flash('estado', $mensaje);
     }
 
     /** El permiso que exige el controlador de la página. */

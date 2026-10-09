@@ -72,7 +72,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Autenticación | Laravel Socialite 5 (Google OAuth, RF18) |
 | Contenedores | Docker + Docker Compose |
 
-**Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF22–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament.
+**Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF23–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament. Las cuentas de usuario (RF22) tampoco: deshabilitar y repartir roles tienen reglas (motivo, bitácora, vigencia), así que viven en `/panel/usuarios`.
 
 **Filament, cinco cosas que no son las de su plantilla:**
 
@@ -163,13 +163,22 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): las registra un administrativo y nacen aprobadas; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
 | `AjustesService` | Valores que el ADMIN cambia sin desplegar (`ajustes_laboratorio`, claves fijas en `AjusteDelLaboratorio`), como la antelación del aviso del RF60 |
 | `NovedadesDeSesionService` | Reprogramar una sesión aprobada (RF61) y sustituir a su docente (RF73), con rastro de solo añadir y correo. `solicitudes.docente_que_dicta_id` es el reemplazo vigente: quien dicta es quien evalúa, gestiona la lista y suma las horas del reporte |
+| `BitacoraService` | Bitácora de auditoría (RF62). La escriben los Services que aprueban, rechazan, reprograman, sustituyen, retiran, bloquean o cambian roles, **dentro de su propia transacción**; nunca un componente. Una acción auditada nueva lleva su caso en `AccionAuditada` |
 | `ReporteService` | Agregaciones y generación de PDF y Excel |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
-| `UsuarioSyncService` | Sincronización contra la vista institucional. **Todavía no existe:** depende del pendiente 2, la estructura de la vista institucional. No lo invoques ni supongas que hay sincronización corriendo |
+| `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (RF22), con origen `manual`; deshabilitar y volver a habilitar, siempre con motivo y en la bitácora |
+| `UsuarioSyncService` | Sincronización con la base institucional (RF19, RF20), comando `usuarios:sincronizar`. Lee de una `FuenteInstitucional`; **hoy solo existe la simulada** (`database/datos/institucional-simulada.json`), porque la real depende del pendiente 2. La pasada programada está apagada salvo con `SINCRONIZACION_PROGRAMADA=true` |
 
-**Cuando se construya `UsuarioSyncService`:** los roles **permanentes** se derivarán del tipo de vinculación institucional, pero la sincronización **no debe tocar las asignaciones temporales ni revocarlas**. Un pasante no figura como administrativo en la vista institucional —por eso se le da el rol a mano y con fecha—, así que una sincronización que reponga roles "según la vinculación" le borraría el suyo en la primera pasada del semestre. Solo son suyas las filas del pivote con `hasta` nulo; las que tienen fecha las reparte el ADMIN y solo él las quita.
+**Lo que la sincronización no hace, y no debe empezar a hacer:**
+
+- **No borra a nadie:** quien desaparece de la fuente o deja de estar vigente queda con `estado` inactivo, y sus solicitudes, evaluaciones y formatos siguen apuntando a él.
+- **No toca las cuentas de origen `manual`** ni la marca de deshabilitado (`deshabilitado_at`) que pone el ADMIN (D6). Son dos motivos distintos para no entrar: `estado` es la vigencia institucional y solo lo escribe la sincronización; `deshabilitado_at` es del ADMIN y solo él la quita. `AccesoService::puedeEntrar()` exige las dos.
+- **Solo da roles permanentes**, según la vinculación (`OrigenUsuario::rolPermanente()`), con `asignarPorSincronizacion()`, y **nunca revoca**. Un pasante no figura como administrativo en la vista institucional —por eso se le da el rol a mano y con fecha—, así que una sincronización que reponga roles "según la vinculación" le borraría el suyo en la primera pasada del semestre. Las filas con fecha las reparte el ADMIN y solo él las quita.
+- **No aplica nada si una pasada fuera a desactivar más del umbral** (`SINCRONIZACION_UMBRAL_DESACTIVACION`, en porcentaje): avisa por correo a cada ADMIN. Protege de una vista institucional vacía o a medio cargar. Contra los datos del seeder siempre se frena: ninguna de esas cuentas está en el archivo simulado.
+
+**Conectar la fuente real** es escribir una clase que implemente `FuenteInstitucional` —traducir las columnas de la universidad a `PersonaInstitucional`— y elegirla en el binding de `AppServiceProvider` con `SINCRONIZACION_FUENTE`. El resto no cambia.
 
 ---
 
@@ -199,7 +208,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    **Quien no tiene el formato o está bloqueado no entra ni puede ser evaluado (RF45, RF70).** Para el estudiante eso es quedar fuera de la práctica. Lo decide **`ParticipacionService`**, el único sitio que junta el formato con los bloqueos de coordinación (RF68): lo consultan la evaluación y la lista de cada sesión. No repitas la comprobación en otro lado. Para el docente, la decisión por defecto (D2 de `docs/trazabilidad.md`) es avisar sin cancelar la sesión: bloquear al docente cancela la clase. Un docente bloqueado sí deja de poder solicitar escenarios.
 
-8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso.
+8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso. Lo que el ADMIN sí hace a mano es **deshabilitar** una cuenta (RF22): es otra columna, `deshabilitado_at`, que la sincronización no revierte.
 
    **Se decide en un solo sitio, `AccesoService::puedeEntrar()`, y se comprueba en dos puertas.** La entrada —el controlador de Google, y en `local` el acceso de desarrollo— no deja pasar a un inactivo. Y el middleware `VerificarUsuarioActivo` corta en cada petición a quien se desactiva con la sesión abierta: cierra la sesión y después responde 403.
 
@@ -384,7 +393,7 @@ docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia
 No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 
 1. ~~Si un usuario con rol docente y coordinador debe poder aprobar su propia solicitud.~~ Resuelto (RF31): sí, porque siempre media la revisión administrativa.
-2. Motor, acceso y estructura de la base de datos institucional para la sincronización de usuarios (RF19, RF20). Se desarrolla con datos simulados.
+2. Motor, acceso y estructura de la base de datos institucional para la sincronización de usuarios (RF19, RF20). La sincronización ya funciona con la fuente simulada; falta la real (ver `UsuarioSyncService` en el §3).
 3. ~~Cómo se entera hoy el docente de la sala asignada al llegar a clase.~~ Resuelto (RF36): por correo, al asignar o cambiar la sala.
 4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
 5. Las decisiones por defecto D2–D17 de `docs/trazabilidad.md`. Se aplican si nadie las corrige. Las preguntas P1–P5 ya están respondidas y sus respuestas, en `docs/requerimientos.md`.

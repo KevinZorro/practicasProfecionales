@@ -77,6 +77,12 @@
                             </p>
                         @endif
 
+                        @if (($delIngeniero[$montaje->id] ?? []) !== [])
+                            <p class="mt-3 text-sm text-violet-800">
+                                {{ count($delIngeniero[$montaje->id]) }} {{ count($delIngeniero[$montaje->id]) === 1 ? 'elemento requiere' : 'elementos requieren' }} al ingeniero (alta fidelidad).
+                            </p>
+                        @endif
+
                         @php($alistados = $montaje->items->where('pivot.alistado', true)->count())
                         @php($total = $montaje->items->count())
 
@@ -105,6 +111,7 @@
                                 'montaje' => $detalle,
                                 'salasLibres' => $salasLibres,
                                 'conflicto' => $conflictos[$montaje->id] ?? null,
+                                'delIngeniero' => $delIngeniero[$montaje->id] ?? [],
                             ])
                         @endif
                     </x-tarjeta>

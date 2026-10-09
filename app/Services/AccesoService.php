@@ -24,14 +24,27 @@ use App\Models\User;
  */
 final class AccesoService
 {
+    /**
+     * Vigente en la institución y sin deshabilitar a mano por el ADMIN
+     * (RF22, D6). Son dos marcas distintas: la primera la pone la
+     * sincronización y la segunda no la toca nadie más que el ADMIN.
+     */
     public function puedeEntrar(User $usuario): bool
     {
-        return $usuario->estado === EstadoUsuario::Activo;
+        return $usuario->estado === EstadoUsuario::Activo && ! $usuario->estaDeshabilitado();
     }
 
-    /** El mensaje que ve quien no puede entrar. Uno solo para las dos puertas. */
-    public function motivoDelRechazo(): string
+    /**
+     * El mensaje que ve quien no puede entrar, el mismo en las dos puertas.
+     * Sin cuenta a la vista, el de la vigencia institucional.
+     */
+    public function motivoDelRechazo(?User $usuario = null): string
     {
+        if ($usuario?->estaDeshabilitado()) {
+            return 'Tu cuenta está deshabilitada en la plataforma, así que no puedes entrar. '
+                .'Si crees que es un error, comunícate con el laboratorio.';
+        }
+
         return 'Tu vinculación con la institución no está vigente, así que no puedes entrar a la plataforma. '
             .'Si crees que es un error, comunícate con el laboratorio.';
     }
@@ -93,7 +106,7 @@ final class AccesoService
         }
 
         if (! $this->puedeEntrar($usuario)) {
-            throw AccesoRechazado::inactivo($this->motivoDelRechazo());
+            throw AccesoRechazado::inactivo($this->motivoDelRechazo($usuario));
         }
 
         if ($usuario->google_id === null) {

@@ -46,6 +46,10 @@ final class FormularioItem extends Component
     #[Validate('nullable|string|max:1000')]
     public ?string $descripcion = null;
 
+    /** El simulador al que pertenece, si es accesorio o repuesto (RF38). */
+    #[Validate('nullable|integer|exists:items_inventario,id')]
+    public ?int $simuladorId = null;
+
     public bool $activo = true;
 
     public string $nivelFidelidad = '';
@@ -67,6 +71,7 @@ final class FormularioItem extends Component
         $this->descripcion = $item->descripcion;
         $this->activo = $item->activo;
         $this->nivelFidelidad = $item->nivel_fidelidad?->value ?? '';
+        $this->simuladorId = $item->simulador_id;
     }
 
     /** El nivel de fidelidad solo tiene sentido en simuladores. */
@@ -74,6 +79,10 @@ final class FormularioItem extends Component
     {
         if (! $this->esSimulador()) {
             $this->nivelFidelidad = '';
+        }
+
+        if (! $this->esAccesorio()) {
+            $this->simuladorId = null;
         }
     }
 
@@ -115,6 +124,10 @@ final class FormularioItem extends Component
             'tipos' => TipoItemInventario::cases(),
             'nivelesFidelidad' => NivelFidelidad::cases(),
             'esSimulador' => $this->esSimulador(),
+            'esAccesorio' => $this->esAccesorio(),
+            'simuladores' => $this->esAccesorio()
+                ? ItemInventario::query()->simuladores()->whereKeyNot($this->item?->id)->orderBy('nombre')->get(['id', 'nombre'])
+                : collect(),
             'esAlta' => ! $this->item instanceof ItemInventario,
             'puedeEditarFidelidad' => Auth::user()?->can('editarNivelFidelidad', $this->item ?? ItemInventario::class) ?? false,
         ]);
@@ -123,6 +136,11 @@ final class FormularioItem extends Component
     private function esSimulador(): bool
     {
         return TipoItemInventario::tryFrom($this->tipo)?->admiteNivelFidelidad() ?? false;
+    }
+
+    private function esAccesorio(): bool
+    {
+        return TipoItemInventario::tryFrom($this->tipo)?->perteneceAUnSimulador() ?? false;
     }
 
     /**
@@ -144,6 +162,7 @@ final class FormularioItem extends Component
             descripcion: $this->descripcion,
             activo: $this->activo,
             nivelFidelidad: $this->esSimulador() ? $nivel : null,
+            simuladorId: $this->esAccesorio() ? $this->simuladorId : null,
         );
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\Reporte;
 use App\Http\Controllers\Auth\AccesoConGoogleController;
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
+use App\Http\Controllers\Panel\BitacoraController;
 use App\Http\Controllers\Panel\BloqueoController;
 use App\Http\Controllers\Panel\CalendarioController;
 use App\Http\Controllers\Panel\ConfidencialidadController;
@@ -62,7 +63,7 @@ Route::get('acceso/google/volver', [AccesoConGoogleController::class, 'volver'])
 Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes', 'periodo-academico', 'bloqueos', 'evaluaciones', 'mis-resultados', 'sesiones-apartadas'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes', 'periodo-academico', 'bloqueos', 'evaluaciones', 'mis-resultados', 'sesiones-apartadas', 'bitacora'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
@@ -79,13 +80,18 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('evaluaciones/{evaluacion}', [EvaluacionController::class, 'registro'])->name('evaluaciones.registro');
     Route::get('mis-resultados', [EvaluacionController::class, 'misResultados'])->name('mis-resultados');
 
+    /* Bitácora de auditoría (RF62). Coordinación y ADMIN. */
+    Route::get('bitacora', BitacoraController::class)->name('bitacora');
+
     /* Bloqueos de acceso al laboratorio (RF68). Coordinación y ADMIN. */
     Route::get('bloqueos', BloqueoController::class)->name('bloqueos');
 
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
 
-    /* Reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
+    /* Cuentas (RF22) y reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
     Route::get('usuarios', [UsuarioController::class, 'roles'])->name('usuarios');
+    Route::get('usuarios/nueva', [UsuarioController::class, 'nueva'])->name('usuarios.nueva');
+    Route::get('usuarios/{cuenta}/editar', [UsuarioController::class, 'editar'])->name('usuarios.editar');
 
     /*
      * Lista de insumos por pedir (RF67). Las descargas solo existen para

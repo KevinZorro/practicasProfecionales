@@ -12,6 +12,7 @@ use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -46,6 +47,7 @@ class User extends Authenticatable implements FilamentUser, HasName
         'estado',
         'origen',
         'ultima_sincronizacion',
+        'programa',
     ];
 
     /**
@@ -65,6 +67,7 @@ class User extends Authenticatable implements FilamentUser, HasName
             'ultima_sincronizacion' => 'datetime',
             'estado' => EstadoUsuario::class,
             'origen' => OrigenUsuario::class,
+            'deshabilitado_at' => 'datetime',
         ];
     }
 
@@ -184,10 +187,27 @@ class User extends Authenticatable implements FilamentUser, HasName
         return $this->hasMany(Bloqueo::class);
     }
 
-    /** @param Builder<$this> $consulta */
+    /** Deshabilitado a mano por el ADMIN (RF22), aparte de la vigencia institucional. */
+    public function estaDeshabilitado(): bool
+    {
+        return $this->deshabilitado_at !== null;
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function deshabilitadoPor(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'deshabilitado_por');
+    }
+
+    /**
+     * Quienes pueden usar la plataforma: vigentes en la institución y sin
+     * deshabilitar a mano. Lo mismo que AccesoService::puedeEntrar(), en SQL.
+     *
+     * @param  Builder<$this>  $consulta
+     */
     public function scopeActivos(Builder $consulta): void
     {
-        $consulta->where('estado', EstadoUsuario::Activo);
+        $consulta->where('estado', EstadoUsuario::Activo)->whereNull('deshabilitado_at');
     }
 
     /** @param Builder<$this> $consulta */
