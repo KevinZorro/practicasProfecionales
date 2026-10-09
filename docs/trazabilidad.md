@@ -2,7 +2,7 @@
 
 Estado de cada requerimiento según lo que existe en el código, no según lo que dicen los documentos.
 
-**Corte:** 9 de octubre de 2026, rama `main` en `fe3e6a3` (incluye la PR #43, configuración de producción).
+**Corte:** 9 de octubre de 2026, rama `claude/nice-brown-qgepab` en `636d281`: `main` (`fe3e6a3`) más el rechazo en dos fases, el periodo académico, la ubicación de las salas, los estudiantes de cada sesión y el control de participantes. Sin fusionar todavía.
 
 **Enunciados:** `docs/requerimientos.md`, versión del 9 de octubre de 2026 con las aclaraciones del mismo día (respuestas a P1–P5 y a D1). Es la primera vez que la matriz se coteja contra el enunciado real; las versiones anteriores tuvieron que deducir qué cubría cada número a partir del código.
 
