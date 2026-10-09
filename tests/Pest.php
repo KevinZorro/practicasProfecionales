@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\PeriodoAcademico;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -88,4 +89,22 @@ function accionDeLivewire(string $instantanea, ?string $metodo = null, array $pa
 function abrirPeriodo(string $nombre = '2026-2'): PeriodoAcademico
 {
     return PeriodoAcademico::factory()->create(['nombre' => $nombre]);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Estudiantes de una sesión
+|--------------------------------------------------------------------------
+|
+| El docente dice qué estudiantes van a cada sesión (RF28), y la cantidad
+| sale de esa lista.
+|
+*/
+
+/**
+ * @return list<int>
+ */
+function idsDeEstudiantes(int $cuantos): array
+{
+    return User::factory()->estudiante()->count($cuantos)->create()->pluck('id')->all();
 }

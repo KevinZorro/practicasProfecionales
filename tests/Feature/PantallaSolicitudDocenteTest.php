@@ -98,7 +98,8 @@ it('crea la solicitud con lo que el docente ajustó', function (): void {
         ->set('fecha', '2026-10-05')
         ->set('horaInicio', '07:00')
         ->set('horaFin', '09:00')
-        ->set('cantidadEstudiantes', 14)
+        ->set('grupo', 'b')
+        ->set('estudianteIds', idsDeEstudiantes(14))
         ->set("items.{$maniqui->id}", 4)
         ->call('guardar')
         ->assertHasNoErrors()
@@ -109,6 +110,8 @@ it('crea la solicitud con lo que el docente ajustó', function (): void {
         ->and($solicitud->tipo)->toBe(TipoSesion::Evaluacion)
         ->and($solicitud->estado)->toBe(EstadoSolicitud::Pendiente)
         ->and($solicitud->cantidad_estudiantes)->toBe(14)
+        ->and($solicitud->grupo)->toBe('B')
+        ->and($solicitud->estudiantes()->count())->toBe(14)
         ->and($solicitud->items->firstWhere('id', $maniqui->id)->pivot->cantidad)->toBe(4);
 });
 
@@ -116,7 +119,7 @@ it('exige los campos obligatorios', function (): void {
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
         ->call('guardar')
-        ->assertHasErrors(['materiaId', 'casoClinicoId', 'fecha', 'horaInicio', 'horaFin', 'cantidadEstudiantes']);
+        ->assertHasErrors(['materiaId', 'casoClinicoId', 'fecha', 'horaInicio', 'horaFin', 'grupo', 'estudianteIds']);
 });
 
 it('no acepta una franja que termina antes de empezar', function (): void {

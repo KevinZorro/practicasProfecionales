@@ -19,6 +19,9 @@ final readonly class DatosNuevaSolicitud
      * @param  string  $fecha  en formato Y-m-d
      * @param  string  $horaInicio  en formato H:i
      * @param  string  $horaFin  en formato H:i
+     * @param  string  $grupo  letra del grupo (A, B, C…)
+     * @param  list<int>  $estudianteIds  quiénes van a la sesión (RF28); la
+     *                                    cantidad de estudiantes sale de aquí
      * @param  array<int, int>  $items  id del ítem de inventario => cantidad.
      *                                  Si llega vacío se toman los del caso
      *                                  clínico; si trae algo, manda tal cual:
@@ -32,7 +35,8 @@ final readonly class DatosNuevaSolicitud
         public string $fecha,
         public string $horaInicio,
         public string $horaFin,
-        public int $cantidadEstudiantes,
+        public string $grupo,
+        public array $estudianteIds,
         public ?string $observaciones = null,
         public array $items = [],
     ) {}

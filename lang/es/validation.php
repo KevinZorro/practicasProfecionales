@@ -187,6 +187,8 @@ return [
         'archivo' => 'archivo',
         'cantidad' => 'cantidad',
         'cantidadEstudiantes' => 'cantidad de estudiantes',
+        'grupo' => 'grupo',
+        'estudianteIds' => 'estudiantes',
         'cantidadTotal' => 'cantidad total',
         'casoClinicoId' => 'caso clínico',
         'desde' => 'fecha inicial',

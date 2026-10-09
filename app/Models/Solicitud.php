@@ -40,6 +40,7 @@ class Solicitud extends Model
         'resuelta_at',
         'motivo_rechazo',
         'observaciones',
+        'grupo',
     ];
 
     /**
@@ -85,6 +86,17 @@ class Solicitud extends Model
     public function resueltaPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'resuelta_por');
+    }
+
+    /**
+     * Los estudiantes que el docente puso en esta sesión (RF28).
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function estudiantes(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'estudiante_solicitud', 'solicitud_id', 'estudiante_id')
+            ->withTimestamps();
     }
 
     /** @return BelongsToMany<ItemInventario, $this> */

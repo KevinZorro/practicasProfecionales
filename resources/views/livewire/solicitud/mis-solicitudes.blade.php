@@ -39,7 +39,7 @@
                         <dl class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
                             <x-dato etiqueta="Fecha">{{ $solicitud->fecha->format('d/m/Y') }}</x-dato>
                             <x-dato etiqueta="Hora">{{ substr($solicitud->hora_inicio, 0, 5) }}–{{ substr($solicitud->hora_fin, 0, 5) }}</x-dato>
-                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}</x-dato>
+                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
                             <x-dato etiqueta="Sala">
                                 @if ($solicitud->preparacion?->sala)
                                     {{ $solicitud->preparacion->sala->nombre }}

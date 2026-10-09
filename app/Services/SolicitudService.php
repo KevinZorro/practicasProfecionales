@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EstadoSolicitud;
+use App\Enums\EstadoUsuario;
+use App\Enums\Rol;
 use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Exceptions\SolicitudInvalida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
@@ -23,18 +26,78 @@ use Illuminate\Support\Facades\DB;
  */
 final class SolicitudService
 {
+    /** Máximo de resultados al buscar estudiantes para una sesión. */
+    public const RESULTADOS_DE_BUSQUEDA = 10;
+
     public function __construct(private readonly PreparacionService $preparaciones) {}
 
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
-        $this->garantizarCapacidad($datos);
+        $grupo = $this->normalizarGrupo($datos->grupo);
+        $estudianteIds = $this->garantizarEstudiantes($datos->estudianteIds);
+        $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
 
-        return DB::transaction(function () use ($docente, $datos): Solicitud {
-            $solicitud = Solicitud::create($this->atributosIniciales($docente, $datos));
+        return DB::transaction(function () use ($docente, $datos, $grupo, $estudianteIds): Solicitud {
+            $solicitud = Solicitud::create([
+                ...$this->atributosIniciales($docente, $datos),
+                'grupo' => $grupo,
+                'cantidad_estudiantes' => count($estudianteIds),
+            ]);
             $solicitud->items()->attach($this->itemsAAdjuntar($datos));
+            $solicitud->estudiantes()->attach($estudianteIds);
 
             return $solicitud;
         });
+    }
+
+    /**
+     * Estudiantes que el docente puede poner en una sesión, por nombre,
+     * correo o código institucional (RF28). Solo cuentas activas con el rol
+     * de estudiante vigente.
+     *
+     * @param  list<int>  $excluir  los que ya están en la lista
+     * @return Collection<int, User>
+     */
+    public function buscarEstudiantes(string $busqueda, array $excluir = []): Collection
+    {
+        if (trim($busqueda) === '') {
+            return new Collection;
+        }
+
+        $aguja = '%'.mb_strtolower(trim($busqueda)).'%';
+
+        return $this->estudiantesQuePuedenIr()
+            ->whereNotIn('id', $excluir)
+            ->where(static fn (Builder $o) => $o
+                ->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
+                ->orWhereRaw('LOWER(email) LIKE ?', [$aguja])
+                ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]))
+            ->orderBy('nombre')
+            ->limit(self::RESULTADOS_DE_BUSQUEDA)
+            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+    }
+
+    /**
+     * Estudiantes por código institucional, para pegar de una vez la lista
+     * del grupo. Devuelve los encontrados y los códigos que no corresponden a
+     * ningún estudiante activo.
+     *
+     * @param  list<string>  $codigos
+     * @return array{encontrados: Collection<int, User>, desconocidos: list<string>}
+     */
+    public function estudiantesPorCodigo(array $codigos): array
+    {
+        $codigos = array_values(array_unique(array_filter(array_map('trim', $codigos), static fn (string $c): bool => $c !== '')));
+
+        $encontrados = $this->estudiantesQuePuedenIr()
+            ->whereIn('codigo_institucional', $codigos)
+            ->orderBy('nombre')
+            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+
+        return [
+            'encontrados' => $encontrados,
+            'desconocidos' => array_values(array_diff($codigos, $encontrados->pluck('codigo_institucional')->all())),
+        ];
     }
 
     /**
@@ -46,16 +109,70 @@ final class SolicitudService
      * llenado sería peor que no limitarla, y en pantalla se lee como
      * "sin definir".
      */
-    private function garantizarCapacidad(DatosNuevaSolicitud $datos): void
+    private function garantizarCapacidad(int $casoClinicoId, int $cantidad): void
     {
-        $caso = CasoClinico::findOrFail($datos->casoClinicoId);
+        $caso = CasoClinico::findOrFail($casoClinicoId);
         $maximo = $caso->capacidad_maxima_estudiantes;
 
-        if ($maximo === null || $datos->cantidadEstudiantes <= $maximo) {
+        if ($maximo === null || $cantidad <= $maximo) {
             return;
         }
 
-        throw CapacidadDeEstudiantesExcedida::para($caso, $datos->cantidadEstudiantes);
+        throw CapacidadDeEstudiantesExcedida::para($caso, $cantidad);
+    }
+
+    /**
+     * Una o dos letras, en mayúscula: "a" y "A" son el mismo grupo.
+     */
+    private function normalizarGrupo(string $grupo): string
+    {
+        $grupo = mb_strtoupper(trim($grupo));
+
+        if (preg_match('/^[A-Z]{1,2}$/', $grupo) !== 1) {
+            throw SolicitudInvalida::grupoInvalido($grupo);
+        }
+
+        return $grupo;
+    }
+
+    /**
+     * Al menos un estudiante, y todos con cuenta activa y el rol de
+     * estudiante vigente. Los repetidos cuentan una vez.
+     *
+     * @param  list<int>  $estudianteIds
+     * @return list<int>
+     */
+    private function garantizarEstudiantes(array $estudianteIds): array
+    {
+        $estudianteIds = array_values(array_unique($estudianteIds));
+
+        if ($estudianteIds === []) {
+            throw SolicitudInvalida::sinEstudiantes();
+        }
+
+        $validos = $this->estudiantesQuePuedenIr()->whereIn('id', $estudianteIds)->pluck('id')->all();
+        $invalidos = array_diff($estudianteIds, $validos);
+
+        if ($invalidos !== []) {
+            throw SolicitudInvalida::noSonEstudiantesActivos(
+                User::query()->whereIn('id', $invalidos)->orderBy('nombre')->pluck('nombre')->all(),
+            );
+        }
+
+        return $estudianteIds;
+    }
+
+    /**
+     * El rol pasa por el filtro de vigencia de User::roles() (regla 13), así
+     * que un rol de estudiante vencido tampoco cuenta.
+     *
+     * @return Builder<User>
+     */
+    private function estudiantesQuePuedenIr(): Builder
+    {
+        return User::query()
+            ->role(Rol::Estudiante->value)
+            ->where('estado', EstadoUsuario::Activo);
     }
 
     /**
@@ -108,7 +225,10 @@ final class SolicitudService
      */
     public function paraDetalle(Solicitud $solicitud): Solicitud
     {
-        return $solicitud->load(['docente', 'materia', 'casoClinico', 'preparacion.sala', 'items']);
+        return $solicitud->load([
+            'docente', 'materia', 'casoClinico', 'preparacion.sala', 'items',
+            'estudiantes' => static fn ($consulta) => $consulta->orderBy('nombre'),
+        ]);
     }
 
     public function marcarRevisada(Solicitud $solicitud, User $administrativo): Solicitud
@@ -187,7 +307,6 @@ final class SolicitudService
             'fecha' => $datos->fecha,
             'hora_inicio' => $datos->horaInicio,
             'hora_fin' => $datos->horaFin,
-            'cantidad_estudiantes' => $datos->cantidadEstudiantes,
             'estado' => EstadoSolicitud::Pendiente,
             'observaciones' => $datos->observaciones,
         ];

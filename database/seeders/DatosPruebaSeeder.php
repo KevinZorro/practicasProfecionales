@@ -607,6 +607,7 @@ class DatosPruebaSeeder extends Seeder
                 'hora_inicio' => $datos['hora'].':00',
                 'hora_fin' => sprintf('%02d:00:00', ((int) substr($datos['hora'], 0, 2)) + 2),
                 'cantidad_estudiantes' => $datos['estudiantes'],
+                'grupo' => 'A',
                 'estado' => $datos['estado'],
                 'revisada_por' => $revisada ? $administrativo->id : null,
                 'revisada_at' => $revisada ? $datos['fecha']->copy()->subDays(3) : null,
@@ -616,6 +617,9 @@ class DatosPruebaSeeder extends Seeder
                     ? 'El simulador de auscultación está en mantenimiento en esa fecha.'
                     : null,
             ]);
+
+            // Los estudiantes de la sesión (RF28), tantos como dice la cantidad.
+            $solicitud->estudiantes()->attach($usuarios['estudiantes']->take($datos['estudiantes'])->pluck('id')->all());
 
             // El inventario del caso clínico se precarga en la solicitud.
             foreach ($caso->items as $item) {

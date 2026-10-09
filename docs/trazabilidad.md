@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 36 | 4 |
+| Completo | 37 | 4 |
 | Solo backend | 8 | 0 |
-| Parcial | 10 | 6 |
+| Parcial | 9 | 6 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 20 | 0 |
 | **Total** | **75** | **10** |
@@ -91,7 +91,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
 | RF27 | El docente solicita, con tipo práctica o evaluación | Completo | `SolicitudService::crear()`, `/panel/solicitudes/nueva` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | |
-| RF28 | Caso, fecha y hora, materia, **grupo** y cantidad; sin sala; fecha del registro previo en sesiones apartadas | Parcial | `SolicitudService::crear()` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | No existe el grupo (letra A, B, C…) ni la lista de estudiantes de la sesión, que según la aclaración de P2 la escribe el docente al solicitar. La fecha desde el registro previo depende de RF57 |
+| RF28 | Caso, fecha y hora, materia, **grupo** y **estudiantes**; sin sala; fecha del registro previo en sesiones apartadas | Completo | `SolicitudService::crear()`, `buscarEstudiantes()`, `estudiantesPorCodigo()`, tabla `estudiante_solicitud`, `/panel/solicitudes/nueva` | `EstudiantesDeLaSesionTest`, `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest`, `CapacidadDeEscenarioTest` | El docente busca por nombre o código, o pega los códigos del grupo. Solo estudiantes activos. La cantidad sale de la lista y es la que limita la capacidad (RF74). La fecha desde el registro previo es parte de RF57 |
 | RF29 | Precarga del inventario del caso | Completo | `SolicitudService::itemsSugeridos()` | `PantallaSolicitudDocenteTest`, `FlujoSolicitudTest` | |
 | RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza** | Completo | `SolicitudService::marcarRevisada()`, `rechazar()`, `SolicitudPolicy::rechazar()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest`, `SolicitudPolicyTest` | Rechazo en dos fases hecho. Mejora pendiente, no exigida para cerrar el RF: la bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). |
 | RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Queda borrar el bloque comentado de `SolicitudPolicy::aprobar()` |

@@ -218,7 +218,7 @@ final class ReporteService
             'solicitudes.tipo',
             DB::raw('COUNT(solicitudes.id) as sesiones'),
             DB::raw('SUM(EXTRACT(EPOCH FROM (solicitudes.hora_fin - solicitudes.hora_inicio)) / 3600) as horas'),
-            DB::raw('SUM(solicitudes.cantidad_estudiantes) as estudiantes'),
+            DB::raw('SUM(solicitudes.cantidad_estudiantes) as total_estudiantes'),
         ];
     }
 }

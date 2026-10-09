@@ -6,11 +6,13 @@ namespace App\Livewire\Solicitud;
 
 use App\Enums\TipoSesion;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\Materia;
 use App\Models\Solicitud;
+use App\Models\User;
 use App\Services\DatosNuevaSolicitud;
 use App\Services\SolicitudService;
 use Illuminate\Database\Eloquent\Collection;
@@ -19,7 +21,8 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 /**
- * Formulario con el que el docente pide un escenario (RF27-RF29).
+ * Formulario con el que el docente pide un escenario (RF27-RF29), con el
+ * grupo y los estudiantes que van a la sesión (RF28).
  *
  * No decide nada: valida formato, arma el objeto de datos y llama al
  * Service. Tampoco enseña disponibilidad de inventario, que el RF40 reserva
@@ -47,8 +50,20 @@ final class FormularioSolicitud extends Component
     #[Validate('required|date_format:H:i|after:horaInicio')]
     public string $horaFin = '';
 
-    #[Validate('required|integer|min:1|max:200')]
-    public ?int $cantidadEstudiantes = null;
+    #[Validate('required|string|regex:/^[A-Za-z]{1,2}$/')]
+    public string $grupo = '';
+
+    /** @var list<int> los estudiantes que van a la sesión */
+    #[Validate(['estudianteIds' => 'required|array|min:1', 'estudianteIds.*' => 'integer'])]
+    public array $estudianteIds = [];
+
+    public string $busquedaEstudiante = '';
+
+    /** Códigos institucionales pegados de la lista del grupo. */
+    public string $codigosPegados = '';
+
+    /** @var list<string> códigos pegados que no son de ningún estudiante activo */
+    public array $codigosDesconocidos = [];
 
     #[Validate('nullable|string|max:1000')]
     public ?string $observaciones = null;
@@ -95,6 +110,34 @@ final class FormularioSolicitud extends Component
         unset($this->items[$itemId]);
     }
 
+    public function agregarEstudiante(int $estudianteId): void
+    {
+        if (! in_array($estudianteId, $this->estudianteIds, true)) {
+            $this->estudianteIds[] = $estudianteId;
+        }
+
+        $this->busquedaEstudiante = '';
+    }
+
+    public function quitarEstudiante(int $estudianteId): void
+    {
+        $this->estudianteIds = array_values(array_diff($this->estudianteIds, [$estudianteId]));
+    }
+
+    /** Agrega de una vez los códigos pegados, separados por comas, espacios o saltos de línea. */
+    public function agregarPorCodigo(SolicitudService $solicitudes): void
+    {
+        $codigos = preg_split('/[\s,;]+/', $this->codigosPegados) ?: [];
+        $resultado = $solicitudes->estudiantesPorCodigo($codigos);
+
+        foreach ($resultado['encontrados'] as $estudiante) {
+            $this->agregarEstudiante($estudiante->id);
+        }
+
+        $this->codigosDesconocidos = $resultado['desconocidos'];
+        $this->codigosPegados = '';
+    }
+
     public function guardar(SolicitudService $solicitudes): void
     {
         $this->authorize('create', Solicitud::class);
@@ -102,11 +145,10 @@ final class FormularioSolicitud extends Component
 
         try {
             $solicitudes->crear(Auth::user(), $this->comoDatos($datos));
-        } catch (CapacidadDeEstudiantesExcedida $excedida) {
+        } catch (CapacidadDeEstudiantesExcedida|SolicitudInvalida $invalida) {
             // La regla vive en el Service; aquí solo se traduce a un error
-            // del campo para que se lea junto al número, no como un fallo
-            // del servidor.
-            $this->addError('cantidadEstudiantes', $excedida->getMessage());
+            // junto a la lista de estudiantes, no como un fallo del servidor.
+            $this->addError('estudianteIds', $invalida->getMessage());
 
             return;
         }
@@ -127,7 +169,8 @@ final class FormularioSolicitud extends Component
             fecha: $datos['fecha'],
             horaInicio: $datos['horaInicio'],
             horaFin: $datos['horaFin'],
-            cantidadEstudiantes: (int) $datos['cantidadEstudiantes'],
+            grupo: (string) $datos['grupo'],
+            estudianteIds: array_map('intval', $this->estudianteIds),
             observaciones: $datos['observaciones'] ?? null,
             // Una cantidad nunca baja de uno: si el docente la deja en cero,
             // lo que quiere es quitar el equipo, y para eso está "Quitar".
@@ -141,9 +184,11 @@ final class FormularioSolicitud extends Component
         $this->authorize('create', Solicitud::class);
     }
 
-    public function render(): mixed
+    public function render(SolicitudService $solicitudes): mixed
     {
         return view('livewire.solicitud.formulario-solicitud', [
+            'seleccionados' => User::query()->whereIn('id', $this->estudianteIds)->orderBy('nombre')->get(['id', 'nombre', 'codigo_institucional']),
+            'resultados' => $solicitudes->buscarEstudiantes($this->busquedaEstudiante, $this->estudianteIds),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre', 'semestre']),
             'casosClinicos' => CasoClinico::activos()->orderBy('nombre')->get(['id', 'nombre']),
             'tiposDeSesion' => TipoSesion::cases(),

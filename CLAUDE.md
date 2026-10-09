@@ -39,6 +39,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 - **Simulador** — maniquí de baja, media o alta fidelidad.
 - **Equipo clínico / equipo básico** — insumos y equipos que acompañan la práctica.
 - **Solicitud** — pedido de un docente para usar un escenario. Es de tipo `practica` o `evaluacion`.
+- **Grupo** — la parte de la clase que pasa a los simuladores en una sesión (A, B, C…). No hay grupos fijos del semestre: el docente dice al solicitar qué estudiantes van (`estudiante_solicitud`), y `cantidad_estudiantes` sale de esa lista.
 - **Preparación** — el montaje físico del escenario, previo a la clase.
 - **Checklist** — lista de ítems que el docente marca al evaluar.
 - **Intento** — número de vez que un estudiante presenta la misma evaluación.

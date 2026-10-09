@@ -53,7 +53,7 @@
                         </div>
 
                         <dl class="mt-3 grid grid-cols-2 gap-3">
-                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}</x-dato>
+                            <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
                             <x-dato etiqueta="Sala">
                                 @if ($montaje->sala)
                                     <span class="font-medium">{{ $montaje->sala->nombreCompleto() }}</span>
