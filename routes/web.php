@@ -10,6 +10,7 @@ use App\Http\Controllers\Panel\BloqueoController;
 use App\Http\Controllers\Panel\CalendarioController;
 use App\Http\Controllers\Panel\ConfidencialidadController;
 use App\Http\Controllers\Panel\DescargaConfidencialidadController;
+use App\Http\Controllers\Panel\EvaluacionController;
 use App\Http\Controllers\Panel\InventarioController;
 use App\Http\Controllers\Panel\PanelController;
 use App\Http\Controllers\Panel\PeriodoAcademicoController;
@@ -61,12 +62,17 @@ Route::get('acceso/google/volver', [AccesoConGoogleController::class, 'volver'])
 Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->name('panel.')->group(function (): void {
     // Secciones ya construidas. Se declaran antes del marcador de posición
     // para que este solo cubra las que aún no tienen pantalla.
-    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes', 'periodo-academico', 'bloqueos'];
+    $construidas = ['mis-solicitudes', 'solicitudes', 'calendario', 'preparaciones', 'inventario', 'formatos-confidencialidad', 'mi-formato', 'plantillas-confidencialidad', 'reposicion', 'usuarios', 'administracion', 'reportes', 'periodo-academico', 'bloqueos', 'evaluaciones', 'mis-resultados'];
 
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
     Route::get('solicitudes', [SolicitudController::class, 'bandeja'])->name('solicitudes');
     Route::get('solicitudes/{solicitud}/participantes', [SolicitudController::class, 'participantes'])->name('solicitudes.participantes');
+
+    /* Evaluación de habilidades (RF41-RF50). */
+    Route::get('evaluaciones', [EvaluacionController::class, 'index'])->name('evaluaciones');
+    Route::get('evaluaciones/{evaluacion}', [EvaluacionController::class, 'registro'])->name('evaluaciones.registro');
+    Route::get('mis-resultados', [EvaluacionController::class, 'misResultados'])->name('mis-resultados');
 
     /* Bloqueos de acceso al laboratorio (RF68). Coordinación y ADMIN. */
     Route::get('bloqueos', BloqueoController::class)->name('bloqueos');

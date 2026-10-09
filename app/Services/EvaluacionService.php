@@ -16,6 +16,7 @@ use App\Models\ItemChecklist;
 use App\Models\Solicitud;
 use App\Models\TipoEvaluacion;
 use App\Models\User;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,8 @@ use Illuminate\Support\Facades\DB;
  */
 final class EvaluacionService
 {
+    public const POR_PAGINA = 15;
+
     public function __construct(private readonly ParticipacionService $participacion) {}
 
     public function crear(Solicitud $solicitud, TipoEvaluacion $tipo, User $docente): Evaluacion
@@ -55,10 +58,16 @@ final class EvaluacionService
     /**
      * Solo se evalúa a quien puede entrar al laboratorio: formato de
      * confidencialidad al día y sin bloqueo (RF45, RF70).
+     *
+     * Y a quien va a la sesión: si la sesión tiene lista de estudiantes
+     * (RF28), el evaluado tiene que estar en ella y no haber sido retirado.
+     * Las sesiones registradas antes de que existiera la lista no la tienen,
+     * y en ellas basta con que pueda entrar.
      */
     public function agregarEstudiante(Evaluacion $evaluacion, User $estudiante): EvaluacionEstudiante
     {
         $this->garantizarBorrador($evaluacion);
+        $this->garantizarQueVaALaSesion($evaluacion->solicitud, $estudiante);
 
         $impedimentos = $this->participacion->impedimentosDe($estudiante);
 
@@ -157,6 +166,90 @@ final class EvaluacionService
     }
 
     /**
+     * Sesiones de evaluación aprobadas de un docente que todavía no tienen
+     * evaluación (RF41): de aquí sale el botón para registrarla.
+     *
+     * @return Collection<int, Solicitud>
+     */
+    public function sesionesPorEvaluar(User $docente): Collection
+    {
+        return Solicitud::query()
+            ->where('docente_id', $docente->id)
+            ->deEvaluacion()
+            ->aprobadas()
+            ->whereDoesntHave('evaluacion')
+            ->with(['materia', 'casoClinico'])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio')
+            ->get();
+    }
+
+    /**
+     * Tipos de evaluación que se pueden usar en esta sesión: activos y
+     * asociados a su materia (RF43).
+     *
+     * @return Collection<int, TipoEvaluacion>
+     */
+    public function tiposParaLaSesion(Solicitud $solicitud): Collection
+    {
+        return TipoEvaluacion::query()
+            ->activos()
+            ->whereHas('materias', static fn (Builder $materia) => $materia->whereKey($solicitud->materia_id))
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    /**
+     * La evaluación con todo lo que la pantalla de registro enseña, sin
+     * consultas por estudiante.
+     */
+    public function paraRegistrar(Evaluacion $evaluacion): Evaluacion
+    {
+        return $evaluacion->load([
+            'tipoEvaluacion',
+            'solicitud.materia',
+            'solicitud.casoClinico',
+            'items',
+            'estudiantes' => static fn ($consulta) => $consulta->with(['estudiante', 'items'])->orderBy('id'),
+        ]);
+    }
+
+    /**
+     * Estudiantes de la sesión que aún no están en la evaluación, con lo que
+     * les impide entrar (vacío si pueden). Los retirados no aparecen.
+     *
+     * @return array{estudiantes: Collection<int, User>, impedimentos: array<int, list<Impedimento>>}
+     */
+    public function candidatosDeLaSesion(Evaluacion $evaluacion): array
+    {
+        $yaEvaluados = $evaluacion->estudiantes()->pluck('estudiante_id')->all();
+
+        $estudiantes = $evaluacion->solicitud->estudiantesPresentes()
+            ->whereNotIn('users.id', $yaEvaluados)
+            ->orderBy('nombre')
+            ->get();
+
+        return [
+            'estudiantes' => $estudiantes,
+            'impedimentos' => $this->participacion->impedimentos($estudiantes->pluck('id')->all()),
+        ];
+    }
+
+    /**
+     * Todas las evaluaciones, para coordinación y el ADMIN.
+     *
+     * @return LengthAwarePaginator<int, Evaluacion>
+     */
+    public function todas(int $porPagina = self::POR_PAGINA): LengthAwarePaginator
+    {
+        return Evaluacion::query()
+            ->with(['tipoEvaluacion', 'docente', 'solicitud.materia', 'solicitud.casoClinico'])
+            ->withCount('estudiantes')
+            ->orderByDesc('id')
+            ->paginate($porPagina);
+    }
+
+    /**
      * Historial de evaluaciones registradas por un docente (RF50).
      *
      * @return Collection<int, Evaluacion>
@@ -183,7 +276,7 @@ final class EvaluacionService
             ->where('estudiante_id', $estudiante->id)
             ->whereHas('evaluacion', static fn (Builder $consulta) => $consulta
                 ->where('estado', EstadoEvaluacion::Finalizada))
-            ->with(['evaluacion.tipoEvaluacion', 'evaluacion.docente', 'evaluacion.solicitud.materia', 'items'])
+            ->with(['evaluacion.tipoEvaluacion', 'evaluacion.docente', 'evaluacion.solicitud.materia', 'evaluacion.items', 'items'])
             ->orderByDesc('id')
             ->get();
     }
@@ -238,6 +331,17 @@ final class EvaluacionService
     {
         if (! $tipo->materias()->whereKey($solicitud->materia_id)->exists()) {
             throw EvaluacionInvalida::tipoAjenoALaMateria($tipo, $solicitud);
+        }
+    }
+
+    private function garantizarQueVaALaSesion(Solicitud $solicitud, User $estudiante): void
+    {
+        if (! $solicitud->estudiantes()->exists()) {
+            return;
+        }
+
+        if (! $solicitud->estudiantesPresentes()->whereKey($estudiante->id)->exists()) {
+            throw EvaluacionInvalida::noVaALaSesion($estudiante);
         }
     }
 

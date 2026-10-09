@@ -165,6 +165,8 @@ it('no genera consultas N+1 en el historial del estudiante', function (): void {
         $registro->evaluacion->tipoEvaluacion->nombre;
         $registro->evaluacion->docente->nombre;
         $registro->evaluacion->solicitud->materia->nombre;
+        // El checklist completo, para enseñar también lo no cumplido (RF49).
+        $registro->evaluacion->items->count();
         foreach ($registro->items as $item) {
             $item->descripcion;
             $item->pivot->cumplido;
@@ -173,7 +175,7 @@ it('no genera consultas N+1 en el historial del estudiante', function (): void {
     $consultas = count(DB::getQueryLog());
     DB::disableQueryLog();
 
-    expect($consultas)->toBeLessThanOrEqual(7);
+    expect($consultas)->toBeLessThanOrEqual(8);
 });
 
 it('no deja a un docente ver evaluaciones de otro docente', function (): void {

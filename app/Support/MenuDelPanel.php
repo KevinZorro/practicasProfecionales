@@ -7,6 +7,7 @@ namespace App\Support;
 use App\Models\AsignacionDeRol;
 use App\Models\Bloqueo;
 use App\Models\Evaluacion;
+use App\Models\EvaluacionEstudiante;
 use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
 use App\Models\ListaDeReposicion;
@@ -83,6 +84,14 @@ final class MenuDelPanel
                 icono: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
                 permiso: 'viewAny',
                 sobre: Evaluacion::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'mis-resultados',
+                etiqueta: 'Mis resultados',
+                ruta: 'panel.mis-resultados',
+                icono: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11',
+                permiso: 'viewAny',
+                sobre: EvaluacionEstudiante::class,
             ),
             new SeccionDelPanel(
                 clave: 'inventario',

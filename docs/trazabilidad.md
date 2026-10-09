@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 41 | 4 |
-| Solo backend | 9 | 0 |
-| Parcial | 7 | 6 |
+| Completo | 51 | 4 |
+| Solo backend | 0 | 0 |
+| Parcial | 6 | 6 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 17 | 0 |
 | **Total** | **75** | **10** |
@@ -112,20 +112,20 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 
 ## Evaluación de habilidades (RF41–RF50)
 
-`EvaluacionService` está completo y probado, pero no hay pantalla: `/panel/evaluaciones` muestra "Esta sección todavía no tiene pantalla". El módulo esperaba la respuesta de RF68–RF70, que el enunciado ya da: **ya no está bloqueado**.
+Pantallas: `/panel/evaluaciones` (el docente registra sobre sus sesiones de evaluación aprobadas y ve su historial; coordinación y ADMIN ven todas), `/panel/evaluaciones/{evaluacion}` (registro) y `/panel/mis-resultados` (el estudiante). Tests de pantalla en `PantallaEvaluacionesTest`.
 
-| RF | Pide | Estado | Dónde | Tests | Falta |
+| RF | Pide | Estado | Dónde | Tests | Notas |
 |---|---|---|---|---|---|
-| RF41 | Evaluación solo desde una solicitud de evaluación aprobada | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
-| RF42 | Impedirla sin solicitud aprobada | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
-| RF43 | Tipo de evaluación de la materia, sin editar el checklist | Parcial | `EvaluacionService`, `/admin/tipos-de-evaluacion` | `PantallaTiposEvaluacionTest`, `EvaluacionReglasTest` | La pantalla del docente |
-| RF44 | Copia del checklist vigente | Solo backend | `EvaluacionService::crear()` | `EvaluacionReglasTest` | Pantalla |
-| RF45 | Varios estudiantes; **solo los habilitados** (formato verificado o en físico, sin bloqueo) | Solo backend | `EvaluacionService::agregarEstudiante()` → `ParticipacionService` | `EvaluacionReglasTest`, `ParticipantesDeLaSesionTest` | La regla ya se cumple: no se agrega a quien no puede ingresar, con el motivo. Falta la pantalla, y que los evaluados salgan de la lista de la sesión |
-| RF46 | Ítems marcados y resultado decidido por el docente | Solo backend | `EvaluacionService::marcarItem()`, `registrarResultado()` | `EvaluacionReglasTest` | Pantalla |
-| RF47 | Observaciones por estudiante | Solo backend | `EvaluacionService::registrarObservaciones()` | `EvaluacionReglasTest` | Pantalla |
-| RF48 | Un intento por evaluación, sin límite | Solo backend | `EvaluacionService::calcularIntento()` | `EvaluacionIntentoTest` | Pantalla |
-| RF49 | El estudiante consulta evaluaciones, intentos y checklist | Solo backend | `EvaluacionService::historialDelEstudiante()` | `EvaluacionConsultasTest` | Pantalla |
-| RF50 | Historial del docente | Solo backend | `EvaluacionService::historialDelDocente()` | `EvaluacionConsultasTest` | Pantalla |
+| RF41 | Evaluación solo desde una solicitud de evaluación aprobada | Completo | `EvaluacionService::crear()`, `sesionesPorEvaluar()` | `EvaluacionReglasTest`, `PantallaEvaluacionesTest` | La pantalla solo ofrece las sesiones de evaluación aprobadas del propio docente |
+| RF42 | Impedirla sin solicitud aprobada | Completo | `EvaluacionService::crear()` | `EvaluacionReglasTest` | |
+| RF43 | Tipo de evaluación de la materia, sin editar el checklist | Completo | `EvaluacionService::tiposParaLaSesion()`, `/admin/tipos-de-evaluacion` | `PantallaTiposEvaluacionTest`, `EvaluacionReglasTest`, `PantallaEvaluacionesTest` | El docente elige entre los tipos activos de la materia; el checklist no se edita en la pantalla |
+| RF44 | Copia del checklist vigente | Completo | `EvaluacionService::crear()` | `EvaluacionReglasTest` | |
+| RF45 | Varios estudiantes; **solo los habilitados** | Completo | `EvaluacionService::agregarEstudiante()`, `candidatosDeLaSesion()` → `ParticipacionService` | `EvaluacionReglasTest`, `ParticipantesDeLaSesionTest`, `PantallaEvaluacionesTest` | Se agrega desde la lista de la sesión (y solo de ella, si la sesión la tiene), uno a uno o todos los que pueden ingresar. Quien no puede entrar aparece con el motivo y sin botón |
+| RF46 | Ítems marcados y resultado decidido por el docente | Completo | `EvaluacionService::marcarItem()`, `registrarResultado()` | `EvaluacionReglasTest`, `PantallaEvaluacionesTest` | La pantalla lo dice: marcar ítems no aprueba ni reprueba |
+| RF47 | Observaciones por estudiante | Completo | `EvaluacionService::registrarObservaciones()` | `EvaluacionReglasTest`, `PantallaEvaluacionesTest` | Se guardan al salir del campo |
+| RF48 | Un intento por evaluación, sin límite | Completo | `EvaluacionService::calcularIntento()` | `EvaluacionIntentoTest` | |
+| RF49 | El estudiante consulta evaluaciones, intentos y checklist | Completo | `EvaluacionService::historialDelEstudiante()`, `/panel/mis-resultados` | `EvaluacionConsultasTest`, `PantallaEvaluacionesTest` | Solo las finalizadas, con el checklist completo: lo cumplido y lo no cumplido |
+| RF50 | Historial del docente | Completo | `EvaluacionService::historialDelDocente()`, `/panel/evaluaciones` | `EvaluacionConsultasTest`, `PantallaEvaluacionesTest` | |
 
 ## Formato de confidencialidad (RF51–RF53)
 
@@ -142,8 +142,8 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
 | RF54 | Uso de escenarios, con horas atribuidas al docente que dictó e indicando sustitución | Parcial | `ReporteService::usoDeEscenarios()`, `/panel/reportes` | `ReporteUsoDeEscenariosTest`, `PantallaDeReportesTest`, `ReporteExportacionTest` | La atribución por sustitución, que depende de RF73 |
-| RF55 | Resultados de evaluación, PDF y Excel | Completo | `ReporteService::resultadosDeEvaluacion()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | Saldrá vacío hasta que exista la pantalla de evaluaciones |
-| RF56 | Sesiones de evaluación aprobadas sin evaluación registrada | Completo | `ReporteService::evaluacionesNoRegistradas()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | Mientras no haya pantalla de evaluaciones, lista todas |
+| RF55 | Resultados de evaluación, PDF y Excel | Completo | `ReporteService::resultadosDeEvaluacion()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | |
+| RF56 | Sesiones de evaluación aprobadas sin evaluación registrada | Completo | `ReporteService::evaluacionesNoRegistradas()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | |
 
 ## Programación de sesiones (RF57–RF61, RF73)
 

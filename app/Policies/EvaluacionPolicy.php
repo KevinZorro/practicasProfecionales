@@ -40,6 +40,12 @@ final class EvaluacionPolicy
         return $usuario->hasRole(Rol::Docente->value) || $this->generaReportes($usuario);
     }
 
+    /** El listado de todas las evaluaciones, no solo las propias. */
+    public function verTodas(User $usuario): bool
+    {
+        return $this->generaReportes($usuario);
+    }
+
     /**
      * Registrar el checklist, los resultados y las observaciones. Solo el
      * docente que la creó; que además esté en borrador lo comprueba

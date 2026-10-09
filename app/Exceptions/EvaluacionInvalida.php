@@ -68,6 +68,11 @@ final class EvaluacionInvalida extends DomainException
         ));
     }
 
+    public static function noVaALaSesion(User $estudiante): self
+    {
+        return new self(sprintf('%s no está en la lista de estudiantes de esta sesión.', $estudiante->nombre));
+    }
+
     public static function noEsBorrador(): self
     {
         return new self('Una evaluación finalizada no se modifica.');
