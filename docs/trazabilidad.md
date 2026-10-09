@@ -33,7 +33,7 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 | No iniciado | 21 | 0 |
 | **Total** | **75** | **10** |
 
-El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la cuenta de Resend (ver [Bloqueos externos](#bloqueos-externos)).
+El único bloqueado es la sincronización con la base institucional (RF20), que espera datos de la universidad y aun así se puede construir con datos simulados. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
 
 ---
 
@@ -53,7 +53,7 @@ El único bloqueado es la sincronización con la base institucional (RF20), que 
 | RF06 | Certificaciones como insignias | No iniciado | Datos: RF15 | Igual que RF01 |
 | RF07 | Docentes con foto, nombre, cargo y títulos | No iniciado | Datos: RF16 | Igual que RF01 |
 | RF08 | Galería de videos institucionales | No iniciado | — | Igual que RF01, y los datos de RF17. Ya no espera la decisión YouTube o Vimeo: el enunciado fija subida al servidor |
-| RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | No iniciado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario, su Service, el correo (D8 y la cuenta de Resend), una protección contra envíos masivos (D16) y el interruptor para ocultar la sección en la configuración de la landing |
+| RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | No iniciado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario, su Service, el correo (D8), una protección contra envíos masivos (D16) y el interruptor para ocultar la sección en la configuración de la landing |
 
 ## Contenido público: pantallas del ADMIN (RF10–RF17)
 
@@ -231,7 +231,7 @@ Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apar
 | D5 | La antelación del aviso la edita el ADMIN en la plataforma, con 3 días por defecto | RF60 |
 | D6 | Deshabilitar a mano es una marca propia que la sincronización no revierte. Los usuarios creados a mano (por ejemplo, un pasante externo) no los desactiva la sincronización | RF20, RF22 |
 | D7 | Tamaño máximo de cada video: 100 MB por defecto, configurable por variable de entorno | RF17 |
-| D8 | El correo del formulario **sale** de la dirección no-reply y **llega** al correo de contacto del laboratorio (RF11), con responder-a del interesado. También se guarda en `solicitudes_informacion` | RF09 |
+| D8 | El correo del formulario **sale** de la cuenta institucional del laboratorio (la misma de todos los correos) y **llega** al correo de contacto del laboratorio (RF11), con responder-a del interesado. También se guarda en `solicitudes_informacion` | RF09 |
 | D9 | "Retiro" en la bitácora cubre el retiro de participantes (RF69) y el de unidades de inventario (RF38). La bitácora la consultan coordinación y el ADMIN | RF62 |
 | D10 | Lo que requiere al ingeniero se deduce del nivel de fidelidad alta. El ingeniero no tiene cuenta: el administrativo marca el ítem cuando él termina | RF72 |
 | D11 | La sustitución la registran los administrativos (y coordinación). El reemplazo debe ser un docente con cuenta | RF73 |
@@ -239,7 +239,7 @@ Ninguno está construido. El modelo queda definido por P3 y P4: una sesión apar
 | D13 | Accesorio o repuesto es un tipo nuevo de ítem de inventario, ligado a un simulador del inventario | RF38 |
 | D14 | El vínculo sala–escenario es informativo: en la preparación las salas vinculadas al escenario aparecen primero, pero el administrativo puede elegir cualquier sala libre. Así un vínculo sin llenar no bloquea una clase, igual que la capacidad sin definir de la regla 10 | RF36, RF65 |
 | D15 | En las sesiones apartadas, los estudiantes los pone el docente desde su historial de solicitudes antes de la sesión; el administrativo también puede hacerlo. Sin lista, RF70 no tiene a quién revisar y la sesión se marca | RF57, RF70 |
-| D16 | Para no agotar el cupo de correos (ver Resend abajo): el aviso de RF60 es **un correo diario por persona** con todas sus sesiones pendientes, no uno por sesión; y el formulario público de RF09 tiene límite de envíos por IP y un campo trampa contra robots. Es la excepción a "sin límite de peticiones por IP" del `CLAUDE.md`, que habla de la entrada con Google, no de un formulario anónimo | RF09, RF60 |
+| D16 | Para no gastar el cupo diario de la cuenta del laboratorio ni llenar de correos a la gente: el aviso de RF60 es **un correo diario por persona** con todas sus sesiones pendientes, no uno por sesión; y el formulario público de RF09 tiene límite de envíos por IP y un campo trampa contra robots. Es la excepción a "sin límite de peticiones por IP" del `CLAUDE.md`, que habla de la entrada con Google, no de un formulario anónimo | RF09, RF60 |
 | D17 | Al registrar una sesión apartada, si en esa franja no queda ninguna sala libre se avisa, sin impedir el registro: la sala se resuelve en la preparación | RF58 |
 
 ---
@@ -255,16 +255,22 @@ Dependen de la universidad, no del laboratorio.
 3. El usuario de solo lectura.
 4. La estructura: personas (correo, documento, código), programa y vigencia de matrícula o contrato.
 
-**Correo con Resend (RF09, RF33, RF36, RF60, RF61, aviso al ADMIN de RF20).** Decidido: se envía por Resend, por su servidor SMTP (`smtp.resend.com`). Laravel ya trae el envío por SMTP, así que **no se agrega ningún paquete**: basta con las variables `MAIL_*` del `.env`, y cambiar de proveedor mañana es cambiar esas variables. Para ponerlo a andar hace falta:
+**Correo (RF09, RF33, RF36, RF60, RF61, aviso al ADMIN de RF20).** Decidido: los correos salen de **la cuenta institucional que el laboratorio ya tiene**, por el SMTP de Google (`smtp.gmail.com`, puerto 587). Se descartó Resend por su tope de 100 correos al día en el plan gratuito. Con la cuenta institucional:
 
-1. **La cuenta de Resend**, creada con el correo del ADMIN que se va a entregar. Esa cuenta da la clave que va en `MAIL_PASSWORD`.
-2. **Un dominio verificado.** Resend solo envía desde direcciones de un dominio en el que se hayan publicado sus registros DNS (SPF y DKIM). **No puede enviar desde una dirección de Gmail** ni desde el correo personal del ADMIN: el remitente tiene que ser algo como `no-reply@laboratorio.ufps.edu.co`, y esos registros los publica quien administre el DNS de la universidad. Resend recomienda un subdominio dedicado. Va de la mano del dominio de la plataforma (despliegue, punto 1).
-3. **Revisar el cupo.** El plan gratuito permite 3.000 correos al mes y **100 al día**; al llegar al tope deja de enviar hasta la medianoche UTC (las siete de la noche en Colombia) y no cobra. Para un día normal alcanza; D16 lo protege de los picos. Si un día se agota, los correos fallan en la cola y hay que reintentarlos.
-4. **Confirmar con la universidad si puede usarse un servicio externo** para correos con datos de estudiantes (nombre, sesión, resultado de una solicitud). Resend procesa los correos en Estados Unidos, y la Ley 1581 pide cuidado con las transferencias internacionales de datos personales.
+- El cupo es de unos 2.000 correos al día (el de Google Workspace), sin costo.
+- No hay que tocar el DNS de la universidad: su dominio ya está configurado para Google, así que los correos no caen en spam.
+- Los datos de los estudiantes no salen a un servicio nuevo: se quedan en Google, donde la universidad ya tiene su correo.
+- Laravel ya trae el envío por SMTP, así que **no se agrega ningún paquete**: basta con las variables `MAIL_*` del `.env`.
+
+Para ponerlo a andar hace falta:
+
+1. **La dirección del correo del laboratorio.**
+2. **Verificación en dos pasos activada en esa cuenta y una contraseña de aplicación**, que va en `MAIL_PASSWORD`. Si alguien cambia la contraseña de la cuenta, Google anula la de aplicación y hay que generar otra.
+3. **Si la universidad tiene desactivadas las contraseñas de aplicación**, el plan alterno es que sistemas autorice la IP del servidor en el relay de Google Workspace (`smtp-relay.gmail.com`, hasta 10.000 destinatarios al día). Último recurso: Brevo, 300 al día gratis, con verificación de dominio.
 
 **Despliegue.**
 
-1. Dominio o subdominio definitivo, para la dirección de retorno en Google y para verificar el dominio en Resend.
+1. Dominio o subdominio definitivo, para la dirección de retorno en Google.
 2. Quién crea las credenciales de Google.
 3. Si el HTTPS lo pone un proxy de la universidad o el propio servidor.
 4. Destino externo de las copias de seguridad.
