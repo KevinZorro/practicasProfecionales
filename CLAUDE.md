@@ -45,7 +45,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 - **Intento** — número de vez que un estudiante presenta la misma evaluación.
 - **Formato de confidencialidad** — el documento que se firma para entrar a las prácticas; incluye la autorización de captación de imágenes. Es como lo llama el laboratorio, y así está rotulada su carpeta en el Drive. **No lo llames "consentimiento informado"**: fue nuestro nombre, no el suyo, y se retiró del código. Lo firma todo el que entra a la práctica —estudiantes y docentes—, por eso la columna es `firmante_id` y no `estudiante_id`.
 
-**Cuidado con "capacidad": en este dominio significa tres cosas distintas.** `capacidades` son las capacidades clínicas del simulador (sangrado, llanto, signos vitales); `salas.capacidad` es cuánta gente cabe en el espacio físico; `casos_clinicos.capacidad_maxima_estudiantes` es cuántos estudiantes admite el escenario (RF74). Escribe siempre el nombre largo del tercero: "capacidad" a secas ya está ocupado.
+**Cuidado con "capacidad": en este dominio significa tres cosas distintas.** `capacidades` son las capacidades clínicas del simulador (sangrado, llanto, signos vitales); `salas.capacidad` es cuánta gente cabe en el espacio físico; `casos_clinicos.capacidad_maxima_estudiantes` es cuántos estudiantes admite el escenario (RF74). Escribe siempre el nombre largo del tercero: "capacidad" a secas ya está ocupado. Por eso las frases del equipamiento destacado de la portada se llaman `caracteristicas` (`equipos_destacados`), no capacidades.
 
 ---
 
@@ -104,6 +104,13 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 - **Nada de lo que suben los usuarios entra en una imagen:** `.dockerignore` excluye `storage/app/public` y `storage/app/private`. Una imagen construida en un equipo de desarrollo se llevaría dentro los documentos de prueba.
 - **Las cabeceras de seguridad las pone `CabecerasDeSeguridad`**, en Laravel y no en nginx, para que se prueben. La Content-Security-Policy lleva `'unsafe-inline'` y `'unsafe-eval'` porque Alpine y Filament los necesitan; lo que cierra son los orígenes externos. Cualquier recurso de otro sitio que se añada (una fuente, un script, una imagen) hay que declararlo en ella, o el navegador lo bloquea. Por eso el avatar de Filament se dibuja en local (`App\Filament\AvatarConIniciales`) y no se pide a ui-avatars.com.
 - **Una copia que no se restaura no es una copia.** La CI hace una en cada PR, daña los datos y la restaura. Si cambia dónde guarda algo la aplicación, cambia también `docker/produccion/copias/`.
+
+**Portada pública (`/` y `/escenarios/{id}`, RF01–RF07).** Sin sesión. Todo lo que muestra lo carga el ADMIN en `/admin`; `PortadaService` reúne lo publicado sin N+1, y una imagen cuyo archivo ya no está se trata como sin foto. El diseño (tokens `portada-*` de Tailwind, Onest, rojo `#d30f23` solo como acento, fondos que alternan entre las secciones presentes) está en `DESIGN.md`, y el contexto de producto, en `PRODUCT.md`. Cuatro cosas que no se pueden perder:
+
+- **Exactamente seis animaciones, acordadas con el usuario** (DESIGN.md). No agregues otras sin consultarlo, ni siquiera un hover con movimiento.
+- **Nada empieza oculto sin `html.animar`**, que el layout pone solo si hay IntersectionObserver y no se pidió reducir el movimiento, y retira si `portada.js` no avisa a tiempo. Sin JavaScript o con movimiento reducido, todo se ve completo. `portada.js` es una entrada propia de Vite: el panel no la carga.
+- **Fuente y logos se sirven desde el propio servidor** (`public/fonts`, `public/marca`). Un recurso de otro sitio rompería la CSP.
+- **Todavía no hay fotos reales:** cada bloque tiene un estado sin foto que tiene que seguir viéndose terminado.
 
 **Correo: la cuenta institucional del laboratorio, por SMTP de Google, sin paquete.** Los correos salen de la cuenta de Google Workspace que el laboratorio ya tiene, por `smtp.gmail.com` con una contraseña de aplicación y el transporte SMTP que ya trae Laravel; todo se configura con las variables `MAIL_*`. No instales paquetes de proveedores de correo: cambiar de proveedor tiene que ser cambiar el `.env`. La cuenta tiene un tope diario (unos 2.000), así que un aviso que pueda repetirse por sesión se agrupa en un correo por persona. Si alguien cambia la contraseña de esa cuenta, la de aplicación se anula y los correos dejan de salir hasta generar otra.
 
@@ -168,6 +175,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
+| `PortadaService` | Lo que muestra la portada pública (RF01–RF07): solo lo publicado, talleres y eventos de hoy en adelante (D18), sin imágenes cuyo archivo falta; el detalle de un escenario publicado (RF03) |
 | `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (RF22), con origen `manual`; deshabilitar y volver a habilitar, siempre con motivo y en la bitácora |
 | `UsuarioSyncService` | Sincronización con la base institucional (RF19, RF20), comando `usuarios:sincronizar`. Lee de una `FuenteInstitucional`; **hoy solo existe la simulada** (`database/datos/institucional-simulada.json`), porque la real depende del pendiente 2. La pasada programada está apagada salvo con `SINCRONIZACION_PROGRAMADA=true` |
 
@@ -396,5 +404,5 @@ No los resuelvas por tu cuenta; si el código los toca, déjalo señalado:
 2. Motor, acceso y estructura de la base de datos institucional para la sincronización de usuarios (RF19, RF20). La sincronización ya funciona con la fuente simulada; falta la real (ver `UsuarioSyncService` en el §3).
 3. ~~Cómo se entera hoy el docente de la sala asignada al llegar a clase.~~ Resuelto (RF36): por correo, al asignar o cambiar la sala.
 4. ~~Volumen real de usuarios.~~ Resuelto: el cliente confirmó ~700 estudiantes y ~150 docentes, y el RNF01 quedó actualizado.
-5. Las decisiones por defecto D2–D17 de `docs/trazabilidad.md`. Se aplican si nadie las corrige. Las preguntas P1–P5 ya están respondidas y sus respuestas, en `docs/requerimientos.md`.
+5. Las decisiones por defecto D2–D18 de `docs/trazabilidad.md`. Se aplican si nadie las corrige. Las preguntas P1–P5 ya están respondidas y sus respuestas, en `docs/requerimientos.md`.
 6. La dirección del correo del laboratorio y su contraseña de aplicación (verificación en dos pasos activada), o, si la universidad no permite contraseñas de aplicación, el relay de Google Workspace autorizado por sistemas (ver `docs/trazabilidad.md`, Bloqueos externos).

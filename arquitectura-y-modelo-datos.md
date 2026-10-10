@@ -108,6 +108,7 @@ Event ─────────────► Listener ──► Mail (notifi
 | `AjustesService` | Valores que el ADMIN cambia sin desplegar, como la antelación del aviso del RF60 |
 | `ReporteService` y `GeneradorDeReportes` | Agregaciones de uso de escenarios y de resultados de evaluación; una sola consulta alimenta pantalla, PDF y Excel (RF54–RF56) |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11) |
+| `PortadaService` | Lo que muestra la portada pública (RF01–RF07): solo lo publicado, talleres y eventos de hoy en adelante, sin imágenes cuyo archivo falta; el detalle de cada escenario publicado (RF03) |
 | `ImagenPublicaService` | Imágenes del contenido público: validar tipo y tamaño, enderezar según el EXIF, reducir a 1600 px de lado mayor y guardar en WebP (RNF10); borrar la reemplazada al confirmar la transacción |
 
 ---
@@ -130,6 +131,7 @@ proyecto/
 │   │   └── Resources/                         # pantallas del ADMIN (RF10–RF16, RF23–RF26)
 │   ├── Http/
 │   │   ├── Controllers/
+│   │   │   ├── PortadaController.php          # portada pública y detalle de escenario (RF01–RF07)
 │   │   │   ├── Auth/
 │   │   │   │   ├── AccesoConGoogleController.php      # entrada con Google (RF18)
 │   │   │   │   ├── AccesoDeDesarrolloController.php   # solo en local, hasta probar Google con credenciales reales
@@ -172,8 +174,14 @@ proyecto/
 │   ├── nginx/default.conf
 │   ├── php/                                   # Dockerfile, php.ini, www.conf
 │   └── postgres/
+├── public/
+│   ├── fonts/onest/                           # Onest servida localmente, con su licencia OFL
+│   └── marca/                                 # logos oficiales de la UFPS
+├── resources/js/portada.js                    # las animaciones de la portada (entrada propia de Vite)
 ├── resources/views/
-│   ├── layouts/
+│   ├── layouts/                               # panel y publico
+│   ├── portada/                               # portada pública y detalle de escenario
+│   ├── components/portada/                    # piezas de la portada: pulso, cifra, credencial…
 │   ├── panel/                                 # una carpeta por sección del menú
 │   ├── livewire/
 │   ├── emails/
@@ -195,8 +203,8 @@ proyecto/
 | Pieza | Para qué | Depende de |
 |---|---|---|
 | Una `FuenteInstitucional` real | Conectar la sincronización (RF20) a la base de la universidad: traducir sus columnas a `PersonaInstitucional` y elegirla con `SINCRONIZACION_FUENTE` | Motor, acceso y estructura de la base institucional (pendiente 2 del `CLAUDE.md`) |
-| Recurso de Filament de la galería de videos | Videos subidos al servidor, con portada y tope configurable (RF17) | — |
-| Landing pública (RF01–RF09) | Hoy solo hay `welcome.blade.php`. Incluye el formulario de información por taller (RF09) | El diseño nuevo |
+| Recurso de Filament de la galería de videos y su sección en la portada | Videos subidos al servidor, con portada y tope configurable (RF17), y la galería pública que no los descarga hasta reproducirlos (RF08) | — |
+| Formulario de información por taller (RF09) | Hoy «Pedir información» abre un correo al laboratorio | — |
 
 **Un solo Form Request.** El diagrama de capas los nombra, pero en este proyecto su papel lo cumple casi siempre la validación de Livewire (`#[Validate]` y `validate()`): las pantallas que reciben datos son componentes Livewire. La excepción son las descargas de reportes, que son enlaces normales con los filtros en la URL: `FiltroDeReporteRequest` las valida, y la pantalla de reportes usa sus mismas reglas y su mismo método para armar el filtro, así que la tabla y el archivo no pueden entender los filtros de forma distinta.
 
@@ -473,6 +481,7 @@ Hace falta aparte del pivote porque la llave primaria de este es (`role_id`, `mo
 | `estadisticas_landing` | `etiqueta`, `valor` (texto, se publica tal cual: `22`, `+700`), `orden`, `activo`. Valores manuales del ADMIN, no calculados de las tablas | RF01, RF10 |
 | `galeria_fotos` | `titulo`, `imagen_path`, `orden`, `activo` | RF01, RF10 |
 | `videos_institucionales` | `titulo`, `url`, `orden`, `activo`. Le faltan el archivo y la portada que pide el RF17 | RF08, RF17 |
+| `equipos_destacados` | `nombre`, `resumen` (una frase), `imagen`, `caracteristicas` (jsonb: hasta cuatro frases cortas), `orden`, `activo`. Los protagonistas de la portada: simuladores, sala inmersiva, mesa de anatomía virtual; el primero es el principal. No es el inventario: no tiene unidades ni estado | RF01, RF10 |
 | `talleres` | `titulo`, `descripcion`, `imagen`, `tema`, `fecha`, `modalidad` (`virtual` \| `presencial`), `muestra_formulario`, `orden`, `activo` | RF04, RF13 |
 | `eventos` | `titulo`, `descripcion`, `imagen`, `fecha`, `tipo_evento_id` (FK → `tipos_evento`, restrict), `abierto_publico`, `orden`, `activo` | RF05, RF14 |
 | `tipos_evento` | `nombre` (único), `activo`. Catálogo que gestiona el ADMIN desde Filament; no se borran, se desactivan | RF05, RF14 |
