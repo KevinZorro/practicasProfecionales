@@ -31,3 +31,9 @@ yarn-error.log
 .claude/settings.local.json
 CLAUDE.local.md
 /copias
+
+# Capturas y artefactos locales de la revisión de diseño. El brief de cada
+# superficie (.impeccable/surfaces) sí se versiona.
+/.impeccable/review
+/.impeccable/mocks
+/.impeccable/build

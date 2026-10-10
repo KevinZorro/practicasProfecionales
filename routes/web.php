@@ -21,10 +21,23 @@ use App\Http\Controllers\Panel\ReposicionController;
 use App\Http\Controllers\Panel\SelectorDeRolController;
 use App\Http\Controllers\Panel\SolicitudController;
 use App\Http\Controllers\Panel\UsuarioController;
+use App\Http\Controllers\PortadaController;
 use App\Support\MenuDelPanel;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome')->name('inicio.publico');
+/*
+|--------------------------------------------------------------------------
+| Portada pública (RF01–RF07)
+|--------------------------------------------------------------------------
+|
+| Sin sesión. El contenido lo gestiona el ADMIN en /admin (RF10–RF17).
+|
+*/
+
+Route::get('/', [PortadaController::class, 'inicio'])->name('inicio.publico');
+Route::get('escenarios/{escenario}', [PortadaController::class, 'escenario'])
+    ->whereNumber('escenario')
+    ->name('portada.escenario');
 
 Route::post('salir', SalirController::class)->name('salir');
 
