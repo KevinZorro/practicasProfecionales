@@ -21,6 +21,7 @@ use App\Models\Capacidad;
 use App\Models\CasoClinico;
 use App\Models\Certificacion;
 use App\Models\ConfiguracionLanding;
+use App\Models\EquipoDestacado;
 use App\Models\EstadisticaLanding;
 use App\Models\Evaluacion;
 use App\Models\EvaluacionEstudiante;
@@ -710,8 +711,8 @@ class DatosPruebaSeeder extends Seeder
     {
         // Sin video del hero: es un archivo que sube el ADMIN (RF11).
         $configuracion = [
-            ClaveConfiguracionLanding::HeroTitulo->value => 'Laboratorio de Simulación Clínica',
-            ClaveConfiguracionLanding::HeroSubtitulo->value => 'Formación práctica en entornos clínicos seguros y controlados.',
+            ClaveConfiguracionLanding::HeroTitulo->value => 'Simulación que se siente real.',
+            ClaveConfiguracionLanding::HeroSubtitulo->value => 'Escenarios clínicos, simuladores de alta fidelidad y una sala inmersiva para practicar antes de llegar al paciente.',
             ClaveConfiguracionLanding::ContactoEmail->value => 'laboratorio@ejemplo.edu.co',
             ClaveConfiguracionLanding::ContactoTelefono->value => '+57 601 000 0000',
             ClaveConfiguracionLanding::ContactoDireccion->value => 'Facultad de Ciencias de la Salud, bloque C, piso 2',
@@ -793,6 +794,37 @@ class DatosPruebaSeeder extends Seeder
                 'fecha' => now()->addMonths($orden + 2)->format('Y-m-d'),
                 'tipo_evento_id' => $datos[1]->id,
                 'abierto_publico' => true,
+                'orden' => $orden + 1,
+                'activo' => true,
+            ]);
+        }
+
+        // Sin fotos: las sube el ADMIN (RF10). La portada tiene que verse
+        // completa mientras tanto.
+        $equipos = [
+            [
+                'Simulador de alta fidelidad',
+                'Respira, sangra, convulsiona y responde a cada maniobra como un paciente real.',
+                ['Signos vitales en tiempo real', 'Respuesta fisiológica a fármacos', 'Sangrado y sonidos corporales', 'Guiado por el docente desde la cabina'],
+            ],
+            [
+                'Sala inmersiva',
+                'Paredes que se convierten en urgencias, quirófano o la vía pública, con su sonido.',
+                ['Entornos proyectados en toda la sala', 'Sonido ambiente del escenario', 'Grabación para el debriefing'],
+            ],
+            [
+                'Mesa de anatomía virtual',
+                'El cuerpo humano a tamaño real, capa por capa, sin un solo corte.',
+                ['Disección virtual por capas', 'Cortes en cualquier plano', 'Imágenes de casos clínicos reales'],
+            ],
+        ];
+
+        foreach ($equipos as $orden => $datos) {
+            EquipoDestacado::create([
+                'nombre' => $datos[0],
+                'resumen' => $datos[1],
+                'imagen' => null,
+                'caracteristicas' => $datos[2],
                 'orden' => $orden + 1,
                 'activo' => true,
             ]);
