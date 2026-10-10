@@ -5,7 +5,7 @@
      afuera, 8 px de margen, 20 px adentro). --}}
 <article {{ $attributes->class('revelar flex flex-col rounded-[28px] bg-[var(--pieza)]') }} style="--orden: {{ min($orden, 2) }}">
     <div class="p-7 sm:p-10">
-        <h3 class="text-balance text-[clamp(1.625rem,1.4rem+0.9vw,2.125rem)] font-extrabold leading-[1.08] tracking-[-0.028em]">
+        <h3 class="text-balance text-[clamp(1.25rem,0.8rem+1.5vw,2.125rem)] font-extrabold leading-[1.08] tracking-[-0.028em]">
             {{ $equipo->nombre }}
         </h3>
         <p class="mt-4 max-w-[34ch] text-pretty text-lg leading-snug text-portada-gris">{{ $equipo->resumen }}</p>

@@ -7,12 +7,14 @@
     fundido en móvil (animación 4 de DESIGN.md, data-acercamiento).
 --}}
 <article class="revelar">
-    <div class="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-12">
+    <div class="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-12">
         <div class="lg:col-span-7">
-            <h3 class="text-balance text-[clamp(2rem,1.55rem+1.9vw,3rem)] font-extrabold leading-[1.04] tracking-[-0.032em]">
+            {{-- Siempre 1,5 veces por debajo del titular de la sección: 24 px
+                 en móvil, 48 en escritorio. --}}
+            <h3 class="text-balance text-[clamp(1.5rem,0.6rem+3.4vw,3rem)] font-extrabold leading-[1.04] tracking-[-0.032em]">
                 {{ $equipo->nombre }}
             </h3>
-            <p class="mt-5 max-w-[30ch] text-pretty text-xl leading-snug text-portada-gris sm:text-2xl">{{ $equipo->resumen }}</p>
+            <p class="mt-5 max-w-[30ch] text-pretty text-lg leading-snug text-portada-gris sm:text-2xl">{{ $equipo->resumen }}</p>
         </div>
 
         <x-portada.caracteristicas :lista="$equipo->caracteristicas ?? []" class="lg:col-span-5" />

@@ -4,6 +4,11 @@
 
     Diseño, tokens y las seis animaciones: DESIGN.md. Una sola idea por
     sección y los fondos alternan blanco y gris muy claro.
+
+    Cómo abre cada sección es una decisión de ritmo, no de cuántas piezas
+    cargue el ADMIN: el hero, centrado; las de contenido, apiladas; al
+    final, certificaciones al costado, docentes centrada y contacto al
+    costado, para que dos aperturas iguales no vayan seguidas.
 --}}
 @extends('layouts.publico', [
     'enlaces' => array_filter([
@@ -216,10 +221,9 @@
 
     {{-- Certificaciones como insignias (RF06). --}}
     @if ($contenido->certificaciones->isNotEmpty())
-        {{-- Dos insignias caben al costado de la cabecera; más, debajo. --}}
-        <x-portada.seccion id="certificaciones" :fondo="$fondos['certificaciones']" titulo="Formación con respaldo."
-                           :disposicion="$contenido->certificaciones->count() <= 2 ? 'lateral' : 'apilada'">
-            <div class="flex flex-wrap justify-center gap-x-6 gap-y-12 sm:gap-x-10 sm:gap-y-14">
+        <x-portada.seccion id="certificaciones" :fondo="$fondos['certificaciones']" disposicion="lateral" titulo="Formación con respaldo.">
+            {{-- Desde el borde izquierdo de su columna, como la lista de contacto. --}}
+            <div class="flex flex-wrap gap-x-6 gap-y-12 sm:gap-x-10 sm:gap-y-14">
                 @foreach ($contenido->certificaciones as $certificacion)
                     <x-portada.insignia :certificacion="$certificacion" :orden="$loop->index" />
                 @endforeach
@@ -229,19 +233,10 @@
 
     {{-- Docentes con sus títulos (RF07). --}}
     @if ($contenido->docentes->isNotEmpty())
-        {{-- Con uno o dos docentes, la cabecera va al costado: apilados
-             ocupaban un cuarto de la fila. Uno solo se alinea al borde
-             derecho, frente al titular; tres llenan su propia fila. --}}
-        @php($cantidadDocentes = $contenido->docentes->count())
-        <x-portada.seccion id="docentes" :fondo="$fondos['docentes']" titulo="Quienes te acompañan."
-                           :disposicion="$cantidadDocentes <= 2 ? 'lateral' : 'apilada'">
-            <div @class([
-                    'grid grid-cols-1 gap-4',
-                    'sm:max-w-[22rem] lg:ml-auto' => $cantidadDocentes === 1,
-                    'sm:grid-cols-2' => $cantidadDocentes > 1,
-                    'lg:grid-cols-3' => $cantidadDocentes === 3,
-                    'lg:grid-cols-4' => $cantidadDocentes > 3,
-                 ])>
+        {{-- Centrada, y las filas incompletas también: con uno, dos o tres
+             docentes el espacio libre queda repartido a los dos lados. --}}
+        <x-portada.seccion id="docentes" :fondo="$fondos['docentes']" disposicion="centrada" titulo="Quienes te acompañan.">
+            <div class="flex flex-wrap justify-center gap-4">
                 @foreach ($contenido->docentes as $docente)
                     <x-portada.credencial :docente="$docente" :orden="$loop->index" />
                 @endforeach
@@ -251,44 +246,33 @@
 
     {{-- Contacto (RF11). --}}
     @if ($contenido->hayContacto())
-        <section id="contacto" aria-labelledby="contacto-titulo"
-                 @class(['py-24 md:py-32 lg:py-36', $fondos['contacto'] === 'niebla' ? 'fondo-niebla' : 'fondo-blanco'])>
-            <div class="mx-auto grid max-w-[1180px] gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:px-8">
-                <div class="revelar lg:col-span-6">
-                    <h2 id="contacto-titulo" class="max-w-[12ch] text-balance text-[clamp(2.25rem,1.35rem+3.6vw,4.5rem)] font-extrabold leading-[1.04] tracking-[-0.032em]">
-                        Ven a conocerlo.
-                    </h2>
-                    <p class="mt-5 max-w-[30rem] text-pretty text-lg leading-relaxed text-portada-gris sm:text-xl">
-                        Escríbenos para visitas, talleres o convenios.
-                    </p>
-                </div>
-
-                <dl class="revelar divide-y divide-portada-linea border-y border-portada-linea lg:col-span-6" style="--orden: 1">
-                    @if ($contenido->direccion)
-                        <div class="py-6">
-                            <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">Dónde estamos</dt>
-                            <dd class="mt-2 text-pretty text-xl font-semibold leading-snug tracking-[-0.015em] sm:text-2xl">{{ $contenido->direccion }}</dd>
-                        </div>
-                    @endif
-                    @if ($contenido->telefono)
-                        <div class="py-6">
-                            <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">Teléfono</dt>
-                            <dd class="mt-2 text-xl font-semibold tracking-[-0.015em] sm:text-2xl">
-                                <a href="tel:{{ preg_replace('/[^\d+]/', '', $contenido->telefono) }}" class="tabular-nums underline-offset-4 hover:text-portada-rojo hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">{{ $contenido->telefono }}</a>
-                            </dd>
-                        </div>
-                    @endif
-                    @if ($contenido->correo)
-                        <div class="py-6">
-                            <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">Correo</dt>
-                            <dd class="mt-2 break-words text-xl font-semibold tracking-[-0.015em] sm:text-2xl">
-                                <a href="mailto:{{ $contenido->correo }}" class="underline-offset-4 hover:text-portada-rojo hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">{{ $contenido->correo }}</a>
-                            </dd>
-                        </div>
-                    @endif
-                </dl>
-            </div>
-        </section>
+        <x-portada.seccion id="contacto" :fondo="$fondos['contacto']" disposicion="lateral" titulo="Ven a conocerlo."
+                           subtitulo="Escríbenos para visitas, talleres o convenios.">
+            <dl class="revelar divide-y divide-portada-linea border-y border-portada-linea" style="--orden: 1">
+                @if ($contenido->direccion)
+                    <div class="py-6">
+                        <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">Dónde estamos</dt>
+                        <dd class="mt-2 text-pretty text-xl font-semibold leading-snug tracking-[-0.015em] sm:text-2xl">{{ $contenido->direccion }}</dd>
+                    </div>
+                @endif
+                @if ($contenido->telefono)
+                    <div class="py-6">
+                        <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">Teléfono</dt>
+                        <dd class="mt-2 text-xl font-semibold tracking-[-0.015em] sm:text-2xl">
+                            <a href="tel:{{ preg_replace('/[^\d+]/', '', $contenido->telefono) }}" class="tabular-nums underline-offset-4 hover:text-portada-rojo hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">{{ $contenido->telefono }}</a>
+                        </dd>
+                    </div>
+                @endif
+                @if ($contenido->correo)
+                    <div class="py-6">
+                        <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">Correo</dt>
+                        <dd class="mt-2 break-words text-xl font-semibold tracking-[-0.015em] sm:text-2xl">
+                            <a href="mailto:{{ $contenido->correo }}" class="underline-offset-4 hover:text-portada-rojo hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">{{ $contenido->correo }}</a>
+                        </dd>
+                    </div>
+                @endif
+            </dl>
+        </x-portada.seccion>
     @endif
 
 @endsection
