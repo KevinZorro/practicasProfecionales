@@ -12,6 +12,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -56,7 +57,18 @@ final class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Indigo,
             ])
+            // Volver a las pantallas operativas sin escribir la dirección.
+            ->navigationItems([
+                NavigationItem::make('Volver al panel')
+                    ->url(static fn (): string => route('panel.inicio'))
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->sort(-1),
+            ])
             ->userMenuItems([
+                'panel' => MenuItem::make()
+                    ->label('Volver al panel')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->url(static fn (): string => route('panel.inicio')),
                 'logout' => MenuItem::make()
                     ->label('Salir')
                     ->url(static fn (): string => route('salir')),

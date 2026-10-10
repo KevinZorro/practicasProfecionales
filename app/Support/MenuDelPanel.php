@@ -39,12 +39,6 @@ final class MenuDelPanel
     {
         return [
             new SeccionDelPanel(
-                clave: 'inicio',
-                etiqueta: 'Escritorio',
-                ruta: 'panel.inicio',
-                icono: 'M3 12l9-9 9 9M5 10v10h14V10',
-            ),
-            new SeccionDelPanel(
                 clave: 'calendario',
                 etiqueta: 'Calendario',
                 ruta: 'panel.calendario',

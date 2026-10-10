@@ -27,7 +27,7 @@ it('manda las cabeceras de seguridad en la portada', function (): void {
 it('las manda también en el panel, en Filament y en una página de error', function (): void {
     $this->actingAs(User::factory()->admin()->create());
 
-    foreach ([route('panel.inicio'), '/admin', '/no-existe'] as $url) {
+    foreach ([route('panel.calendario'), '/admin', '/no-existe'] as $url) {
         $respuesta = $this->get($url);
 
         expect($respuesta->headers->get('X-Frame-Options'))->toBe('SAMEORIGIN', $url)

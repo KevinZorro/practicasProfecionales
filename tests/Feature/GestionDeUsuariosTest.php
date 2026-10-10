@@ -165,11 +165,11 @@ it('no deja deshabilitar a quien no es ADMIN', function (): void {
 
 it('saca del panel a una cuenta deshabilitada con su propio mensaje', function (): void {
     $docente = User::factory()->docente()->create();
-    $this->actingAs($docente)->get(route('panel.inicio'))->assertOk();
+    $this->actingAs($docente)->get(route('panel.calendario'))->assertOk();
 
     $this->servicio->deshabilitar($docente, 'Uso indebido de la cuenta.', $this->admin);
 
-    $this->get(route('panel.inicio'))
+    $this->get(route('panel.calendario'))
         ->assertForbidden()
         ->assertSee('Tu cuenta está deshabilitada');
     $this->assertGuest();
