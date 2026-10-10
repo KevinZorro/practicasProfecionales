@@ -104,11 +104,11 @@ it('sale por la ruta de salida del proyecto', function (): void {
 
 it('enseña el enlace a la administración solo a quien puede entrar', function (): void {
     $this->actingAs(User::factory()->admin()->create())
-        ->get(route('panel.inicio'))
+        ->get(route('panel.calendario'))
         ->assertSee('href="'.route('filament.admin.pages.dashboard').'"', escape: false);
 
     $this->actingAs(User::factory()->coordinador()->create())
-        ->get(route('panel.inicio'))
+        ->get(route('panel.calendario'))
         ->assertDontSee('href="'.route('filament.admin.pages.dashboard').'"', escape: false);
 });
 
@@ -121,4 +121,12 @@ it('dibuja el avatar con las iniciales sin pedirlo a un servicio externo', funct
 
     expect($avatar)->toStartWith('data:image/svg+xml;base64,')
         ->and(base64_decode(substr($avatar, strlen('data:image/svg+xml;base64,'))))->toContain('>SM<');
+});
+
+it('ofrece volver al panel desde la administración', function (): void {
+    $this->actingAs(User::factory()->admin()->create())
+        ->get('/admin')
+        ->assertOk()
+        ->assertSee('Volver al panel')
+        ->assertSee('href="'.route('panel.inicio').'"', escape: false);
 });

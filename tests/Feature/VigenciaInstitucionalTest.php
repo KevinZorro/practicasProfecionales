@@ -37,7 +37,7 @@ it('no deja entrar a quien ya no la tiene, aunque conserve el correo', function 
 
 it('deja pasar al panel a un usuario activo', function (): void {
     $this->actingAs(User::factory()->docente()->create())
-        ->get(route('panel.inicio'))
+        ->get(route('panel.calendario'))
         ->assertOk();
 });
 
@@ -52,7 +52,7 @@ it('cierra la sesión de un usuario inactivo y no le enseña el panel', function
 
 it('corta a quien se desactiva con la sesión abierta, en la petición siguiente', function (): void {
     $docente = User::factory()->docente()->create();
-    $this->actingAs($docente)->get(route('panel.inicio'))->assertOk();
+    $this->actingAs($docente)->get(route('panel.calendario'))->assertOk();
 
     // Lo que hará la sincronización institucional (regla 8).
     $docente->forceFill(['estado' => EstadoUsuario::Inactivo])->save();

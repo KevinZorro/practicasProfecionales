@@ -23,7 +23,7 @@ function usuarioConRoles(Rol ...$roles): User
 }
 
 it('no muestra el selector a quien solo tiene un rol', function (Rol $rol): void {
-    $respuesta = $this->actingAs(usuarioConRoles($rol))->get(route('panel.inicio'));
+    $respuesta = $this->actingAs(usuarioConRoles($rol))->get(route('panel.calendario'));
 
     $respuesta->assertOk()
         ->assertDontSee('Cambiar de rol')
@@ -33,7 +33,7 @@ it('no muestra el selector a quien solo tiene un rol', function (Rol $rol): void
 it('muestra el selector con los dos roles a quien tiene dos', function (): void {
     $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
 
-    $this->actingAs($coordinadoraDocente)->get(route('panel.inicio'))
+    $this->actingAs($coordinadoraDocente)->get(route('panel.calendario'))
         ->assertOk()
         ->assertSee('Cambiar de rol')
         ->assertSee(Rol::Coordinador->etiqueta())
@@ -43,7 +43,7 @@ it('muestra el selector con los dos roles a quien tiene dos', function (): void 
 it('arranca en el rol más amplio de los asignados', function (): void {
     $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
 
-    $this->actingAs($coordinadoraDocente)->get(route('panel.inicio'));
+    $this->actingAs($coordinadoraDocente)->get(route('panel.calendario'));
 
     // Queda guardado aunque no lo haya elegido: es el rol con el que se abrió
     // la pantalla, y las acciones de Livewire lo necesitan para saber si
@@ -56,9 +56,9 @@ it('cambia de rol sin cerrar sesión y lo guarda en la sesión, no en la base', 
     $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
 
     $this->actingAs($coordinadoraDocente)
-        ->from(route('panel.inicio'))
+        ->from(route('panel.calendario'))
         ->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value])
-        ->assertRedirect(route('panel.inicio'));
+        ->assertRedirect(route('panel.calendario'));
 
     expect(session(RolActivo::CLAVE_DE_SESION))->toBe(Rol::Docente->value)
         ->and($this->isAuthenticated())->toBeTrue()
@@ -70,14 +70,14 @@ it('cambia la navegación al cambiar de rol', function (): void {
     $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
 
     // Como coordinadora ve reportes y formatos de confidencialidad; no puede solicitar.
-    $this->actingAs($coordinadoraDocente)->get(route('panel.inicio'))
+    $this->actingAs($coordinadoraDocente)->get(route('panel.calendario'))
         ->assertSee('Reportes')
         ->assertSee('Formatos de confidencialidad');
 
     $this->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value]);
 
     // Como docente desaparecen: la Policy se lo niega con ese rol puesto.
-    $this->get(route('panel.inicio'))
+    $this->get(route('panel.calendario'))
         ->assertOk()
         ->assertDontSee('Reportes')
         ->assertDontSee('>Formatos de confidencialidad<', escape: false);
@@ -112,7 +112,7 @@ it('ignora un rol metido a mano en la sesión y cae al que sí corresponde', fun
     $this->actingAs($docente)
         ->withSession([RolActivo::CLAVE_DE_SESION => Rol::Coordinador->value]);
 
-    $this->get(route('panel.inicio'))
+    $this->get(route('panel.calendario'))
         ->assertOk()
         ->assertSee(Rol::Docente->etiqueta())
         ->assertDontSee('Reportes');
