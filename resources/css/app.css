@@ -1,3 +1,226 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+ * Onest, la tipografía de la portada pública. Viene de Google Fonts pero se
+ * sirve desde el propio servidor: carga más rápido en conexiones lentas, no
+ * pasa la IP de los visitantes a otro sitio y no hay que abrir la
+ * Content-Security-Policy. Solo el subconjunto latino, que trae todo el
+ * español. Licencia: public/fonts/onest/OFL.txt.
+ */
+@font-face {
+    font-family: 'Onest';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('/fonts/onest/onest-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/*
+ * Portada pública: cada sección declara su fondo y el tono de sus piezas.
+ * Como los fondos alternan según las secciones que existan, una pieza no
+ * sabe de antemano sobre qué color cae: lee --pieza (su fondo) y
+ * --pieza-inversa (lo que va dentro de ella, como las etiquetas).
+ */
+:root {
+    --pieza: theme('colors.portada.niebla');
+    --pieza-inversa: #ffffff;
+}
+
+.fondo-blanco {
+    background-color: #ffffff;
+    --pieza: theme('colors.portada.niebla');
+    --pieza-inversa: #ffffff;
+}
+
+.fondo-niebla {
+    background-color: theme('colors.portada.niebla');
+    --pieza: #ffffff;
+    --pieza-inversa: theme('colors.portada.niebla');
+}
+
+/*
+ * Portada pública: las seis animaciones (DESIGN.md). Solo transform y
+ * opacity, salvo el trazo del pulso, que se dibuja con stroke-dashoffset.
+ *
+ * Lo que se revela al hacer scroll solo empieza oculto bajo html.animar,
+ * que el layout pone si hay IntersectionObserver y no se pidió reducir el
+ * movimiento. Sin esa clase todo se ve en su estado final.
+ */
+:root {
+    /* Entradas: arranca rápido y frena largo. */
+    --curva-salida: cubic-bezier(0.23, 1, 0.32, 1);
+    /* Lo que cruza la pantalla, como el brillo de las insignias. */
+    --curva-recorrido: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+/* 1. Hero: el titular sube y aparece; el pulso se traza una sola vez, a
+      velocidad constante, como el barrido de un monitor. */
+@media (prefers-reduced-motion: no-preference) {
+    .portada-titular {
+        animation: portada-subir 700ms var(--curva-salida) both;
+    }
+
+    .portada-pulso--animado path {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: portada-trazar linear forwards;
+    }
+
+    .portada-pulso--animado svg:nth-child(1) path {
+        animation-duration: 560ms;
+        animation-delay: 300ms;
+    }
+
+    .portada-pulso--animado svg:nth-child(2) path {
+        animation-duration: 320ms;
+        animation-delay: 860ms;
+    }
+
+    .portada-pulso--animado svg:nth-child(3) path {
+        animation-duration: 560ms;
+        animation-delay: 1180ms;
+    }
+}
+
+@keyframes portada-subir {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+}
+
+@keyframes portada-trazar {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* 3. Secciones y piezas: aparecen al entrar en pantalla, una vez. 300 ms
+      cada una y 40 ms de escalonado como mucho dos veces: nada pasa de
+      400 ms. */
+.animar .revelar {
+    transition:
+        opacity 300ms var(--curva-salida),
+        transform 300ms var(--curva-salida);
+    transition-delay: calc(min(var(--orden, 0), 2) * 40ms);
+}
+
+.animar .revelar:not(.visible) {
+    opacity: 0;
+    transform: translateY(12px);
+}
+
+.animar .revelar--fundido:not(.visible) {
+    transform: none;
+}
+
+/* 4. El equipo principal se acerca levemente mientras entra en pantalla.
+      portada.js pone la escala; esto solo suaviza los saltos entre umbrales
+      del IntersectionObserver. En móvil es un fundido (revelar--fundido). */
+@media (min-width: 768px) {
+    .animar [data-acercamiento] .portada-acercamiento {
+        transition: transform 160ms linear;
+    }
+}
+
+/* 5. Insignias: un brillo metálico las cruza una vez al entrar en pantalla,
+      y con cursor se inclinan hacia él (portada.js). */
+.portada-insignia::after {
+    content: '';
+    position: absolute;
+    inset: -25%;
+    background: linear-gradient(105deg, transparent 38%, rgb(255 255 255 / 0.9) 50%, transparent 62%);
+    opacity: 0;
+    transform: translateX(-70%);
+    pointer-events: none;
+}
+
+.animar .portada-insignia.brillo::after {
+    animation: portada-brillo 1100ms var(--curva-recorrido) calc(min(var(--orden-brillo, 0), 5) * 90ms) both;
+}
+
+.animar .portada-insignia {
+    transition: transform 400ms var(--curva-salida);
+}
+
+@keyframes portada-brillo {
+    from {
+        opacity: 1;
+        transform: translateX(-70%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(70%);
+    }
+}
+
+/* 6. Credenciales de docentes. En pantallas táctiles, o si se pidió reducir
+      el movimiento, los títulos van debajo del cargo y se ven siempre. Con
+      cursor, los títulos se superponen al pie de la foto: aparecen y la foto
+      se eleva al pasar por encima o al llegar con el teclado. */
+.portada-credencial {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    .portada-credencial-foto,
+    .portada-credencial-titulos {
+        grid-row: 1;
+        grid-column: 1;
+    }
+
+    .portada-credencial-foto {
+        position: relative;
+        transition: transform 300ms var(--curva-salida);
+    }
+
+    /* La sombra vive en su propia capa: se anima su opacidad, no la sombra.
+       La foto no recorta (la imagen lleva su propia esquina): con
+       overflow-hidden, esta sombra no se vería. */
+    .portada-credencial-foto::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        box-shadow: 0 24px 40px -24px rgb(0 0 0 / 0.45);
+        opacity: 0;
+        transition: opacity 300ms var(--curva-salida);
+    }
+
+    .portada-credencial-titulos {
+        z-index: 1;
+        align-self: end;
+        margin: 0.5rem;
+        border-radius: 12px;
+        border-top-width: 0;
+        background-color: #ffffff;
+        padding: 1rem 1.125rem;
+        opacity: 0;
+        transform: translateY(12px);
+        transition:
+            opacity 250ms var(--curva-salida),
+            transform 250ms var(--curva-salida);
+    }
+
+    .portada-credencial:hover .portada-credencial-foto,
+    .portada-credencial:focus-visible .portada-credencial-foto {
+        transform: translateY(-6px);
+    }
+
+    .portada-credencial:hover .portada-credencial-foto::after,
+    .portada-credencial:focus-visible .portada-credencial-foto::after {
+        opacity: 1;
+    }
+
+    .portada-credencial:hover .portada-credencial-titulos,
+    .portada-credencial:focus-visible .portada-credencial-titulos {
+        opacity: 1;
+        transform: translateY(-6px);
+        transition-delay: 60ms;
+    }
+}

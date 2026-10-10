@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 64 | 5 |
+| Completo | 71 | 5 |
 | Solo backend | 0 | 0 |
 | Parcial | 0 | 5 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 10 | 0 |
+| No iniciado | 3 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20): ya funciona con datos simulados y solo espera la fuente real de la universidad. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -39,19 +39,19 @@ El único bloqueado es la sincronización con la base institucional (RF20): ya f
 
 ## Landing pública (RF01–RF09)
 
-`/` sirve `resources/views/welcome.blade.php`, que es **la página de ejemplo de Laravel**: título "Laravel" y una imagen cargada desde laravel.com, que además bloquea la Content-Security-Policy. Los datos que la landing va a mostrar sí existen y los gestiona el ADMIN (RF10–RF17).
+`/` es la portada nueva (`PortadaController`, `PortadaService`, `resources/views/portada/`), con el diseño que pidió el usuario el 10-oct-2026: página de producto al estilo de Apple y Xiaomi, el equipamiento como protagonista, rejilla bento, rojo institucional `#d30f23` solo como acento, línea de pulso ECG, tipografía Onest y exactamente seis animaciones acordadas. El diseño, los tokens y las animaciones están en `DESIGN.md`; el contexto de producto, en `PRODUCT.md`.
 
-**El diseño se rehace (P1).** Hay un diseño aprobado por el ingeniero Zambrano, pero se descarta por genérico: el desarrollo propone uno nuevo a partir de estos requerimientos. Conviene que el laboratorio vea la propuesta antes de construir todas las secciones.
+**Lo que falta para cerrar la portada:** la galería de videos (RF08, espera la subida de videos de RF17) y el formulario por taller (RF09). Mientras tanto, «Pedir información» en cada taller abre un correo al laboratorio. **Conviene que el laboratorio vea la portada con sus fotos reales:** hoy no hay ninguna y cada bloque muestra su estado sin foto.
 
 | RF | Pide | Estado | Hecho | Falta |
 |---|---|---|---|---|
-| RF01 | Información institucional, cifras destacadas y galería de fotos | No iniciado | Datos: RF10 | La vista pública, con el diseño nuevo |
-| RF02 | Video institucional de fondo en el hero | No iniciado | Datos: RF11 | Igual que RF01 |
-| RF03 | Escenarios clínicos con sus capacidades, resumen y detalle ampliado | No iniciado | Datos: RF12 | Igual que RF01 |
-| RF04 | Talleres con imagen, tema, fecha y modalidad | No iniciado | Datos: RF13 | Igual que RF01 |
-| RF05 | Eventos con fecha, tipo e indicador de abierto al público | No iniciado | Datos: RF14 | Igual que RF01 |
-| RF06 | Certificaciones como insignias | No iniciado | Datos: RF15 | Igual que RF01 |
-| RF07 | Docentes con foto, nombre, cargo y títulos | No iniciado | Datos: RF16 | Igual que RF01 |
+| RF01 | Información institucional, cifras destacadas y galería de fotos | Completo | Hero con titular y subtítulo del ADMIN, cifras de monitor que cuentan al entrar en pantalla, equipamiento destacado (módulo nuevo, RF10) y galería en rejilla. `PortadaTest` | La galería solo muestra fotos cuyo archivo existe |
+| RF02 | Video institucional de fondo en el hero | Completo | Video en silencio y en bucle bajo el titular, en un marco a casi todo el ancho; lo arranca `portada.js` salvo con `prefers-reduced-motion` o ahorro de datos, se detiene fuera de pantalla y tiene botón de pausa (WCAG 2.2.2). `PortadaTest` | Va bajo el titular y no detrás del texto: así el titular se lee siempre |
+| RF03 | Escenarios clínicos con sus capacidades, resumen y detalle ampliado | Completo | Rejilla bento de escenarios publicados con sus capacidades; detalle en `/escenarios/{id}` con capacidades, equipo asociado, «Solicitar el escenario» y otros tres escenarios. Uno no publicado da 404. `PortadaTest` | |
+| RF04 | Talleres con imagen, tema, fecha y modalidad | Completo | Talleres de hoy en adelante (D18), el primero destacado. `PortadaTest` | El formulario por taller es RF09; hasta entonces, un correo al laboratorio |
+| RF05 | Eventos con fecha, tipo e indicador de abierto al público | Completo | Eventos de hoy en adelante (D18) con el día en cifra de monitor, el tipo y si está abierto al público. `PortadaTest` | |
+| RF06 | Certificaciones como insignias | Completo | Medallones con brillo metálico al entrar y leve inclinación con el cursor; sin imagen, las siglas de la entidad. `PortadaTest` | |
+| RF07 | Docentes con foto, nombre, cargo y títulos | Completo | Credenciales: con cursor, la foto se eleva y aparecen los títulos (también con el teclado); en pantallas táctiles los títulos se ven siempre. Sin foto, las iniciales. `PortadaTest` | |
 | RF08 | Galería de videos institucionales | No iniciado | — | Igual que RF01, y los datos de RF17. Ya no espera la decisión YouTube o Vimeo: el enunciado fija subida al servidor |
 | RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | No iniciado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario, su Service, el correo (D8), una protección contra envíos masivos (D16) y el interruptor para ocultar la sección en la configuración de la landing |
 
@@ -61,7 +61,7 @@ Todas las imágenes pasan por `ImagenPublicaService` (validación, orientación 
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF10 | Información institucional, cifras y galería de fotos | Completo | `/admin/galeria`, `/admin/estadisticas` | `PantallaGaleriaTest`, `PantallaEstadisticasTest` | |
+| RF10 | Información institucional, cifras y galería de fotos | Completo | `/admin/galeria`, `/admin/estadisticas`, `/admin/equipamiento-destacado` (los protagonistas de la portada: nombre, frase, foto y hasta cuatro características; el primero es el principal) | `PantallaGaleriaTest`, `PantallaEstadisticasTest`, `PantallaEquipamientoDestacadoTest` | El equipamiento destacado se agregó el 10-oct-2026 a pedido del usuario: el enunciado no lo nombra, pero es información institucional |
 | RF11 | Video de fondo | Completo | `ConfiguracionLandingService`, `/admin/configuracion-de-la-landing` | `ConfiguracionLandingTest` | |
 | RF12 | Escenarios publicados con imagen, descripción, capacidades y equipo | Completo | `/admin/casos-clinicos` | `PantallaCasosClinicosTest` | |
 | RF13 | Talleres | Completo | `/admin/talleres` | `PantallaTalleresTest`, `tests/Unit/EnumsTest` | |
@@ -199,12 +199,12 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | RNF02 | Disponible en el horario académico | Parcial | `restart` en los servicios del compose de producción, copias de seguridad probadas en la CI | Depende del servidor. No hay monitoreo ni aviso si la plataforma cae |
 | RNF03 | Docker sobre Debian 13 | Completo | `docker-compose.produccion.yml`, `docker/php/Dockerfile`, job de Docker en la CI | Falta desplegarlo en el servidor real (ver [Bloqueos externos](#bloqueos-externos)) |
 | RNF04 | Acceso por rol, herencia coordinador → administrativo, control total del ADMIN | Completo | Policies, `RecursoDelAdmin`, middleware persistentes de Livewire | |
-| RNF05 | Responsiva en computador y celular | Parcial | Panel con Tailwind, móvil primero | La landing no existe, y no hay revisión sistemática a ancho de celular |
+| RNF05 | Responsiva en computador y celular | Parcial | Panel con Tailwind, móvil primero. La portada se revisó a 390 px y a 1440 px, con y sin fotos, sin desbordes | El panel sigue sin una revisión sistemática a ancho de celular |
 | RNF06 | Arquitectura por capas documentada para terceros | Completo | `CLAUDE.md`, `README.md`, `arquitectura-y-modelo-datos.md`, Larastan nivel 6 | El documento de arquitectura quedó al día con el código el 9-oct-2026 (RF01–RF75, todos los Services, el modelo de datos completo y la matriz de permisos). Mantenerlo es parte de cada cambio de esquema |
 | RNF07 | Información de estudiantes y evaluaciones solo para roles autorizados | Completo | Disco privado, `DescargaConfidencialidadController`, Policies, `EvaluacionEstudiantePolicy` | |
 | RNF08 | Chrome, Firefox y Edge | Parcial | Sin dependencias exóticas de JavaScript | Nunca se ha probado en Firefox ni en Edge |
 | RNF09 | Agregar módulos sin afectar los existentes | Completo | Capas Service/Policy, tests por módulo | |
-| RNF10 | Conexiones lentas y equipos de gama baja | Parcial | `ImagenPublicaService` (WebP a 1600 px), exportación por lotes, FullCalendar solo en su pantalla | La landing, que es donde más pesa (videos, fotos); nunca se ha medido el peso real de las páginas |
+| RNF10 | Conexiones lentas y equipos de gama baja | Parcial | `ImagenPublicaService` (WebP a 1600 px), exportación por lotes, FullCalendar solo en su pantalla. Portada: JavaScript propio de 1,4 KB comprimido, CSS de 8,5 KB, Onest de 34 KB servida localmente, imágenes con carga diferida y video sin descargarse hasta reproducirse | Las fotos de la portada se sirven a 1600 px también en el celular: falta guardar una versión más pequeña y usar `srcset` |
 
 ---
 
@@ -214,7 +214,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 
 | # | Pregunta | Respuesta | Afecta |
 |---|---|---|---|
-| P1 | ¿Hay un diseño de la landing que seguir? | Hay uno aprobado por el ingeniero Zambrano, pero se descarta por genérico. El desarrollo propone uno nuevo a partir de los requerimientos | RF01–RF09 |
+| P1 | ¿Hay un diseño de la landing que seguir? | Hay uno aprobado por el ingeniero Zambrano, pero se descarta por genérico. El usuario fijó el brief del diseño nuevo el 10-oct-2026 (`DESIGN.md`) | RF01–RF09 |
 | P2 | ¿Quién decide qué estudiantes van a cada grupo? | El docente, al solicitar: dice qué estudiantes van a esa sesión. No hay grupos fijos del semestre; la lista es de cada sesión | RF28, RF45, RF53, RF69, RF70, RF71 |
 | P3 | ¿Las sesiones apartadas pasan por aprobación? ¿Quién digita el formato intramural? | Llegan aprobadas: coordinación es quien entrega el formato a los administrativos. Los insumos los digitan los administrativos desde el formato impreso | RF57, RF59 |
 | P4 | ¿Qué significa "sala disponible" en RF58? | La sala la elige el administrativo en la preparación, nunca el docente, y el sistema no le ofrece una sala ocupada en esa franja. El nombre de la sala es editable | RF36, RF58 |
@@ -241,6 +241,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | D15 | En las sesiones apartadas, los estudiantes los pone el docente desde su historial de solicitudes antes de la sesión; el administrativo también puede hacerlo. Sin lista, RF70 no tiene a quién revisar y la sesión se marca | RF57, RF70 |
 | D16 | Para no gastar el cupo diario de la cuenta del laboratorio ni llenar de correos a la gente: el aviso de RF60 es **un correo diario por persona** con todas sus sesiones pendientes, no uno por sesión; y el formulario público de RF09 tiene límite de envíos por IP y un campo trampa contra robots. Es la excepción a "sin límite de peticiones por IP" del `CLAUDE.md`, que habla de la entrada con Google, no de un formulario anónimo | RF09, RF60 |
 | D17 | Al registrar una sesión apartada, si en esa franja no queda ninguna sala libre se avisa, sin impedir el registro: la sala se resuelve en la preparación | RF58 |
+| D18 | La portada no anuncia talleres ni eventos con fecha pasada: siguen en /admin, pero ya no son oferta. Hoy se cuenta en la zona de la aplicación | RF04, RF05 |
 
 ---
 
@@ -280,7 +281,7 @@ Para ponerlo a andar hace falta:
 
 ## Diferencias entre los documentos y el código
 
-1. **La portada pública es la página de ejemplo de Laravel**, con una imagen de laravel.com que la Content-Security-Policy bloquea. Si se despliega antes de la landing, eso verá el público.
+1. ~~**La portada pública es la página de ejemplo de Laravel.**~~ Corregido: la portada nueva la reemplaza.
 2. ~~**Quién rechaza.**~~ Corregido: rechazo en dos fases (RF30, RF31).
 3. ~~**El periodo académico.**~~ Corregido: el periodo lo abre y lo cierra el laboratorio (RF75); se quitaron el cálculo por calendario y `PERIODO_ACADEMICO_VIGENTE`.
 4. **Pendientes del `CLAUDE.md` ya cerrados por el enunciado:** el 1 (autoaprobación, RF31: no se bloquea) y el 3 (cómo se entera el docente de la sala, RF36: por correo). Ya se quitaron de `SolicitudPolicy` el bloque comentado y los avisos de pendiente.
