@@ -2,6 +2,9 @@
     'escenario',
     'destacado' => false,
     'orden' => 0,
+    // Ocupa la fila entera en escritorio: el texto a la izquierda y las
+    // capacidades a la derecha, para no dejar una franja vacía.
+    'ancho' => false,
 ])
 
 {{-- Una pieza de la rejilla de escenarios (RF03). Toda la pieza es el
@@ -27,30 +30,38 @@
             'flex flex-1 flex-col p-7',
             'sm:p-10' => $destacado,
             'lg:flex-none' => $destacado && $escenario->imagen,
+            'lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:p-10' => $ancho,
          ])>
-        <h3 @class([
-                'text-balance font-bold leading-[1.1] tracking-[-0.025em]',
-                'text-[clamp(1.875rem,1.4rem+1.8vw,3rem)]' => $destacado,
-                'text-2xl' => ! $destacado,
-            ])>
-            {{ $escenario->nombre }}
-        </h3>
-        <p @class([
-               'mt-3 text-pretty leading-relaxed text-portada-gris',
-               'line-clamp-3' => ! $destacado,
-               'max-w-[42ch] text-lg' => $destacado,
-           ])>{{ $escenario->descripcion }}</p>
+        <div @class(['lg:max-w-[46ch]' => $ancho])>
+            <h3 @class([
+                    'text-balance font-bold leading-[1.1] tracking-[-0.025em]',
+                    'text-[clamp(1.875rem,1.4rem+1.8vw,3rem)]' => $destacado,
+                    'text-2xl' => ! $destacado,
+                ])>
+                {{ $escenario->nombre }}
+            </h3>
+            <p @class([
+                   'mt-3 text-pretty leading-relaxed text-portada-gris',
+                   'line-clamp-3' => ! $destacado && ! $ancho,
+                   'max-w-[42ch] text-lg' => $destacado,
+               ])>{{ $escenario->descripcion }}</p>
+        </div>
 
-        @if ($escenario->capacidades->isNotEmpty())
-            <ul class="mt-6 flex flex-wrap gap-2" aria-label="Capacidades del escenario">
-                @foreach ($escenario->capacidades as $capacidad)
-                    <li class="rounded-full bg-[var(--pieza-inversa)] px-3 py-1 text-[13px] font-medium">{{ $capacidad->nombre }}</li>
-                @endforeach
-            </ul>
-        @endif
+        <div @class(['mt-auto pt-6', 'lg:mt-0 lg:shrink-0 lg:pt-0 lg:text-right' => $ancho])>
+            @if ($escenario->capacidades->isNotEmpty())
+                <ul @class(['flex flex-wrap gap-2', 'lg:justify-end' => $ancho]) aria-label="Capacidades del escenario">
+                    @foreach ($escenario->capacidades as $capacidad)
+                        <li class="rounded-full bg-[var(--pieza-inversa)] px-3 py-1 text-[13px] font-medium">{{ $capacidad->nombre }}</li>
+                    @endforeach
+                </ul>
+            @endif
 
-        <span class="mt-auto inline-flex items-center gap-1.5 pt-8 text-[15px] font-semibold text-portada-rojo group-hover:underline group-hover:underline-offset-4">
-            Ver el escenario <x-portada.chevron />
-        </span>
+            <span @class([
+                      'inline-flex items-center gap-1.5 text-[15px] font-semibold text-portada-rojo group-hover:underline group-hover:underline-offset-4',
+                      'mt-6' => $escenario->capacidades->isNotEmpty(),
+                  ])>
+                Ver el escenario <x-portada.chevron />
+            </span>
+        </div>
     </div>
 </a>

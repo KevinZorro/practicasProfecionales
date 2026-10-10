@@ -104,7 +104,7 @@
 
     {{-- Cifras destacadas (RF01): números de monitor que cuentan al llegar. --}}
     @if ($contenido->cifras->isNotEmpty())
-        <x-portada.seccion id="cifras" :fondo="$fondos['cifras']" titulo="En cifras." subtitulo="Lo que el laboratorio pone a disposición de cada semestre.">
+        <x-portada.seccion id="cifras" :fondo="$fondos['cifras']" titulo="En cifras.">
             <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach ($contenido->cifras as $cifra)
                     <x-portada.cifra :cifra="$cifra" :indice="$loop->index" :total="$loop->count" />
@@ -147,6 +147,7 @@
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($contenido->escenarios as $escenario)
                     <x-portada.escenario :escenario="$escenario" :destacado="$loop->first && $conDestacado" :orden="$loop->index"
+                                         :ancho="$loop->last && $sobranEnEscritorio === 1"
                                          :class="\Illuminate\Support\Arr::toCssClasses([
                                              'sm:col-span-2' => $loop->last && $sobranEnTablet === 1,
                                              'lg:col-span-1' => $loop->last && $sobranEnTablet === 1 && $sobranEnEscritorio === 0,
@@ -185,7 +186,7 @@
 
     {{-- Galería de fotografías (RF01). Solo las que existen en el disco. --}}
     @if ($contenido->fotos->isNotEmpty())
-        <x-portada.seccion id="galeria" :fondo="$fondos['galeria']" titulo="Por dentro." subtitulo="Así se ve un día en el laboratorio.">
+        <x-portada.seccion id="galeria" :fondo="$fondos['galeria']" titulo="Por dentro.">
             @php
                 // La primera foto ocupa 4 celdas (2 × 2). La última se estira
                 // para cerrar su fila en 2 y en 4 columnas.
@@ -215,9 +216,10 @@
 
     {{-- Certificaciones como insignias (RF06). --}}
     @if ($contenido->certificaciones->isNotEmpty())
-        <x-portada.seccion id="certificaciones" :fondo="$fondos['certificaciones']"
-                           titulo="Formación con respaldo." subtitulo="Certificaciones y acreditaciones del laboratorio.">
-            <div class="flex flex-wrap justify-center gap-x-6 gap-y-12 sm:justify-start sm:gap-x-10 sm:gap-y-14">
+        {{-- Dos insignias caben al costado de la cabecera; más, debajo. --}}
+        <x-portada.seccion id="certificaciones" :fondo="$fondos['certificaciones']" titulo="Formación con respaldo."
+                           :disposicion="$contenido->certificaciones->count() <= 2 ? 'lateral' : 'apilada'">
+            <div class="flex flex-wrap justify-center gap-x-6 gap-y-12 sm:gap-x-10 sm:gap-y-14">
                 @foreach ($contenido->certificaciones as $certificacion)
                     <x-portada.insignia :certificacion="$certificacion" :orden="$loop->index" />
                 @endforeach
@@ -227,8 +229,19 @@
 
     {{-- Docentes con sus títulos (RF07). --}}
     @if ($contenido->docentes->isNotEmpty())
-        <x-portada.seccion id="docentes" :fondo="$fondos['docentes']" titulo="Quienes te acompañan." subtitulo="El equipo que diseña y guía cada práctica.">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {{-- Con uno o dos docentes, la cabecera va al costado: apilados
+             ocupaban un cuarto de la fila. Uno solo se alinea al borde
+             derecho, frente al titular; tres llenan su propia fila. --}}
+        @php($cantidadDocentes = $contenido->docentes->count())
+        <x-portada.seccion id="docentes" :fondo="$fondos['docentes']" titulo="Quienes te acompañan."
+                           :disposicion="$cantidadDocentes <= 2 ? 'lateral' : 'apilada'">
+            <div @class([
+                    'grid grid-cols-1 gap-4',
+                    'sm:max-w-[22rem] lg:ml-auto' => $cantidadDocentes === 1,
+                    'sm:grid-cols-2' => $cantidadDocentes > 1,
+                    'lg:grid-cols-3' => $cantidadDocentes === 3,
+                    'lg:grid-cols-4' => $cantidadDocentes > 3,
+                 ])>
                 @foreach ($contenido->docentes as $docente)
                     <x-portada.credencial :docente="$docente" :orden="$loop->index" />
                 @endforeach

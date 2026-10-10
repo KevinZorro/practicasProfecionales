@@ -11,16 +11,18 @@
 @endphp
 
 {{--
-    Una certificación como insignia (RF06). Sin imagen, la insignia es un
-    sello: doble anillo y las siglas de la entidad. El brillo metálico pasa
-    una vez al entrar en pantalla y la pieza se inclina hacia el cursor
-    (animación 5 de DESIGN.md, data-insignia).
+    Una certificación como insignia (RF06): un disco plano. Sin imagen es un
+    sello: doble filete y las siglas de la entidad. Lo metálico es solo el
+    brillo que pasa una vez al entrar en pantalla; con cursor, la pieza se
+    inclina hacia él (animación 5 de DESIGN.md, data-insignia).
 --}}
 <figure class="revelar flex w-36 flex-col items-center text-center sm:w-48" style="--orden: {{ min($orden, 3) }}">
-    <div class="portada-insignia relative size-32 overflow-hidden rounded-full bg-[radial-gradient(circle_at_30%_25%,#ffffff,#ececf0_70%)] ring-1 ring-black/[0.06] sm:size-44"
+    <div class="portada-insignia relative size-32 overflow-hidden rounded-full bg-[var(--pieza)] ring-1 ring-black/[0.06] sm:size-44"
          data-insignia style="--orden-brillo: {{ min($orden, 5) }}">
         @if ($certificacion->imagen_insignia)
-            <x-portada.foto :ruta="$certificacion->imagen_insignia" :alt="''" class="!object-contain p-7" />
+            {{-- Casi todo el diámetro, para que un logo apaisado se lea; el
+                 blanco de un logo en JPG se funde con el disco. --}}
+            <x-portada.foto :ruta="$certificacion->imagen_insignia" :alt="''" class="!object-contain p-3 mix-blend-multiply sm:p-4" />
         @else
             <div class="absolute inset-3 flex flex-col items-center justify-center rounded-full border border-portada-linea" aria-hidden="true">
                 <span class="text-[1.625rem] font-semibold leading-none tracking-[0.06em] text-portada-tinta sm:text-[2rem]">{{ $siglas }}</span>

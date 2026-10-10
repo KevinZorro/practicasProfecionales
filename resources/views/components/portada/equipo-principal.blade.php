@@ -9,7 +9,7 @@
 <article class="revelar">
     <div class="grid gap-10 lg:grid-cols-12 lg:items-end lg:gap-12">
         <div class="lg:col-span-7">
-            <h3 class="text-balance text-[clamp(2.5rem,1.5rem+3.9vw,4.75rem)] font-extrabold leading-[1.02] tracking-[-0.035em]">
+            <h3 class="text-balance text-[clamp(2rem,1.55rem+1.9vw,3rem)] font-extrabold leading-[1.04] tracking-[-0.032em]">
                 {{ $equipo->nombre }}
             </h3>
             <p class="mt-5 max-w-[30ch] text-pretty text-xl leading-snug text-portada-gris sm:text-2xl">{{ $equipo->resumen }}</p>

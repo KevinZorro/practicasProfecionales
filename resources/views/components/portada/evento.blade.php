@@ -6,7 +6,7 @@
          style="--orden: {{ min($orden, 3) }}">
     <p class="flex items-baseline gap-3">
         <time datetime="{{ $evento->fecha->toDateString() }}" class="contents">
-            <span class="text-[4rem] font-light leading-none tracking-[-0.045em] text-portada-rojo tabular-nums">{{ $evento->fecha->format('j') }}</span>
+            <span class="text-[4rem] font-light leading-none tracking-[-0.04em] text-portada-rojo tabular-nums">{{ $evento->fecha->format('j') }}</span>
             <span class="text-[15px] font-semibold leading-tight">
                 {{ $evento->fecha->translatedFormat('F') }}<br>
                 <span class="font-normal text-portada-gris">{{ $evento->fecha->format('Y') }}</span>
