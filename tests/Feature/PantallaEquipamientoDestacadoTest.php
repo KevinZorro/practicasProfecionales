@@ -62,7 +62,8 @@ it('no abre el equipamiento destacado a otro rol', function (): void {
 });
 
 it('crea un equipo con su foto y sus características, y lo pone al final', function (): void {
-    EquipoDestacado::factory()->create(['orden' => 3]);
+    // Con nombre propio: la factory podría elegir «Sala inmersiva» al azar.
+    EquipoDestacado::factory()->create(['nombre' => 'Otro equipo', 'orden' => 3]);
 
     Livewire::actingAs($this->admin)
         ->test(CreateEquipoDestacado::class)
