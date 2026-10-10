@@ -60,7 +60,8 @@ final class CabecerasDeSeguridad
      * cambiar la base de las URL, enviar formularios a otro sitio y que otra
      * página la meta en un iframe.
      *
-     * fonts.bunny.net es la tipografía de Filament y de la portada.
+     * fonts.bunny.net es la tipografía de Filament. La portada no la usa:
+     * sirve Onest desde el propio servidor.
      */
     private function politicaDeContenido(): string
     {

@@ -8,7 +8,8 @@
     Cómo abre cada sección es una decisión de ritmo, no de cuántas piezas
     cargue el ADMIN: el hero, centrado; las de contenido, apiladas; al
     final, certificaciones al costado, docentes centrada y contacto al
-    costado, para que dos aperturas iguales no vayan seguidas.
+    costado, para que dos aperturas iguales no vayan seguidas. Sin
+    docentes, certificaciones abre centrada por el mismo motivo.
 --}}
 @extends('layouts.publico', [
     'enlaces' => array_filter([
@@ -221,9 +222,12 @@
 
     {{-- Certificaciones como insignias (RF06). --}}
     @if ($contenido->certificaciones->isNotEmpty())
-        <x-portada.seccion id="certificaciones" :fondo="$fondos['certificaciones']" disposicion="lateral" titulo="Formación con respaldo.">
-            {{-- Desde el borde izquierdo de su columna, como la lista de contacto. --}}
-            <div class="flex flex-wrap gap-x-6 gap-y-12 sm:gap-x-10 sm:gap-y-14">
+        @php($certificacionesAlCostado = $contenido->docentes->isNotEmpty())
+        <x-portada.seccion id="certificaciones" :fondo="$fondos['certificaciones']" titulo="Formación con respaldo."
+                           :disposicion="$certificacionesAlCostado ? 'lateral' : 'centrada'">
+            {{-- Al costado, desde el borde izquierdo de su columna, como la
+                 lista de contacto; centradas, al centro. --}}
+            <div @class(['flex flex-wrap gap-x-6 gap-y-12 sm:gap-x-10 sm:gap-y-14', 'justify-center' => ! $certificacionesAlCostado])>
                 @foreach ($contenido->certificaciones as $certificacion)
                     <x-portada.insignia :certificacion="$certificacion" :orden="$loop->index" />
                 @endforeach

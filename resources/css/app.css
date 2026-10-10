@@ -179,7 +179,9 @@
         transition: transform 300ms var(--curva-salida);
     }
 
-    /* La sombra vive en su propia capa: se anima su opacidad, no la sombra. */
+    /* La sombra vive en su propia capa: se anima su opacidad, no la sombra.
+       La foto no recorta (la imagen lleva su propia esquina): con
+       overflow-hidden, esta sombra no se vería. */
     .portada-credencial-foto::after {
         content: '';
         position: absolute;
@@ -194,7 +196,7 @@
         z-index: 1;
         align-self: end;
         margin: 0.5rem;
-        border-radius: 14px;
+        border-radius: 12px;
         border-top-width: 0;
         background-color: #ffffff;
         padding: 1rem 1.125rem;

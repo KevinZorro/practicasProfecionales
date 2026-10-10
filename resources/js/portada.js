@@ -18,9 +18,9 @@ const pantallaAncha = window.matchMedia('(min-width: 768px)').matches;
 const CIFRA_ENTERA = /^(\D*?)(\d{1,3}(?:([.,\s])\d{3})+|\d+)(\D*)$/;
 const DURACION_DEL_CONTEO = 1400;
 // Cuánto se acerca la foto del equipo principal, y cuánto se inclinan las
-// insignias hacia el cursor, en grados.
+// insignias hacia el cursor, en grados hacia cada lado.
 const ACERCAMIENTO_MAXIMO = 0.08;
-const INCLINACION_MAXIMA = 10;
+const INCLINACION_MAXIMA = 5;
 
 prepararMenu();
 prepararVideo();
@@ -173,8 +173,9 @@ function prepararInsignias() {
 
         insignia.addEventListener('pointermove', (evento) => {
             const caja = insignia.getBoundingClientRect();
-            const x = (evento.clientX - caja.left) / caja.width - 0.5;
-            const y = (evento.clientY - caja.top) / caja.height - 0.5;
+            // De -1 a 1, del borde izquierdo (o superior) al opuesto.
+            const x = ((evento.clientX - caja.left) / caja.width - 0.5) * 2;
+            const y = ((evento.clientY - caja.top) / caja.height - 0.5) * 2;
             insignia.style.transform = `perspective(700px) rotateX(${(-y * INCLINACION_MAXIMA).toFixed(2)}deg) rotateY(${(x * INCLINACION_MAXIMA).toFixed(2)}deg)`;
         });
 

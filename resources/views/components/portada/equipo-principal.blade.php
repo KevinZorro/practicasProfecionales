@@ -9,9 +9,9 @@
 <article class="revelar">
     <div class="grid gap-10 lg:grid-cols-12 lg:items-start lg:gap-12">
         <div class="lg:col-span-7">
-            {{-- Siempre 1,5 veces por debajo del titular de la sección: 24 px
-                 en móvil, 48 en escritorio. --}}
-            <h3 class="text-balance text-[clamp(1.5rem,0.6rem+3.4vw,3rem)] font-extrabold leading-[1.04] tracking-[-0.032em]">
+            {{-- El titular de la sección dividido por 1,5, en cualquier ancho:
+                 24 px en móvil y 48 en escritorio. --}}
+            <h3 class="text-balance text-[clamp(1.5rem,0.9rem+2.4vw,3rem)] font-extrabold leading-[1.04] tracking-[-0.032em]">
                 {{ $equipo->nombre }}
             </h3>
             <p class="mt-5 max-w-[30ch] text-pretty text-lg leading-snug text-portada-gris sm:text-2xl">{{ $equipo->resumen }}</p>

@@ -17,7 +17,7 @@
 --}}
 <article class="portada-credencial revelar basis-full rounded-[28px] bg-[var(--pieza)] p-2 sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo"
          tabindex="0" style="--orden: {{ min($orden, 3) }}">
-    <div class="portada-credencial-foto aspect-[4/5] overflow-hidden rounded-[20px] bg-[var(--pieza-inversa)]">
+    <div class="portada-credencial-foto aspect-[4/5] rounded-[20px] bg-[var(--pieza-inversa)]">
         @if ($docente->foto)
             <x-portada.foto :ruta="$docente->foto" :alt="$docente->nombre" class="rounded-[20px]" />
         @else

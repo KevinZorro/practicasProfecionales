@@ -18,6 +18,7 @@ use App\Models\TituloDocente;
 use App\Services\ImagenPublicaService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /*
  * La portada pública (RF01–RF07) y el detalle de cada escenario (RF03).
@@ -222,6 +223,23 @@ it('alterna los fondos entre las secciones que existen, aunque falte alguna', fu
     expect($html)->toMatch('/id="cifras"[^>]*fondo-niebla/')
         ->and($html)->toMatch('/id="escenarios"[^>]*fondo-blanco/')
         ->and($html)->toMatch('/id="certificaciones"[^>]*fondo-niebla/');
+});
+
+it('no abre seguidas dos secciones al costado: sin docentes, las certificaciones van centradas', function (): void {
+    Certificacion::factory()->create();
+    configurarPortada(ClaveConfiguracionLanding::ContactoEmail, 'laboratorio@ufps.edu.co');
+    $cabecera = static fn (string $html, string $seccion): string => Str::betweenFirst($html, 'id="'.$seccion.'"', '</header>');
+
+    $sinDocentes = $this->get('/')->assertOk()->getContent();
+    PerfilDocente::factory()->create();
+    $conDocentes = $this->get('/')->assertOk()->getContent();
+
+    // La cabecera lateral ocupa media rejilla; la centrada, el centro.
+    expect($cabecera($sinDocentes, 'certificaciones'))->toContain('text-center')
+        ->and($cabecera($sinDocentes, 'contacto'))->toContain('lg:col-span-6')
+        ->and($cabecera($conDocentes, 'certificaciones'))->toContain('lg:col-span-6')
+        ->and($cabecera($conDocentes, 'docentes'))->toContain('text-center')
+        ->and($cabecera($conDocentes, 'contacto'))->toContain('lg:col-span-6');
 });
 
 it('enlaza en la cabecera solo las secciones que existen', function (): void {
