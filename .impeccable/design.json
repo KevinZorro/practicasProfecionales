@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-10T04:31:16Z",
+  "generatedAt": "2026-10-11T23:30:17Z",
   "title": "Design System: Laboratorio de Simulación Clínica · UFPS",
   "extensions": {
     "colorMeta": {
@@ -108,6 +108,291 @@
           "oklch(87% 0 0)",
           "oklch(95% 0 0)"
         ]
+      },
+      "negro": {
+        "role": "neutral",
+        "displayName": "Negro",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "#000000",
+          "#111112",
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7"
+        ]
+      },
+      "carbon": {
+        "role": "neutral",
+        "displayName": "Carbón",
+        "canonical": "#2a2a2d",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#5c5c61",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7",
+          "#ededf0"
+        ]
+      },
+      "grafito": {
+        "role": "neutral",
+        "displayName": "Grafito",
+        "canonical": "#3f3f43",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#5c5c61",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7",
+          "#ededf0"
+        ]
+      },
+      "gris-hondo": {
+        "role": "neutral",
+        "displayName": "Gris hondo",
+        "canonical": "#5c5c61",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#5c5c61",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7",
+          "#ededf0"
+        ]
+      },
+      "filete-firme": {
+        "role": "neutral",
+        "displayName": "Filete firme",
+        "canonical": "#a1a1a6",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#5c5c61",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7",
+          "#ededf0"
+        ]
+      },
+      "filete-tenue": {
+        "role": "neutral",
+        "displayName": "Filete tenue",
+        "canonical": "#e2e2e7",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#5c5c61",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7",
+          "#ededf0"
+        ]
+      },
+      "niebla-honda": {
+        "role": "neutral",
+        "displayName": "Niebla honda",
+        "canonical": "#ededf0",
+        "tonalRamp": [
+          "#1d1d1f",
+          "#2a2a2d",
+          "#3f3f43",
+          "#5c5c61",
+          "#6e6e73",
+          "#a1a1a6",
+          "#d2d2d7",
+          "#ededf0"
+        ]
+      },
+      "rojo-oscuro": {
+        "role": "semantic",
+        "displayName": "Rojo oscuro",
+        "canonical": "#8e0d1b",
+        "tonalRamp": [
+          "#750f1b",
+          "#8e0d1b",
+          "#ad0c1c",
+          "#d30f23",
+          "#e02b3c",
+          "#f597a0",
+          "#fbc6cb",
+          "#fef2f3"
+        ]
+      },
+      "rojo-filete": {
+        "role": "semantic",
+        "displayName": "Rojo filete",
+        "canonical": "#fbc6cb",
+        "tonalRamp": [
+          "#750f1b",
+          "#8e0d1b",
+          "#ad0c1c",
+          "#d30f23",
+          "#e02b3c",
+          "#f597a0",
+          "#fbc6cb",
+          "#fef2f3"
+        ]
+      },
+      "rojo-claro": {
+        "role": "semantic",
+        "displayName": "Rojo claro",
+        "canonical": "#fef2f3",
+        "tonalRamp": [
+          "#750f1b",
+          "#8e0d1b",
+          "#ad0c1c",
+          "#d30f23",
+          "#e02b3c",
+          "#f597a0",
+          "#fbc6cb",
+          "#fef2f3"
+        ]
+      },
+      "verde-oscuro": {
+        "role": "semantic",
+        "displayName": "Verde oscuro",
+        "canonical": "#065f46",
+        "tonalRamp": [
+          "#064e3b",
+          "#065f46",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#a7f3d0",
+          "#ecfdf5"
+        ]
+      },
+      "verde-hondo": {
+        "role": "semantic",
+        "displayName": "Verde hondo",
+        "canonical": "#047857",
+        "tonalRamp": [
+          "#064e3b",
+          "#065f46",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#a7f3d0",
+          "#ecfdf5"
+        ]
+      },
+      "verde-medio": {
+        "role": "semantic",
+        "displayName": "Verde medio",
+        "canonical": "#059669",
+        "tonalRamp": [
+          "#064e3b",
+          "#065f46",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#a7f3d0",
+          "#ecfdf5"
+        ]
+      },
+      "verde": {
+        "role": "semantic",
+        "displayName": "Verde",
+        "canonical": "#10b981",
+        "tonalRamp": [
+          "#064e3b",
+          "#065f46",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#a7f3d0",
+          "#ecfdf5"
+        ]
+      },
+      "verde-claro": {
+        "role": "semantic",
+        "displayName": "Verde claro",
+        "canonical": "#ecfdf5",
+        "tonalRamp": [
+          "#064e3b",
+          "#065f46",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#a7f3d0",
+          "#ecfdf5"
+        ]
+      },
+      "ambar-oscuro": {
+        "role": "semantic",
+        "displayName": "Ámbar oscuro",
+        "canonical": "#78350f",
+        "tonalRamp": [
+          "#78350f",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ]
+      },
+      "ambar-hondo": {
+        "role": "semantic",
+        "displayName": "Ámbar hondo",
+        "canonical": "#92400e",
+        "tonalRamp": [
+          "#78350f",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ]
+      },
+      "ambar": {
+        "role": "semantic",
+        "displayName": "Ámbar",
+        "canonical": "#f59e0b",
+        "tonalRamp": [
+          "#78350f",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ]
+      },
+      "ambar-claro": {
+        "role": "semantic",
+        "displayName": "Ámbar claro",
+        "canonical": "#fffbeb",
+        "tonalRamp": [
+          "#78350f",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#fbbf24",
+          "#fde68a",
+          "#fffbeb"
+        ]
       }
     },
     "typographyMeta": {
@@ -158,6 +443,54 @@
       "cifra": {
         "displayName": "Cifra",
         "purpose": "Las demás cifras; el día de un evento usa la misma voz a 4rem."
+      },
+      "panel-titulo": {
+        "displayName": "Título de página (panel)",
+        "purpose": "El título de cada pantalla del panel y el nombre del escenario en el expediente; 1.625rem por debajo de 640 px y en las pantallas de acceso."
+      },
+      "panel-lectura": {
+        "displayName": "Lectura (panel)",
+        "purpose": "La hora de cada montaje en el tablero del día; las demás lecturas usan la misma voz entre 22 px y 2.5rem. Cifras proporcionales, en tinta; cero libres, en rojo."
+      },
+      "panel-titulo-pieza": {
+        "displayName": "Título de pieza (panel)",
+        "purpose": "El título de cada pieza y de cada bloque de «Hoy»."
+      },
+      "panel-texto": {
+        "displayName": "Texto (panel)",
+        "purpose": "El cuerpo del panel; nombres y títulos de fila en 600; las observaciones del docente, a 1.625."
+      },
+      "panel-secundario": {
+        "displayName": "Secundario (panel)",
+        "purpose": "Quién y qué bajo un título, celdas de tabla, avisos y pies de pieza."
+      },
+      "panel-meta": {
+        "displayName": "Meta (panel)",
+        "purpose": "Horarios, cantidades y ayudas de campo, en gris, y las fases de la línea de estados."
+      },
+      "panel-etiqueta-campo": {
+        "displayName": "Etiqueta de campo",
+        "purpose": "Sobre cada campo, en grafito; los encabezados de grupo y de columna, en gris."
+      },
+      "panel-pastilla": {
+        "displayName": "Pastilla (panel)",
+        "purpose": "Estados, tipos y cuentas."
+      },
+      "panel-dato": {
+        "displayName": "Dato (panel)",
+        "purpose": "Solo la etiqueta de un par etiqueta/valor, en mayúsculas espaciadas y gris: las únicas mayúsculas del panel."
+      },
+      "panel-boton": {
+        "displayName": "Botón (panel)",
+        "purpose": "Botones de 44 px (40 desde 640)."
+      },
+      "panel-boton-chico": {
+        "displayName": "Botón chico (panel)",
+        "purpose": "Botones de 36 px (32 desde 640)."
+      },
+      "panel-campo": {
+        "displayName": "Campo (panel)",
+        "purpose": "Lo que se escribe en un campo: 16 px en el celular para que Safari no acerque la página; 15 px desde 640."
       }
     },
     "shadows": [
@@ -170,6 +503,36 @@
         "name": "elevacion-credencial",
         "value": "0 24px 40px -24px rgb(0 0 0 / 0.45)",
         "purpose": "Solo bajo la foto de una credencial mientras se eleva (animación 6), en una capa propia cuya opacidad se anima y que no puede quedar dentro de un contenedor con overflow: hidden."
+      },
+      {
+        "name": "flotacion-barra-de-decision",
+        "value": "0 0 0 1px #d2d2d7, 0 12px 32px -12px rgb(0 0 0 / 0.28)",
+        "purpose": "Panel: las barras pegadas al pie del expediente y del registro de evaluación; el anillo de filete cierra su borde contra las piezas blancas que pasan por debajo."
+      },
+      {
+        "name": "flotacion-aviso",
+        "value": "0 10px 30px -8px rgb(0 0 0 / 0.35)",
+        "purpose": "Panel: el aviso de la acción, de tinta, sobre la niebla."
+      },
+      {
+        "name": "halo-paso-actual",
+        "value": "0 0 0 5px rgb(211 15 35 / 0.15)",
+        "purpose": "Panel: el nodo del paso actual en la línea de estados; 3 px en la línea compacta. No eleva: señala lo que está en juego."
+      },
+      {
+        "name": "corte-del-nodo",
+        "value": "0 0 0 4px #ffffff",
+        "purpose": "Panel: el anillo blanco de los nodos hechos y pendientes de la línea completa, que corta el trazo a cada lado."
+      },
+      {
+        "name": "contorno-de-control",
+        "value": "inset 0 0 0 1px #d2d2d7",
+        "purpose": "Panel: botones secundarios, pastillas de filtro, la etiqueta de evaluación y el botón de Google; pasa a #a1a1a6 con el cursor. El del peligro suave va en #fbc6cb."
+      },
+      {
+        "name": "foco-del-campo",
+        "value": "0 0 0 1px #1d1d1f",
+        "purpose": "Panel: con el borde en tinta, el foco de un campo. Lo que se pulsa enfoca con un contorno rojo de 2 px separado 2 px."
       }
     ],
     "motion": [
@@ -232,6 +595,26 @@
         "name": "animacion-6-credencial",
         "value": "foto translateY -6px en 300ms; títulos opacity 0 a 1 y translateY 12px a -6px en 250ms tras 60ms; curva-salida",
         "purpose": "Credencial al pasar el cursor o al enfocarla, solo con cursor fino y sin movimiento reducido."
+      },
+      {
+        "name": "panel-cambio-de-color",
+        "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Panel: botones, filas, pestañas, pastillas y campos. Solo color: no mueve nada."
+      },
+      {
+        "name": "panel-aviso-entrada",
+        "value": "200ms; translateY -8px a 0; opacity 0 a 1; curva-salida (ease-llegada)",
+        "purpose": "Panel: la llegada del aviso de la acción, lo único que se desplaza; motion-reduce:transition-none la deja quieta."
+      },
+      {
+        "name": "panel-aviso-salida",
+        "value": "150ms; opacity a 0; cubic-bezier(0.4, 0, 1, 1)",
+        "purpose": "Panel: el aviso de la acción se va por opacidad."
+      },
+      {
+        "name": "panel-aviso-permanencia",
+        "value": "7000ms",
+        "purpose": "Panel: el aviso de la acción se va solo a los siete segundos; se puede cerrar antes."
       }
     ],
     "breakpoints": [
@@ -337,11 +720,107 @@
       "description": "Credencial sin foto: iniciales en el marco 4:5; con cursor fino la foto sube y los títulos aparecen en una placa (animación 6); en táctil se ven siempre.",
       "html": "<article class=\"ds-credencial\" tabindex=\"0\"><div class=\"ds-credencial-foto\"><span class=\"ds-credencial-iniciales\" aria-hidden=\"true\">ND</span></div><div class=\"ds-credencial-texto\"><h3 class=\"ds-credencial-nombre\">Nombre del docente</h3><p class=\"ds-credencial-cargo\">Cargo</p></div><ul class=\"ds-credencial-titulos\" aria-label=\"Títulos académicos\"><li><span class=\"ds-credencial-titulo\">Título académico</span><span class=\"ds-credencial-institucion\">Institución</span></li></ul></article>",
       "css": ".ds-credencial { display: grid; grid-template-columns: minmax(0, 1fr); width: 280px; border-radius: 28px; background: var(--pieza, #f5f5f7); padding: 8px; color: #1d1d1f; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-credencial:focus-visible { outline: 2px solid #d30f23; outline-offset: 4px; } .ds-credencial-foto { display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 5; border-radius: 20px; background: var(--pieza-inversa, #ffffff); } .ds-credencial-iniciales { font-size: 5rem; font-weight: 200; letter-spacing: -0.04em; color: rgb(29 29 31 / 0.3); } .ds-credencial-texto { padding: 24px 20px; } .ds-credencial-nombre { margin: 0; font-size: 1.25rem; font-weight: 700; line-height: 1.25; letter-spacing: -0.02em; } .ds-credencial-cargo { margin: 4px 0 0; color: #6e6e73; font-size: 15px; } .ds-credencial-titulos { margin: 0 20px 24px; padding: 20px 0 0; list-style: none; border-top: 1px solid #d2d2d7; font-size: 15px; line-height: 1.375; } .ds-credencial-titulo { display: block; font-weight: 500; } .ds-credencial-institucion { display: block; color: #6e6e73; font-size: 14px; } @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) { .ds-credencial-foto, .ds-credencial-titulos { grid-row: 1; grid-column: 1; } .ds-credencial-foto { position: relative; transition: transform 300ms var(--curva-salida, cubic-bezier(0.23, 1, 0.32, 1)); } .ds-credencial-foto::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: 0 24px 40px -24px rgb(0 0 0 / 0.45); opacity: 0; transition: opacity 300ms var(--curva-salida, cubic-bezier(0.23, 1, 0.32, 1)); } .ds-credencial-titulos { z-index: 1; align-self: end; margin: 8px; border-radius: 12px; border-top-width: 0; background: #ffffff; padding: 16px 18px; opacity: 0; transform: translateY(12px); transition: opacity 250ms var(--curva-salida, cubic-bezier(0.23, 1, 0.32, 1)), transform 250ms var(--curva-salida, cubic-bezier(0.23, 1, 0.32, 1)); } .ds-credencial:hover .ds-credencial-foto, .ds-credencial:focus-visible .ds-credencial-foto { transform: translateY(-6px); } .ds-credencial:hover .ds-credencial-foto::after, .ds-credencial:focus-visible .ds-credencial-foto::after { opacity: 1; } .ds-credencial:hover .ds-credencial-titulos, .ds-credencial:focus-visible .ds-credencial-titulos { opacity: 1; transform: translateY(-6px); transition-delay: 60ms; } }"
+    },
+    {
+      "name": "Botón primario del panel",
+      "kind": "button",
+      "refersTo": "boton-panel-primario",
+      "description": "Pastilla de tinta para la acción que avanza la tarea; con el cursor pasa a negro. El rojo no marca lo que se pulsa en el panel.",
+      "html": "<button class=\"ds-boton-panel-primario\" type=\"button\">Aprobar</button>",
+      "css": ".ds-boton-panel-primario { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 9999px; background: #1d1d1f; color: #ffffff; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } @media (hover: hover) and (pointer: fine) { .ds-boton-panel-primario:hover { background: #000000; } } .ds-boton-panel-primario:focus-visible { outline: 2px solid #d30f23; outline-offset: 2px; } .ds-boton-panel-primario:disabled { opacity: 0.45; cursor: not-allowed; } @media (min-width: 640px) { .ds-boton-panel-primario { min-height: 40px; } }"
+    },
+    {
+      "name": "Botón secundario del panel",
+      "kind": "button",
+      "refersTo": "boton-panel-secundario",
+      "description": "Pastilla blanca con contorno de filete por dentro: lo que acompaña a la acción principal.",
+      "html": "<button class=\"ds-boton-panel-secundario\" type=\"button\">Abrir el tablero</button>",
+      "css": ".ds-boton-panel-secundario { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 9999px; background: #ffffff; color: #1d1d1f; box-shadow: inset 0 0 0 1px #d2d2d7; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } @media (hover: hover) and (pointer: fine) { .ds-boton-panel-secundario:hover { background: #f5f5f7; box-shadow: inset 0 0 0 1px #a1a1a6; } } .ds-boton-panel-secundario:focus-visible { outline: 2px solid #d30f23; outline-offset: 2px; } .ds-boton-panel-secundario:disabled { opacity: 0.45; cursor: not-allowed; } @media (min-width: 640px) { .ds-boton-panel-secundario { min-height: 40px; } }"
+    },
+    {
+      "name": "Botón de peligro suave",
+      "kind": "button",
+      "refersTo": "boton-panel-peligro-suave",
+      "description": "Abre lo que no se deshace (Rechazar, Devolver): texto rojo hondo y contorno rojo filete. La primera llave.",
+      "html": "<button class=\"ds-boton-panel-peligro-suave\" type=\"button\">Rechazar</button>",
+      "css": ".ds-boton-panel-peligro-suave { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 9999px; background: #ffffff; color: #ad0c1c; box-shadow: inset 0 0 0 1px #fbc6cb; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } @media (hover: hover) and (pointer: fine) { .ds-boton-panel-peligro-suave:hover { background: #fef2f3; } } .ds-boton-panel-peligro-suave:focus-visible { outline: 2px solid #d30f23; outline-offset: 2px; } .ds-boton-panel-peligro-suave:disabled { opacity: 0.45; cursor: not-allowed; } @media (min-width: 640px) { .ds-boton-panel-peligro-suave { min-height: 40px; } }"
+    },
+    {
+      "name": "Botón de peligro",
+      "kind": "button",
+      "refersTo": "boton-panel-peligro",
+      "description": "Rojo relleno: solo confirma lo que no se deshace, al final de su motivo o de su confirmación. La segunda llave.",
+      "html": "<button class=\"ds-boton-panel-peligro\" type=\"button\">Confirmar rechazo</button>",
+      "css": ".ds-boton-panel-peligro { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 20px; border: 0; border-radius: 9999px; background: #d30f23; color: #ffffff; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } @media (hover: hover) and (pointer: fine) { .ds-boton-panel-peligro:hover { background: #ad0c1c; } } .ds-boton-panel-peligro:focus-visible { outline: 2px solid #d30f23; outline-offset: 2px; } .ds-boton-panel-peligro:disabled { opacity: 0.45; cursor: not-allowed; } @media (min-width: 640px) { .ds-boton-panel-peligro { min-height: 40px; } }"
+    },
+    {
+      "name": "Campo del panel",
+      "kind": "input",
+      "refersTo": "campo-panel",
+      "description": "Campo con borde de filete y esquina de 10 px, 16 px en el celular; enfoca en tinta, con borde y anillo de 1 px.",
+      "html": "<div class=\"ds-campo-grupo\"><label class=\"ds-campo-etiqueta\" for=\"ds-campo-motivo\">Motivo del rechazo <span class=\"ds-campo-opcional\">(opcional)</span></label><textarea class=\"ds-campo\" id=\"ds-campo-motivo\" rows=\"2\"></textarea><p class=\"ds-campo-ayuda\">El docente lo verá en su historial y le llegará por correo.</p></div>",
+      "css": ".ds-campo-grupo { max-width: 380px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-campo-etiqueta { display: block; margin-bottom: 6px; color: #3f3f43; font-size: 13px; font-weight: 600; } .ds-campo-opcional { color: #6e6e73; font-weight: 400; } .ds-campo { display: block; width: 100%; box-sizing: border-box; min-height: 5.5rem; border: 1px solid #d2d2d7; border-radius: 10px; background: #ffffff; padding: 10px 12px; color: #1d1d1f; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 16px; line-height: 1.625; caret-color: #d30f23; transition: border-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-campo::placeholder { color: #6e6e73; } @media (hover: hover) and (pointer: fine) { .ds-campo:hover { border-color: #a1a1a6; } } .ds-campo:focus { outline: none; border-color: #1d1d1f; box-shadow: 0 0 0 1px #1d1d1f; } .ds-campo-ayuda { margin: 6px 0 0; color: #6e6e73; font-size: 13px; line-height: 1.375; } @media (min-width: 640px) { .ds-campo { padding: 8px 12px; font-size: 15px; } }"
+    },
+    {
+      "name": "Riel del panel",
+      "kind": "nav",
+      "refersTo": "riel-panel",
+      "description": "Riel de tinta de 248 px: la sección activa en blanco y 600 sobre blanco al 10 %, con el ícono rojo; al pie, quién está dentro y con qué rol.",
+      "html": "<aside class=\"ds-riel\"><a class=\"ds-riel-marca\" href=\"#\">Laboratorio de Simulación Clínica<span class=\"ds-riel-facultad\">UFPS · Ciencias de la Salud</span></a><nav class=\"ds-riel-nav\" aria-label=\"Secciones del sistema\"><ul class=\"ds-riel-lista\"><li><a class=\"ds-riel-seccion\" href=\"#\"><svg class=\"ds-riel-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364 6.364l-1.06-1.06M6.697 6.697l-1.06-1.06m12.727 0l-1.06 1.06M6.697 17.303l-1.06 1.06M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z\"/></svg>Hoy</a></li><li><a class=\"ds-riel-seccion\" href=\"#\"><svg class=\"ds-riel-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M8 7V3m8 4V3M3 11h18M5 5h14v16H5z\"/></svg>Calendario</a></li><li><a class=\"ds-riel-seccion ds-riel-activa\" href=\"#\" aria-current=\"page\"><svg class=\"ds-riel-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M3 8h18M3 12h18M3 16h10\"/></svg>Solicitudes</a></li><li><a class=\"ds-riel-seccion\" href=\"#\"><svg class=\"ds-riel-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M4 6h16M4 12h16M4 18h10\"/></svg>Preparaciones</a></li></ul></nav><div class=\"ds-riel-pie\"><span class=\"ds-riel-iniciales\" aria-hidden=\"true\">NU</span><span class=\"ds-riel-persona\"><span class=\"ds-riel-usuario\">Nombre del usuario</span><span class=\"ds-riel-rol\">Coordinador</span></span></div></aside>",
+      "css": ".ds-riel { display: flex; flex-direction: column; width: 248px; min-height: 400px; background: #1d1d1f; color: #ffffff; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-riel-marca { display: block; margin: 20px 20px 16px; border-radius: 8px; color: inherit; font-size: 14px; font-weight: 600; line-height: 1.25; text-decoration: none; } .ds-riel-marca:focus-visible { outline: 2px solid #d30f23; outline-offset: 4px; } .ds-riel-facultad { display: block; margin-top: 2px; color: rgb(255 255 255 / 0.55); font-size: 12px; font-weight: 400; } .ds-riel-nav { flex: 1; padding: 0 12px 16px; } .ds-riel-lista { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; } .ds-riel-seccion { display: flex; align-items: center; gap: 12px; border-radius: 10px; padding: 8px 12px; color: rgb(255 255 255 / 0.7); font-size: 14px; font-weight: 500; line-height: 1.375; text-decoration: none; transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-riel-icono { width: 20px; height: 20px; flex-shrink: 0; color: rgb(255 255 255 / 0.5); } @media (hover: hover) and (pointer: fine) { .ds-riel-seccion:not(.ds-riel-activa):hover { background: rgb(255 255 255 / 0.06); color: #ffffff; } .ds-riel-seccion:not(.ds-riel-activa):hover .ds-riel-icono { color: rgb(255 255 255 / 0.8); } } .ds-riel-seccion:focus-visible { outline: 2px solid #d30f23; outline-offset: 0; } .ds-riel-activa { background: rgb(255 255 255 / 0.1); color: #ffffff; font-weight: 600; } .ds-riel-activa .ds-riel-icono { color: #d30f23; } .ds-riel-pie { display: flex; align-items: center; gap: 12px; border-top: 1px solid rgb(255 255 255 / 0.1); padding: 18px 20px; } .ds-riel-iniciales { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 9999px; background: rgb(255 255 255 / 0.1); font-size: 13px; font-weight: 600; } .ds-riel-persona { min-width: 0; } .ds-riel-usuario { display: block; font-size: 14px; font-weight: 600; } .ds-riel-rol { display: block; color: rgb(255 255 255 / 0.6); font-size: 12px; }"
+    },
+    {
+      "name": "Etiquetas de estado",
+      "kind": "chip",
+      "refersTo": "estado-aprobado",
+      "description": "Los cuatro tonos del panel, cada uno con su palabra y un punto que lo repite: verde, ámbar, rojo y gris. Ningún otro.",
+      "html": "<div class=\"ds-estados\"><span class=\"ds-estado ds-estado-aprobado\"><span class=\"ds-estado-punto\" aria-hidden=\"true\"></span>Aprobada</span><span class=\"ds-estado ds-estado-en-curso\"><span class=\"ds-estado-punto\" aria-hidden=\"true\"></span>Revisada</span><span class=\"ds-estado ds-estado-rechazado\"><span class=\"ds-estado-punto\" aria-hidden=\"true\"></span>Rechazada</span><span class=\"ds-estado ds-estado-pendiente\"><span class=\"ds-estado-punto\" aria-hidden=\"true\"></span>Pendiente</span></div>",
+      "css": ".ds-estados { display: flex; flex-wrap: wrap; gap: 8px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-estado { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; white-space: nowrap; } .ds-estado-punto { width: 6px; height: 6px; flex-shrink: 0; border-radius: 9999px; } .ds-estado-aprobado { background: #ecfdf5; color: #065f46; } .ds-estado-aprobado .ds-estado-punto { background: #10b981; } .ds-estado-en-curso { background: #fffbeb; color: #78350f; } .ds-estado-en-curso .ds-estado-punto { background: #f59e0b; } .ds-estado-rechazado { background: #fef2f3; color: #8e0d1b; } .ds-estado-rechazado .ds-estado-punto { background: #d30f23; } .ds-estado-pendiente { background: #ededf0; color: #3f3f43; } .ds-estado-pendiente .ds-estado-punto { background: #a1a1a6; }"
+    },
+    {
+      "name": "Tipo de sesión",
+      "kind": "chip",
+      "refersTo": "tipo-practica",
+      "description": "Práctica y evaluación se distinguen por forma, ícono y palabra, no por color: la práctica rellena, la evaluación en contorno.",
+      "html": "<div class=\"ds-tipos\"><span class=\"ds-tipo ds-tipo-practica\"><svg class=\"ds-tipo-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10\"/></svg>Práctica</span><span class=\"ds-tipo ds-tipo-evaluacion\"><svg class=\"ds-tipo-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"/></svg>Evaluación</span></div>",
+      "css": ".ds-tipos { display: flex; flex-wrap: wrap; gap: 8px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-tipo { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: 9999px; font-size: 12px; font-weight: 600; white-space: nowrap; } .ds-tipo-icono { width: 14px; height: 14px; flex-shrink: 0; } .ds-tipo-practica { background: #ededf0; color: #3f3f43; } .ds-tipo-evaluacion { background: #ffffff; color: #1d1d1f; box-shadow: inset 0 0 0 1px #d2d2d7; }"
+    },
+    {
+      "name": "Pieza del panel",
+      "kind": "card",
+      "refersTo": "pieza-panel",
+      "description": "Las tres capas: niebla de fondo, la pieza blanca de 16 px y, dentro, la lista sobre niebla con esquina de 12 px. Cantidades con cifras proporcionales.",
+      "html": "<div class=\"ds-fondo-panel\"><section class=\"ds-pieza-panel\"><h2 class=\"ds-pieza-panel-titulo\">Equipos solicitados</h2><div class=\"ds-pieza-panel-cuerpo\"><h4 class=\"ds-pieza-panel-grupo\">Equipo básico</h4><ul class=\"ds-pieza-panel-lista\"><li><span class=\"ds-pieza-panel-nombre\">Guantes de nitrilo</span><span class=\"ds-pieza-panel-cantidad\">×20</span></li><li><span class=\"ds-pieza-panel-nombre\">Sonda nasogástrica</span><span class=\"ds-pieza-panel-cantidad\">×11</span></li><li><span class=\"ds-pieza-panel-nombre\">Set de curación</span><span class=\"ds-pieza-panel-cantidad\">×4</span></li></ul></div><footer class=\"ds-pieza-panel-pie\"><a href=\"#\">Preparaciones de ese día</a></footer></section></div>",
+      "css": ".ds-fondo-panel { background: #f5f5f7; padding: 20px; color: #1d1d1f; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-pieza-panel { max-width: 420px; border-radius: 16px; background: #ffffff; } .ds-pieza-panel-titulo { margin: 0; padding: 20px 20px 0; font-size: 17px; font-weight: 700; line-height: 1.375; letter-spacing: -0.01em; } .ds-pieza-panel-cuerpo { padding: 20px; } .ds-pieza-panel-grupo { margin: 0 0 8px; color: #6e6e73; font-size: 13px; font-weight: 600; } .ds-pieza-panel-lista { margin: 0; padding: 0; list-style: none; border-radius: 12px; background: #f5f5f7; } .ds-pieza-panel-lista li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; font-size: 14px; } .ds-pieza-panel-lista li + li { border-top: 1px solid #ededf0; } .ds-pieza-panel-nombre { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-pieza-panel-cantidad { flex-shrink: 0; color: #3f3f43; font-weight: 600; } .ds-pieza-panel-pie { border-top: 1px solid #ededf0; padding: 12px 20px; color: #5c5c61; font-size: 14px; } .ds-pieza-panel-pie a { color: #1d1d1f; font-weight: 600; text-decoration: underline; text-decoration-color: #d2d2d7; text-underline-offset: 4px; transition: text-decoration-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } @media (hover: hover) and (pointer: fine) { .ds-pieza-panel-pie a:hover { text-decoration-color: #1d1d1f; } } .ds-pieza-panel-pie a:focus-visible { outline: 2px solid #d30f23; outline-offset: 2px; border-radius: 4px; }"
+    },
+    {
+      "name": "Línea de estados",
+      "kind": "custom",
+      "refersTo": "paso-actual",
+      "description": "La firma del panel, en la cabecera del expediente: lo hecho en tinta con su fecha, el paso actual en rojo con su halo y lo que falta hueco sobre un trazo de rayas.",
+      "html": "<ol class=\"ds-linea\" aria-label=\"Fases de la solicitud\"><li class=\"ds-linea-fase ds-linea-hecha\"><span class=\"ds-linea-pista\" aria-hidden=\"true\"><span class=\"ds-linea-tramo ds-linea-sale\"></span><span class=\"ds-linea-nodo\"></span></span><span class=\"ds-linea-nombre\">Solicitud<span class=\"ds-linea-sr\">: hecha</span></span><span class=\"ds-linea-fecha\">9 oct.</span></li><li class=\"ds-linea-fase ds-linea-hecha\"><span class=\"ds-linea-pista\" aria-hidden=\"true\"><span class=\"ds-linea-tramo ds-linea-llega\"></span><span class=\"ds-linea-tramo ds-linea-sale\"></span><span class=\"ds-linea-nodo\"></span></span><span class=\"ds-linea-nombre\">Revisión<span class=\"ds-linea-sr\">: hecha</span></span><span class=\"ds-linea-fecha\">12 oct.</span></li><li class=\"ds-linea-fase ds-linea-actual\" aria-current=\"step\"><span class=\"ds-linea-pista\" aria-hidden=\"true\"><span class=\"ds-linea-tramo ds-linea-llega\"></span><span class=\"ds-linea-tramo ds-linea-sale ds-linea-falta\"></span><span class=\"ds-linea-nodo\"></span></span><span class=\"ds-linea-nombre\">Aprobación<span class=\"ds-linea-sr\">: en curso</span></span><span class=\"ds-linea-situacion\">Por aprobar</span></li><li class=\"ds-linea-fase ds-linea-pendiente\"><span class=\"ds-linea-pista\" aria-hidden=\"true\"><span class=\"ds-linea-tramo ds-linea-llega ds-linea-falta\"></span><span class=\"ds-linea-nodo\"></span></span><span class=\"ds-linea-nombre\">Montaje<span class=\"ds-linea-sr\">: pendiente</span></span></li></ol>",
+      "css": ".ds-linea { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 640px; margin: 0; padding: 20px 8px; list-style: none; border-radius: 16px; background: #ffffff; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-linea-fase { display: flex; flex-direction: column; align-items: center; min-width: 0; text-align: center; } .ds-linea-pista { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 24px; } .ds-linea-tramo { position: absolute; top: 50%; height: 2px; background: #1d1d1f; transform: translateY(-50%); } .ds-linea-llega { left: 0; right: 50%; } .ds-linea-sale { left: 50%; right: 0; } .ds-linea-falta { height: 0; background: none; border-top: 2px dashed #d2d2d7; transform: none; } .ds-linea-nodo { position: relative; box-sizing: border-box; border-radius: 9999px; } .ds-linea-hecha .ds-linea-nodo { width: 12px; height: 12px; background: #1d1d1f; box-shadow: 0 0 0 4px #ffffff; } .ds-linea-actual .ds-linea-nodo { width: 16px; height: 16px; background: #d30f23; box-shadow: 0 0 0 5px rgb(211 15 35 / 0.15); } .ds-linea-pendiente .ds-linea-nodo { width: 12px; height: 12px; border: 2px solid #d2d2d7; background: #ffffff; box-shadow: 0 0 0 4px #ffffff; } .ds-linea-nombre { margin-top: 8px; font-size: 13px; line-height: 1.25; text-wrap: balance; } .ds-linea-hecha .ds-linea-nombre { color: #1d1d1f; font-weight: 500; } .ds-linea-actual .ds-linea-nombre { color: #d30f23; font-weight: 600; } .ds-linea-pendiente .ds-linea-nombre { color: #6e6e73; } .ds-linea-fecha { margin-top: 2px; color: #6e6e73; font-size: 12px; line-height: 1.25; } .ds-linea-situacion { margin-top: 2px; color: #3f3f43; font-size: 12px; font-weight: 500; line-height: 1.25; } .ds-linea-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }"
+    },
+    {
+      "name": "Fila de solicitud",
+      "kind": "custom",
+      "refersTo": "linea-compacta",
+      "description": "Una solicitud en una lista: la fecha para recorrerlas por día, quién y cuándo, y la línea compacta de 76 px en su columna fija de 12.5rem. Toda la fila abre el expediente.",
+      "html": "<ul class=\"ds-filas\"><li class=\"ds-fila\"><div class=\"ds-fila-fecha\" aria-hidden=\"true\"><span class=\"ds-fila-mes\">oct.</span><span class=\"ds-fila-dia\">13</span></div><div class=\"ds-fila-cuerpo\"><div class=\"ds-fila-titulo\"><a class=\"ds-fila-enlace\" href=\"#\">Atención de parto normal<span class=\"ds-fila-sr\">, 13 de octubre</span></a><span class=\"ds-fila-tipo\"><svg class=\"ds-fila-tipo-icono\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10\"/></svg>Práctica</span></div><p class=\"ds-fila-quien\">Nombre del docente · Cuidado Materno Perinatal</p><p class=\"ds-fila-detalles\">07:00–09:00 · 6 estudiantes · Grupo A</p></div><div class=\"ds-compacta\"><span class=\"ds-compacta-pista\" aria-hidden=\"true\"><span class=\"ds-compacta-caja\"><span class=\"ds-compacta-hecho\"></span></span><span class=\"ds-compacta-tramo\"></span><span class=\"ds-compacta-caja\"><span class=\"ds-compacta-actual\"></span></span><span class=\"ds-compacta-tramo ds-compacta-punteado\"></span><span class=\"ds-compacta-caja\"><span class=\"ds-compacta-pendiente\"></span></span><span class=\"ds-compacta-tramo ds-compacta-punteado\"></span><span class=\"ds-compacta-caja\"><span class=\"ds-compacta-pendiente\"></span></span></span><span class=\"ds-compacta-situacion\"><span class=\"ds-fila-sr\">Situación: </span>En revisión</span></div></li></ul>",
+      "css": ".ds-filas { max-width: 720px; margin: 0; padding: 0; list-style: none; overflow: hidden; border-radius: 16px; background: #ffffff; color: #1d1d1f; font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-fila { position: relative; display: grid; grid-template-columns: 3rem minmax(0, 1fr); column-gap: 16px; row-gap: 10px; padding: 16px; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } @media (hover: hover) and (pointer: fine) { .ds-fila:hover { background: rgb(237 237 240 / 0.6); } } .ds-fila-fecha { grid-row: span 2; text-align: center; } .ds-fila-mes { display: block; color: #6e6e73; font-size: 12px; font-weight: 600; } .ds-fila-dia { display: block; font-size: 22px; font-weight: 700; line-height: 1; letter-spacing: -0.02em; } .ds-fila-cuerpo { min-width: 0; } .ds-fila-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; } .ds-fila-enlace { min-width: 0; color: #1d1d1f; font-size: 15px; font-weight: 600; line-height: 1.375; text-decoration: none; } .ds-fila-enlace::after { content: ''; position: absolute; inset: 0; } .ds-fila-enlace:focus-visible { outline: none; } .ds-fila-enlace:focus-visible::after { outline: 2px solid #d30f23; outline-offset: -2px; } .ds-fila-tipo { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: 9999px; background: #ededf0; color: #3f3f43; font-size: 12px; font-weight: 600; white-space: nowrap; } .ds-fila-tipo-icono { width: 14px; height: 14px; flex-shrink: 0; } .ds-fila-quien { margin: 2px 0 0; color: #6e6e73; font-size: 14px; line-height: 1.375; } .ds-fila-detalles { margin: 2px 0 0; color: #6e6e73; font-size: 13px; line-height: 1.375; } .ds-compacta { grid-column-start: 2; display: flex; align-items: center; gap: 10px; } .ds-compacta-pista { display: flex; align-items: center; width: 76px; flex-shrink: 0; } .ds-compacta-caja { display: flex; align-items: center; justify-content: center; width: 10px; height: 10px; flex-shrink: 0; } .ds-compacta-hecho { width: 6px; height: 6px; border-radius: 9999px; background: #1d1d1f; } .ds-compacta-actual { width: 10px; height: 10px; border-radius: 9999px; background: #d30f23; box-shadow: 0 0 0 3px rgb(211 15 35 / 0.15); } .ds-compacta-pendiente { width: 6px; height: 6px; box-sizing: border-box; border: 1.5px solid #d2d2d7; border-radius: 9999px; background: #ffffff; } .ds-compacta-tramo { width: 12px; height: 2px; flex-shrink: 0; background: #1d1d1f; } .ds-compacta-punteado { height: 0; background: none; border-top: 2px dotted #d2d2d7; } .ds-compacta-situacion { font-size: 13px; font-weight: 600; white-space: nowrap; } .ds-fila-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; } @media (min-width: 640px) { .ds-fila { grid-template-columns: 3rem minmax(0, 1fr) 12.5rem; align-items: center; padding: 16px 20px; } .ds-fila-fecha { grid-row: auto; } .ds-compacta { grid-column-start: auto; } }"
+    },
+    {
+      "name": "Barra de decisión",
+      "kind": "custom",
+      "refersTo": "barra-de-decision",
+      "description": "La decisión al pie del expediente, pegada al borde inferior mientras se lee: qué pasa al decidir, peligro suave y primario. Es lo único que flota, con la sombra amplia y el anillo de filete.",
+      "html": "<div class=\"ds-barra\"><p class=\"ds-barra-texto\">La revisó el laboratorio. Al aprobarla se crea la preparación y se le avisa al docente.</p><div class=\"ds-barra-acciones\"><button class=\"ds-barra-boton ds-barra-rechazar\" type=\"button\">Rechazar</button><button class=\"ds-barra-boton ds-barra-aprobar\" type=\"button\">Aprobar</button></div></div>",
+      "css": ".ds-barra { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; max-width: 720px; border-radius: 16px; background: #ffffff; padding: 16px; box-shadow: 0 0 0 1px #d2d2d7, 0 12px 32px -12px rgb(0 0 0 / 0.28); font-family: Onest, ui-sans-serif, system-ui, sans-serif; } .ds-barra-texto { flex: 1 1 16rem; min-width: 0; max-width: 52ch; margin: 0; color: #5c5c61; font-size: 14px; line-height: 1.375; } .ds-barra-acciones { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; } .ds-barra-boton { display: inline-flex; flex: 1 1 0%; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; border: 0; border-radius: 9999px; font-family: Onest, ui-sans-serif, system-ui, sans-serif; font-size: 15px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1); } .ds-barra-boton:focus-visible { outline: 2px solid #d30f23; outline-offset: 2px; } .ds-barra-rechazar { background: #ffffff; color: #ad0c1c; box-shadow: inset 0 0 0 1px #fbc6cb; } .ds-barra-aprobar { background: #1d1d1f; color: #ffffff; } @media (hover: hover) and (pointer: fine) { .ds-barra-rechazar:hover { background: #fef2f3; } .ds-barra-aprobar:hover { background: #000000; } } @media (min-width: 640px) { .ds-barra { padding: 16px 20px; } .ds-barra-acciones { width: auto; } .ds-barra-boton { flex: none; min-height: 40px; } }"
     }
   ],
   "narrative": {
-    "northStar": "La vitrina clínica",
-    "overview": "La portada es la página de producto del laboratorio. Su equipamiento, sus escenarios, sus cifras y su gente se exhiben como productos en una vitrina limpia: superficies blancas y niebla que se alternan, titulares enormes y cortos, mucho aire y una sola idea fuerte por sección. El contenido lo carga el ADMIN; el diseño pone la vitrina y deja que el laboratorio sea la prueba.\n\nLa firma clínica es escasa a propósito: una línea de pulso ECG que se dibuja una sola vez bajo los botones del hero, y cifras rojas, ligeras y tabulares, como la lectura de un monitor de signos vitales. El rojo institucional de la UFPS aparece solo donde se pulsa o se lee un dato. La densidad es baja: pocas piezas grandes, de esquinas generosas y tamaños distintos, planas, sin sombras ni vidrio; la profundidad sale del contraste de tono entre una pieza y el fondo de su sección.\n\nTodavía no hay fotos reales, y cada módulo tiene que verse terminado sin ellas. La aspiración es el nivel de las páginas de producto de Apple y Xiaomi sin parecer una plantilla. Rechazos confirmados: gradientes morados, tarjetas idénticas con ícono arriba, glassmorphism, emojis, sombras exageradas, textos de relleno.\n\nAlcance: las páginas públicas, la portada (/) y el detalle de cada escenario (/escenarios/{id}), sobre el layout layouts/publico.blade.php. El panel (/panel) y /admin no usan estos tokens.",
+    "northStar": "La vitrina clínica (portada) · El expediente del laboratorio (panel)",
+    "overview": "La portada es la página de producto del laboratorio. Su equipamiento, sus escenarios, sus cifras y su gente se exhiben como productos en una vitrina limpia: superficies blancas y niebla que se alternan, titulares enormes y cortos, mucho aire y una sola idea fuerte por sección. El contenido lo carga el ADMIN; el diseño pone la vitrina y deja que el laboratorio sea la prueba.\n\nLa firma clínica es escasa a propósito: una línea de pulso ECG que se dibuja una sola vez bajo los botones del hero, y cifras rojas, ligeras y tabulares, como la lectura de un monitor de signos vitales. El rojo institucional de la UFPS aparece solo donde se pulsa o se lee un dato. La densidad es baja: pocas piezas grandes, de esquinas generosas y tamaños distintos, planas, sin sombras ni vidrio; la profundidad sale del contraste de tono entre una pieza y el fondo de su sección.\n\nTodavía no hay fotos reales, y cada módulo tiene que verse terminado sin ellas. La aspiración es el nivel de las páginas de producto de Apple y Xiaomi sin parecer una plantilla. Rechazos confirmados: gradientes morados, tarjetas idénticas con ícono arriba, glassmorphism, emojis, sombras exageradas, textos de relleno.\n\nPor dentro, la vitrina se vuelve expediente. El panel (/panel) lleva la misma marca, compactada para el trabajo diario: cada solicitud se abre como una historia clínica, con su línea de estados y sus pestañas, y las decisiones se toman ahí. Quien entra ve primero «Hoy», lo que espera a su rol; abre una solicitud y entiende en qué punto está, qué le falta y quién va. Se usa a diario desde el celular, en el laboratorio y a veces con mala señal: es móvil primero, con controles para el pulgar y sin JavaScript pesado.\n\nEl material es el de la portada en pequeño: fondo niebla, piezas blancas y planas de 16 px, filetes fríos, Onest en una escala corta y botones en pastilla. Cambian dos cosas. El rojo deja de marcar lo que se pulsa —el botón primario es de tinta, como el riel— y pasa a decir lo que está en juego. Y las cifras dejan de ser tabulares: en el panel se leen cantidades de material de cerca, y una cantidad no puede leerse mal. Rechazo confirmado: el tablero genérico de tarjetas grises con un acento azul y botones sueltos en cada fila.\n\n/admin (Filament) no se rediseña: toma solo la marca (Onest servida desde el propio servidor, la tinta como color primario, el rojo para el peligro y la sección activa, los grises fríos y el símbolo de la UFPS) y no tiene modo oscuro, como el resto de la plataforma.\n\nAlcance: una marca y tres superficies. Las páginas públicas, la portada (/) y el detalle de cada escenario (/escenarios/{id}), sobre el layout layouts/publico.blade.php, usan los tokens de la portada. El panel (/panel, sobre layouts/panel.blade.php) y las pantallas de acceso usan los del panel. En el frontmatter, cada grupo lista primero los tokens de la portada y después los del panel; los siete colores de la marca (rojo, rojo hondo, tinta, gris, filete, niebla y blanco) son de las dos. /admin hereda solo la marca.",
     "keyCharacteristics": [
       "Blanco y niebla alternados entre las secciones presentes; el rojo, solo como acento.",
       "Una sola familia, Onest, servida desde el propio servidor: 800 apretada para afirmar, 300 tabular y roja para medir.",
@@ -350,7 +829,15 @@
       "Aperturas de sección decididas por el ritmo de la página, nunca por la cantidad de piezas.",
       "Una línea de pulso ECG, dibujada una sola vez.",
       "Seis animaciones, ni una más; sin ellas el contenido está completo.",
-      "Ningún módulo depende de una foto para verse terminado."
+      "Ningún módulo depende de una foto para verse terminado.",
+      "Riel de tinta de 248 px, fondo niebla y piezas blancas planas de 16 px.",
+      "Onest en una escala corta (28 px el título, 17 px la pieza, 15 px el texto) y cifras proporcionales.",
+      "El rojo dice lo que está en juego; el botón primario es de tinta.",
+      "Cuatro tonos de estado —verde, ámbar, rojo y gris— y ningún otro; los tipos se distinguen por ícono, palabra y forma.",
+      "La línea de estados: completa en el expediente y compacta en cada fila, en una columna fija.",
+      "Solo proyecta sombra lo que flota: las barras de decisión y el aviso de la acción.",
+      "Móvil primero: 44 px para el pulgar, campos de 16 px y un menú que abre sin JavaScript.",
+      "Ninguna animación propia: cambios de color de 150 ms y la llegada del aviso."
     ],
     "rules": [
       {
@@ -366,6 +853,26 @@
       {
         "name": "La regla del contraste",
         "body": "El gris es el tono más claro que se admite para texto: 5,1:1 sobre blanco y 4,7:1 sobre niebla. El rojo aguanta texto de 15 px en los dos fondos (5,4:1 y 5,0:1), y el texto blanco sobre rojo da 5,4:1. El filete (1,5:1) es solo para líneas.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de lo que está en juego",
+        "body": "En el panel el rojo no marca lo que se pulsa: dice lo que está en juego. Va en el ícono de la sección activa del riel, en el paso actual de la línea de estados, en las acciones que no se deshacen y en la cifra de lo que espera tu decisión (la cuenta de «Por aprobar» y «Por revisar»; cero unidades libres en la consulta de disponibilidad). No marca pestañas, ni el día de hoy en el calendario (un círculo de tinta), ni categorías. Los fondos claros de los tonos son matices, no el rojo: la superficie roja más grande sigue siendo un botón en pastilla.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de los cuatro tonos",
+        "body": "Verde, ámbar, rojo y gris, y ningún otro. Los tipos —práctica o evaluación, simulador o equipo— se distinguen por ícono, palabra y forma: la práctica va rellena y la evaluación en contorno, en su etiqueta y en el calendario. La única pieza de otro color es la «G» de Google en el botón de entrada, porque sus pautas de marca la piden así.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla de la palabra",
+        "body": "Ningún estado se dice solo con color: lo dice la palabra, y un punto o un ícono repite el tono para leerlo de lejos. La sección activa del riel tampoco depende del ícono rojo: va además en blanco y en 600 sobre su fondo.",
+        "section": "colors"
+      },
+      {
+        "name": "La regla del contraste en el panel",
+        "body": "El gris de apoyo da 5,1:1 sobre blanco y 4,7:1 sobre niebla, pero 4,3:1 sobre la niebla honda: sobre esa superficie el texto va en grafito (9:1), como en las pastillas neutras. El texto de cada tono pasa de 7:1 sobre su fondo claro, y el blanco da 5,5:1 sobre el verde hondo. El filete y el filete firme son solo para líneas.",
         "section": "colors"
       },
       {
@@ -389,6 +896,21 @@
         "section": "typography"
       },
       {
+        "name": "La regla de las cifras proporcionales",
+        "body": "En el panel las cifras usan las figuras por defecto de Onest, que son proporcionales; ninguna pantalla activa tabular-nums. En public/fonts/onest/onest-latin.woff2, el 1 tabular (one.tf) avanza 672 unidades de 1000 contra 363 del 1 por defecto, con un trazo de unos 231: le sobran unas 440 unidades de aire, y a los tamaños del panel «×15» se lee «×1 5» y «oct. 11», «oct. 1 1». Una cantidad de material no puede leerse mal. Las cifras de monitor de la portada siguen tabulares, y no es una contradicción: son otro contexto, enormes y en 300, donde la cifra es la voz del monitor y el conteo (animación 2) necesita que cada dígito ocupe lo mismo para no desplazar nada.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla de la escala corta",
+        "body": "Nada pasa de 28 px salvo una lectura, y el peso hace el trabajo que en la portada hace el tamaño: 800 en títulos de página y lecturas, 700 en títulos de pieza, 600 en nombres, botones, etiquetas y pastillas, 500 en lo secundario que se destaca (las secciones del riel y las pestañas sin elegir, las pastillas de filtro, la fase hecha), 400 en el texto. Sin 300 y sin 900.",
+        "section": "typography"
+      },
+      {
+        "name": "La regla de la mayúscula inicial",
+        "body": "Títulos, pestañas, botones, encabezados de columna y etiquetas van en mayúscula inicial («Formatos de confidencialidad», «Calendario de escenarios»), y el calendario corrige el suyo para no decir «Octubre De 2026». Las mayúsculas espaciadas son solo para la etiqueta de un dato, nunca un rótulo encima de un título.",
+        "section": "typography"
+      },
+      {
         "name": "La regla del ritmo de aperturas",
         "body": "Cómo abre cada sección lo decide el ritmo de la página, nunca la cantidad de piezas, y la asignación es fija por sección: el hero centrado; las secciones de contenido (cifras, equipamiento, escenarios, oferta, galería) apiladas; y el cierre alterna certificaciones en lateral, docentes centrada y contacto en lateral, para que dos aperturas iguales no se sigan al final. Si no hay docentes, certificaciones abre centrada por el mismo motivo.",
         "section": "layout"
@@ -409,13 +931,43 @@
         "section": "layout"
       },
       {
+        "name": "La regla de la columna fija",
+        "body": "La línea compacta mide siempre 76 px y va alineada a la izquierda en una columna de 12.5rem: de una fila a otra, los nodos y las situaciones caen en la misma x, aunque la solicitud tenga tres fases o se haya rechazado en la segunda.",
+        "section": "layout"
+      },
+      {
+        "name": "La regla del pulgar",
+        "body": "Móvil primero. Lo que se pulsa mide 44 px en el celular (40 desde 640): botones, pestañas, el botón de menú. Los campos van en 16 px, porque con menos Safari acerca la página al tocarlos; en el montaje, la fila entera de 56 px es la casilla. Nada depende del hover.",
+        "section": "layout"
+      },
+      {
+        "name": "La regla de la decisión al pie",
+        "body": "Donde se decide, la decisión se queda pegada al borde inferior mientras se lee el detalle: quien decide lee antes de pulsar y no vuelve a buscar el botón. Por eso el aviso de la acción sale arriba.",
+        "section": "layout"
+      },
+      {
         "name": "La regla de la vitrina plana",
         "body": "Nada proyecta sombra en reposo, y nada usa vidrio ni desenfoque. La única sombra con cuerpo es la de la credencial, y aparece como respuesta al cursor o al foco.",
         "section": "elevation"
       },
       {
+        "name": "La regla de lo que flota",
+        "body": "Solo proyecta sombra lo que flota sobre el contenido mientras se trabaja: las barras de decisión pegadas al pie y el aviso de la acción. Las piezas, el riel, las pestañas y el cajón del menú, no; el cajón se separa con un velo.",
+        "section": "elevation"
+      },
+      {
+        "name": "La regla de las tres capas",
+        "body": "Niebla, blanco, niebla: el fondo del panel, la pieza y lo que va dentro de ella. Ninguna pieza blanca va sobre otra blanca: lo que va dentro de una pieza baja a niebla.",
+        "section": "elevation"
+      },
+      {
         "name": "La regla concéntrica",
         "body": "Lo que va dentro de una pieza de 28 px se separa 8 px de su borde y lleva 20 px de esquina (28 − 8 = 20). Un marco interior con la misma esquina que su pieza se ve torcido.",
+        "section": "shapes"
+      },
+      {
+        "name": "La regla de las tres esquinas",
+        "body": "16 px la pieza, 12 lo que va dentro de ella, 10 los campos y las secciones del riel; todo lo que se pulsa o etiqueta, en pastilla. Fuera de eso, solo el ítem cerrado del checklist (4 px) y los eventos del calendario (6 px).",
         "section": "shapes"
       },
       {
@@ -426,6 +978,16 @@
       {
         "name": "La regla del contenido completo",
         "body": "Solo transform y opacity (salvo el trazo del pulso y el texto del conteo), con CSS e IntersectionObserver y sin librerías. prefers-reduced-motion las apaga todas. Lo que se revela al hacer scroll solo empieza oculto bajo html.animar, que el layout pone antes de pintar si hay IntersectionObserver y no se pidió reducir el movimiento, y que retira a los 2,5 s si portada.js no avisó que está listo (data-portada-lista). Las animaciones 1 y 6 son CSS puro; de la 2 a la 5 necesitan además html.animar. Sin JavaScript, sin IntersectionObserver o con movimiento reducido, la página se ve completa y en su estado final.",
+        "section": "components"
+      },
+      {
+        "name": "La regla de la doble llave",
+        "body": "El rojo relleno confirma lo que no se deshace y nunca va suelto en una fila: llega al final de su motivo o de su confirmación. Lo abre un botón de peligro suave o un botón de texto en rojo hondo; cerrar una lista de reposición, que no lleva motivo, lo confirma el diálogo del navegador.",
+        "section": "components"
+      },
+      {
+        "name": "La regla del panel quieto",
+        "body": "El panel no suma animaciones a las seis de la portada. Un cambio de estado se dice con color en 150 ms, y lo único que se desplaza, 8 px, es el aviso de la acción, que motion-reduce deja quieto.",
         "section": "components"
       }
     ],
@@ -441,7 +1003,18 @@
       "Diseña el estado sin foto de cada módulo: siglas en el sello, iniciales en la credencial, piezas de solo texto.",
       "Sirve fuentes, logos e imágenes desde el propio servidor (public/fonts, public/marca, /storage).",
       "Comprueba cada estado oculto contra html.animar y prefers-reduced-motion: sin ellos, la página se ve completa.",
-      "Da foco visible a todo lo que se pulsa: un contorno rojo de 2 px, separado 4 px."
+      "Da foco visible a todo lo que se pulsa: un contorno rojo de 2 px, separado 4 px.",
+      "Reserva el rojo del panel para lo que está en juego: el ícono de la sección activa, el paso actual de la línea de estados, las acciones que no se deshacen y la cifra que espera una decisión.",
+      "Pon el botón primario del panel en tinta (negro con el cursor) y los demás en pastilla: secundario con contorno de filete, peligro suave para abrir y rojo relleno para confirmar.",
+      "Dale a cada estado del panel su tono y su palabra, con el punto o el ícono que lo repite: verde aprobado o listo, ámbar en curso o por atender, rojo rechazado o peligroso, gris pendiente.",
+      "Distingue los tipos del panel por ícono, palabra y forma: la práctica rellena y la evaluación en contorno, también en el calendario.",
+      "Usa en el panel las cifras proporcionales de Onest; las tabulares son solo para las cifras de monitor de la portada.",
+      "Apila en el panel niebla, blanco y niebla: el fondo, la pieza de 16 px y lo que va dentro de ella, con esquina de 12 px.",
+      "Muestra en el panel dónde está cada solicitud con la línea de estados: completa en el expediente, compacta y en su columna fija de 12.5rem en las listas.",
+      "Mide los controles del panel para el pulgar: 44 px en el celular (40 desde 640), campos en 16 px y la fila del montaje entera como casilla.",
+      "Deja pegada al pie la barra de decisión del panel y saca el aviso de la acción arriba.",
+      "Da en el panel foco visible en rojo a todo lo que se pulsa (contorno de 2 px separado 2 px; por dentro en pestañas y filas) y foco en tinta a los campos.",
+      "Escribe el panel en mayúscula inicial y deja las mayúsculas espaciadas (11 px, 0,08 em) solo para la etiqueta de un dato."
     ],
     "donts": [
       "No agregues una séptima animación, ni siquiera un hover que desplace, escale o gire algo, sin consultarlo con el usuario.",
@@ -455,7 +1028,17 @@
       "No decidas la apertura de una sección por la cantidad de piezas.",
       "No dejes celdas vacías en una rejilla ni marcos de foto vacíos.",
       "No proyectes sombras en reposo.",
-      "No cargues fuentes, scripts ni imágenes de otro sitio: la Content-Security-Policy de CabecerasDeSeguridad bloquea scripts e imágenes de otros orígenes, y PortadaTest falla si la portada pide una fuente a Google o a Bunny."
+      "No cargues fuentes, scripts ni imágenes de otro sitio: la Content-Security-Policy de CabecerasDeSeguridad bloquea scripts e imágenes de otros orígenes, y PortadaTest falla si la portada pide una fuente a Google o a Bunny.",
+      "No uses el rojo del panel en pestañas, en el día de hoy del calendario, en categorías ni en tipos.",
+      "No agregues al panel otro tono (azul, violeta, naranja) ni un color por tipo de sesión o de ítem.",
+      "No actives tabular-nums en el panel: el 1 tabular de Onest parte «15» en «1 5».",
+      "No pongas sombra a una pieza del panel, al riel ni al cajón del menú: solo flotan las barras de decisión y el aviso de la acción.",
+      "No sumes animaciones al panel: cambios de color de 150 ms y la llegada del aviso, nada más.",
+      "No uses en el panel el rojo relleno como primer paso de una acción que no se deshace, ni pongas botones sueltos en las filas de solicitud: la fila entera abre el expediente y la decisión se toma ahí.",
+      "No escribas en el panel texto gris (#6e6e73) sobre niebla honda (#ededf0): baja a 4,3:1; ahí va el grafito.",
+      "No digas un estado del panel solo con color.",
+      "No quites hoverOnlyWhenSupported de la configuración de Tailwind: en el celular, la fila tocada se quedaría teñida.",
+      "No uses Title Case en el panel ni en /admin: «Galería de fotos», no «Galería De Fotos»."
     ]
   }
 }
