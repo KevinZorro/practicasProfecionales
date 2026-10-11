@@ -180,7 +180,7 @@ La portada es la página de producto del laboratorio. Su equipamiento, sus escen
 
 La firma clínica es escasa a propósito: una línea de pulso ECG que se dibuja una sola vez bajo los botones del hero, y cifras rojas, ligeras y tabulares, como la lectura de un monitor de signos vitales. El rojo institucional de la UFPS aparece solo donde se pulsa o se lee un dato. La densidad es baja: pocas piezas grandes, de esquinas generosas y tamaños distintos, planas, sin sombras ni vidrio; la profundidad sale del contraste de tono entre una pieza y el fondo de su sección.
 
-Todavía no hay fotos reales, y cada módulo tiene que verse terminado sin ellas. La aspiración es el nivel de las páginas de producto de Apple y Xiaomi sin parecer una plantilla. Rechazos confirmados: gradientes morados, tarjetas idénticas con ícono arriba, glassmorphism, emojis, sombras exageradas, textos de relleno y el hero oscuro con texto sobre video.
+Todavía no hay fotos reales, y cada módulo tiene que verse terminado sin ellas. La aspiración es el nivel de las páginas de producto de Apple y Xiaomi sin parecer una plantilla. Rechazos confirmados: gradientes morados, tarjetas idénticas con ícono arriba, glassmorphism, emojis, sombras exageradas, textos de relleno.
 
 Alcance: las páginas públicas, la portada (`/`) y el detalle de cada escenario (`/escenarios/{id}`), sobre el layout `layouts/publico.blade.php`. El panel (`/panel`) y `/admin` no usan estos tokens.
 
@@ -332,7 +332,7 @@ Bloques grandes y callados: el contenido manda y la pieza solo lo agrupa.
 Niebla con filete superior (el filete al 70 %), para separarse aunque la última sección también sea niebla. Lleva el logo horizontal oficial con «Vigilada Mineducación» (256 px, 288 desde 640, en multiplicar), textos de 14 y 12 px en gris y «Ingresar a la plataforma» en tinta.
 
 ### Video del hero
-Marco de 28 px a casi todo el ancho bajo el pulso, en 4:3 (16:9 desde 640) sobre niebla. Es contenido, no una de las seis animaciones: en silencio y en bucle, arranca solo si no se pidió reducir el movimiento ni ahorrar datos, se detiene fuera de pantalla y siempre muestra el botón para pausarlo o reanudarlo. Sin JavaScript no arranca: muestra su primer cuadro. Nunca lleva texto encima.
+Con video, el hero es el video: ocupa la pantalla entera bajo la cabecera, de fondo, con un velo negro al 45 % y el titular, el subtítulo y las acciones encima, en blanco, arriba a la derecha (titular de 36 a 68 px). Decisión del usuario del 10-oct-2026: el video es lo central y el texto le deja el espacio. Es contenido, no una de las seis animaciones: en silencio y en bucle, arranca solo si no se pidió reducir el movimiento ni ahorrar datos, se detiene fuera de pantalla y siempre muestra el botón para pausarlo o reanudarlo. Sin JavaScript no arranca: muestra su primer cuadro. El pulso pasa a cerrar el hero sobre blanco, porque rojo sobre video no se lee. Sin video, el hero es blanco con el texto oscuro y el pulso debajo.
 
 ### Línea de pulso
 La firma clínica. Tres trazos de 2 px en rojo y 80 px de alto: dos rectas que se estiran con la ventana y un latido de 168 px de ancho fijo que nunca se deforma. Es decorativa (`aria-hidden`). Aparece en dos sitios y en ninguno más: bajo las acciones del hero, de borde a borde de la ventana, dibujándose una vez (animación 1); y estática, al 30 %, sobre la lectura de la cifra principal, de borde a borde de su pieza.
@@ -391,7 +391,7 @@ Pocas y bien hechas, acordadas con el usuario. `resources/css/app.css` y `resour
 - **No** agregues una séptima animación, ni siquiera un hover que desplace, escale o gire algo, sin consultarlo con el usuario.
 - **No** uses el rojo como fondo de una sección o de una pieza, ni en una superficie mayor que un botón en pastilla.
 - **No** uses gradientes morados ni degradados decorativos, tarjetas idénticas con ícono arriba, glassmorphism ni desenfoques, emojis, sombras exageradas ni textos de relleno.
-- **No** pongas texto sobre el video ni oscurezcas el hero.
+- **No** quites el velo del video: sin él, el texto blanco no se lee sobre un cuadro claro.
 - **No** pongas rótulos en mayúsculas encima de un titular: las mayúsculas espaciadas (13 px, 0,14 em) son solo para etiquetas de datos (`dt`).
 - **No** fijes el color de una pieza en blanco o niebla: sobre el fondo equivocado desaparece.
 - **No** uses el filete (#d2d2d7) para texto ni aclares el gris (#6e6e73): sobre niebla ya está en 4,7:1.

@@ -44,31 +44,87 @@
         }
     @endphp
 
-    {{-- Hero: el titular, la línea de pulso y el laboratorio en marcha (RF02). --}}
-    <section aria-labelledby="titulo-principal" class="overflow-hidden bg-white pb-16 pt-20 sm:pt-28 lg:pb-24 lg:pt-32">
-        <div class="mx-auto max-w-[1180px] px-4 text-center sm:px-6 lg:px-8">
+    {{-- Hero (RF02). Con video, el video llena la pantalla y el texto va
+         encima, en blanco, sobre un velo oscuro que garantiza el contraste;
+         sin video, fondo blanco y texto oscuro. --}}
+    @php
+        $conVideo = $contenido->video !== null;
+    @endphp
+    <section aria-labelledby="titulo-principal"
+             @class([
+                 'relative overflow-hidden',
+                 'flex min-h-[calc(100svh-4rem)] items-start bg-portada-tinta pb-24 pt-12 sm:pt-16 lg:pt-20' => $conVideo,
+                 'bg-white pb-16 pt-20 sm:pt-28 lg:pb-24 lg:pt-32' => ! $conVideo,
+             ])>
+        @if ($conVideo)
+            <div class="absolute inset-0" data-video-hero>
+                {{-- En silencio y en bucle, como fondo. Lo arranca portada.js,
+                     que respeta prefers-reduced-motion y el ahorro de datos y
+                     muestra el botón de pausa. Sin JavaScript se ve el primer
+                     cuadro, sin descargar el video entero. --}}
+                <video class="size-full object-cover"
+                       muted loop playsinline preload="metadata"
+                       aria-label="Video institucional del laboratorio">
+                    {{-- #t=0.1: detenido, el navegador pinta ese cuadro en vez de un marco vacío. --}}
+                    <source src="{{ \Illuminate\Support\Facades\Storage::disk(\App\Services\ImagenPublicaService::DISCO)->url($contenido->video) }}#t=0.1"
+                            type="{{ $contenido->tipoDeVideo }}">
+                </video>
+                {{-- Velo: el texto blanco se lee sobre cualquier cuadro del video. --}}
+                <div class="absolute inset-0 bg-black/45" aria-hidden="true"></div>
+                <button type="button" hidden data-video-control
+                        class="absolute bottom-4 right-4 z-10 flex size-11 items-center justify-center rounded-full bg-white text-portada-tinta transition-colors duration-150 hover:bg-portada-niebla focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:bottom-6 sm:right-6">
+                    <span class="sr-only" data-video-etiqueta>Pausar el video</span>
+                    <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-video-icono="pausa">
+                        <rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/>
+                    </svg>
+                    <svg class="hidden size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-video-icono="reproducir">
+                        <path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7Z"/>
+                    </svg>
+                </button>
+            </div>
+        @endif
+
+        {{-- Con video, el texto va arriba a la derecha y deja el centro al video. --}}
+        <div @class([
+                'relative mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8',
+                'text-right' => $conVideo,
+                'text-center' => ! $conVideo,
+             ])>
             <h1 id="titulo-principal"
-                class="portada-titular mx-auto max-w-[15ch] text-balance text-[clamp(2.75rem,1.2rem+6.4vw,6rem)] font-extrabold leading-[1.02] tracking-[-0.038em]">
+                @class([
+                    'portada-titular max-w-[16ch] text-balance text-[clamp(2.25rem,1.1rem+4.2vw,4.25rem)] font-extrabold leading-[1.04] tracking-[-0.034em]',
+                    'ml-auto text-white' => $conVideo,
+                    'mx-auto' => ! $conVideo,
+                ])>
                 {{ $contenido->titulo }}
             </h1>
 
             @if ($contenido->subtitulo)
-                <p class="mx-auto mt-6 max-w-[40rem] text-pretty text-lg leading-relaxed text-portada-gris sm:text-[1.375rem] sm:leading-relaxed">
+                <p @class([
+                       'mt-5 max-w-[36rem] text-pretty text-base leading-relaxed sm:text-lg',
+                       'ml-auto text-white/85' => $conVideo,
+                       'mx-auto' => ! $conVideo,
+                       'text-portada-gris' => ! $conVideo,
+                   ])>
                     {{ $contenido->subtitulo }}
                 </p>
             @endif
 
             @if ($contenido->escenarios->isNotEmpty() || $contenido->hayOfertaAcademica())
-                <div class="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+                <div @class(['mt-8 flex flex-wrap items-center gap-x-8 gap-y-4', 'justify-end' => $conVideo, 'justify-center' => ! $conVideo])>
                     @if ($contenido->escenarios->isNotEmpty())
                         <a href="#escenarios"
-                           class="rounded-full bg-portada-rojo px-7 py-3.5 text-[17px] font-semibold text-white transition-colors duration-150 hover:bg-portada-rojo-hondo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">
+                           class="rounded-full bg-portada-rojo px-6 py-3 text-base font-semibold text-white transition-colors duration-150 hover:bg-portada-rojo-hondo focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">
                             Conoce los escenarios
                         </a>
                     @endif
                     @if ($contenido->hayOfertaAcademica())
                         <a href="#oferta"
-                           class="inline-flex items-center gap-1.5 text-[17px] font-semibold text-portada-rojo underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">
+                           @class([
+                               'inline-flex items-center gap-1.5 text-base font-semibold underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4',
+                               'text-white focus-visible:outline-white' => $conVideo,
+                               'text-portada-rojo focus-visible:outline-portada-rojo' => ! $conVideo,
+                           ])>
                             Ver la oferta académica <x-portada.chevron />
                         </a>
                     @endif
@@ -76,37 +132,17 @@
             @endif
         </div>
 
-        <x-portada.pulso :animado="true" class="mt-12 sm:mt-16" />
-
-        @if ($contenido->video)
-            <div class="mx-auto mt-6 max-w-[1400px] px-4 sm:px-6 lg:px-8">
-                <div class="relative overflow-hidden rounded-[28px] bg-portada-niebla" data-video-hero>
-                    {{-- En silencio y en bucle, como fondo (RF02). Lo arranca
-                         portada.js, que respeta prefers-reduced-motion y el
-                         ahorro de datos y muestra el botón de pausa. Sin
-                         JavaScript se ve el primer cuadro, sin descargar el
-                         video entero. --}}
-                    <video class="aspect-[4/3] w-full object-cover sm:aspect-[16/9]"
-                           muted loop playsinline preload="metadata"
-                           aria-label="Video institucional del laboratorio">
-                        {{-- #t=0.1: detenido, el navegador pinta ese cuadro en vez de un marco vacío. --}}
-                        <source src="{{ \Illuminate\Support\Facades\Storage::disk(\App\Services\ImagenPublicaService::DISCO)->url($contenido->video) }}#t=0.1"
-                                type="{{ $contenido->tipoDeVideo }}">
-                    </video>
-                    <button type="button" hidden data-video-control
-                            class="absolute bottom-4 right-4 flex size-11 items-center justify-center rounded-full bg-white text-portada-tinta ring-1 ring-black/[0.06] transition-colors duration-150 hover:bg-portada-niebla focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-portada-rojo sm:bottom-6 sm:right-6">
-                        <span class="sr-only" data-video-etiqueta>Pausar el video</span>
-                        <svg class="size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-video-icono="pausa">
-                            <rect x="3.5" y="2.5" width="3" height="11" rx="1"/><rect x="9.5" y="2.5" width="3" height="11" rx="1"/>
-                        </svg>
-                        <svg class="hidden size-4" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" data-video-icono="reproducir">
-                            <path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7Z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        @endif
+        @unless ($conVideo)
+            <x-portada.pulso :animado="true" class="mt-12 sm:mt-16" />
+        @endunless
     </section>
+
+    {{-- Con video, el pulso cierra el hero sobre blanco: rojo sobre video no se leería. --}}
+    @if ($conVideo)
+        <div class="bg-white py-10 sm:py-12">
+            <x-portada.pulso :animado="true" />
+        </div>
+    @endif
 
     {{-- Cifras destacadas (RF01): números de monitor que cuentan al llegar. --}}
     @if ($contenido->cifras->isNotEmpty())
