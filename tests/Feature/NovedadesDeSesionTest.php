@@ -156,10 +156,15 @@ it('reprograma desde la pantalla y enseña el historial', function (): void {
         ->set('constancia', 'Correo del 9/10')
         ->call('reprogramar')
         ->assertHasNoErrors()
-        ->assertSee('Reprogramada el')
-        ->assertSee('Correo del 9/10');
+        // La cabecera del expediente enseña la fecha y la hora: se recarga.
+        ->assertRedirect(route('panel.solicitudes.novedades', $sesion));
 
     expect(substr($sesion->fresh()->hora_inicio, 0, 5))->toBe('13:00');
+
+    Livewire::actingAs($this->administrativo)
+        ->test(NovedadesDeLaSesion::class, ['solicitud' => $sesion->fresh()])
+        ->assertSee('Reprogramada el')
+        ->assertSee('Correo del 9/10');
 });
 
 // ---------------------------------------------------------------------
@@ -229,7 +234,11 @@ it('sustituye desde la pantalla', function (): void {
         ->set('motivoSustitucion', 'Calamidad doméstica')
         ->call('sustituir')
         ->assertHasNoErrors()
-        ->assertSee('Dicta: <span class="font-medium">Docente Reemplazo</span>', escape: false)
+        ->assertRedirect(route('panel.solicitudes.novedades', $sesion));
+
+    Livewire::actingAs($this->administrativo)
+        ->test(NovedadesDeLaSesion::class, ['solicitud' => $sesion->fresh()])
+        ->assertSee('Ahora la dicta <strong class="font-semibold text-gray-900">Docente Reemplazo</strong>', escape: false)
         ->assertSee('Calamidad doméstica');
 });
 

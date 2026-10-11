@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\Rol;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\ItemInventario;
+use App\Models\Solicitud;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\File;
@@ -47,6 +48,7 @@ function pantallasDelPanel(): array
 {
     return [
         'bandeja de solicitudes' => [fn (): string => route('panel.solicitudes'), Rol::Administrativo, Rol::Docente],
+        'expediente de una solicitud' => [fn (): string => route('panel.solicitudes.ver', Solicitud::factory()->create()), Rol::Administrativo, Rol::Docente],
         'mis solicitudes' => [fn (): string => route('panel.mis-solicitudes'), Rol::Docente, Rol::Administrativo],
         'nueva solicitud' => [fn (): string => route('panel.solicitudes.nueva'), Rol::Docente, Rol::Administrativo],
         'preparaciones' => [fn (): string => route('panel.preparaciones'), Rol::Administrativo, Rol::Docente],

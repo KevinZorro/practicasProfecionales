@@ -6,6 +6,7 @@ namespace App\Livewire\Confidencialidad;
 
 use App\Exceptions\FormatoConfidencialidadInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\FormatoConfidencialidad;
 use App\Models\Materia;
 use App\Models\Solicitud;
@@ -26,6 +27,7 @@ use Livewire\WithPagination;
 final class EstadoDeFirmantes extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     /** Valores del filtro de situación. */
@@ -87,7 +89,7 @@ final class EstadoDeFirmantes extends Component
             return;
         }
 
-        session()->flash('estado', 'Entrega en físico registrada. Puede ingresar a la práctica.');
+        $this->avisar('Entrega en físico registrada. Puede ingresar a la práctica.');
     }
 
     public function limpiarFiltros(): void

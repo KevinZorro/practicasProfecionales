@@ -6,6 +6,7 @@ namespace App\Livewire\Bloqueo;
 
 use App\Exceptions\BloqueoInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\Bloqueo;
 use App\Models\User;
 use App\Services\BloqueoService;
@@ -21,6 +22,7 @@ use Livewire\WithPagination;
 final class GestionDeBloqueos extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     /** A quién bloquear: búsqueda por nombre, correo o código. */
@@ -114,7 +116,7 @@ final class GestionDeBloqueos extends Component
             return false;
         }
 
-        session()->flash('estado', $mensaje);
+        $this->avisar($mensaje);
 
         return true;
     }

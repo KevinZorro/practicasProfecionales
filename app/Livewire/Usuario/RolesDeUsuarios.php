@@ -8,6 +8,7 @@ use App\Enums\Rol;
 use App\Exceptions\AsignacionDeRolInvalida;
 use App\Exceptions\UsuarioInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\AsignacionDeRol;
 use App\Models\User;
 use App\Services\AsignacionDeRolService;
@@ -29,6 +30,7 @@ use Livewire\WithPagination;
 final class RolesDeUsuarios extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     #[Url(as: 'buscar', keep: false)]
@@ -109,7 +111,7 @@ final class RolesDeUsuarios extends Component
         }
 
         $this->cerrar();
-        session()->flash('estado', 'Rol asignado.');
+        $this->avisar('Rol asignado.');
     }
 
     public function revocar(int $usuarioId, string $rol, AsignacionDeRolService $roles): void
@@ -133,7 +135,7 @@ final class RolesDeUsuarios extends Component
             return;
         }
 
-        session()->flash('estado', 'Rol revocado. Deja de tener efecto ahora mismo, no al final del día.');
+        $this->avisar('Rol revocado. Deja de tener efecto ahora mismo, no al final del día.');
     }
 
     public function abrirAcceso(int $usuarioId): void
@@ -167,7 +169,7 @@ final class RolesDeUsuarios extends Component
         }
 
         $this->reset('cambiandoAcceso', 'motivoDeAcceso');
-        session()->flash('estado', $mensaje);
+        $this->avisar($mensaje);
     }
 
     /** El permiso que exige el controlador de la página. */

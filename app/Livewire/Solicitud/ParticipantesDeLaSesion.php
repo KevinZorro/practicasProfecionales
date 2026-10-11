@@ -7,6 +7,7 @@ namespace App\Livewire\Solicitud;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\FormatoConfidencialidad;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Livewire\Component;
 final class ParticipantesDeLaSesion extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Locked]
     public int $solicitudId;
@@ -55,6 +57,7 @@ final class ParticipantesDeLaSesion extends Component
 
         if ($this->ejecutar(fn () => $solicitudes->retirarEstudiante($solicitud, User::findOrFail($estudianteId), $this->motivoRetiro, Auth::user()), 'Estudiante retirado de la sesión.')) {
             $this->reset('retirando', 'motivoRetiro');
+            $this->recargar();
         }
     }
 
@@ -65,7 +68,18 @@ final class ParticipantesDeLaSesion extends Component
 
         if ($this->ejecutar(fn () => $solicitudes->agregarEstudiantes($solicitud, [$estudianteId], Auth::user()), 'Estudiante agregado a la sesión.')) {
             $this->busquedaEstudiante = '';
+            $this->recargar();
         }
+    }
+
+    /**
+     * La cabecera del expediente cuenta los estudiantes, y no es parte de
+     * este componente: se recarga la página para que no se quede con la
+     * cifra de antes.
+     */
+    private function recargar(): void
+    {
+        $this->redirectRoute('panel.solicitudes.participantes', ['solicitud' => $this->solicitudId], navigate: true);
     }
 
     /** El permiso que exige el controlador de la página. */
@@ -76,7 +90,7 @@ final class ParticipantesDeLaSesion extends Component
 
     public function render(ParticipacionService $participacion, SolicitudService $solicitudes): mixed
     {
-        $solicitud = $this->solicitud()->load(['materia', 'casoClinico', 'preparacion.sala']);
+        $solicitud = $this->solicitud();
         $lista = $participacion->deLaSesion($solicitud);
         $puedeGestionar = Auth::user()->can('gestionarParticipantes', $solicitud);
 
@@ -109,7 +123,7 @@ final class ParticipantesDeLaSesion extends Component
             return false;
         }
 
-        session()->flash('estado', $mensaje);
+        $this->avisar($mensaje);
 
         return true;
     }

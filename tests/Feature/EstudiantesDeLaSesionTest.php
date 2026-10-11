@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\EstadoUsuario;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Solicitud\BandejaRevision;
+use App\Livewire\Solicitud\ExpedienteDeSolicitud;
 use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Models\CasoClinico;
 use App\Models\Materia;
@@ -132,10 +133,14 @@ it('enseña el grupo y los estudiantes a quien revisa la solicitud', function ()
     $ana = User::factory()->estudiante()->create(['nombre' => 'Ana Ruiz']);
     $solicitud = $this->servicio->crear($this->docente, sesionCon([$ana->id], 'B'));
 
-    Livewire::actingAs(User::factory()->administrativo()->create())
+    $administrativo = User::factory()->administrativo()->create();
+
+    Livewire::actingAs($administrativo)
         ->test(BandejaRevision::class)
-        ->assertSee('1 · grupo B')
-        ->call('abrir', $solicitud->id)
+        ->assertSee('1 estudiante · Grupo B');
+
+    Livewire::actingAs($administrativo)
+        ->test(ExpedienteDeSolicitud::class, ['solicitud' => $solicitud])
         ->assertSee('Estudiantes de la sesión')
         ->assertSee('Ana Ruiz');
 });

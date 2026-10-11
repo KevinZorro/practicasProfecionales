@@ -30,6 +30,15 @@ it('deja entrar al ADMIN', function (): void {
         ->assertOk();
 });
 
+it('viste /admin con la marca, sin pedir la fuente a otro sitio', function (): void {
+    $html = $this->actingAs(User::factory()->admin()->create())->get('/admin')->assertOk()->getContent();
+
+    expect($html)->toContain(asset('fonts/onest/onest.css'))
+        ->toContain('marca/ufps-simbolo.webp')
+        ->not->toContain('fonts.bunny.net')
+        ->not->toContain('fonts.googleapis.com');
+});
+
 it('no deja entrar a ningún otro rol', function (string $estado): void {
     $usuario = User::factory()->{$estado}()->create();
 

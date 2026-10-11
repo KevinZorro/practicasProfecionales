@@ -6,6 +6,7 @@ namespace App\Livewire\Usuario;
 
 use App\Exceptions\UsuarioInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\User;
 use App\Services\DatosUsuario;
 use App\Services\UsuarioService;
@@ -24,6 +25,7 @@ use Livewire\Component;
 final class FormularioDeCuenta extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     public ?User $cuenta = null;
 
@@ -82,7 +84,7 @@ final class FormularioDeCuenta extends Component
             return;
         }
 
-        session()->flash('estado', $this->cuenta instanceof User ? 'Cuenta actualizada.' : 'Cuenta creada. Ahora asígnale un rol.');
+        $this->avisar($this->cuenta instanceof User ? 'Cuenta actualizada.' : 'Cuenta creada. Ahora asígnale un rol.');
         $this->redirectRoute('panel.usuarios', navigate: true);
     }
 

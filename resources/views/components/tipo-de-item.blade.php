@@ -1,16 +1,10 @@
 {{--
-    Simulador, equipo clínico, equipo básico o accesorio. Se distingue por icono y por
-    texto además del color: el color solo no basta para quien no lo percibe.
+    Simulador, equipo clínico, equipo básico o accesorio. Se distinguen por el
+    ícono y la palabra, en gris: el color del panel queda para los estados.
 --}}
 @props(['tipo'])
 
 @php
-    $tono = match ($tipo) {
-        \App\Enums\TipoItemInventario::Simulador => 'bg-indigo-50 text-indigo-800 ring-indigo-600/20',
-        \App\Enums\TipoItemInventario::EquipoClinico => 'bg-teal-50 text-teal-800 ring-teal-600/20',
-        \App\Enums\TipoItemInventario::EquipoBasico => 'bg-stone-100 text-stone-800 ring-stone-600/20',
-        \App\Enums\TipoItemInventario::Accesorio => 'bg-violet-50 text-violet-800 ring-violet-600/20',
-    };
 
     $icono = match ($tipo) {
         // Persona: el maniquí.
@@ -24,7 +18,7 @@
     };
 @endphp
 
-<span {{ $attributes->class("inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset {$tono}") }}>
+<span {{ $attributes->class('inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-gray-100 px-2.5 text-[12px] font-semibold text-gray-700') }}>
     <svg class="size-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icono }}"/>
     </svg>

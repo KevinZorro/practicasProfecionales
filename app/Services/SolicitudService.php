@@ -375,19 +375,32 @@ final class SolicitudService
     {
         return Solicitud::query()
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['docente', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->paginate($porPagina);
     }
 
     /**
-     * Una solicitud con todo lo que el detalle de la bandeja enseña.
+     * Una solicitud con lo que enseña la cabecera de su expediente: el
+     * escenario, quién la pidió y quién la dicta, y la preparación, de la que
+     * salen la sala y la fase de montaje de la línea de estados.
+     */
+    public function paraElExpediente(Solicitud $solicitud): Solicitud
+    {
+        return $solicitud->loadMissing([
+            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.sala',
+        ]);
+    }
+
+    /**
+     * Una solicitud con todo lo que enseña la pestaña de detalle del
+     * expediente: lo pedido, la lista de la sesión y quién la ha tramitado.
      */
     public function paraDetalle(Solicitud $solicitud): Solicitud
     {
-        return $solicitud->load([
-            'docente', 'materia', 'casoClinico', 'preparacion.sala', 'items',
+        return $this->paraElExpediente($solicitud)->load([
+            'items', 'revisadaPor:id,nombre', 'resueltaPor:id,nombre', 'registradaPor:id,nombre',
             'estudiantes' => static fn ($consulta) => $consulta->orderBy('nombre'),
         ]);
     }
@@ -455,7 +468,7 @@ final class SolicitudService
     {
         return Solicitud::query()
             ->aprobadasEntre($desde, $hasta)
-            ->with(['docente', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->get();

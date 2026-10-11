@@ -38,6 +38,13 @@ final class MenuDelPanel
     public function todas(): array
     {
         return [
+            // Sin permiso: todos tienen algo que ver hoy, aunque sea su formato.
+            new SeccionDelPanel(
+                clave: 'hoy',
+                etiqueta: 'Hoy',
+                ruta: 'panel.inicio',
+                icono: 'M12 3v1.5m0 15V21m9-9h-1.5M4.5 12H3m15.364 6.364l-1.06-1.06M6.697 6.697l-1.06-1.06m12.727 0l-1.06 1.06M6.697 17.303l-1.06 1.06M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z',
+            ),
             new SeccionDelPanel(
                 clave: 'calendario',
                 etiqueta: 'Calendario',
@@ -55,6 +62,9 @@ final class MenuDelPanel
                 icono: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z',
                 permiso: 'create',
                 sobre: Solicitud::class,
+                // El formulario nuevo y el expediente cuelgan de «solicitudes»,
+                // pero el docente llega a ellos desde aquí.
+                tambienEn: ['panel.solicitudes.*'],
             ),
             new SeccionDelPanel(
                 clave: 'solicitudes',
@@ -132,7 +142,7 @@ final class MenuDelPanel
                 clave: 'plantillas-confidencialidad',
                 etiqueta: 'Plantillas de confidencialidad',
                 ruta: 'panel.plantillas-confidencialidad',
-                icono: 'M12 4v16m8-8H4',
+                icono: 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2',
                 permiso: 'create',
                 sobre: PlantillaConfidencialidad::class,
             ),

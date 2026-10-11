@@ -1,57 +1,57 @@
-<div class="space-y-4">
+<div class="space-y-5">
 
     <x-tarjeta titulo="Consultar disponibilidad">
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="sm:col-span-2">
-                <label for="itemId" class="mb-1 block text-sm font-medium text-gray-700">Ítem</label>
+                <label for="itemId" class="campo-etiqueta">Ítem</label>
                 <select wire:model="itemId" id="itemId"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                        class="campo">
                     <option value="">Elige un ítem</option>
                     @foreach ($items as $item)
                         <option value="{{ $item->id }}">{{ $item->nombre }} · {{ $item->tipo->etiqueta() }}</option>
                     @endforeach
                 </select>
-                @error('itemId') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @error('itemId') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label for="fecha" class="mb-1 block text-sm font-medium text-gray-700">Fecha</label>
+                <label for="fecha" class="campo-etiqueta">Fecha</label>
                 <input type="date" wire:model="fecha" id="fecha"
-                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
-                @error('fecha') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                       class="campo">
+                @error('fecha') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label for="horaInicio" class="mb-1 block text-sm font-medium text-gray-700">Desde</label>
+                    <label for="horaInicio" class="campo-etiqueta">Desde</label>
                     <input type="time" wire:model="horaInicio" id="horaInicio"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                           class="campo">
                 </div>
                 <div>
-                    <label for="horaFin" class="mb-1 block text-sm font-medium text-gray-700">Hasta</label>
+                    <label for="horaFin" class="campo-etiqueta">Hasta</label>
                     <input type="time" wire:model="horaFin" id="horaFin"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                           class="campo">
                 </div>
-                @error('horaInicio') <p class="col-span-2 mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
-                @error('horaFin') <p class="col-span-2 mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @error('horaInicio') <p class="campo-error col-span-2 -mt-1">{{ $message }}</p> @enderror
+                @error('horaFin') <p class="campo-error col-span-2 -mt-1">{{ $message }}</p> @enderror
             </div>
         </div>
 
         <x-slot:pie>
-            <x-boton wire:click="consultar" class="px-4 py-2.5">Consultar</x-boton>
+            <x-boton type="button" wire:click="consultar" wire:loading.attr="disabled" wire:target="consultar">Consultar</x-boton>
         </x-slot:pie>
     </x-tarjeta>
 
     @if ($libres !== null && $consultado !== null)
         <x-tarjeta>
-            <p class="text-sm text-gray-600">{{ $consultado->nombre }}</p>
-            <p class="mt-1 text-3xl font-semibold tabular-nums {{ $libres === 0 ? 'text-rose-700' : 'text-gray-900' }}">
-                {{ $libres }}
-                <span class="text-base font-normal text-gray-600">
+            <p class="text-[15px] font-semibold text-gray-900">{{ $consultado->nombre }}</p>
+            <p class="mt-2 flex flex-wrap items-baseline gap-x-2">
+                <span class="text-[2.5rem] font-extrabold leading-none tracking-[-0.03em] {{ $libres === 0 ? 'text-rojo' : 'text-gray-900' }}">{{ $libres }}</span>
+                <span class="text-[15px] text-gray-600">
                     {{ trans_choice('unidad libre|unidades libres', $libres) }} de {{ $consultado->cantidad_total }}
                 </span>
             </p>
-            <p class="mt-2 text-sm text-gray-600">
+            <p class="mt-3 text-[14px] leading-snug text-gray-500">
                 El {{ \Illuminate\Support\Carbon::parse($fecha)->format('d/m/Y') }}, de {{ $horaInicio }} a {{ $horaFin }}.
                 Se descuenta lo comprometido en solicitudes ya aprobadas que se pisen con esa franja.
             </p>

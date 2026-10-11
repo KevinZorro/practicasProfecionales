@@ -7,6 +7,7 @@ namespace App\Livewire\Solicitud;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\NovedadInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\CasoClinico;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Livewire\Component;
 final class NovedadesDeLaSesion extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Locked]
     public int $solicitudId;
@@ -77,6 +79,7 @@ final class NovedadesDeLaSesion extends Component
         if ($hecho) {
             $this->reset('motivo', 'constancia');
             $this->llenarConLaSesion($solicitud->fresh());
+            $this->recargar();
         }
     }
 
@@ -96,7 +99,18 @@ final class NovedadesDeLaSesion extends Component
 
         if ($hecho) {
             $this->reset('reemplazoId', 'motivoSustitucion');
+            $this->recargar();
         }
+    }
+
+    /**
+     * La cabecera del expediente enseña la fecha, la hora, el escenario y
+     * quién dicta, y no es parte de este componente: se recarga la página
+     * para que no se quede con los datos de antes.
+     */
+    private function recargar(): void
+    {
+        $this->redirectRoute('panel.solicitudes.novedades', ['solicitud' => $this->solicitudId], navigate: true);
     }
 
     /** El permiso que exige el controlador de la página. */
@@ -151,7 +165,7 @@ final class NovedadesDeLaSesion extends Component
             return false;
         }
 
-        session()->flash('estado', $mensaje);
+        $this->avisar($mensaje);
 
         return true;
     }

@@ -19,6 +19,7 @@ final readonly class SeccionDelPanel
      * @param  string  $ruta  Nombre de la ruta a la que apunta.
      * @param  string|null  $permiso  Ability que se consulta con can(). Null: visible para cualquiera que entre al panel.
      * @param  class-string|null  $sobre  Modelo sobre el que se consulta el permiso. Null para un Gate suelto.
+     * @param  list<string>  $tambienEn  Otras rutas (admiten comodín) que pertenecen a la sección aunque cuelguen de otro nombre.
      */
     public function __construct(
         public string $clave,
@@ -27,7 +28,19 @@ final readonly class SeccionDelPanel
         public string $icono,
         public ?string $permiso = null,
         public ?string $sobre = null,
+        public array $tambienEn = [],
     ) {}
+
+    /**
+     * Dónde se marca la sección en el riel: su ruta, las que cuelgan de ella
+     * (la edición de un ítem cuelga del inventario) y las que declara aparte.
+     *
+     * @return list<string>
+     */
+    public function rutasDondeEstaActiva(): array
+    {
+        return [$this->ruta, $this->ruta.'.*', ...$this->tambienEn];
+    }
 
     public function visiblePara(User $usuario): bool
     {

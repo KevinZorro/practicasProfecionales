@@ -84,6 +84,17 @@ final class SolicitudPolicy
     }
 
     /**
+     * La segunda fase a nivel de clase, sin una solicitud delante: si esta
+     * persona aprueba o rechaza lo revisado. La usa la pantalla «Hoy» para
+     * decidir si enseña lo que espera aprobación. Cada solicitud la sigue
+     * decidiendo aprobar(), que además exige que esté revisada.
+     */
+    public function resolverRevisadas(User $usuario): bool
+    {
+        return $this->resuelveSolicitudes($usuario);
+    }
+
+    /**
      * Cada fase rechaza lo suyo: la pendiente, quien revisa; la revisada,
      * quien aprueba. El administrativo no rechaza lo que ya aceptó, porque
      * esa decisión pasó a coordinación.

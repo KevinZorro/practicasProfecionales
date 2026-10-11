@@ -1,18 +1,19 @@
-<div class="space-y-4">
+<div class="space-y-5">
 
     @php($estadoActual = $entrega?->estado ?? \App\Enums\EstadoFormatoConfidencialidad::Pendiente)
 
     {{-- Estado del periodo, bien visible: es lo primero que se busca al entrar. --}}
     <x-tarjeta>
         <div class="flex flex-wrap items-start justify-between gap-2">
-            <div class="min-w-0">
-                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Periodo académico</p>
-                <p class="text-lg font-semibold text-gray-900">{{ $periodo ?? 'Sin periodo abierto' }}</p>
-            </div>
+            <dl class="min-w-0">
+                <x-dato etiqueta="Periodo académico">
+                    <span class="text-[1.375rem] font-bold leading-tight tracking-[-0.02em]">{{ $periodo ?? 'Sin periodo abierto' }}</span>
+                </x-dato>
+            </dl>
             <x-etiqueta-estado :estado="$estadoActual" />
         </div>
 
-        <p class="mt-3 text-sm text-gray-700">
+        <p class="mt-3 text-[15px] leading-snug text-gray-700">
             @switch($estadoActual)
                 @case(\App\Enums\EstadoFormatoConfidencialidad::Verificado)
                     Tu formato de este periodo está verificado. No tienes nada pendiente.
@@ -30,29 +31,31 @@
             entiende, si no se le dice, que esto se renueva cada semestre.
         --}}
         <x-slot:pie>
-            El formato autoriza la grabación de las prácticas y <span class="font-medium">se renueva cada periodo académico</span>.
-            @if ($periodo)
-                El que hayas entregado en periodos anteriores sigue guardado, pero no vale para {{ $periodo }}.
-            @endif
+            <p>
+                El formato autoriza la grabación de las prácticas y <span class="font-semibold text-gray-800">se renueva cada periodo académico</span>.
+                @if ($periodo)
+                    El que hayas entregado en periodos anteriores sigue guardado, pero no vale para {{ $periodo }}.
+                @endif
+            </p>
         </x-slot:pie>
     </x-tarjeta>
 
     {{-- Motivo del rechazo --}}
     @if ($entrega?->motivo_rechazo && $estadoActual === \App\Enums\EstadoFormatoConfidencialidad::Pendiente)
-        <div class="rounded-md bg-rose-50 px-4 py-3 ring-1 ring-inset ring-rose-600/20" role="alert">
-            <p class="text-sm font-medium text-rose-900">Tu documento anterior fue devuelto</p>
-            <p class="mt-1 text-sm text-rose-900">{{ $entrega->motivo_rechazo }}</p>
-            <p class="mt-1 text-sm text-rose-900">Corrígelo y vuelve a subirlo aquí abajo.</p>
-        </div>
+        <x-aviso tono="peligro" role="alert">
+            <p class="font-semibold">Tu documento anterior fue devuelto</p>
+            <p class="mt-0.5">{{ $entrega->motivo_rechazo }}</p>
+            <p class="mt-0.5">Corrígelo y vuelve a subirlo aquí abajo.</p>
+        </x-aviso>
     @endif
 
     {{-- Paso 1: descargar --}}
     <x-tarjeta titulo="1 · Descarga el documento">
         @if ($hayPlantilla)
-            <p class="mb-3 text-sm text-gray-700">
+            <p class="mb-4 text-[15px] leading-snug text-gray-700">
                 Descárgalo, léelo, fírmalo y vuelve aquí para subirlo.
             </p>
-            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.plantilla') }}" class="px-4 py-2.5">
+            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.plantilla') }}">
                 Descargar el formato
             </x-boton>
         @else
@@ -75,33 +78,32 @@
     @if ($estadoActual !== \App\Enums\EstadoFormatoConfidencialidad::Verificado && $hayPlantilla && $recibeEntregas)
         <x-tarjeta titulo="2 · Sube el documento firmado">
             @if ($errorDeRegla)
-                <p class="mb-3 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
+                <x-aviso tono="peligro" role="alert">
                     {{ $errorDeRegla }}
-                </p>
+                </x-aviso>
             @endif
 
-            <label for="documento" class="mb-1 block text-sm font-medium text-gray-700">Archivo firmado</label>
-            <input type="file" wire:model="documento" id="documento" accept="application/pdf"
-                   class="w-full rounded-md border border-gray-300 px-3 py-2.5 text-base file:mr-3 file:rounded file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm">
+            <label for="documento" class="campo-etiqueta">Archivo firmado</label>
+            <input type="file" wire:model="documento" id="documento" accept="application/pdf" class="campo-archivo">
 
-            <p class="mt-1 text-sm text-gray-600">
+            <p class="campo-ayuda">
                 Solo PDF, hasta {{ round((int) config('laboratorio.confidencialidad.tamano_maximo_kb') / 1024, 1) }} MB.
                 Si lo escaneaste con el celular, únelo en un solo PDF antes de subirlo.
             </p>
 
-            @error('documento') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+            @error('documento') <p class="campo-error">{{ $message }}</p> @enderror
 
             {{-- La subida de un escaneo desde el celular tarda: que se vea. --}}
-            <div wire:loading wire:target="documento" class="mt-2 text-sm text-sky-800">
+            <p wire:loading wire:target="documento" class="mt-2 text-[14px] font-medium text-gray-700">
                 Subiendo el archivo…
-            </div>
+            </p>
 
             @if ($documento)
-                <p class="mt-2 text-sm text-gray-700">Listo para enviar: {{ $documento->getClientOriginalName() }}</p>
+                <x-aviso tono="exito" class="mt-3">Listo para enviar: {{ $documento->getClientOriginalName() }}</x-aviso>
             @endif
 
             <x-slot:pie>
-                <x-boton wire:click="entregar" wire:loading.attr="disabled" wire:target="entregar,documento" class="px-4 py-2.5">
+                <x-boton type="button" wire:click="entregar" wire:loading.attr="disabled" wire:target="entregar,documento">
                     <span wire:loading.remove wire:target="entregar">Enviar para verificación</span>
                     <span wire:loading wire:target="entregar">Enviando…</span>
                 </x-boton>
@@ -112,10 +114,10 @@
     {{-- Documento ya entregado --}}
     @if ($entrega?->archivo_firmado_path)
         <x-tarjeta titulo="Tu documento">
-            <p class="mb-3 text-sm text-gray-700">
+            <p class="mb-4 text-[15px] leading-snug text-gray-700">
                 Subido el {{ $entrega->updated_at->format('d/m/Y H:i') }}.
             </p>
-            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.firmado', $entrega) }}" class="px-4 py-2.5">
+            <x-boton variante="secundario" href="{{ route('panel.formatos-confidencialidad.firmado', $entrega) }}">
                 Descargar lo que subí
             </x-boton>
         </x-tarjeta>

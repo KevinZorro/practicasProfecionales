@@ -9,6 +9,7 @@ use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Exceptions\InventarioInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
 use App\Services\InventarioService;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,7 @@ use Livewire\WithPagination;
 final class ListadoInventario extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     /** Valor del filtro de fidelidad que busca los simuladores sin asignar. */
@@ -121,7 +123,7 @@ final class ListadoInventario extends Component
 
         $cantidad = $this->cantidad;
         $this->cancelarCambioDeEstado();
-        session()->flash('estado', sprintf(
+        $this->avisar(sprintf(
             '%d unidad(es) de «%s» pasan a «%s».',
             $cantidad,
             $item->nombre,

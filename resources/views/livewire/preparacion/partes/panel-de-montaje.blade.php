@@ -3,51 +3,51 @@
     no en una pantalla aparte: quien monta necesita ver la hora y el caso
     clínico mientras marca el material.
 --}}
-<div class="mt-4 space-y-5 border-t border-gray-200 pt-4">
+<div class="mt-4 space-y-6 border-t border-gray-100 pt-5">
 
     @if ($conflicto)
-        <p class="rounded-md bg-rose-50 px-3 py-2.5 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
+        <x-aviso tono="peligro" role="alert">
             {{ $conflicto }}
-        </p>
+        </x-aviso>
     @endif
 
     {{-- Sala --}}
     <div>
-        <h3 class="mb-2 text-sm font-semibold text-gray-900">Sala</h3>
+        <h3 class="mb-2 text-[15px] font-semibold text-gray-900">Sala</h3>
 
         @if ($salasLibres->isEmpty())
-            <p class="rounded-md bg-amber-50 px-3 py-2.5 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20">
+            <x-aviso tono="atencion">
                 No queda ninguna sala libre en esta franja.
-            </p>
+            </x-aviso>
         @else
             <div class="flex flex-wrap items-end gap-2">
-                <div class="min-w-0 flex-1">
+                <div class="min-w-0 flex-1 basis-56">
                     <label for="sala-{{ $montaje->id }}" class="sr-only">Sala</label>
                     <select wire:model="salaElegida" id="sala-{{ $montaje->id }}"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2.5 text-base focus:border-sky-600 focus:ring-sky-600">
+                            class="campo">
                         <option value="">Elige una sala libre</option>
                         @foreach ($salasLibres as $sala)
                             <option value="{{ $sala->id }}">{{ $sala->nombreCompleto() }}{{ $sala->del_escenario ? ' · recomendada para este escenario' : '' }}</option>
                         @endforeach
                     </select>
                 </div>
-                <x-boton type="button" wire:click="asignarSala({{ $montaje->id }})" class="px-4 py-2.5">
+                <x-boton type="button" wire:click="asignarSala({{ $montaje->id }})">
                     {{ $montaje->sala ? 'Cambiar' : 'Asignar' }}
                 </x-boton>
             </div>
-            @error('salaElegida') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+            @error('salaElegida') <p class="campo-error">{{ $message }}</p> @enderror
         @endif
     </div>
 
     {{-- Alistamiento --}}
     <div>
-        <h3 class="mb-2 text-sm font-semibold text-gray-900">Material</h3>
+        <h3 class="mb-1 text-[15px] font-semibold text-gray-900">Material</h3>
 
         {{-- Lo que monta el ingeniero va aparte y primero: hay que llamarlo antes (RF72). --}}
         @php($grupos = $montaje->items->groupBy(fn ($item) => in_array($item->id, $delIngeniero, true) ? 'ingeniero' : $item->tipo->value)->sortKeysUsing(fn ($a, $b) => ($b === 'ingeniero') <=> ($a === 'ingeniero')))
 
         @forelse ($grupos as $tipo => $delTipo)
-            <h4 @class(['mb-2 mt-3 text-xs font-semibold uppercase tracking-wide', 'text-violet-800' => $tipo === 'ingeniero', 'text-gray-500' => $tipo !== 'ingeniero'])>
+            <h4 @class(['mb-2 mt-4 text-[13px] font-semibold', 'text-amber-800' => $tipo === 'ingeniero', 'text-gray-500' => $tipo !== 'ingeniero'])>
                 {{ $tipo === 'ingeniero' ? 'Requiere al ingeniero (alta fidelidad)' : \App\Enums\TipoItemInventario::from($tipo)->etiqueta() }}
             </h4>
             <ul class="space-y-2">
@@ -55,61 +55,58 @@
                     <li wire:key="item-{{ $montaje->id }}-{{ $item->id }}">
                         {{-- La etiqueta entera es el objetivo táctil: se marca
                              con el pulgar, no con la punta del dedo. --}}
-                        <label class="flex cursor-pointer items-center gap-3 rounded-md border border-gray-200 px-3 py-3 hover:bg-gray-50">
+                        <label class="flex min-h-14 cursor-pointer items-center gap-3 rounded-xl bg-gray-50 px-3.5 py-2.5 transition-colors duration-150 hover:bg-gray-100 has-[:checked]:bg-emerald-50">
                             <input type="checkbox"
                                    wire:click="alternarItem({{ $montaje->id }}, {{ $item->id }})"
                                    @checked($item->pivot->alistado)
-                                   class="size-6 shrink-0 rounded border-gray-300 text-sky-700 focus:ring-sky-600">
-                            <span class="min-w-0 flex-1 text-base text-gray-900">{{ $item->nombre }}</span>
-                            <span class="shrink-0 text-base font-medium text-gray-700">×{{ $item->pivot->cantidad }}</span>
+                                   class="casilla size-6">
+                            <span class="min-w-0 flex-1 text-[16px] leading-snug text-gray-900">{{ $item->nombre }}</span>
+                            <span class="shrink-0 text-[16px] font-semibold text-gray-700">×{{ $item->pivot->cantidad }}</span>
                         </label>
                     </li>
                 @endforeach
             </ul>
         @empty
-            <p class="text-sm text-gray-500">Este escenario no lleva equipos.</p>
+            <p class="text-[14px] text-gray-500">Este escenario no lleva equipos.</p>
         @endforelse
     </div>
 
     {{-- Observaciones --}}
     <div>
-        <label for="observaciones-{{ $montaje->id }}" class="mb-1 block text-sm font-semibold text-gray-900">
+        <label for="observaciones-{{ $montaje->id }}" class="mb-2 block text-[15px] font-semibold text-gray-900">
             Observaciones del alistamiento
         </label>
         <textarea wire:model="observaciones" id="observaciones-{{ $montaje->id }}" rows="2"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2.5 text-base focus:border-sky-600 focus:ring-sky-600"
+                  class="campo"
                   placeholder="Algo que el docente deba saber al llegar."></textarea>
-        @error('observaciones') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
-        <x-boton variante="secundario" type="button" wire:click="guardarObservaciones({{ $montaje->id }})"
-                 class="mt-2 px-4 py-2.5">
+        @error('observaciones') <p class="campo-error">{{ $message }}</p> @enderror
+        <x-boton variante="secundario" tamano="chico" type="button" wire:click="guardarObservaciones({{ $montaje->id }})"
+                 class="mt-2">
             Guardar observaciones
         </x-boton>
     </div>
 
     {{-- Estado del montaje --}}
-    <div class="border-t border-gray-200 pt-4">
-        <h3 class="mb-2 text-sm font-semibold text-gray-900">Estado del montaje</h3>
+    <div class="border-t border-gray-100 pt-5">
+        <h3 class="mb-2 text-[15px] font-semibold text-gray-900">Estado del montaje</h3>
 
         @if ($montaje->estado === \App\Enums\EstadoPreparacion::Pendiente)
-            <x-boton type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')"
-                     class="w-full px-4 py-3 text-base sm:w-auto">
+            <x-boton type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
                 Empezar el montaje
             </x-boton>
         @elseif ($montaje->estado === \App\Enums\EstadoPreparacion::EnPreparacion)
             @if ($montaje->sala_id === null)
-                <p class="rounded-md bg-amber-50 px-3 py-2.5 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20">
+                <x-aviso tono="atencion">
                     Asigna una sala antes de dar el escenario por preparado.
-                </p>
+                </x-aviso>
             @else
-                <x-boton type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'preparado')"
-                         class="w-full px-4 py-3 text-base sm:w-auto">
+                <x-boton type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'preparado')" class="w-full sm:w-auto">
                     Marcar como preparado
                 </x-boton>
             @endif
         @else
-            <p class="mb-2 text-sm text-gray-600">Este escenario ya está preparado.</p>
-            <x-boton variante="secundario" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')"
-                     class="w-full px-4 py-3 text-base sm:w-auto">
+            <p class="mb-2 text-[14px] text-gray-600">Este escenario ya está preparado.</p>
+            <x-boton variante="secundario" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
                 Volver a en preparación
             </x-boton>
         @endif

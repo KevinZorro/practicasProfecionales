@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\Solicitud;
+use App\Services\SolicitudService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -14,9 +15,15 @@ use Illuminate\View\View;
  *
  * Cada método comprueba el permiso con la Policy y devuelve la vista; toda
  * la interacción vive en los componentes Livewire que esas vistas montan.
+ *
+ * Una solicitud se abre como expediente: una cabecera con su línea de
+ * estados y cuatro pestañas (detalle, participantes, novedades y formato
+ * intramural). Cada pestaña es su propia ruta, con su propio permiso.
  */
 final class SolicitudController extends Controller
 {
+    public function __construct(private readonly SolicitudService $solicitudes) {}
+
     /** Historial del docente (RF35). */
     public function mias(Request $peticion): View
     {
@@ -41,12 +48,20 @@ final class SolicitudController extends Controller
         return view('panel.solicitudes.bandeja');
     }
 
+    /** El expediente de una solicitud: su detalle y la decisión que toca (RF30, RF31). */
+    public function ver(Request $peticion, Solicitud $solicitud): View
+    {
+        abort_unless($peticion->user()->can('view', $solicitud), 403);
+
+        return view('panel.solicitudes.expediente', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
+    }
+
     /** Reprogramar la sesión y sustituir al docente (RF61, RF73). */
     public function novedades(Request $peticion, Solicitud $solicitud): View
     {
         abort_unless($peticion->user()->can('reprogramar', $solicitud), 403);
 
-        return view('panel.solicitudes.novedades', ['solicitud' => $solicitud]);
+        return view('panel.solicitudes.novedades', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
     }
 
     /** Sesiones apartadas antes del semestre (RF57). */
@@ -62,7 +77,7 @@ final class SolicitudController extends Controller
     {
         abort_unless($peticion->user()->can('registrarFormatoIntramural', $solicitud), 403);
 
-        return view('panel.solicitudes.formato-intramural', ['solicitud' => $solicitud]);
+        return view('panel.solicitudes.formato-intramural', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
     }
 
     /**
@@ -73,6 +88,6 @@ final class SolicitudController extends Controller
     {
         abort_unless($peticion->user()->can('view', $solicitud), 403);
 
-        return view('panel.solicitudes.participantes', ['solicitud' => $solicitud]);
+        return view('panel.solicitudes.participantes', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
     }
 }

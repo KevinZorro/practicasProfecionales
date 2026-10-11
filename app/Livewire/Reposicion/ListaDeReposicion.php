@@ -7,6 +7,7 @@ namespace App\Livewire\Reposicion;
 use App\Enums\MotivoReposicion;
 use App\Exceptions\ReposicionInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
 use App\Models\ListaDeReposicion as Lista;
 use App\Models\NecesidadDeReposicion;
@@ -26,6 +27,7 @@ use Livewire\Component;
 final class ListaDeReposicion extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Url(as: 'desde', keep: false)]
     public string $desde = '';
@@ -122,7 +124,7 @@ final class ListaDeReposicion extends Component
         }
 
         $this->cancelarFormulario();
-        session()->flash('estado', 'Necesidad anotada. Entrará en la lista del periodo.');
+        $this->avisar('Necesidad anotada. Entrará en la lista del periodo.');
     }
 
     public function pedirAtencion(int $necesidadId): void
@@ -158,7 +160,7 @@ final class ListaDeReposicion extends Component
         }
 
         $this->cancelarAtencion();
-        session()->flash('estado', 'Necesidad atendida. Deja de aparecer en los borradores.');
+        $this->avisar('Necesidad atendida. Deja de aparecer en los borradores.');
     }
 
     /** Congela la lista: a partir de aquí no cambia (RF67). */
@@ -181,7 +183,7 @@ final class ListaDeReposicion extends Component
 
         $this->listaCerrada = $lista->id;
         $this->origenFijado = $reposicion->origenDelSiguienteBorrador();
-        session()->flash('estado', 'Lista cerrada. Ya se puede descargar como soporte de la solicitud de compra.');
+        $this->avisar('Lista cerrada. Ya se puede descargar como soporte de la solicitud de compra.');
     }
 
     /** El permiso que exige el controlador de la página. */

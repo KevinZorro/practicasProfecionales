@@ -10,12 +10,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
 			identifier: property.notFound
 			count: 1
-			path: app/Livewire/Solicitud/BandejaRevision.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\ItemInventario\:\:\$pivot\.$#'
-			identifier: property.notFound
-			count: 1
 			path: app/Livewire/Solicitud/FormularioSolicitud.php
 
 		-

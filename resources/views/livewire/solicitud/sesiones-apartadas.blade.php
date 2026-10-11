@@ -1,141 +1,139 @@
-<div class="space-y-4">
+<div class="space-y-5">
 
     @if ($errorDeRegla)
-        <p class="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">{{ $errorDeRegla }}</p>
+        <x-aviso tono="peligro" role="alert">{{ $errorDeRegla }}</x-aviso>
     @endif
 
     <x-tarjeta titulo="Registrar una sesión apartada">
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="sm:col-span-2">
-                <label for="docenteId" class="mb-1 block text-sm font-medium text-gray-700">Docente</label>
-                <select wire:model="docenteId" id="docenteId" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
+                <label for="docenteId" class="campo-etiqueta">Docente</label>
+                <select wire:model="docenteId" id="docenteId" class="campo">
                     <option value="">Elige un docente</option>
                     @foreach ($docentes as $docente)
                         <option value="{{ $docente->id }}">{{ $docente->nombre }}</option>
                     @endforeach
                 </select>
-                @error('docenteId') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @error('docenteId') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label for="materiaId" class="mb-1 block text-sm font-medium text-gray-700">Materia</label>
-                <select wire:model="materiaId" id="materiaId" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
+                <label for="materiaId" class="campo-etiqueta">Materia</label>
+                <select wire:model="materiaId" id="materiaId" class="campo">
                     <option value="">Elige una materia</option>
                     @foreach ($materias as $materia)
                         <option value="{{ $materia->id }}">{{ $materia->nombre }} · semestre {{ $materia->semestre }}</option>
                     @endforeach
                 </select>
-                @error('materiaId') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @error('materiaId') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label for="casoClinicoId" class="mb-1 block text-sm font-medium text-gray-700">Escenario clínico</label>
-                <select wire:model="casoClinicoId" id="casoClinicoId" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
+                <label for="casoClinicoId" class="campo-etiqueta">Escenario clínico</label>
+                <select wire:model="casoClinicoId" id="casoClinicoId" class="campo">
                     <option value="">Elige un escenario</option>
                     @foreach ($casosClinicos as $caso)
                         <option value="{{ $caso->id }}">{{ $caso->nombre }}</option>
                     @endforeach
                 </select>
-                @error('casoClinicoId') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                @error('casoClinicoId') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
             <div>
-                <label for="tipo" class="mb-1 block text-sm font-medium text-gray-700">Tipo de sesión</label>
-                <select wire:model="tipo" id="tipo" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
+                <label for="tipo" class="campo-etiqueta">Tipo de sesión</label>
+                <select wire:model="tipo" id="tipo" class="campo">
                     @foreach ($tiposDeSesion as $unTipo)
                         <option value="{{ $unTipo->value }}">{{ $unTipo->etiqueta() }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label for="cantidadEstudiantes" class="mb-1 block text-sm font-medium text-gray-700">Estudiantes</label>
+                    <label for="cantidadEstudiantes" class="campo-etiqueta">Estudiantes</label>
                     <input type="number" min="1" wire:model="cantidadEstudiantes" id="cantidadEstudiantes"
-                           class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                    @error('cantidadEstudiantes') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                           class="campo">
+                    @error('cantidadEstudiantes') <p class="campo-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label for="grupo" class="mb-1 block text-sm font-medium text-gray-700">Grupo <span class="font-normal text-gray-500">(si viene)</span></label>
+                    <label for="grupo" class="campo-etiqueta">Grupo <span class="font-normal text-gray-500">(si viene)</span></label>
                     <input type="text" wire:model="grupo" id="grupo" maxlength="2" placeholder="A"
-                           class="w-full rounded-md border border-gray-300 text-sm uppercase focus:border-sky-600 focus:ring-sky-600">
-                    @error('grupo') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                           class="campo uppercase">
+                    @error('grupo') <p class="campo-error">{{ $message }}</p> @enderror
                 </div>
             </div>
 
             <div>
-                <label for="fecha" class="mb-1 block text-sm font-medium text-gray-700">Fecha</label>
-                <input type="date" wire:model.live="fecha" id="fecha" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                @error('fecha') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                <label for="fecha" class="campo-etiqueta">Fecha</label>
+                <input type="date" wire:model.live="fecha" id="fecha" class="campo">
+                @error('fecha') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label for="horaInicio" class="mb-1 block text-sm font-medium text-gray-700">Inicio</label>
-                    <input type="time" wire:model.live="horaInicio" id="horaInicio" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                    @error('horaInicio') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                    <label for="horaInicio" class="campo-etiqueta">Inicio</label>
+                    <input type="time" wire:model.live="horaInicio" id="horaInicio" class="campo">
+                    @error('horaInicio') <p class="campo-error">{{ $message }}</p> @enderror
                 </div>
                 <div>
-                    <label for="horaFin" class="mb-1 block text-sm font-medium text-gray-700">Fin</label>
-                    <input type="time" wire:model.live="horaFin" id="horaFin" class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                    @error('horaFin') <p class="mt-1 text-sm text-rose-700">{{ $message }}</p> @enderror
+                    <label for="horaFin" class="campo-etiqueta">Fin</label>
+                    <input type="time" wire:model.live="horaFin" id="horaFin" class="campo">
+                    @error('horaFin') <p class="campo-error">{{ $message }}</p> @enderror
                 </div>
             </div>
         </div>
 
         @if ($advertencias !== [])
-            <div class="mt-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20" role="status">
-                <p class="font-medium">Cruces en esa franja (puedes registrarla igual):</p>
-                <ul class="mt-1 list-disc pl-5">
+            <x-aviso tono="atencion" role="status" class="mt-4">
+                <p class="font-semibold">Cruces en esa franja (puedes registrarla igual):</p>
+                <ul class="mt-1 list-disc space-y-0.5 pl-5">
                     @foreach ($advertencias as $advertencia)
                         <li>{{ $advertencia }}</li>
                     @endforeach
                 </ul>
-            </div>
+            </x-aviso>
         @endif
 
         <x-slot:pie>
-            <div class="flex flex-wrap items-center gap-3">
-                <x-boton type="button" wire:click="registrar" wire:loading.attr="disabled" class="px-4 py-2.5">Registrar sesión</x-boton>
-                <span>Queda aprobada: la aprobó coordinación al entregar el formato. La sala se asigna al preparar.</span>
-            </div>
+            <x-boton type="button" wire:click="registrar" wire:loading.attr="disabled" wire:target="registrar">Registrar sesión</x-boton>
+            <span class="min-w-0 flex-1 basis-64">Queda aprobada: la aprobó coordinación al entregar el formato. La sala se asigna al preparar.</span>
         </x-slot:pie>
     </x-tarjeta>
 
     <x-tarjeta titulo="Sesiones apartadas">
-        <label class="mb-3 flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" wire:model.live="soloSinFormato" class="rounded border border-gray-300">
+        <label class="mb-4 flex w-fit cursor-pointer items-center gap-2.5 text-[14px] text-gray-700">
+            <input type="checkbox" wire:model.live="soloSinFormato" class="casilla">
             Solo las que no tienen formato intramural
         </label>
 
         @if ($sesiones->isEmpty())
             <x-mensaje-vacio titulo="No hay sesiones apartadas" descripcion="Las que registres aparecerán aquí." />
         @else
-            <ul class="divide-y divide-gray-200">
+            <ul class="divide-y divide-gray-100">
                 @foreach ($sesiones as $sesion)
-                    <li wire:key="apartada-{{ $sesion->id }}" class="flex flex-wrap items-center justify-between gap-2 py-3">
+                    <li wire:key="apartada-{{ $sesion->id }}" class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3.5">
                         <div class="min-w-0">
-                            <p class="text-sm font-medium text-gray-900">{{ $sesion->casoClinico->nombre }}</p>
-                            <p class="text-sm text-gray-600">
+                            <a href="{{ route('panel.solicitudes.ver', $sesion) }}" class="text-[15px] font-semibold leading-snug text-gray-900 underline decoration-transparent underline-offset-4 hover:decoration-gray-900">{{ $sesion->casoClinico->nombre }}</a>
+                            <p class="mt-0.5 text-[14px] leading-snug text-gray-500">
                                 {{ $sesion->fecha->format('d/m/Y') }} {{ substr($sesion->hora_inicio, 0, 5) }}–{{ substr($sesion->hora_fin, 0, 5) }}
                                 · {{ $sesion->docente->nombre }} · {{ $sesion->materia->nombre }}{{ $sesion->grupo ? ' · grupo '.$sesion->grupo : '' }}
                             </p>
                         </div>
-                        <div class="flex shrink-0 items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2">
                             @if ($sesion->tieneFormatoIntramural())
-                                <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-900 ring-1 ring-inset ring-emerald-600/20">Con formato intramural</span>
+                                <x-insignia tono="exito">Con formato intramural</x-insignia>
                             @else
-                                <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-inset ring-amber-600/20">Sin formato intramural</span>
+                                <x-insignia tono="atencion">Sin formato intramural</x-insignia>
                             @endif
-                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.novedades', $sesion) }}" class="px-3 py-2">Novedades</x-boton>
-                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.formato-intramural', $sesion) }}" class="px-3 py-2">
+                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.novedades', $sesion) }}" tamano="chico">Novedades</x-boton>
+                            <x-boton variante="secundario" href="{{ route('panel.solicitudes.formato-intramural', $sesion) }}" tamano="chico">
                                 {{ $sesion->tieneFormatoIntramural() ? 'Ver insumos' : 'Registrar insumos' }}
                             </x-boton>
                         </div>
                     </li>
                 @endforeach
             </ul>
-            <div class="mt-3">{{ $sesiones->links() }}</div>
+            <div class="mt-4">{{ $sesiones->links() }}</div>
         @endif
     </x-tarjeta>
 </div>

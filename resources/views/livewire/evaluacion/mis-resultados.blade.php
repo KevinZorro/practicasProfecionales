@@ -1,14 +1,14 @@
-<div class="space-y-4">
+<div class="space-y-5">
     @if ($resultados->isEmpty())
         <x-mensaje-vacio titulo="Todavía no tienes evaluaciones" descripcion="Aparecen aquí cuando el docente finaliza la evaluación." />
     @else
         @foreach ($resultados as $registro)
             @php($cumplidos = $registro->items->filter(fn ($i) => (bool) $i->pivot->cumplido)->pluck('id')->all())
             <x-tarjeta wire:key="resultado-{{ $registro->id }}">
-                <div class="flex flex-wrap items-start justify-between gap-2">
+                <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <p class="text-sm font-semibold text-gray-900">{{ $registro->evaluacion->tipoEvaluacion->nombre }}</p>
-                        <p class="text-sm text-gray-600">
+                        <p class="text-[17px] font-bold leading-snug tracking-[-0.01em] text-gray-900">{{ $registro->evaluacion->tipoEvaluacion->nombre }}</p>
+                        <p class="mt-0.5 text-[14px] leading-snug text-gray-500">
                             {{ $registro->evaluacion->solicitud->materia->nombre }} · {{ $registro->evaluacion->docente->nombre }}
                             · intento {{ $registro->intento }}
                         </p>
@@ -18,18 +18,18 @@
                     @endif
                 </div>
 
-                <ul class="mt-3 space-y-1">
+                <ul class="mt-4 divide-y divide-gray-100 rounded-xl bg-gray-50">
                     @foreach ($registro->evaluacion->items as $item)
                         @php($cumplido = in_array($item->id, $cumplidos, true))
-                        <li class="flex items-start gap-2 text-sm">
-                            <span @class(['font-semibold', 'text-emerald-700' => $cumplido, 'text-rose-700' => ! $cumplido]) aria-hidden="true">{{ $cumplido ? '✓' : '✗' }}</span>
-                            <span class="text-gray-800">{{ $item->descripcion }}<span class="sr-only">{{ $cumplido ? ' (cumplido)' : ' (no cumplido)' }}</span></span>
+                        <li class="flex items-start gap-3 px-3.5 py-2.5 text-[15px] leading-snug">
+                            <x-marca-de-checklist :cumplido="$cumplido" />
+                            <span @class(['text-gray-900' => $cumplido, 'text-gray-600' => ! $cumplido])>{{ $item->descripcion }}<span class="sr-only">{{ $cumplido ? ' (cumplido)' : ' (no cumplido)' }}</span></span>
                         </li>
                     @endforeach
                 </ul>
 
                 @if ($registro->observaciones)
-                    <div class="mt-3"><x-dato etiqueta="Observaciones del docente">{{ $registro->observaciones }}</x-dato></div>
+                    <dl class="mt-4"><x-dato etiqueta="Observaciones del docente">{{ $registro->observaciones }}</x-dato></dl>
                 @endif
             </x-tarjeta>
         @endforeach

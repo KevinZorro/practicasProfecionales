@@ -1,54 +1,50 @@
-<div class="space-y-4">
-
-    @if (session('estado'))
-        <p class="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-inset ring-emerald-600/20" role="status">
-            {{ session('estado') }}
-        </p>
-    @endif
+<div class="space-y-5">
 
     @if ($errorDeRegla)
-        <p class="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
+        <x-aviso tono="peligro" role="alert">
             {{ $errorDeRegla }}
-        </p>
+        </x-aviso>
     @endif
 
     <x-tarjeta>
         @if ($laSesion)
-            <div class="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-sky-50 px-3 py-2 text-sm text-sky-900 ring-1 ring-inset ring-sky-600/20">
-                <span>
-                    Solo la sesión de {{ $laSesion->casoClinico->nombre }} del {{ $laSesion->fecha->format('d/m/Y') }}
-                    {{ $laSesion->grupo ? '· grupo '.$laSesion->grupo : '' }}: sus estudiantes y su docente.
-                </span>
-                <button type="button" wire:click="$set('sesion', null)" class="font-medium underline">Ver todos</button>
-            </div>
+            <x-aviso class="mb-4">
+                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                    <span>
+                        Solo la sesión de {{ $laSesion->casoClinico->nombre }} del {{ $laSesion->fecha->format('d/m/Y') }}
+                        {{ $laSesion->grupo ? '· grupo '.$laSesion->grupo : '' }}: sus estudiantes y su docente.
+                    </span>
+                    <button type="button" wire:click="$set('sesion', null)" class="font-semibold text-gray-900 underline decoration-gray-400 underline-offset-4 hover:decoration-gray-900">Ver todos</button>
+                </div>
+            </x-aviso>
         @endif
 
-        <div class="grid gap-3 sm:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-3">
             <div class="sm:col-span-1">
-                <label for="buscar" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Buscar</label>
+                <label for="buscar" class="campo-etiqueta">Buscar</label>
                 <input type="search" wire:model.live.debounce.400ms="busqueda" id="buscar" placeholder="Nombre, correo o código"
-                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                       class="campo">
             </div>
             <div>
-                <label for="periodo" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Periodo</label>
+                <label for="periodo" class="campo-etiqueta">Periodo</label>
                 <input type="text" wire:model.live.debounce.400ms="periodo" id="periodo"
-                       class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                       class="campo">
             </div>
             <div>
-                <label for="situacion" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Situación</label>
+                <label for="situacion" class="campo-etiqueta">Situación</label>
                 <select wire:model.live="situacion" id="situacion"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                        class="campo">
                     <option value="">Todos</option>
                     <option value="{{ \App\Livewire\Confidencialidad\EstadoDeFirmantes::LE_FALTA }}">Les falta</option>
                     <option value="{{ \App\Livewire\Confidencialidad\EstadoDeFirmantes::AL_DIA }}">Al día</option>
                 </select>
             </div>
         </div>
-        <div class="mt-3 grid gap-3 sm:grid-cols-2">
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-                <label for="materia" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Materia</label>
+                <label for="materia" class="campo-etiqueta">Materia</label>
                 <select wire:model.live="materia" id="materia"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                        class="campo">
                     <option value="">Todas</option>
                     @foreach ($materias as $unaMateria)
                         <option value="{{ $unaMateria->id }}">{{ $unaMateria->nombre }}</option>
@@ -56,9 +52,9 @@
                 </select>
             </div>
             <div>
-                <label for="programa" class="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">Programa</label>
+                <label for="programa" class="campo-etiqueta">Programa</label>
                 <select wire:model.live="programa" id="programa"
-                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-base focus:border-sky-600 focus:ring-sky-600">
+                        class="campo">
                     <option value="">Todos</option>
                     @foreach ($programas as $unPrograma)
                         <option value="{{ $unPrograma }}">{{ $unPrograma }}</option>
@@ -66,62 +62,54 @@
                 </select>
             </div>
         </div>
-        <div class="mt-3 flex flex-wrap items-center justify-between gap-2">
-            <p class="text-sm text-gray-600">
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+            <p class="text-[14px] text-gray-500">
                 {{ trans_choice(':count persona|:count personas', $firmantes->total(), ['count' => $firmantes->total()]) }}
                 en {{ $periodo }}
             </p>
-            <x-boton variante="secundario" type="button" wire:click="limpiarFiltros">Limpiar filtros</x-boton>
+            <x-boton variante="texto" tamano="chico" type="button" wire:click="limpiarFiltros">Limpiar filtros</x-boton>
         </div>
     </x-tarjeta>
 
     @if ($firmantes->isEmpty())
         <x-mensaje-vacio titulo="No hay nadie que coincida" descripcion="Prueba a quitar algún filtro." />
     @else
-        <ul class="space-y-2">
+        <ul class="divide-y divide-gray-100 overflow-hidden rounded-2xl bg-white">
             @foreach ($firmantes as $firmante)
                 @php($entrega = $firmante->formatosDeConfidencialidad->first())
-                <li wire:key="firmante-{{ $firmante->id }}">
-                    <x-tarjeta>
+                <li wire:key="firmante-{{ $firmante->id }}" class="px-4 py-4 sm:px-5">
                         {{-- Columna y no fila: a 390 px el nombre y las etiquetas
                              no caben juntos y el nombre se corta. --}}
                         <div class="flex flex-col gap-2">
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-semibold text-gray-900">{{ $firmante->nombre }}</p>
-                                <p class="truncate text-sm text-gray-600">{{ $firmante->email }}</p>
-                                @if ($firmante->codigo_institucional)
-                                    <p class="truncate text-sm text-gray-500">Código {{ $firmante->codigo_institucional }}</p>
-                                @endif
+                                <p class="text-[15px] font-semibold leading-snug text-gray-900">{{ $firmante->nombre }}</p>
+                                <p class="truncate text-[14px] text-gray-500">
+                                    {{ $firmante->email }}@if ($firmante->codigo_institucional) · código {{ $firmante->codigo_institucional }}@endif
+                                </p>
                             </div>
                             <div class="flex flex-wrap items-center gap-1.5">
                                 {{-- El docente firma el mismo formato, pero quien revisa
                                      necesita distinguirlo de un vistazo (RF51-RF52). --}}
                                 @if ($firmante->hasRole(\App\Enums\Rol::Docente->value))
-                                    <span class="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20">
-                                        Docente
-                                    </span>
+                                    <x-insignia>Docente</x-insignia>
                                 @endif
 
                                 {{-- La entrega en físico no es un estado del documento: convive
                                      con él, así que se pinta como etiqueta aparte (RF53). --}}
                                 @if ($entrega?->entregadoEnFisico())
-                                    <span class="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-600/20">
-                                        Entregado en físico
-                                    </span>
+                                    <x-insignia tono="atencion">Entregado en físico</x-insignia>
                                 @endif
 
                                 @if ($entrega)
                                     <x-etiqueta-estado :estado="$entrega->estado" />
                                 @else
-                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 ring-1 ring-inset ring-gray-500/20">
-                                        Sin entregar
-                                    </span>
+                                    <x-insignia tono="neutro">Sin entregar</x-insignia>
                                 @endif
                             </div>
                         </div>
 
                         @if ($entrega?->entregadoEnFisico())
-                            <p class="mt-2 text-sm text-gray-600">
+                            <p class="mt-2 text-[14px] text-gray-600">
                                 Recibido por {{ $entrega->recibidoFisicoPor?->nombre ?? 'el laboratorio' }}
                                 el {{ $entrega->recibido_fisico_at->format('d/m/Y') }}.
                                 @if ($entrega->estado !== \App\Enums\EstadoFormatoConfidencialidad::Verificado)
@@ -129,11 +117,11 @@
                                 @endif
                             </p>
                         @elseif ($entrega?->estado !== \App\Enums\EstadoFormatoConfidencialidad::Verificado)
-                            <p class="mt-2 text-sm text-amber-800">No tiene el formato al día para {{ $periodo }}.</p>
+                            <p class="mt-2 text-[14px] font-medium text-amber-800">No tiene el formato al día para {{ $periodo }}.</p>
 
                             @can('marcarEntregaFisica', \App\Models\FormatoConfidencialidad::class)
                                 <div class="mt-3">
-                                    <x-boton variante="secundario" type="button"
+                                    <x-boton variante="secundario" tamano="chico" type="button"
                                              wire:click="marcarEntregaFisica({{ $firmante->id }})"
                                              wire:loading.attr="disabled">
                                         Recibí el formato en físico
@@ -141,7 +129,6 @@
                                 </div>
                             @endcan
                         @endif
-                    </x-tarjeta>
                 </li>
             @endforeach
         </ul>

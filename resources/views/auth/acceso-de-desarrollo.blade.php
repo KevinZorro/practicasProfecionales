@@ -3,54 +3,37 @@
     (middleware SoloEnDesarrollo); se retira cuando la entrada con Google (RF18)
     esté probada con las credenciales reales.
 --}}
-<!DOCTYPE html>
-<html lang="es" class="h-full">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Acceso de desarrollo · {{ config('app.name') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="flex h-full items-center justify-center bg-gray-50 px-4 font-sans text-gray-900 antialiased">
+<x-pantalla-de-acceso titulo="Acceso de desarrollo">
+    <x-aviso tono="atencion">
+        Entrada provisional para probar las vistas con distintos roles. La
+        autenticación definitiva es por Google y esta pantalla no existe
+        fuera del entorno local.
+    </x-aviso>
 
-<div class="w-full max-w-md">
-    <x-tarjeta titulo="Acceso de desarrollo">
-        <p class="mb-4 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 ring-1 ring-inset ring-amber-600/20">
-            Entrada provisional para probar las vistas con distintos roles. La
-            autenticación definitiva es por Google y esta pantalla no existe
-            fuera del entorno local.
+    @error('usuario')
+        <x-aviso tono="peligro" role="alert" class="mt-4">{{ $message }}</x-aviso>
+    @enderror
+
+    @if ($usuarios->isEmpty())
+        <p class="mt-5 text-[15px] text-gray-600">
+            No hay usuarios sembrados. Ejecuta <code class="rounded bg-gray-100 px-1.5 py-0.5 text-[13px]">php artisan migrate:fresh --seed</code> para poder entrar.
         </p>
+    @else
+        <form method="POST" action="{{ route('desarrollo.entrar') }}" class="mt-5 space-y-4">
+            @csrf
 
-        @error('usuario')
-            <p class="mb-3 text-sm text-rose-700">{{ $message }}</p>
-        @enderror
+            <div>
+                <label for="usuario" class="campo-etiqueta">Entrar como</label>
+                <select name="usuario" id="usuario" required class="campo">
+                    @foreach ($usuarios as $usuario)
+                        <option value="{{ $usuario->id }}">
+                            {{ $usuario->nombre }} — {{ $usuario->roles->pluck('name')->join(', ') ?: 'sin rol' }}@if ($usuario->estado !== \App\Enums\EstadoUsuario::Activo) · inactivo @endif
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-        @if ($usuarios->isEmpty())
-            <x-mensaje-vacio
-                titulo="No hay usuarios sembrados"
-                descripcion="Ejecuta php artisan migrate:fresh --seed para poder entrar."
-            />
-        @else
-            <form method="POST" action="{{ route('desarrollo.entrar') }}" class="space-y-4">
-                @csrf
-
-                <div>
-                    <label for="usuario" class="mb-1 block text-sm font-medium text-gray-700">Entrar como</label>
-                    <select name="usuario" id="usuario" required
-                            class="w-full rounded-md border border-gray-300 text-sm focus:border-sky-600 focus:ring-sky-600">
-                        @foreach ($usuarios as $usuario)
-                            <option value="{{ $usuario->id }}">
-                                {{ $usuario->nombre }} — {{ $usuario->roles->pluck('name')->join(', ') ?: 'sin rol' }}@if ($usuario->estado !== \App\Enums\EstadoUsuario::Activo) · inactivo @endif
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <x-boton class="w-full">Entrar</x-boton>
-            </form>
-        @endif
-    </x-tarjeta>
-</div>
-
-</body>
-</html>
+            <x-boton class="w-full">Entrar</x-boton>
+        </form>
+    @endif
+</x-pantalla-de-acceso>

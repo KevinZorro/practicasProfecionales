@@ -8,6 +8,7 @@ use App\Enums\EstadoEvaluacion;
 use App\Enums\ResultadoEvaluacion;
 use App\Exceptions\EvaluacionInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\Evaluacion;
 use App\Models\EvaluacionEstudiante;
 use App\Models\EvaluacionItem;
@@ -26,6 +27,7 @@ use Livewire\Component;
 final class RegistroDeEvaluacion extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Locked]
     public int $evaluacionId;
@@ -104,7 +106,7 @@ final class RegistroDeEvaluacion extends Component
         $this->authorize('finalizar', $evaluacion);
 
         if ($this->ejecutar(fn () => $evaluaciones->finalizar($evaluacion))) {
-            session()->flash('estado', 'Evaluación finalizada. Los estudiantes ya pueden ver sus resultados.');
+            $this->avisar('Evaluación finalizada. Los estudiantes ya pueden ver sus resultados.');
         }
     }
 

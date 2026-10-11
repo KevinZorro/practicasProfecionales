@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Panel;
 
-use App\Enums\TipoSesion;
 use App\Http\Controllers\Controller;
 use App\Models\Solicitud;
 use App\Services\SolicitudService;
@@ -50,6 +49,7 @@ final class CalendarioController extends Controller
     private function comoEvento(Solicitud $solicitud): array
     {
         $sala = $solicitud->preparacion?->sala?->nombre;
+        $colores = $solicitud->tipo->coloresEnElCalendario();
         $fecha = $solicitud->fecha->format('Y-m-d');
         $hora = substr($solicitud->hora_inicio, 0, 5).'–'.substr($solicitud->hora_fin, 0, 5);
 
@@ -58,11 +58,12 @@ final class CalendarioController extends Controller
             'title' => $solicitud->casoClinico->nombre,
             'start' => "{$fecha}T{$solicitud->hora_inicio}",
             'end' => "{$fecha}T{$solicitud->hora_fin}",
-            // La práctica y la evaluación se distinguen por color y por
+            // La práctica y la evaluación se distinguen por relleno y por
             // clase, para que no dependa solo del color.
             'classNames' => ['evento-'.$solicitud->tipo->value],
-            'backgroundColor' => $solicitud->tipo === TipoSesion::Evaluacion ? '#7e22ce' : '#0369a1',
-            'borderColor' => $solicitud->tipo === TipoSesion::Evaluacion ? '#7e22ce' : '#0369a1',
+            'backgroundColor' => $colores['fondo'],
+            'borderColor' => $colores['borde'],
+            'textColor' => $colores['texto'],
             'extendedProps' => [
                 'tipo' => $solicitud->tipo->etiqueta(),
                 'fecha' => $solicitud->fecha->format('d/m/Y'),

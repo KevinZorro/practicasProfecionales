@@ -8,6 +8,7 @@ use App\Enums\TipoSesion;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\CasoClinico;
 use App\Models\Materia;
 use App\Models\Solicitud;
@@ -27,6 +28,7 @@ use Livewire\WithPagination;
 final class SesionesApartadas extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     #[Validate('required|integer|exists:users,id')]
@@ -93,7 +95,7 @@ final class SesionesApartadas extends Component
         // Se conservan docente, materia y caso: el formato físico suele traer
         // varias sesiones seguidas del mismo docente.
         $this->reset('fecha', 'horaInicio', 'horaFin', 'grupo');
-        session()->flash('estado', 'Sesión registrada y aprobada. Falta su formato intramural.');
+        $this->avisar('Sesión registrada y aprobada. Falta su formato intramural.');
     }
 
     /** El permiso que exige el controlador de la página. */
