@@ -79,6 +79,7 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('mis-solicitudes', [SolicitudController::class, 'mias'])->name('mis-solicitudes');
     Route::get('solicitudes/nueva', [SolicitudController::class, 'nueva'])->name('solicitudes.nueva');
     Route::get('solicitudes', [SolicitudController::class, 'bandeja'])->name('solicitudes');
+    Route::get('solicitudes/{solicitud}', [SolicitudController::class, 'ver'])->whereNumber('solicitud')->name('solicitudes.ver');
     Route::get('solicitudes/{solicitud}/participantes', [SolicitudController::class, 'participantes'])->name('solicitudes.participantes');
     Route::get('solicitudes/{solicitud}/formato-intramural', [SolicitudController::class, 'formatoIntramural'])->name('solicitudes.formato-intramural');
     Route::get('solicitudes/{solicitud}/novedades', [SolicitudController::class, 'novedades'])->name('solicitudes.novedades');

@@ -7,6 +7,7 @@ namespace App\Livewire\Solicitud;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\FormatoConfidencialidad;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Livewire\Component;
 final class ParticipantesDeLaSesion extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Locked]
     public int $solicitudId;
@@ -76,7 +78,7 @@ final class ParticipantesDeLaSesion extends Component
 
     public function render(ParticipacionService $participacion, SolicitudService $solicitudes): mixed
     {
-        $solicitud = $this->solicitud()->load(['materia', 'casoClinico', 'preparacion.sala']);
+        $solicitud = $this->solicitud();
         $lista = $participacion->deLaSesion($solicitud);
         $puedeGestionar = Auth::user()->can('gestionarParticipantes', $solicitud);
 
@@ -109,7 +111,7 @@ final class ParticipantesDeLaSesion extends Component
             return false;
         }
 
-        session()->flash('estado', $mensaje);
+        $this->avisar($mensaje);
 
         return true;
     }

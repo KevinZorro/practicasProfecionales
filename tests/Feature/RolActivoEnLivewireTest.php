@@ -56,14 +56,14 @@ it('no deja actuar con el rol que le quitaron mientras tenía la pantalla abiert
     $solicitud = Solicitud::factory()->create();
 
     $this->actingAs($usuaria)->post(route('panel.rol-activo'), ['rol' => Rol::Administrativo->value]);
-    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes'));
+    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes.ver', $solicitud));
 
     retirarRol($usuaria, Rol::Administrativo);
     comoEnLaSiguientePeticion($usuaria);
 
     // Como coordinadora podría revisar, pero el botón se pulsó en una
     // pantalla abierta como administrativa, y ese rol ya no lo tiene.
-    accionDeLivewire($instantanea, 'revisar', [$solicitud->id])
+    accionDeLivewire($instantanea, 'revisar')
         ->assertForbidden()
         ->assertJsonPath('message', 'El rol con el que abriste esta pantalla ya no está vigente. Recarga la página.');
 
@@ -77,12 +77,12 @@ it('corta igual a quien nunca eligió rol y le quitan el que tenía por defecto'
     $solicitud = Solicitud::factory()->create();
 
     $this->actingAs($usuaria);
-    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes'));
+    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes.ver', $solicitud));
 
     retirarRol($usuaria, Rol::Coordinador);
     comoEnLaSiguientePeticion($usuaria);
 
-    accionDeLivewire($instantanea, 'revisar', [$solicitud->id])->assertForbidden();
+    accionDeLivewire($instantanea, 'revisar')->assertForbidden();
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Pendiente);
 });
@@ -101,19 +101,19 @@ it('al recargar la pantalla la lleva al rol que le queda', function (): void {
 });
 
 it('evalúa los botones con el rol activo, no con todos los que tiene', function (): void {
-    // Abre la bandeja como coordinadora y, en otra pestaña, se pasa a
+    // Abre el expediente como coordinadora y, en otra pestaña, se pasa a
     // administrativa. El botón de aprobar que quedó en la primera ya no es
     // suyo: la administrativa no aprueba.
     $usuaria = coordinadoraYAdministrativa();
     $solicitud = Solicitud::factory()->revisada()->create();
 
     $this->actingAs($usuaria);
-    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes'));
+    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes.ver', $solicitud));
 
     $this->post(route('panel.rol-activo'), ['rol' => Rol::Administrativo->value]);
     comoEnLaSiguientePeticion($usuaria);
 
-    accionDeLivewire($instantanea, 'aprobar', [$solicitud->id])->assertForbidden();
+    accionDeLivewire($instantanea, 'aprobar')->assertForbidden();
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Revisada);
 });
@@ -125,10 +125,10 @@ it('deja actuar con el rol activo cuando nada cambió', function (): void {
     $solicitud = Solicitud::factory()->create();
 
     $this->actingAs($usuaria)->post(route('panel.rol-activo'), ['rol' => Rol::Administrativo->value]);
-    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes'));
+    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes.ver', $solicitud));
     comoEnLaSiguientePeticion($usuaria);
 
-    accionDeLivewire($instantanea, 'revisar', [$solicitud->id])->assertOk();
+    accionDeLivewire($instantanea, 'revisar')->assertOk();
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Revisada);
 });

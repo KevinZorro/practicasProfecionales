@@ -6,6 +6,7 @@ namespace App\Livewire\Solicitud;
 
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
 use App\Models\Solicitud;
 use App\Services\RegistroPrevioService;
@@ -23,6 +24,7 @@ use Livewire\Component;
 final class FormatoIntramural extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Locked]
     public int $solicitudId;
@@ -83,7 +85,7 @@ final class FormatoIntramural extends Component
             return;
         }
 
-        session()->flash('estado', 'Formato intramural registrado. La preparación ya tiene la lista para alistar.');
+        $this->avisar('Formato intramural registrado. La preparación ya tiene la lista para alistar.');
     }
 
     /** El permiso que exige el controlador de la página. */
@@ -95,7 +97,7 @@ final class FormatoIntramural extends Component
     public function render(): mixed
     {
         return view('livewire.solicitud.formato-intramural', [
-            'solicitud' => Solicitud::with(['docente:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'formatoIntramuralPor:id,nombre'])->findOrFail($this->solicitudId),
+            'solicitud' => Solicitud::with('formatoIntramuralPor:id,nombre')->findOrFail($this->solicitudId),
             'elegidos' => ItemInventario::query()->whereIn('id', array_keys($this->items))->orderBy('tipo')->orderBy('nombre')->get(['id', 'nombre', 'tipo']),
             'catalogo' => ItemInventario::query()->where('activo', true)->whereNotIn('id', array_keys($this->items))
                 ->orderBy('tipo')->orderBy('nombre')->get(['id', 'nombre', 'tipo']),

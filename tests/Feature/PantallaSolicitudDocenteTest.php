@@ -197,7 +197,7 @@ it('no enseña la sala hasta que el administrativo la asigna', function (): void
 
     Livewire::actingAs($this->docente)
         ->test(MisSolicitudes::class)
-        ->assertSee('Aún sin asignar')
+        ->assertSee('Sala por asignar')
         ->assertDontSee('Sala de partos');
 
     $preparacion->update(['sala_id' => Sala::factory()->create(['nombre' => 'Sala de partos'])->id]);
@@ -205,7 +205,7 @@ it('no enseña la sala hasta que el administrativo la asigna', function (): void
     Livewire::actingAs($this->docente)
         ->test(MisSolicitudes::class)
         ->assertSee('Sala de partos')
-        ->assertDontSee('Aún sin asignar');
+        ->assertDontSee('Sala por asignar');
 });
 
 it('no genera consultas N+1 al recorrer el historial', function (): void {

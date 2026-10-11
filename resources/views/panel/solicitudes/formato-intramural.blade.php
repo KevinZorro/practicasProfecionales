@@ -1,7 +1,10 @@
 @extends('layouts.panel')
 
-@section('titulo', 'Formato intramural')
+@section('titulo', 'Formato intramural · '.$solicitud->casoClinico->nombre)
+@section('sin-cabecera', '1')
 
 @section('contenido')
-    <livewire:solicitud.formato-intramural :solicitud="$solicitud" />
+    <x-expediente :solicitud="$solicitud" pestana="formato-intramural">
+        <livewire:solicitud.formato-intramural :solicitud="$solicitud" />
+    </x-expediente>
 @endsection
