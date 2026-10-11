@@ -45,6 +45,8 @@ it('cierra en la política de contenido lo que no hace falta abrir', function ()
         ->toContain("frame-ancestors 'self'")
         // Lo mínimo que abre, y por qué está en el middleware.
         ->toContain("worker-src 'self' blob:")
+        // Las fuentes salen del propio servidor, también en Filament.
+        ->not->toContain('fonts.bunny.net')
         // Ningún origen comodín: un "*" o un "https:" abriría la puerta a
         // cualquier sitio.
         ->not->toMatch('/(^|\s)\*(\s|;|$)/')

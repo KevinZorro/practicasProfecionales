@@ -7,6 +7,7 @@ namespace App\Providers\Filament;
 use App\Filament\AvatarConIniciales;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -17,12 +18,14 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Illuminate\View\View;
 
 /**
  * Pantallas del ADMIN: estructura académica (RF23-RF26) y contenido público
@@ -54,9 +57,59 @@ final class AdminPanelProvider extends PanelProvider
             ->brandName('Administración del laboratorio')
             // Sin ui-avatars.com: ver AvatarConIniciales.
             ->defaultAvatarProvider(AvatarConIniciales::class)
+            // La marca del panel (DESIGN.md): Onest servida desde el propio
+            // servidor, sin fonts.bunny.net; los botones en tinta, el rojo
+            // para lo que no se deshace y los grises fríos. Sin modo oscuro:
+            // el resto de la plataforma no lo tiene.
+            ->font('Onest', url: asset('fonts/onest/onest.css'), provider: LocalFontProvider::class)
+            ->brandLogo(static fn (): View => view('filament.marca'))
+            ->brandLogoHeight('2rem')
+            ->favicon(asset('favicon.ico'))
+            ->darkMode(false)
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => [
+                    50 => '245, 245, 247',
+                    100 => '237, 237, 240',
+                    200 => '226, 226, 231',
+                    300 => '210, 210, 215',
+                    400 => '161, 161, 166',
+                    500 => '63, 63, 67',
+                    600 => '29, 29, 31',
+                    700 => '29, 29, 31',
+                    800 => '17, 17, 18',
+                    900 => '17, 17, 18',
+                    950 => '10, 10, 11',
+                ],
+                'danger' => [
+                    50 => '254, 242, 243',
+                    100 => '253, 227, 229',
+                    200 => '251, 198, 203',
+                    300 => '245, 151, 160',
+                    400 => '236, 93, 107',
+                    500 => '224, 43, 60',
+                    600 => '211, 15, 35',
+                    700 => '173, 12, 28',
+                    800 => '142, 13, 27',
+                    900 => '117, 15, 27',
+                    950 => '64, 5, 12',
+                ],
+                'gray' => [
+                    50 => '245, 245, 247',
+                    100 => '237, 237, 240',
+                    200 => '226, 226, 231',
+                    300 => '210, 210, 215',
+                    400 => '161, 161, 166',
+                    500 => '110, 110, 115',
+                    600 => '92, 92, 97',
+                    700 => '63, 63, 67',
+                    800 => '42, 42, 45',
+                    900 => '29, 29, 31',
+                    950 => '17, 17, 18',
+                ],
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
             ])
+            ->renderHook(PanelsRenderHook::STYLES_AFTER, static fn (): View => view('filament.estilos'))
             // Volver a las pantallas operativas sin escribir la dirección.
             ->navigationItems([
                 NavigationItem::make('Volver al panel')
