@@ -26,11 +26,11 @@ function seccionesVisibles(Rol $rol): array
 it('enseña a cada rol solo lo que su Policy le permite', function (Rol $rol, array $esperadas): void {
     expect(seccionesVisibles($rol))->toEqualCanonicalizing($esperadas);
 })->with([
-    'docente' => [Rol::Docente, ['calendario', 'mis-solicitudes', 'evaluaciones', 'mi-formato']],
-    'estudiante' => [Rol::Estudiante, ['calendario', 'mis-resultados', 'mi-formato']],
-    'administrativo' => [Rol::Administrativo, ['calendario', 'solicitudes', 'sesiones-apartadas', 'preparaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'periodo-academico']],
-    'coordinador' => [Rol::Coordinador, ['calendario', 'solicitudes', 'sesiones-apartadas', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'bloqueos', 'periodo-academico', 'bitacora', 'reportes']],
-    'admin' => [Rol::Admin, ['calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'bloqueos', 'periodo-academico', 'usuarios', 'administracion', 'bitacora', 'reportes']],
+    'docente' => [Rol::Docente, ['hoy', 'calendario', 'mis-solicitudes', 'evaluaciones', 'mi-formato']],
+    'estudiante' => [Rol::Estudiante, ['hoy', 'calendario', 'mis-resultados', 'mi-formato']],
+    'administrativo' => [Rol::Administrativo, ['hoy', 'calendario', 'solicitudes', 'sesiones-apartadas', 'preparaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'periodo-academico']],
+    'coordinador' => [Rol::Coordinador, ['hoy', 'calendario', 'solicitudes', 'sesiones-apartadas', 'preparaciones', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'bloqueos', 'periodo-academico', 'bitacora', 'reportes']],
+    'admin' => [Rol::Admin, ['hoy', 'calendario', 'solicitudes', 'evaluaciones', 'inventario', 'reposicion', 'formatos-confidencialidad', 'plantillas-confidencialidad', 'bloqueos', 'periodo-academico', 'usuarios', 'administracion', 'bitacora', 'reportes']],
 ]);
 
 it('no enseña al docente el inventario ni los reportes', function (): void {
@@ -102,11 +102,13 @@ it('no deja entrar al panel a una cuenta sin ningún rol asignado', function ():
         ->assertSee('no tiene ningún rol asignado');
 });
 
-it('lleva /panel a la primera sección del rol, sin escritorio vacío', function (Rol $rol): void {
+it('abre «Hoy» en /panel con cualquier rol, marcado en el menú', function (Rol $rol): void {
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);
 
     $this->actingAs($usuario->fresh())
         ->get(route('panel.inicio'))
-        ->assertRedirect(route('panel.calendario'));
+        ->assertOk()
+        ->assertSee('aria-current="page"', escape: false)
+        ->assertSee('Hoy');
 })->with([Rol::Docente, Rol::Estudiante, Rol::Administrativo, Rol::Coordinador, Rol::Admin]);

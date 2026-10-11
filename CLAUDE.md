@@ -176,6 +176,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento |
 | `PortadaService` | Lo que muestra la portada pública (RF01–RF07): solo lo publicado, talleres y eventos de hoy en adelante (D18), sin imágenes cuyo archivo falta; el detalle de un escenario publicado (RF03) |
+| `ResumenDelDiaService` | La pantalla «Hoy» del panel (`/panel`): lo que espera a cada persona con su rol activo. Solo lee; cada bloque aparece si la Policy de su módulo lo permite, nunca por rol |
 | `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (RF22), con origen `manual`; deshabilitar y volver a habilitar, siempre con motivo y en la bitácora |
 | `UsuarioSyncService` | Sincronización con la base institucional (RF19, RF20), comando `usuarios:sincronizar`. Lee de una `FuenteInstitucional`; **hoy solo existe la simulada** (`database/datos/institucional-simulada.json`), porque la real depende del pendiente 2. La pasada programada está apagada salvo con `SINCRONIZACION_PROGRAMADA=true` |
 
