@@ -1,34 +1,31 @@
 {{--
     Entrada a la plataforma (RF18). Una sola vía: la cuenta institucional de
-    Google. Es provisional en su aspecto, no en su función: cuando se apruebe
-    el diseño de la landing, el botón puede vivir allí y esta pantalla queda
-    para mostrar por qué no se pudo entrar.
+    Google. Si algo impide entrar, aquí se dice por qué.
 --}}
-<!DOCTYPE html>
-<html lang="es" class="h-full">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Entrar · {{ config('app.name') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body class="flex h-full items-center justify-center bg-gray-50 px-4 font-sans text-gray-900 antialiased">
+<x-pantalla-de-acceso titulo="Entrar">
+    <p class="text-[15px] leading-snug text-gray-600">
+        Entra con tu cuenta institucional de Google{{ $dominio ? ", la que termina en @{$dominio}" : '' }}.
+    </p>
 
-<div class="w-full max-w-md">
-    <x-tarjeta titulo="Laboratorio de Simulación Clínica">
-        <p class="mb-4 text-sm text-gray-700">
-            Entra con tu cuenta institucional de Google{{ $dominio ? ", la que termina en @{$dominio}" : '' }}.
-        </p>
+    @error('acceso')
+        <x-aviso tono="peligro" role="alert" class="mt-5">{{ $message }}</x-aviso>
+    @enderror
 
-        @error('acceso')
-            <p class="mb-4 rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
-                {{ $message }}
-            </p>
-        @enderror
+    {{-- El botón de Google con su «G»: es como se reconoce esta entrada (sus
+         pautas de marca lo piden así), dibujada aquí para no pedir nada a
+         otro sitio (Content-Security-Policy). --}}
+    <a href="{{ route('acceso.google') }}"
+       class="mt-6 flex min-h-12 w-full items-center justify-center gap-3 rounded-full bg-white px-5 text-[15px] font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 transition-colors duration-150 hover:bg-gray-50 hover:ring-gray-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo">
+        <svg class="size-5" viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
+        </svg>
+        Entrar con Google
+    </a>
 
-        <x-boton :href="route('acceso.google')" class="w-full">Entrar con Google</x-boton>
-    </x-tarjeta>
-</div>
-
-</body>
-</html>
+    <p class="mt-5 text-[13px] leading-snug text-gray-500">
+        Solo entran quienes ya tienen cuenta en la plataforma: el correo institucional por sí solo no basta.
+    </p>
+</x-pantalla-de-acceso>

@@ -104,6 +104,15 @@
                             <span class="block text-[13px] text-gray-500">{{ $solicitud->resuelta_at?->translatedFormat('j M Y, H:i') }}</span>
                         </x-dato>
                     @endif
+
+                    {{-- A quien no le toca decidir, qué está esperando la solicitud. --}}
+                    @unless ($puedeRevisar || $puedeAprobar || $puedeRechazar)
+                        @if ($solicitud->estado === $estados::Pendiente)
+                            <x-dato etiqueta="Lo que sigue">Espera la revisión del laboratorio.</x-dato>
+                        @elseif ($solicitud->estado === $estados::Revisada)
+                            <x-dato etiqueta="Lo que sigue">Espera la aprobación de coordinación.</x-dato>
+                        @endif
+                    @endunless
                 </dl>
             </x-tarjeta>
 
@@ -174,9 +183,5 @@
                 </div>
             @endif
         </div>
-    @elseif ($solicitud->estado === $estados::Pendiente)
-        <p class="text-[14px] text-gray-500">Espera la revisión del laboratorio.</p>
-    @elseif ($solicitud->estado === $estados::Revisada)
-        <p class="text-[14px] text-gray-500">Espera la aprobación de coordinación.</p>
     @endif
 </div>

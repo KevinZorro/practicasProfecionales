@@ -18,7 +18,7 @@
 
 <div {{ $attributes->class('flex flex-wrap items-center gap-1.5') }}>
     @forelse ($desglose as $estado => $cantidad)
-        <span class="inline-flex h-6 items-center whitespace-nowrap rounded-full px-2.5 text-[12px] font-semibold tabular-nums {{ $tonos[$estado] }}">
+        <span class="inline-flex h-6 items-center whitespace-nowrap rounded-full px-2.5 text-[12px] font-semibold {{ $tonos[$estado] }}">
             {{ $cantidad }} {{ mb_strtolower(\App\Enums\EstadoItemInventario::from($estado)->etiqueta()) }}
         </span>
     @empty

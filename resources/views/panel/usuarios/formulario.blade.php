@@ -2,6 +2,13 @@
 
 @section('titulo', $cuenta ? 'Editar cuenta' : 'Nueva cuenta')
 
+@section('volver')
+    <a href="{{ route('panel.usuarios') }}" class="enlace-de-vuelta">
+        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+        Usuarios y roles
+    </a>
+@endsection
+
 @section('contenido')
     <livewire:usuario.formulario-de-cuenta :cuenta="$cuenta" />
 @endsection

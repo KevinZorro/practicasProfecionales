@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Panel;
 
-use App\Enums\TipoSesion;
 use App\Http\Controllers\Controller;
 use App\Models\Solicitud;
 use App\Services\SolicitudService;
@@ -61,8 +60,8 @@ final class CalendarioController extends Controller
             // La práctica y la evaluación se distinguen por color y por
             // clase, para que no dependa solo del color.
             'classNames' => ['evento-'.$solicitud->tipo->value],
-            'backgroundColor' => $solicitud->tipo === TipoSesion::Evaluacion ? '#7e22ce' : '#0369a1',
-            'borderColor' => $solicitud->tipo === TipoSesion::Evaluacion ? '#7e22ce' : '#0369a1',
+            'backgroundColor' => $solicitud->tipo->colorEnElCalendario(),
+            'borderColor' => $solicitud->tipo->colorEnElCalendario(),
             'extendedProps' => [
                 'tipo' => $solicitud->tipo->etiqueta(),
                 'fecha' => $solicitud->fecha->format('d/m/Y'),

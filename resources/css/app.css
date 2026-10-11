@@ -64,6 +64,11 @@
         @apply mt-1.5 text-[13px] font-medium leading-snug text-rojo-700;
     }
 
+    /* Subir un archivo: el botón del navegador, en pastilla gris. */
+    .campo-archivo {
+        @apply block w-full cursor-pointer rounded-[10px] border border-gray-300 bg-white p-1.5 text-[14px] text-gray-700 transition-colors duration-150 file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-[14px] file:font-semibold file:text-gray-900 hover:border-gray-400 hover:file:bg-gray-200 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900;
+    }
+
     /* «← Solicitudes»: la vuelta a la lista de la que se vino. */
     .enlace-de-vuelta {
         @apply -ml-1 inline-flex min-h-9 items-center gap-1 rounded-full pl-1 pr-3 text-[14px] font-semibold text-gray-500 transition-colors duration-150 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo;
@@ -71,6 +76,119 @@
 
     .casilla {
         @apply size-[1.125rem] shrink-0 cursor-pointer rounded border-gray-300 disabled:cursor-not-allowed;
+    }
+}
+
+/*
+ * Calendario (FullCalendar). Trae su propio marcado y sus propias clases, así
+ * que no se puede vestir con utilidades: es el caso que CLAUDE.md admite para
+ * CSS suelto. Toma la marca por sus variables: botones en pastilla, la vista
+ * activa en tinta y el día de hoy apenas teñido de rojo.
+ *
+ * FullCalendar pone la clase fc en el mismo contenedor (#calendario) e
+ * inyecta su hoja después de esta: por eso los selectores van con
+ * .calendario.fc, que pesan más que los suyos.
+ */
+.calendario.fc {
+    --fc-border-color: theme('colors.gray.200');
+    --fc-page-bg-color: #ffffff;
+    --fc-neutral-bg-color: theme('colors.gray.50');
+    --fc-today-bg-color: rgb(211 15 35 / 0.05);
+    --fc-button-text-color: theme('colors.gray.900');
+    --fc-button-bg-color: #ffffff;
+    --fc-button-border-color: theme('colors.gray.300');
+    --fc-button-hover-bg-color: theme('colors.gray.50');
+    --fc-button-hover-border-color: theme('colors.gray.400');
+    --fc-button-active-bg-color: theme('colors.gray.900');
+    --fc-button-active-border-color: theme('colors.gray.900');
+    font-size: 14px;
+}
+
+.calendario.fc .fc-button {
+    border-radius: 9999px;
+    padding: 0.4rem 0.9rem;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.calendario.fc .fc-button:focus-visible {
+    outline: 2px solid theme('colors.rojo.DEFAULT');
+    outline-offset: 2px;
+}
+
+.calendario.fc .fc-button-primary:not(:disabled).fc-button-active,
+.calendario.fc .fc-button-primary:not(:disabled):active {
+    color: #ffffff;
+}
+
+.calendario.fc .fc-button-group > .fc-button {
+    border-radius: 0;
+}
+
+.calendario.fc .fc-button-group > .fc-button:first-child {
+    border-start-start-radius: 9999px;
+    border-end-start-radius: 9999px;
+}
+
+.calendario.fc .fc-button-group > .fc-button:last-child {
+    border-start-end-radius: 9999px;
+    border-end-end-radius: 9999px;
+}
+
+.calendario.fc .fc-toolbar-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-transform: capitalize;
+}
+
+.calendario.fc .fc-col-header-cell-cushion {
+    padding-block: 0.5rem;
+    font-size: 13px;
+    font-weight: 600;
+    color: theme('colors.gray.500');
+    text-transform: capitalize;
+}
+
+.calendario.fc .fc-daygrid-day-number {
+    font-size: 13px;
+    color: theme('colors.gray.700');
+}
+
+.calendario.fc .fc-day-today .fc-daygrid-day-number {
+    font-weight: 700;
+    color: theme('colors.rojo.DEFAULT');
+}
+
+.calendario.fc .fc-event {
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    /* Los tres grupos de la barra no caben en una fila a 390 px. */
+    .calendario.fc .fc-toolbar.fc-header-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    .calendario.fc .fc-toolbar-title {
+        font-size: 1.05rem;
+        text-align: center;
+    }
+
+    /* La rejilla sí necesita más ancho del que hay: se desplaza en
+       horizontal, igual que las tablas del sistema, en vez de recortar el
+       texto de los eventos. La barra se queda fuera del desplazamiento para
+       que el título siga legible. */
+    .calendario.fc .fc-view-harness {
+        overflow-x: auto;
+    }
+
+    .calendario.fc .fc-view-harness > .fc-view {
+        min-width: 36rem;
     }
 }
 

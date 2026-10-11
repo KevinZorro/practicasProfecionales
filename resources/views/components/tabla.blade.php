@@ -1,12 +1,13 @@
 {{--
     Tabla en una pieza blanca. En el celular se desplaza en horizontal dentro
     de su pieza en vez de romper la página: el administrativo la consulta
-    desde el celular. Las cifras van tabulares para que las columnas cuadren.
+    desde el celular. Sin cifras tabulares: en Onest separan el 1 de los
+    demás dígitos y «15» se leía «1 5».
 --}}
 @props(['encabezados' => []])
 
 <div {{ $attributes->class('overflow-x-auto rounded-2xl bg-white') }}>
-    <table class="min-w-full text-left text-[14px] tabular-nums">
+    <table class="min-w-full text-left text-[14px]">
         @if ($encabezados !== [])
             <thead>
                 <tr class="border-b border-gray-200">

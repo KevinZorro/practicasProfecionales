@@ -9,7 +9,7 @@
 <div {{ $attributes->merge() }}>
     <div class="flex items-center justify-between text-[13px] text-gray-600">
         <span>Material alistado</span>
-        <span class="font-semibold tabular-nums text-gray-900">{{ $alistados }} de {{ $total }}</span>
+        <span class="font-semibold text-gray-900">{{ $alistados }} de {{ $total }}</span>
     </div>
     <div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-gray-200"
          role="progressbar" aria-label="Material alistado" aria-valuenow="{{ $alistados }}" aria-valuemin="0" aria-valuemax="{{ $total }}">

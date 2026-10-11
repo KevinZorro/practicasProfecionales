@@ -38,7 +38,7 @@
                                 {{ $item->nombre }} <span class="text-[13px] text-gray-500">· {{ $item->tipo->etiqueta() }}</span>
                             </label>
                             <input type="number" min="1" inputmode="numeric" id="cantidad-{{ $item->id }}" wire:model="items.{{ $item->id }}"
-                                   class="campo w-20 shrink-0 text-center tabular-nums">
+                                   class="campo w-20 shrink-0 text-center">
                             <x-boton variante="texto" tamano="chico" type="button" wire:click="quitarItem({{ $item->id }})" aria-label="Quitar {{ $item->nombre }}">Quitar</x-boton>
                         </div>
                         @error('items.'.$item->id) <p class="campo-error">{{ $message }}</p> @enderror

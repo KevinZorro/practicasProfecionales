@@ -62,8 +62,8 @@ function mostrarDetalle(contenedorDetalle, evento) {
     contenedorDetalle.querySelector('[data-cuerpo]').innerHTML = filas
         .map(
             ([etiqueta, valor]) =>
-                `<div class="min-w-0"><dt class="text-xs font-medium uppercase tracking-wide text-gray-500">${etiqueta}</dt>` +
-                `<dd class="mt-0.5 break-words text-sm text-gray-900">${escapar(valor)}</dd></div>`,
+                `<div class="min-w-0"><dt class="text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500">${etiqueta}</dt>` +
+                `<dd class="mt-1 break-words text-[15px] leading-snug text-gray-900">${escapar(valor)}</dd></div>`,
         )
         .join('');
     contenedorDetalle.hidden = false;

@@ -24,7 +24,7 @@
                     @php($cantidad = $cantidades[$item->id] ?? $item->pivot?->cantidad ?? 1)
                     <li class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-3.5 py-2.5 text-[14px]">
                         <span class="min-w-0 flex-1 truncate text-gray-900">{{ $item->nombre }}</span>
-                        <span class="shrink-0 font-semibold tabular-nums text-gray-700">×{{ $cantidad }}</span>
+                        <span class="shrink-0 font-semibold text-gray-700">×{{ $cantidad }}</span>
                         @if (array_key_exists($item->id, $faltantes))
                             <span class="w-full rounded-lg bg-amber-50 px-2.5 py-1 text-[13px] text-amber-900 sm:w-auto">
                                 Solo quedan {{ $faltantes[$item->id] }} libres en esa franja
