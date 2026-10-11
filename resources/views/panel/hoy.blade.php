@@ -179,7 +179,7 @@
                                 @elseif ($formato->entregadoEnFisico())
                                     <x-insignia tono="atencion">Entregado en papel</x-insignia>
                                 @else
-                                    <x-insignia tono="peligro">Pendiente</x-insignia>
+                                    <x-insignia tono="neutro">Pendiente</x-insignia>
                                 @endif
                             </div>
                             <p class="mt-3 text-[14px] leading-snug text-gray-700">
