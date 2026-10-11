@@ -20,7 +20,7 @@
             </thead>
         @endif
 
-        <tbody class="divide-y divide-gray-100 [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_td]:px-4 [&_td]:py-3 [&_tr]:transition-colors [&_tr:hover]:bg-gray-50/70">
+        <tbody class="divide-y divide-gray-100 [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_td]:px-4 [&_td]:py-3 [&_tr]:transition-colors [&_tr:hover]:bg-gray-100/60">
             {{ $slot }}
         </tbody>
     </table>

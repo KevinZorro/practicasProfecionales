@@ -44,7 +44,7 @@
                             {{-- Aquí también llegan formatos de docentes: sin esta
                                  etiqueta parece una cola solo de estudiantes. --}}
                             @if ($entrega->firmante->hasRole(\App\Enums\Rol::Docente->value))
-                                <x-insignia tono="categoria">Docente</x-insignia>
+                                <x-insignia>Docente</x-insignia>
                             @endif
                             <x-etiqueta-estado :estado="$entrega->estado" />
                         </div>

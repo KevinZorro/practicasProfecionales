@@ -11,8 +11,6 @@
         'exito' => ['bg-emerald-50 text-emerald-800', 'bg-emerald-500'],
         'atencion' => ['bg-amber-50 text-amber-900', 'bg-amber-500'],
         'peligro' => ['bg-rojo-50 text-rojo-800', 'bg-rojo'],
-        // Una categoría, no un estado (un firmante que es docente).
-        'categoria' => ['bg-violet-50 text-violet-800', 'bg-violet-500'],
         default => ['bg-gray-100 text-gray-700', 'bg-gray-400'],
     };
 @endphp

@@ -1,14 +1,14 @@
 {{--
-    Práctica o evaluación. Se distingue por color y además por texto e icono:
-    el color solo no basta para quien no lo percibe, y esta pantalla se mira
-    con prisa.
+    Práctica o evaluación. Se distinguen por la forma, el ícono y la palabra,
+    no por el color: la práctica va rellena y la evaluación en contorno, como
+    en el calendario. El color del panel queda para los estados.
 --}}
 @props(['tipo'])
 
 @php
     $esEvaluacion = $tipo === \App\Enums\TipoSesion::Evaluacion;
     $tono = $esEvaluacion
-        ? 'bg-violet-50 text-violet-800'
+        ? 'bg-white text-gray-900 ring-1 ring-inset ring-gray-300'
         : 'bg-gray-100 text-gray-700';
     $icono = $esEvaluacion
         ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'

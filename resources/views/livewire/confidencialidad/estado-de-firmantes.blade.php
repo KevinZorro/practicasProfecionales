@@ -91,7 +91,7 @@
                                 {{-- El docente firma el mismo formato, pero quien revisa
                                      necesita distinguirlo de un vistazo (RF51-RF52). --}}
                                 @if ($firmante->hasRole(\App\Enums\Rol::Docente->value))
-                                    <x-insignia tono="categoria">Docente</x-insignia>
+                                    <x-insignia>Docente</x-insignia>
                                 @endif
 
                                 {{-- La entrega en físico no es un estado del documento: convive

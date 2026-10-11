@@ -16,6 +16,11 @@ const marca = {
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    // El hover solo donde hay cursor: en el celular, la fila que se tocó no
+    // se queda teñida.
+    future: {
+        hoverOnlyWhenSupported: true,
+    },
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './vendor/livewire/livewire/src/Features/SupportPagination/views/*tailwind.blade.php',

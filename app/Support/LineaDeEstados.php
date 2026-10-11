@@ -22,8 +22,9 @@ use App\Models\Solicitud;
  * - Rechazada: la línea se corta en la fase donde se rechazó (la pendiente,
  *   en la revisión; la revisada, en la aprobación) y no sigue.
  *
- * La fase actual es la primera que falta. Cuando no falta ninguna, es la
- * última: el escenario está listo y ahí se queda.
+ * La fase actual es la primera que falta, y es la única en rojo. Cuando no
+ * falta ninguna no hay fase actual: todas quedan hechas, en tinta, y la
+ * situación que se lee es la de la última («Escenario listo»).
  */
 final class LineaDeEstados
 {
@@ -89,7 +90,7 @@ final class LineaDeEstados
      */
     private static function marcarLaActual(array $fases): array
     {
-        $actual = array_key_last($fases);
+        $actual = null;
         foreach ($fases as $indice => $fase) {
             if (! $fase['hecha']) {
                 $actual = $indice;
@@ -97,11 +98,13 @@ final class LineaDeEstados
             }
         }
 
+        $ultima = array_key_last($fases);
         $pasos = [];
         foreach ($fases as $indice => $fase) {
             $pasos[] = match (true) {
-                $indice === $actual => new PasoDeLaLinea($fase['fase'], EstadoDelPaso::Actual, $fase['hecha'] ? $fase['fecha'] : null, $fase['situacion']),
-                $fase['hecha'] => new PasoDeLaLinea($fase['fase'], EstadoDelPaso::Hecho, $fase['fecha']),
+                $indice === $actual => new PasoDeLaLinea($fase['fase'], EstadoDelPaso::Actual, null, $fase['situacion']),
+                // Terminada: la última fase hecha guarda su situación para las filas.
+                $fase['hecha'] => new PasoDeLaLinea($fase['fase'], EstadoDelPaso::Hecho, $fase['fecha'], $actual === null && $indice === $ultima ? $fase['situacion'] : null),
                 default => new PasoDeLaLinea($fase['fase'], EstadoDelPaso::Pendiente),
             };
         }
@@ -111,7 +114,8 @@ final class LineaDeEstados
 
     /**
      * Lo que pasa ahora con la solicitud, en palabras: la situación de la
-     * fase actual o del corte. La usan las filas de las listas.
+     * fase actual o del corte, y si está terminada, la de la última fase.
+     * La usan las filas de las listas.
      *
      * @param  list<PasoDeLaLinea>  $pasos
      */
@@ -123,6 +127,8 @@ final class LineaDeEstados
             }
         }
 
-        return '';
+        $ultimo = end($pasos);
+
+        return $ultimo === false ? '' : (string) $ultimo->situacion;
     }
 }

@@ -57,7 +57,7 @@ it('pasa a la aprobación cuando ya está revisada', function (): void {
     ])->and(LineaDeEstados::situacion(LineaDeEstados::deSolicitud($solicitud)))->toBe('Por aprobar');
 });
 
-it('sigue con el montaje de una aprobada hasta que el escenario queda listo', function (EstadoPreparacion $montaje, string $situacion): void {
+it('sigue con el montaje de una aprobada mientras el escenario no esté listo', function (EstadoPreparacion $montaje, string $situacion): void {
     $solicitud = solicitudEn(EstadoSolicitud::Aprobada, ['revisada_por' => 7], $montaje);
 
     expect(dibujoDe($solicitud)['Montaje'])->toBe('actual')
@@ -65,8 +65,19 @@ it('sigue con el montaje de una aprobada hasta que el escenario queda listo', fu
 })->with([
     'sin empezar' => [EstadoPreparacion::Pendiente, 'Por montar'],
     'a medias' => [EstadoPreparacion::EnPreparacion, 'Montando'],
-    'terminado' => [EstadoPreparacion::Preparado, 'Escenario listo'],
 ]);
+
+it('da la línea por terminada cuando el escenario queda listo: toda en tinta, sin fase actual', function (): void {
+    // El rojo dice dónde está en juego la solicitud; terminada, ya no lo está.
+    $solicitud = solicitudEn(EstadoSolicitud::Aprobada, ['revisada_por' => 7], EstadoPreparacion::Preparado);
+
+    expect(dibujoDe($solicitud))->toBe([
+        'Solicitud' => 'hecho',
+        'Revisión' => 'hecho',
+        'Aprobación' => 'hecho',
+        'Montaje' => 'hecho',
+    ])->and(LineaDeEstados::situacion(LineaDeEstados::deSolicitud($solicitud)))->toBe('Escenario listo');
+});
 
 it('corta la línea en la revisión cuando la rechazan sin haberla revisado', function (): void {
     $solicitud = solicitudEn(EstadoSolicitud::Rechazada, ['revisada_por' => null]);

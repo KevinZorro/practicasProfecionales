@@ -9,7 +9,8 @@
     que es donde llega en papel.
 
     La cabecera se pinta con la página, no con Livewire: lo que la cambia
-    (aprobar, reprogramar, sustituir) recarga la página al terminar.
+    (aprobar, reprogramar, sustituir, retirar o agregar estudiantes) recarga
+    la página al terminar.
 --}}
 @props(['solicitud', 'pestana' => 'detalle'])
 
@@ -67,13 +68,15 @@
             <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:flex sm:flex-wrap sm:gap-x-12">
                 <x-dato etiqueta="Fecha">{{ \Illuminate\Support\Str::ucfirst($solicitud->fecha->translatedFormat('l j \d\e F')) }}</x-dato>
                 <x-dato etiqueta="Hora">{{ substr($solicitud->hora_inicio, 0, 5) }}–{{ substr($solicitud->hora_fin, 0, 5) }}</x-dato>
-                <x-dato etiqueta="Sala" class="col-span-2 sm:col-span-1">
+                <x-dato etiqueta="Sala">
                     @if ($sala)
                         {{ $sala->nombreCompleto() }}
                     @else
                         <span class="text-gray-500">Se asigna al preparar</span>
                     @endif
                 </x-dato>
+                {{-- Cambia al retirar o agregar a alguien: la pestaña de participantes recarga la página. --}}
+                <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}</x-dato>
             </dl>
         </div>
 
@@ -90,7 +93,7 @@
                     <a href="{{ $enlace }}"
                        @class([
                            'relative inline-flex h-11 items-center whitespace-nowrap rounded-t-lg px-3 text-[15px] transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-rojo',
-                           'font-semibold text-gray-900 after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:bg-rojo' => $clave === $pestana,
+                           'font-semibold text-gray-900 after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:bg-gray-900' => $clave === $pestana,
                            'font-medium text-gray-500 hover:text-gray-900' => $clave !== $pestana,
                        ])
                        @if ($clave === $pestana) aria-current="page" @endif>

@@ -60,7 +60,7 @@
                                         $total = $montaje->items->count();
                                         $alistados = $montaje->items->where('pivot.alistado', true)->count();
                                     @endphp
-                                    <li class="relative grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 gap-y-2 px-4 py-4 transition-colors duration-150 hover:bg-gray-50 sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:items-center sm:px-5">
+                                    <li class="relative grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 gap-y-2 px-4 py-4 transition-colors duration-150 hover:bg-gray-100 sm:grid-cols-[3rem_minmax(0,1fr)_auto] sm:items-center sm:px-5">
                                         <p class="text-[15px] font-semibold leading-tight text-gray-900">
                                             {{ substr($solicitud->hora_inicio, 0, 5) }}
                                             <span class="block text-[13px] font-normal text-gray-500">{{ substr($solicitud->hora_fin, 0, 5) }}</span>

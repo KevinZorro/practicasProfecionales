@@ -1,6 +1,12 @@
 @extends('layouts.panel')
 
-@section('titulo', 'Evaluación')
+@section('titulo', $evaluacion->tipoEvaluacion->nombre)
+@section('descripcion', implode(' · ', array_filter([
+    $evaluacion->solicitud->casoClinico->nombre,
+    $evaluacion->solicitud->materia->nombre,
+    $evaluacion->solicitud->grupo ? 'grupo '.$evaluacion->solicitud->grupo : null,
+    $evaluacion->solicitud->fecha->format('d/m/Y'),
+])))
 
 @section('volver')
     <a href="{{ route('panel.evaluaciones') }}" class="enlace-de-vuelta">

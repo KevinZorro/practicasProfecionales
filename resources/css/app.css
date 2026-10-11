@@ -166,6 +166,15 @@
     cursor: pointer;
 }
 
+/* En la vista de mes el evento es un punto (un borde de 4 px sobre una caja
+   vacía): el de la evaluación va hueco, como su etiqueta en contorno. Mismo
+   diámetro de 8 px, con 4 px de hueco. */
+.calendario.fc .evento-evaluacion .fc-daygrid-event-dot {
+    width: 4px;
+    height: 4px;
+    border-width: 2px;
+}
+
 @media (max-width: 640px) {
     /* Los tres grupos de la barra no caben en una fila a 390 px. */
     .calendario.fc .fc-toolbar.fc-header-toolbar {

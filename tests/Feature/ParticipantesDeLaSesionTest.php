@@ -188,12 +188,21 @@ it('retira y agrega desde la pantalla', function (): void {
         ->set('motivoRetiro', 'Incapacidad médica')
         ->call('retirar', $ana->id)
         ->assertHasNoErrors()
+        // La cabecera del expediente cuenta los estudiantes: se recarga.
+        ->assertRedirect(route('panel.solicitudes.participantes', $sesion));
+
+    Livewire::actingAs($this->docente)
+        ->test(ParticipantesDeLaSesion::class, ['solicitud' => $sesion->fresh()])
         ->assertSee('Incapacidad médica')
         ->set('busquedaEstudiante', 'Luis')
         ->call('agregar', $luis->id)
-        ->assertSee('Luis Mora');
+        ->assertRedirect(route('panel.solicitudes.participantes', $sesion));
 
     expect($sesion->estudiantesPresentes()->pluck('users.id')->all())->toBe([$luis->id]);
+
+    Livewire::actingAs($this->docente)
+        ->test(ParticipantesDeLaSesion::class, ['solicitud' => $sesion->fresh()])
+        ->assertSee('Luis Mora');
 });
 
 // ---------------------------------------------------------------------

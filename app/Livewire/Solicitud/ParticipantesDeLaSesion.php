@@ -57,6 +57,7 @@ final class ParticipantesDeLaSesion extends Component
 
         if ($this->ejecutar(fn () => $solicitudes->retirarEstudiante($solicitud, User::findOrFail($estudianteId), $this->motivoRetiro, Auth::user()), 'Estudiante retirado de la sesión.')) {
             $this->reset('retirando', 'motivoRetiro');
+            $this->recargar();
         }
     }
 
@@ -67,7 +68,18 @@ final class ParticipantesDeLaSesion extends Component
 
         if ($this->ejecutar(fn () => $solicitudes->agregarEstudiantes($solicitud, [$estudianteId], Auth::user()), 'Estudiante agregado a la sesión.')) {
             $this->busquedaEstudiante = '';
+            $this->recargar();
         }
+    }
+
+    /**
+     * La cabecera del expediente cuenta los estudiantes, y no es parte de
+     * este componente: se recarga la página para que no se quede con la
+     * cifra de antes.
+     */
+    private function recargar(): void
+    {
+        $this->redirectRoute('panel.solicitudes.participantes', ['solicitud' => $this->solicitudId], navigate: true);
     }
 
     /** El permiso que exige el controlador de la página. */

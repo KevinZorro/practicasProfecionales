@@ -8,16 +8,15 @@
         <x-aviso tono="peligro" role="alert">{{ $errorDeRegla }}</x-aviso>
     @endif
 
+    {{-- El nombre de la evaluación es el título de la página; aquí, cómo va. --}}
     <x-tarjeta>
-        <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-                <p class="text-[1.25rem] font-bold leading-snug tracking-[-0.015em] text-gray-900">{{ $evaluacion->tipoEvaluacion->nombre }}</p>
-                <p class="mt-0.5 text-[15px] leading-snug text-gray-500">
-                    {{ $evaluacion->solicitud->casoClinico->nombre }} · {{ $evaluacion->solicitud->materia->nombre }}
-                    {{ $evaluacion->solicitud->grupo ? '· grupo '.$evaluacion->solicitud->grupo : '' }}
-                    · {{ $evaluacion->solicitud->fecha->format('d/m/Y') }}
-                </p>
-            </div>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-[15px] text-gray-700">
+                {{ trans_choice(':count estudiante|:count estudiantes', $evaluacion->estudiantes->count(), ['count' => $evaluacion->estudiantes->count()]) }}
+                @if ($evaluacion->estudiantes->isNotEmpty())
+                    · {{ $sinResultado === 0 ? 'todos con resultado' : trans_choice(':count sin resultado|:count sin resultado', $sinResultado, ['count' => $sinResultado]) }}
+                @endif
+            </p>
             <x-etiqueta-estado :estado="$evaluacion->estado" />
         </div>
         <x-slot:pie>
@@ -79,12 +78,19 @@
                 @foreach ($evaluacion->items as $item)
                     @php($cumplido = in_array($item->id, $cumplidos, true))
                     <li wire:key="item-{{ $registro->id }}-{{ $item->id }}">
-                        <label @class(['flex items-start gap-3 px-3.5 py-3 text-[15px] leading-snug text-gray-900', 'cursor-pointer' => $editable])>
-                            <input type="checkbox" @checked($cumplido) @disabled(! $editable)
-                                   wire:click="alternarItem({{ $registro->id }}, {{ $item->id }})"
-                                   class="casilla mt-px">
-                            <span>{{ $item->descripcion }}</span>
-                        </label>
+                        @if ($editable)
+                            <label class="flex cursor-pointer items-start gap-3 px-3.5 py-3 text-[15px] leading-snug text-gray-900">
+                                <input type="checkbox" @checked($cumplido)
+                                       wire:click="alternarItem({{ $registro->id }}, {{ $item->id }})"
+                                       class="casilla mt-px">
+                                <span>{{ $item->descripcion }}</span>
+                            </label>
+                        @else
+                            <p class="flex items-start gap-3 px-3.5 py-3 text-[15px] leading-snug">
+                                <x-marca-de-checklist :cumplido="$cumplido" />
+                                <span @class(['text-gray-900' => $cumplido, 'text-gray-600' => ! $cumplido])>{{ $item->descripcion }}<span class="sr-only">{{ $cumplido ? ' (cumplido)' : ' (no cumplido)' }}</span></span>
+                            </p>
+                        @endif
                     </li>
                 @endforeach
             </ul>

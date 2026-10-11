@@ -47,7 +47,7 @@
         @php($grupos = $montaje->items->groupBy(fn ($item) => in_array($item->id, $delIngeniero, true) ? 'ingeniero' : $item->tipo->value)->sortKeysUsing(fn ($a, $b) => ($b === 'ingeniero') <=> ($a === 'ingeniero')))
 
         @forelse ($grupos as $tipo => $delTipo)
-            <h4 @class(['mb-2 mt-4 text-[13px] font-semibold', 'text-violet-800' => $tipo === 'ingeniero', 'text-gray-500' => $tipo !== 'ingeniero'])>
+            <h4 @class(['mb-2 mt-4 text-[13px] font-semibold', 'text-amber-800' => $tipo === 'ingeniero', 'text-gray-500' => $tipo !== 'ingeniero'])>
                 {{ $tipo === 'ingeniero' ? 'Requiere al ingeniero (alta fidelidad)' : \App\Enums\TipoItemInventario::from($tipo)->etiqueta() }}
             </h4>
             <ul class="space-y-2">
