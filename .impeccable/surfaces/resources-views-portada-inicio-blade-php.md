@@ -21,16 +21,17 @@ Portada pública del laboratorio (`/`) y el detalle de cada escenario clínico (
 - Exactamente seis animaciones, en CSS (transform y opacity) con IntersectionObserver, sin librerías, desactivadas con `prefers-reduced-motion`, contenido completo sin ellas: (1) fade-up del titular y pulso dibujado una vez; (2) conteo de cifras; (3) reveal escalonado de secciones y tarjetas, máximo 400 ms; (4) acercamiento leve del simulador principal al hacer scroll, fade en móvil; (5) brillo metálico de insignias al entrar y leve inclinación con el cursor; (6) credenciales de docentes: la foto se eleva y aparecen los títulos al pasar el cursor, siempre visibles en móvil. Ninguna otra sin consultar.
 - Sin fotos reales por ahora: cada bloque necesita un estado sin foto bien resuelto.
 - Fuera de esta entrega: galería de videos (RF08, espera RF17) y formulario por taller (RF09).
+- Cambio del usuario (10-oct-2026, PR #49): con video cargado, el video institucional llena la primera pantalla detrás del texto, y el texto se achica y se va arriba a la derecha para dejarle el centro al video. Sin video, el hero sigue siendo blanco con el titular centrado.
 
 ## Direction contract
 
-THESIS: La portada es la página de producto del laboratorio: su equipamiento y sus escenarios se presentan como productos, una idea fuerte por sección. Rechaza el hero oscuro con texto sobre video, la rejilla de tarjetas iguales con ícono y cualquier degradado decorativo.
+THESIS: La portada es la página de producto del laboratorio: su equipamiento y sus escenarios se presentan como productos, una idea fuerte por sección. Rechaza la rejilla de tarjetas iguales con ícono y cualquier degradado decorativo. (El hero con video de fondo y texto encima, que la primera versión rechazaba, lo pidió después el usuario: ver la restricción del 10-oct.)
 
 OWN-WORLD: Blanco y gris `#f5f5f7` alternados por sección; tinta `#1d1d1f`, gris `#6e6e73`; rojo `#d30f23` solo en botones, enlaces, detalles y cifras. Onest: 800 para titulares enormes y apretados, 400 para el texto, 300 con cifras tabulares para los números de monitor. Esquinas de 28 px, sin sombras duras ni vidrio. Firma: una línea de pulso ECG en SVG, usada pocas veces.
 
 STORY: El visitante ve el laboratorio en marcha, cree que es de primer nivel por su equipamiento, sus cifras y su gente, recorre los escenarios y la oferta, y sabe dónde ingresar o pedir información.
 
-FIRST VIEWPORT: Cabecera blanca fina: símbolo UFPS y nombre del laboratorio a la izquierda, enlaces de sección y «Ingresar» en rojo a la derecha. Titular centrado de hasta 6rem, subtítulo de dos líneas, botón rojo «Conoce los escenarios» y enlace a la oferta académica. La línea de pulso cruza todo el ancho bajo los botones y se dibuja una vez. Debajo, el video institucional en un marco redondeado casi a todo el ancho.
+FIRST VIEWPORT: Cabecera blanca fina: símbolo UFPS y nombre del laboratorio a la izquierda, enlaces de sección y «Ingresar» en rojo a la derecha. Con video: el video llena la pantalla bajo la cabecera, con un velo oscuro, y el titular más pequeño, el subtítulo y los botones van arriba a la derecha en blanco. Sin video: titular centrado de hasta 4.25rem, subtítulo de dos líneas, botón rojo «Conoce los escenarios» y enlace a la oferta académica sobre blanco. La línea de pulso se dibuja una vez bajo los botones.
 
 FORM: Fijada por el brief del usuario (página de producto tipo Apple/Xiaomi con rejilla bento). Sin tirada de concept-seed: la dirección la fijó el brief.
 
