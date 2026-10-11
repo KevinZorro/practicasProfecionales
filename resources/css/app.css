@@ -3,6 +3,78 @@
 @tailwind utilities;
 
 /*
+ * Lo que pinta el navegador por su cuenta también lleva la marca: la
+ * selección de texto, el cursor de los campos, las casillas y las barras
+ * de desplazamiento.
+ */
+@layer base {
+    ::selection {
+        background-color: rgb(211 15 35 / 0.16);
+    }
+
+    input,
+    textarea {
+        caret-color: theme('colors.rojo.DEFAULT');
+    }
+
+    input[type='checkbox'],
+    input[type='radio'] {
+        accent-color: theme('colors.tinta');
+    }
+
+    :root {
+        scrollbar-color: theme('colors.gray.300') transparent;
+    }
+}
+
+/*
+ * Panel: los campos de formulario. Se repiten un centenar de veces en las
+ * pantallas Livewire, así que su aspecto vive aquí, una sola vez, y cada
+ * campo solo añade su ancho. Sin el plugin de formularios de Tailwind:
+ * estas reglas bastan y no suman una dependencia.
+ *
+ * En el celular la letra es de 16 px: con menos, Safari acerca la página al
+ * tocar el campo y el administrativo pierde la vista del escenario.
+ */
+@layer components {
+    .campo {
+        @apply block w-full rounded-[10px] border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 transition-colors duration-150 placeholder:text-gray-500 hover:border-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:py-2 sm:text-[15px];
+    }
+
+    select.campo {
+        @apply appearance-none bg-no-repeat pr-10;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-position: right 0.8rem center;
+        background-size: 0.75rem;
+    }
+
+    textarea.campo {
+        @apply min-h-[5.5rem] leading-relaxed;
+    }
+
+    .campo-etiqueta {
+        @apply mb-1.5 block text-[13px] font-semibold text-gray-700;
+    }
+
+    .campo-ayuda {
+        @apply mt-1.5 text-[13px] leading-snug text-gray-500;
+    }
+
+    .campo-error {
+        @apply mt-1.5 text-[13px] font-medium leading-snug text-rojo-700;
+    }
+
+    /* «← Solicitudes»: la vuelta a la lista de la que se vino. */
+    .enlace-de-vuelta {
+        @apply -ml-1 inline-flex min-h-9 items-center gap-1 rounded-full pl-1 pr-3 text-[14px] font-semibold text-gray-500 transition-colors duration-150 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo;
+    }
+
+    .casilla {
+        @apply size-[1.125rem] shrink-0 cursor-pointer rounded border-gray-300 disabled:cursor-not-allowed;
+    }
+}
+
+/*
  * Onest, la tipografía de la portada pública. Viene de Google Fonts pero se
  * sirve desde el propio servidor: carga más rápido en conexiones lentas, no
  * pasa la IP de los visitantes a otro sitio y no hay que abrir la

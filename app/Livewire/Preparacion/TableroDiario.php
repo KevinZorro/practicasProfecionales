@@ -8,6 +8,7 @@ use App\Enums\EstadoPreparacion;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
 use App\Models\Preparacion;
 use App\Models\Sala;
@@ -32,6 +33,7 @@ use Livewire\Component;
 final class TableroDiario extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Url(as: 'fecha', keep: false)]
     public string $fecha = '';
@@ -98,7 +100,7 @@ final class TableroDiario extends Component
 
         try {
             $preparaciones->asignarSala($preparacion, Sala::findOrFail($this->salaElegida));
-            session()->flash('estado', 'Sala asignada.');
+            $this->avisar('Sala asignada.');
         } catch (SalaOcupada $choque) {
             $this->conflictos[$preparacionId] = $this->describir($choque);
         }
@@ -139,7 +141,7 @@ final class TableroDiario extends Component
         $this->validate(['observaciones' => 'nullable|string|max:1000']);
 
         $preparaciones->registrarObservaciones($preparacion, $this->observaciones ?: null);
-        session()->flash('estado', 'Observaciones guardadas.');
+        $this->avisar('Observaciones guardadas.');
     }
 
     /** El permiso que exige el controlador de la página. */

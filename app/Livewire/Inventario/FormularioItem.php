@@ -8,6 +8,7 @@ use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Exceptions\InventarioInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
 use App\Services\DatosItemInventario;
 use App\Services\InventarioService;
@@ -31,6 +32,7 @@ use Livewire\Component;
 final class FormularioItem extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     public ?ItemInventario $item = null;
 
@@ -102,7 +104,7 @@ final class FormularioItem extends Component
             return;
         }
 
-        session()->flash('estado', 'Ítem guardado.');
+        $this->avisar('Ítem guardado.');
         $this->redirectRoute('panel.inventario', navigate: true);
     }
 

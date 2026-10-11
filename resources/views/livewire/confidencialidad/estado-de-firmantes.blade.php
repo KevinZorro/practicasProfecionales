@@ -1,11 +1,5 @@
 <div class="space-y-4">
 
-    @if (session('estado'))
-        <p class="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-inset ring-emerald-600/20" role="status">
-            {{ session('estado') }}
-        </p>
-    @endif
-
     @if ($errorDeRegla)
         <p class="rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-900 ring-1 ring-inset ring-rose-600/20" role="alert">
             {{ $errorDeRegla }}

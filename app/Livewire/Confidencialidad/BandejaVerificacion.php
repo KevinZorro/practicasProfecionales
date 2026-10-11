@@ -7,6 +7,7 @@ namespace App\Livewire\Confidencialidad;
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Exceptions\FormatoConfidencialidadInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\FormatoConfidencialidad;
 use App\Services\ConfidencialidadService;
 use Illuminate\Support\Facades\Auth;
@@ -23,6 +24,7 @@ use Livewire\WithPagination;
 final class BandejaVerificacion extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     #[Url(as: 'estado', keep: false)]
@@ -80,7 +82,7 @@ final class BandejaVerificacion extends Component
             return;
         }
 
-        session()->flash('estado', 'Formato verificado.');
+        $this->avisar('Formato verificado.');
     }
 
     public function rechazar(int $entregaId, ConfidencialidadService $confidencialidad): void
@@ -99,7 +101,7 @@ final class BandejaVerificacion extends Component
         }
 
         $this->cancelar();
-        session()->flash('estado', 'Formato devuelto para que lo vuelvan a subir.');
+        $this->avisar('Formato devuelto para que lo vuelvan a subir.');
     }
 
     /** El permiso que exige el controlador de la página. */

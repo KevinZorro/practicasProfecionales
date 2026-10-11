@@ -6,6 +6,7 @@ namespace App\Livewire\PeriodoAcademico;
 
 use App\Exceptions\PeriodoAcademicoInvalido;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\PeriodoAcademico;
 use App\Services\PeriodoAcademicoService;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,7 @@ use Livewire\WithPagination;
 final class GestionDePeriodos extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
     use WithPagination;
 
     #[Validate('required|string|max:20')]
@@ -80,7 +82,7 @@ final class GestionDePeriodos extends Component
             return false;
         }
 
-        session()->flash('estado', $mensaje);
+        $this->avisar($mensaje);
 
         return true;
     }

@@ -1,11 +1,5 @@
 <div class="space-y-4">
 
-    @if (session('estado'))
-        <p class="rounded-md bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-1 ring-inset ring-emerald-600/20" role="status">
-            {{ session('estado') }}
-        </p>
-    @endif
-
     {{-- Filtros --}}
     <x-tarjeta>
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

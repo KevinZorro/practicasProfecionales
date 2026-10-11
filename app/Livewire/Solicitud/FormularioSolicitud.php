@@ -8,6 +8,7 @@ use App\Enums\TipoSesion;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
+use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\Materia;
@@ -32,6 +33,7 @@ use Livewire\Component;
 final class FormularioSolicitud extends Component
 {
     use AutorizaEnCadaPeticion;
+    use AvisaDelResultado;
 
     #[Validate('required|string')]
     public string $tipo = TipoSesion::Practica->value;
@@ -154,7 +156,7 @@ final class FormularioSolicitud extends Component
             return;
         }
 
-        session()->flash('estado', 'Tu solicitud quedó registrada. El laboratorio la revisará antes de aprobarla.');
+        $this->avisar('Tu solicitud quedó registrada. El laboratorio la revisará antes de aprobarla.');
         $this->redirectRoute('panel.mis-solicitudes', navigate: true);
     }
 
