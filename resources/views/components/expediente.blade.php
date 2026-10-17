@@ -21,7 +21,7 @@
     $pestanas = [
         'detalle' => ['Detalle', route('panel.solicitudes.ver', $solicitud), true],
         'participantes' => ['Participantes', route('panel.solicitudes.participantes', $solicitud), true],
-        'novedades' => ['Novedades', route('panel.solicitudes.novedades', $solicitud), auth()->user()->can('reprogramar', $solicitud)],
+        'novedades' => ['Cambiar docente o fecha', route('panel.solicitudes.novedades', $solicitud), auth()->user()->can('reprogramar', $solicitud)],
         'formato-intramural' => [
             'Formato intramural',
             route('panel.solicitudes.formato-intramural', $solicitud),

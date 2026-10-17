@@ -1,6 +1,6 @@
 @extends('layouts.panel')
 
-@section('titulo', 'Novedades · '.$solicitud->casoClinico->nombre)
+@section('titulo', 'Cambiar docente o fecha · '.$solicitud->casoClinico->nombre)
 @section('sin-cabecera', '1')
 
 @section('contenido')

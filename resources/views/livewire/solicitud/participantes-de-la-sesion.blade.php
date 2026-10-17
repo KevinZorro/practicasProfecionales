@@ -29,6 +29,14 @@
             </ul>
             <p class="mt-2 text-[14px] text-gray-600">La sesión no se cancela sola: coordinación decide si se reprograma o se sustituye al docente.</p>
         @endif
+        {{-- Aquí es donde se ve quién dicta; cambiarlo tiene que estar a un toque. --}}
+        @can('reprogramar', $solicitud)
+            <div class="mt-4 border-t border-gray-100 pt-4">
+                <x-boton variante="secundario" tamano="chico" href="{{ route('panel.solicitudes.novedades', $solicitud) }}">
+                    Cambiar el docente
+                </x-boton>
+            </div>
+        @endcan
     </x-tarjeta>
 
     <x-tarjeta titulo="Estudiantes">

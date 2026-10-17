@@ -68,9 +68,9 @@ it('enseña la pestaña de novedades solo con la sesión aprobada y a quien pued
     $aprobada = Solicitud::factory()->aprobada()->create();
     $pendiente = Solicitud::factory()->create();
 
-    $this->actingAs($this->administrativo)->get(route('panel.solicitudes.ver', $aprobada))->assertSee('Novedades');
-    $this->actingAs($this->administrativo)->get(route('panel.solicitudes.ver', $pendiente))->assertDontSee('Novedades');
-    $this->actingAs($this->admin)->get(route('panel.solicitudes.ver', $aprobada))->assertDontSee('Novedades');
+    $this->actingAs($this->administrativo)->get(route('panel.solicitudes.ver', $aprobada))->assertSee('Cambiar docente o fecha');
+    $this->actingAs($this->administrativo)->get(route('panel.solicitudes.ver', $pendiente))->assertDontSee('Cambiar docente o fecha');
+    $this->actingAs($this->admin)->get(route('panel.solicitudes.ver', $aprobada))->assertDontSee('Cambiar docente o fecha');
 });
 
 // ---------------------------------------------------------------------
