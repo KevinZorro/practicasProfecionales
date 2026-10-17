@@ -8,11 +8,14 @@
     intramural, en las sesiones apartadas antes del semestre (RF57, RF59),
     que es donde llega en papel.
 
+    El enlace de vuelta lleva a la pantalla desde la que se abrió el
+    expediente (App\Support\VueltaDelExpediente), no a una fija.
+
     La cabecera se pinta con la página, no con Livewire: lo que la cambia
     (aprobar, reprogramar, sustituir, retirar o agregar estudiantes) recarga
     la página al terminar.
 --}}
-@props(['solicitud', 'pestana' => 'detalle'])
+@props(['solicitud', 'volver', 'pestana' => 'detalle'])
 
 @php
     $pestanas = [
@@ -30,17 +33,10 @@
 @endphp
 
 <div class="space-y-5">
-    @can('verBandeja', \App\Models\Solicitud::class)
-        <a href="{{ route('panel.solicitudes') }}" class="enlace-de-vuelta">
-            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-            Solicitudes
-        </a>
-    @else
-        <a href="{{ route('panel.mis-solicitudes') }}" class="enlace-de-vuelta">
-            <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-            Mis solicitudes
-        </a>
-    @endcan
+    <a href="{{ $volver->url }}" class="enlace-de-vuelta">
+        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+        {{ $volver->etiqueta }}
+    </a>
 
     <header class="rounded-2xl bg-white">
         <div class="px-5 pt-5 sm:px-7 sm:pt-7">

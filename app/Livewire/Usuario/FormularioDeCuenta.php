@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\DatosUsuario;
 use App\Services\UsuarioService;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -45,6 +46,13 @@ final class FormularioDeCuenta extends Component
     public string $programa = '';
 
     public ?string $errorDeRegla = null;
+
+    /**
+     * A dónde se vuelve al guardar: la lista con los filtros que tenía
+     * (EnlaceDeVuelta::aLaLista). Bloqueada porque lleva a una redirección.
+     */
+    #[Locked]
+    public ?string $volverA = null;
 
     public function mount(?User $cuenta = null): void
     {
@@ -85,7 +93,7 @@ final class FormularioDeCuenta extends Component
         }
 
         $this->avisar($this->cuenta instanceof User ? 'Cuenta actualizada.' : 'Cuenta creada. Ahora asígnale un rol.');
-        $this->redirectRoute('panel.usuarios', navigate: true);
+        $this->redirect($this->volverA ?? route('panel.usuarios'), navigate: true);
     }
 
     /** El permiso que exige el controlador de la página. */

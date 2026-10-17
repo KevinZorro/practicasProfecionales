@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\ItemInventario;
+use App\Support\EnlaceDeVuelta;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -28,14 +29,14 @@ final class InventarioController extends Controller
     {
         abort_unless($peticion->user()->can('create', ItemInventario::class), 403);
 
-        return view('panel.inventario.formulario', ['item' => null]);
+        return view('panel.inventario.formulario', ['item' => null, 'volver' => $this->vueltaAlInventario($peticion)]);
     }
 
     public function editar(Request $peticion, ItemInventario $item): View
     {
         abort_unless($peticion->user()->can('update', $item), 403);
 
-        return view('panel.inventario.formulario', ['item' => $item]);
+        return view('panel.inventario.formulario', ['item' => $item, 'volver' => $this->vueltaAlInventario($peticion)]);
     }
 
     /** RF40: la disponibilidad no la ve un docente por ninguna vía. */
@@ -43,6 +44,11 @@ final class InventarioController extends Controller
     {
         abort_unless($peticion->user()->can('viewAny', ItemInventario::class), 403);
 
-        return view('panel.inventario.disponibilidad');
+        return view('panel.inventario.disponibilidad', ['volver' => $this->vueltaAlInventario($peticion)]);
+    }
+
+    private function vueltaAlInventario(Request $peticion): EnlaceDeVuelta
+    {
+        return EnlaceDeVuelta::aLaLista($peticion, 'panel.inventario', 'Inventario');
     }
 }
