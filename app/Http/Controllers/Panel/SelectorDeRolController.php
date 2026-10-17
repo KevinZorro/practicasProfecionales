@@ -27,6 +27,11 @@ final class SelectorDeRolController extends Controller
         // Quien no tiene el rol no se lo pone, aunque forme el POST a mano.
         abort_unless($rolActivo->establecer($peticion->user(), $rol), 403);
 
-        return back()->with('estado', "Ahora estás viendo el sistema como {$rol->etiqueta()}.");
+        // A «Hoy» y no de vuelta a la pantalla en la que estaba: con otro rol
+        // esa pantalla puede no existir (la bandeja de solicitudes no es del
+        // docente), y volver a ella enseñaba «Prohibido» justo después de
+        // decir que el cambio se hizo. «Hoy» siempre existe y enseña lo que
+        // espera con el rol nuevo.
+        return redirect()->route('panel.inicio')->with('estado', "Ahora estás viendo el sistema como {$rol->etiqueta()}.");
     }
 }

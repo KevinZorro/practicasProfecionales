@@ -29,6 +29,14 @@
     <link rel="preload" href="{{ asset('fonts/onest/onest-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{--
+        Livewire trae Alpine, y por su cuenta solo inyecta sus scripts en las
+        páginas que montan un componente. «Hoy» y el calendario no montan
+        ninguno, así que el aviso de la acción se quedaba pegado: sin Alpine
+        no se iba solo ni se cerraba con la equis. Se cargan siempre.
+    --}}
+    @livewireStyles
 </head>
 <body class="min-h-screen bg-niebla font-sans text-[15px] text-gray-900 antialiased">
 
@@ -221,5 +229,6 @@
     </div>
 </div>
 
+@livewireScripts
 </body>
 </html>
