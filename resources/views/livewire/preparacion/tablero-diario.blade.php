@@ -99,7 +99,7 @@
                             </x-boton>
                             @can('reprogramar', $solicitud)
                                 <x-boton variante="texto" href="{{ route('panel.solicitudes.novedades', $solicitud) }}" class="w-full sm:w-auto">
-                                    Reprogramar o sustituir
+                                    Cambiar docente o fecha
                                 </x-boton>
                             @endcan
                         </div>

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Solicitud;
 use App\Services\SolicitudService;
+use App\Support\VueltaDelExpediente;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -22,7 +23,10 @@ use Illuminate\View\View;
  */
 final class SolicitudController extends Controller
 {
-    public function __construct(private readonly SolicitudService $solicitudes) {}
+    public function __construct(
+        private readonly SolicitudService $solicitudes,
+        private readonly VueltaDelExpediente $vuelta,
+    ) {}
 
     /** Historial del docente (RF35). */
     public function mias(Request $peticion): View
@@ -53,7 +57,10 @@ final class SolicitudController extends Controller
     {
         abort_unless($peticion->user()->can('view', $solicitud), 403);
 
-        return view('panel.solicitudes.expediente', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
+        return view('panel.solicitudes.expediente', [
+            'solicitud' => $this->solicitudes->paraElExpediente($solicitud),
+            'volver' => $this->vuelta->para($peticion, $solicitud),
+        ]);
     }
 
     /** Reprogramar la sesión y sustituir al docente (RF61, RF73). */
@@ -61,7 +68,10 @@ final class SolicitudController extends Controller
     {
         abort_unless($peticion->user()->can('reprogramar', $solicitud), 403);
 
-        return view('panel.solicitudes.novedades', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
+        return view('panel.solicitudes.novedades', [
+            'solicitud' => $this->solicitudes->paraElExpediente($solicitud),
+            'volver' => $this->vuelta->para($peticion, $solicitud),
+        ]);
     }
 
     /** Sesiones apartadas antes del semestre (RF57). */
@@ -77,7 +87,10 @@ final class SolicitudController extends Controller
     {
         abort_unless($peticion->user()->can('registrarFormatoIntramural', $solicitud), 403);
 
-        return view('panel.solicitudes.formato-intramural', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
+        return view('panel.solicitudes.formato-intramural', [
+            'solicitud' => $this->solicitudes->paraElExpediente($solicitud),
+            'volver' => $this->vuelta->para($peticion, $solicitud),
+        ]);
     }
 
     /**
@@ -88,6 +101,9 @@ final class SolicitudController extends Controller
     {
         abort_unless($peticion->user()->can('view', $solicitud), 403);
 
-        return view('panel.solicitudes.participantes', ['solicitud' => $this->solicitudes->paraElExpediente($solicitud)]);
+        return view('panel.solicitudes.participantes', [
+            'solicitud' => $this->solicitudes->paraElExpediente($solicitud),
+            'volver' => $this->vuelta->para($peticion, $solicitud),
+        ]);
     }
 }

@@ -58,7 +58,7 @@ it('cambia de rol sin cerrar sesión y lo guarda en la sesión, no en la base', 
     $this->actingAs($coordinadoraDocente)
         ->from(route('panel.calendario'))
         ->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value])
-        ->assertRedirect(route('panel.calendario'));
+        ->assertRedirect(route('panel.inicio'));
 
     expect(session(RolActivo::CLAVE_DE_SESION))->toBe(Rol::Docente->value)
         ->and($this->isAuthenticated())->toBeTrue()
@@ -142,4 +142,33 @@ it('deja ir y volver entre los dos roles', function (): void {
 
     $this->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value]);
     $this->get(route('panel.reportes'))->assertForbidden();
+});
+
+it('carga Alpine también en las pantallas sin componentes, para que el aviso del cambio se pueda cerrar', function (string $ruta): void {
+    $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
+
+    // «Hoy» y el calendario no montan ningún componente de Livewire, que
+    // es quien trae Alpine. Sin él, el aviso no se iba ni se cerraba.
+    $this->actingAs($coordinadoraDocente)
+        ->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value]);
+
+    $this->get(route($ruta))
+        ->assertOk()
+        ->assertSee('Ahora estás viendo el sistema como')
+        ->assertSee('/livewire/livewire', false);
+})->with(['panel.inicio', 'panel.calendario']);
+
+it('al cambiar de rol lleva a «Hoy», no a una pantalla que el rol nuevo no puede ver', function (): void {
+    $coordinadoraDocente = usuarioConRoles(Rol::Coordinador, Rol::Docente);
+
+    // La bandeja de solicitudes es de coordinación, no del docente: volver
+    // a ella enseñaba «Prohibido» justo después de anunciar el cambio.
+    $this->actingAs($coordinadoraDocente)
+        ->from(route('panel.solicitudes'))
+        ->post(route('panel.rol-activo'), ['rol' => Rol::Docente->value])
+        ->assertRedirect(route('panel.inicio'));
+
+    $this->get(route('panel.inicio'))
+        ->assertOk()
+        ->assertSee('Ahora estás viendo el sistema como Docente.');
 });

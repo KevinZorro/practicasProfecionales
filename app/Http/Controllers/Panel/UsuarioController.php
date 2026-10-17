@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\AsignacionDeRol;
 use App\Models\User;
+use App\Support\EnlaceDeVuelta;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -28,13 +29,18 @@ final class UsuarioController extends Controller
     {
         abort_unless($peticion->user()->can('create', User::class), 403);
 
-        return view('panel.usuarios.formulario', ['cuenta' => null]);
+        return view('panel.usuarios.formulario', ['cuenta' => null, 'volver' => $this->vueltaALaLista($peticion)]);
     }
 
     public function editar(Request $peticion, User $cuenta): View
     {
         abort_unless($peticion->user()->can('update', $cuenta), 403);
 
-        return view('panel.usuarios.formulario', ['cuenta' => $cuenta]);
+        return view('panel.usuarios.formulario', ['cuenta' => $cuenta, 'volver' => $this->vueltaALaLista($peticion)]);
+    }
+
+    private function vueltaALaLista(Request $peticion): EnlaceDeVuelta
+    {
+        return EnlaceDeVuelta::aLaLista($peticion, 'panel.usuarios', 'Usuarios y roles');
     }
 }

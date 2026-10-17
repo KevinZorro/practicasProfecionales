@@ -13,6 +13,7 @@ use App\Models\ItemInventario;
 use App\Services\DatosItemInventario;
 use App\Services\InventarioService;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -57,6 +58,13 @@ final class FormularioItem extends Component
     public string $nivelFidelidad = '';
 
     public ?string $errorDeRegla = null;
+
+    /**
+     * A dónde se vuelve al guardar: la lista con los filtros que tenía
+     * (EnlaceDeVuelta::aLaLista). Bloqueada porque lleva a una redirección.
+     */
+    #[Locked]
+    public ?string $volverA = null;
 
     public function mount(?ItemInventario $item = null): void
     {
@@ -105,7 +113,7 @@ final class FormularioItem extends Component
         }
 
         $this->avisar('Ítem guardado.');
-        $this->redirectRoute('panel.inventario', navigate: true);
+        $this->redirect($this->volverA ?? route('panel.inventario'), navigate: true);
     }
 
     /** El permiso que exige el controlador de la página. */

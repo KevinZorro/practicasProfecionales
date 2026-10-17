@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\FormatoConfidencialidad;
 use App\Models\PlantillaConfidencialidad;
+use App\Models\Solicitud;
+use App\Support\EnlaceDeVuelta;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -39,7 +41,22 @@ final class ConfidencialidadController extends Controller
     {
         abort_unless($peticion->user()->can('viewAny', FormatoConfidencialidad::class), 403);
 
-        return view('panel.confidencialidad.estado');
+        return view('panel.confidencialidad.estado', ['volver' => $this->vueltaDelEstado($peticion)]);
+    }
+
+    /**
+     * Abierto desde los participantes de una sesión, se vuelve a esa sesión:
+     * es donde estaba quien pulsó «Verificar formatos de esta sesión».
+     */
+    private function vueltaDelEstado(Request $peticion): EnlaceDeVuelta
+    {
+        $sesion = Solicitud::find($peticion->integer('sesion'));
+
+        if ($sesion !== null && $peticion->user()->can('view', $sesion)) {
+            return new EnlaceDeVuelta(route('panel.solicitudes.participantes', $sesion), 'Participantes de la sesión');
+        }
+
+        return new EnlaceDeVuelta(route('panel.formatos-confidencialidad'), 'Verificación de formatos');
     }
 
     /** RF51: la plantilla en blanco. Solo el ADMIN. */

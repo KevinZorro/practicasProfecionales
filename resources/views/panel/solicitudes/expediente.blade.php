@@ -4,7 +4,7 @@
 @section('sin-cabecera', '1')
 
 @section('contenido')
-    <x-expediente :solicitud="$solicitud" pestana="detalle">
+    <x-expediente :solicitud="$solicitud" :volver="$volver" pestana="detalle">
         <livewire:solicitud.expediente-de-solicitud :solicitud="$solicitud" />
     </x-expediente>
 @endsection
