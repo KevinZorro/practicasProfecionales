@@ -164,6 +164,12 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 |---|---|---|---|
 | RF75 | Administrativos, coordinación y ADMIN abren y cierran el periodo, sin fechas impuestas | Completo | `PeriodoAcademicoService`, `PeriodoAcademicoPolicy`, `/panel/periodo-academico`; tests en `PeriodoAcademicoTest` y `FormatoConfidencialidadTest`. A lo sumo uno abierto (índice único parcial). Entre un cierre y la siguiente apertura sigue valiendo el último y no se reciben entregas (D3). Se puede reabrir el último cerrado para deshacer un error |
 
+## Videos del contenido público (RF76)
+
+| RF | Pide | Estado | Dónde | Tests | Falta |
+|---|---|---|---|---|---|
+| RF76 | El ADMIN sube un video, en lugar de una foto o además de ella, en galería, escenarios, talleres, eventos y equipamiento destacado | Completo | `CampoDeVideo`, `VideoPublicoService`, columna `video` (migración `agrega_video_al_contenido_publico`), componente `portada/medio`, `PortadaService` | `VideosPublicosTest`, `ConfiguracionLandingTest` (topes de PHP, nginx y Livewire) | D20, D21. Certificaciones y perfiles docentes siguen solo con foto |
+
 ## Auditoría y roles (RF62–RF64)
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
@@ -243,6 +249,8 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | D17 | Al registrar una sesión apartada, si en esa franja no queda ninguna sala libre se avisa, sin impedir el registro: la sala se resuelve en la preparación | RF58 |
 | D18 | La portada no anuncia talleres ni eventos con fecha pasada: siguen en /admin, pero ya no son oferta. Hoy se cuenta en la zona de la aplicación | RF04, RF05 |
 | D19 | El calendario (RF34) es de cada quien: el docente ve solo las sesiones que dicta, el estudiante solo aquellas donde está en la lista, y quien gestiona las solicitudes ve todas. **Sin franjas «Ocupado»**: el docente no ve nada ajeno, ni sin datos. El detalle de cada sesión se abre al tocar o hacer clic; no hay agrandado al pasar el mouse, para no sumar movimiento en equipos de gama baja. Corrige un fallo de seguridad: antes cualquier rol recibía docente, materia y cantidad de estudiantes de todas las sesiones | RF34 |
+| D20 | Los videos del contenido público son **archivos** MP4 o WebM ya comprimidos, nunca enlaces a YouTube: por seguridad, para no abrir la CSP a otro sitio y para no depender de un tercero. Tope de **30 MB** por video (hasta unos 90 segundos a 720p, a unos 2,5 Mbps; 1080p cabe en menos tiempo y 4K no hace falta). El del hero sigue en 15 MB. No se recodifican (no hay ffmpeg) | RF76, RF11 |
+| D21 | Con video y foto en la misma pieza, la foto es la portada del video. Los videos no se reproducen solos ni en bucle y se piden con `preload="metadata"`, para no cargar nada que nadie pidió en conexiones lentas ni equipos de gama baja. En la tarjeta de un escenario, que es un enlace, el video se ve como su primer cuadro y se reproduce en su detalle. Los eventos, que no mostraban su imagen, la muestran ahora junto con el video | RF76 |
 
 ---
 

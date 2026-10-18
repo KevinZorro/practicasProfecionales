@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Formularios\CampoDeImagen;
+use App\Filament\Formularios\CampoDeVideo;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\EventoResource\Pages;
 use App\Models\Evento;
@@ -56,6 +57,11 @@ final class EventoResource extends RecursoDelAdmin
         return ['imagen'];
     }
 
+    public static function camposDeVideo(): array
+    {
+        return ['video'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -87,6 +93,8 @@ final class EventoResource extends RecursoDelAdmin
                     ->required(),
                 CampoDeImagen::make('imagen', 'eventos')
                     ->label('Imagen')
+                    ->columnSpanFull(),
+                CampoDeVideo::make('video', 'eventos')
                     ->columnSpanFull(),
             ]),
             Section::make('Publicación')->columns(2)->schema([
@@ -121,7 +129,7 @@ final class EventoResource extends RecursoDelAdmin
             ->actions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->after(static fn (Evento $record) => app(ImagenPublicaService::class)->borrarAlConfirmar($record->imagen)),
+                    ->after(static fn (Evento $record) => self::borrarArchivosDe($record)),
             ]);
     }
 

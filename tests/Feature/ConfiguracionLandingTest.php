@@ -9,6 +9,7 @@ use App\Models\ConfiguracionLanding;
 use App\Models\User;
 use App\Services\ConfiguracionLandingService;
 use App\Services\ImagenPublicaService;
+use App\Services\VideoPublicoService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -210,11 +211,11 @@ dataset('entornos', [
     'producción' => ['docker/php/php-produccion.ini', 'docker/produccion/nginx.conf'],
 ]);
 
-it('deja subir el video del hero por PHP, nginx y Livewire', function (string $phpIni, string $nginxConf): void {
+it('deja subir los videos (el del hero y los del contenido público) por PHP, nginx y Livewire', function (string $phpIni, string $nginxConf): void {
     // Si alguno se queda corto, la subida se corta antes de llegar al
     // formulario, con un error que no dice por qué. Livewire tiene que
     // quedar por encima del tope, para que el mensaje lo dé el formulario.
-    $tope = ConfiguracionLandingService::TAMANO_MAXIMO_VIDEO_KB;
+    $tope = max(ConfiguracionLandingService::TAMANO_MAXIMO_VIDEO_KB, VideoPublicoService::TAMANO_MAXIMO_KB);
     preg_match('/max:(\d+)/', implode('|', config('livewire.temporary_file_upload.rules')), $livewire);
 
     $php = (string) file_get_contents(base_path($phpIni));

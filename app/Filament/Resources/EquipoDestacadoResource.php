@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Formularios\CampoDeImagen;
+use App\Filament\Formularios\CampoDeVideo;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\EquipoDestacadoResource\Pages;
 use App\Models\EquipoDestacado;
@@ -53,6 +54,11 @@ final class EquipoDestacadoResource extends RecursoDelAdmin
         return ['imagen'];
     }
 
+    public static function camposDeVideo(): array
+    {
+        return ['video'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -69,6 +75,7 @@ final class EquipoDestacadoResource extends RecursoDelAdmin
             CampoDeImagen::make('imagen', 'equipamiento')
                 ->label('Foto')
                 ->helperText('Mejor una foto del equipo sobre un fondo claro y liso. Se recorta para llenar el recuadro.'),
+            CampoDeVideo::make('video', 'equipamiento'),
             Repeater::make('caracteristicas')
                 ->label('Lo que permite')
                 ->simple(
@@ -108,7 +115,7 @@ final class EquipoDestacadoResource extends RecursoDelAdmin
             ->actions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->after(static fn (EquipoDestacado $record) => app(ImagenPublicaService::class)->borrarAlConfirmar($record->imagen)),
+                    ->after(static fn (EquipoDestacado $record) => self::borrarArchivosDe($record)),
             ]);
     }
 

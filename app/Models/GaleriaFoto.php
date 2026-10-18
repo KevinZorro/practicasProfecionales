@@ -22,6 +22,7 @@ class GaleriaFoto extends Model
     protected $fillable = [
         'titulo',
         'imagen_path',
+        'video',
         'orden',
         'activo',
     ];

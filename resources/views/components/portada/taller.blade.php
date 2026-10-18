@@ -16,13 +16,13 @@
              'basis-full lg:basis-[calc(50%-0.5rem)]' => $destacado,
              'basis-full sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]' => ! $destacado,
          ])>
-    @if ($taller->imagen)
+    @if ($taller->imagen || $taller->video)
         <div @class([
                 'm-2 mb-0 overflow-hidden rounded-[20px] bg-[var(--pieza-inversa)]',
                 'aspect-[16/10]' => ! $destacado,
                 'aspect-[16/10] lg:aspect-[2/1]' => $destacado,
              ])>
-            <x-portada.foto :ruta="$taller->imagen" :alt="''" />
+            <x-portada.medio :imagen="$taller->imagen" :video="$taller->video" :alt="''" :etiqueta="$taller->titulo" />
         </div>
     @endif
 

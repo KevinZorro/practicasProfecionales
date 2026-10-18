@@ -26,6 +26,7 @@ class CasoClinico extends Model
         'descripcion',
         'capacidad_maxima_estudiantes',
         'imagen',
+        'video',
         'visible_publico',
         'orden',
         'activo',

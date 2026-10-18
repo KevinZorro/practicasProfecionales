@@ -14,22 +14,22 @@
    {{ $attributes->class([
        'revelar group flex flex-col overflow-hidden rounded-[28px] bg-[var(--pieza)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo',
        'sm:col-span-2 lg:col-span-2' => $destacado,
-       'lg:row-span-2' => $destacado && $escenario->imagen,
+       'lg:row-span-2' => $destacado && ($escenario->imagen || $escenario->video),
    ]) }}>
-    @if ($escenario->imagen)
+    @if ($escenario->imagen || $escenario->video)
         <div @class([
                 'm-2 mb-0 overflow-hidden rounded-[20px] bg-[var(--pieza-inversa)]',
                 'aspect-[16/10]' => ! $destacado,
                 'aspect-[16/10] lg:aspect-auto lg:min-h-[18rem] lg:flex-1' => $destacado,
              ])>
-            <x-portada.foto :ruta="$escenario->imagen" :alt="''" />
+            <x-portada.medio :imagen="$escenario->imagen" :video="$escenario->video" :alt="''" :controles="false" />
         </div>
     @endif
 
     <div @class([
             'flex flex-1 flex-col p-7',
             'sm:p-10' => $destacado,
-            'lg:flex-none' => $destacado && $escenario->imagen,
+            'lg:flex-none' => $destacado && ($escenario->imagen || $escenario->video),
             'lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:p-10' => $ancho,
          ])>
         <div @class(['lg:max-w-[46ch]' => $ancho])>

@@ -22,6 +22,7 @@ class Evento extends Model
         'titulo',
         'descripcion',
         'imagen',
+        'video',
         'fecha',
         'tipo_evento_id',
         'abierto_publico',

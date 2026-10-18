@@ -33,10 +33,10 @@
             </div>
         </header>
 
-        @if ($escenario->imagen)
+        @if ($escenario->imagen || $escenario->video)
             <div class="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
                 <div class="aspect-[4/3] overflow-hidden rounded-[28px] bg-portada-niebla sm:aspect-[16/9]">
-                    <x-portada.foto :ruta="$escenario->imagen" :alt="$escenario->nombre" :prioritaria="true" />
+                    <x-portada.medio :imagen="$escenario->imagen" :video="$escenario->video" :alt="$escenario->nombre" :etiqueta="$escenario->nombre" :prioritaria="true" />
                 </div>
             </div>
         @endif

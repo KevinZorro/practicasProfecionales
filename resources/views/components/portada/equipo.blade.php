@@ -13,9 +13,9 @@
         <x-portada.caracteristicas :lista="$equipo->caracteristicas ?? []" class="mt-8" />
     </div>
 
-    @if ($equipo->imagen)
+    @if ($equipo->imagen || $equipo->video)
         <div class="mx-2 mb-2 mt-auto aspect-[4/3] overflow-hidden rounded-[20px] bg-[var(--pieza-inversa)]">
-            <x-portada.foto :ruta="$equipo->imagen" :alt="$equipo->nombre" />
+            <x-portada.medio :imagen="$equipo->imagen" :video="$equipo->video" :alt="$equipo->nombre" :etiqueta="$equipo->nombre" />
         </div>
     @endif
 </article>
