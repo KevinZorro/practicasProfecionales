@@ -137,3 +137,33 @@ it('no descarga JavaScript que nadie usa', function (): void {
         expect(archivoDeProduccion("resources/views/{$vista}.blade.php"))->not->toContain('resources/js/app.js');
     }
 });
+
+// ---------------------------------------------------------------------
+// QA-14: disponibilidad (RNF02)
+// ---------------------------------------------------------------------
+
+it('vigila con un healthcheck la aplicación y el servidor web, además de la base', function (): void {
+    $compose = archivoDeProduccion('docker-compose.produccion.yml');
+
+    foreach (['app', 'web', 'db'] as $servicio) {
+        preg_match("/\n  {$servicio}:\n((?:    .*\n|\n)+)/", $compose, $bloque);
+
+        expect($bloque[1] ?? '')->toContain('healthcheck:');
+    }
+
+    expect($compose)->toContain('http://127.0.0.1/up');
+});
+
+it('rota los registros de Docker de todos los servicios que corren', function (): void {
+    $compose = archivoDeProduccion('docker-compose.produccion.yml');
+
+    expect($compose)->toContain('x-registros: &registros')
+        ->and($compose)->toMatch('/max-size: "10m"/')
+        ->and($compose)->toMatch('/max-file: "5"/');
+
+    foreach (['app', 'queue', 'programador', 'web', 'db', 'copias'] as $servicio) {
+        preg_match("/\n  {$servicio}:\n((?:    .*\n|\n)+)/", $compose, $bloque);
+
+        expect($bloque[1] ?? '')->toContain('logging: *registros');
+    }
+});
