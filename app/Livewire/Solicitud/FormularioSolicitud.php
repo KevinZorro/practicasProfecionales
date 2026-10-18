@@ -44,7 +44,7 @@ final class FormularioSolicitud extends Component
     #[Validate('required|integer|exists:casos_clinicos,id')]
     public ?int $casoClinicoId = null;
 
-    #[Validate('required|date')]
+    #[Validate('required|date|after_or_equal:today')]
     public string $fecha = '';
 
     #[Validate('required|date_format:H:i')]

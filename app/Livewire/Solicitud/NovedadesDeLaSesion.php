@@ -59,7 +59,7 @@ final class NovedadesDeLaSesion extends Component
         $solicitud = $this->solicitud();
         $this->authorize('reprogramar', $solicitud);
         $this->validate([
-            'fecha' => 'required|date',
+            'fecha' => 'required|date|after_or_equal:today',
             'horaInicio' => 'required|date_format:H:i',
             'horaFin' => 'required|date_format:H:i|after:horaInicio',
             'casoClinicoId' => 'required|integer|exists:casos_clinicos,id',

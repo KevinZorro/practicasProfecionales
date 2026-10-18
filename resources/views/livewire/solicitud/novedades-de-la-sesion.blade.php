@@ -46,7 +46,7 @@
                 <form wire:submit="reprogramar" id="form-reprogramar" class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="fecha" class="campo-etiqueta">Fecha</label>
-                        <input type="date" wire:model.live="fecha" id="fecha" class="campo">
+                        <input type="date" wire:model.live="fecha" id="fecha" min="{{ now()->toDateString() }}" class="campo">
                         @error('fecha') <p class="campo-error">{{ $message }}</p> @enderror
                     </div>
                     <div class="grid grid-cols-2 gap-3">

@@ -51,6 +51,11 @@ final class RegistroPrevioService
     {
         $this->garantizarPermiso($actor, 'registrarApartada', Solicitud::class);
         $this->garantizarDocente($datos->docenteId);
+
+        if ($this->solicitudes->esFechaPasada($datos->fecha)) {
+            throw SolicitudInvalida::fechaPasada();
+        }
+
         $this->solicitudes->garantizarCapacidad($datos->casoClinicoId, $datos->cantidadEstudiantes);
         $grupo = $this->normalizarGrupo($datos->grupo);
 

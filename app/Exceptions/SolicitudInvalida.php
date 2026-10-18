@@ -59,6 +59,11 @@ final class SolicitudInvalida extends DomainException
         return new self('La sesión tiene que quedar a nombre de un docente.');
     }
 
+    public static function fechaPasada(): self
+    {
+        return new self('Ese día ya pasó: la sesión tiene que ser de hoy en adelante.');
+    }
+
     public static function grupoInvalido(string $grupo): self
     {
         return new self(sprintf('El grupo se identifica con una o dos letras (A, B, C…); se recibió "%s".', $grupo));

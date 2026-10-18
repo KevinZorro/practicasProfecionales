@@ -52,6 +52,10 @@ final class NovedadesDeSesionService
             || substr($solicitud->hora_fin, 0, 5) !== $datos->horaFin;
         $cambiaEscenario = $solicitud->caso_clinico_id !== $datos->casoClinicoId;
 
+        if ($this->solicitudes->esFechaPasada($datos->fecha)) {
+            throw NovedadInvalida::fechaPasada();
+        }
+
         if (! $cambiaFranja && ! $cambiaEscenario) {
             throw NovedadInvalida::sinCambios();
         }

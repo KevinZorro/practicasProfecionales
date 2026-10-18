@@ -46,7 +46,7 @@
 
             <div>
                 <label for="fecha" class="campo-etiqueta">Fecha</label>
-                <input type="date" wire:model="fecha" id="fecha" class="campo">
+                <input type="date" wire:model="fecha" id="fecha" min="{{ now()->toDateString() }}" class="campo">
                 @error('fecha') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 

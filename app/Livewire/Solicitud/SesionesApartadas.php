@@ -43,7 +43,7 @@ final class SesionesApartadas extends Component
     #[Validate('required|string')]
     public string $tipo = TipoSesion::Practica->value;
 
-    #[Validate('required|date')]
+    #[Validate('required|date|after_or_equal:today')]
     public string $fecha = '';
 
     #[Validate('required|date_format:H:i')]

@@ -95,7 +95,7 @@ it('crea la solicitud con lo que el docente ajustó', function (): void {
         ->set('casoClinicoId', $caso->id)
         ->set('materiaId', $materia->id)
         ->set('tipo', TipoSesion::Evaluacion->value)
-        ->set('fecha', '2026-10-05')
+        ->set('fecha', now()->addWeek()->format('Y-m-d'))
         ->set('horaInicio', '07:00')
         ->set('horaFin', '09:00')
         ->set('grupo', 'b')

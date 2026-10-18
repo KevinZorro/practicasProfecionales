@@ -28,6 +28,11 @@ final class NovedadInvalida extends DomainException
         return new self('La fecha, la franja y el escenario son los mismos: no hay nada que reprogramar.');
     }
 
+    public static function fechaPasada(): self
+    {
+        return new self('Ese día ya pasó: la sesión se reprograma para hoy o un día posterior.');
+    }
+
     public static function noEsDocente(): self
     {
         return new self('El reemplazo tiene que ser un docente con cuenta activa.');

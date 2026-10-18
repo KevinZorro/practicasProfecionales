@@ -22,6 +22,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -38,8 +39,22 @@ final class SolicitudService
         private readonly BitacoraService $bitacora,
     ) {}
 
+    /**
+     * Una fecha anterior a hoy, en la zona de la aplicación. Hoy sí vale.
+     * Lo usan los tres caminos que ponen una sesión en el calendario: la
+     * solicitud, la sesión apartada y la reprogramación (QA-05).
+     */
+    public function esFechaPasada(string $fecha): bool
+    {
+        return Carbon::parse($fecha)->startOfDay()->isBefore(Carbon::today());
+    }
+
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
+        if ($this->esFechaPasada($datos->fecha)) {
+            throw SolicitudInvalida::fechaPasada();
+        }
+
         // Un docente bloqueado no pide escenarios nuevos (RF68, D2).
         $bloqueo = $this->bloqueos->vigenteDe($docente);
 
