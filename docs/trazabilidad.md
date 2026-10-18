@@ -2,7 +2,7 @@
 
 Estado de cada requerimiento según lo que existe en el código, no según lo que dicen los documentos.
 
-**Corte:** 9 de octubre de 2026, rama `claude/nice-brown-qgepab` en `a52d760`: `main` (`fe3e6a3`) más el rechazo en dos fases, el periodo académico, la ubicación de las salas, los estudiantes de cada sesión, el control de participantes, las pantallas de evaluación, las sesiones apartadas con su formato intramural y las novedades de sesión. Sin fusionar todavía.
+**Corte:** 18 de octubre de 2026, rama `claude/confident-knuth-pfc7lp`: `main` (`b6e168b`, con el docente supervisor y los videos del contenido público) más las correcciones de la auditoría de QA del 17 de octubre (QA-01 a QA-24, ver [Auditoría de QA](#auditoría-de-qa)). Sin fusionar todavía.
 
 **Enunciados:** `docs/requerimientos.md`, versión del 9 de octubre de 2026 con las aclaraciones del mismo día (respuestas a P1–P5 y a D1). Es la primera vez que la matriz se coteja contra el enunciado real; las versiones anteriores tuvieron que deducir qué cubría cada número a partir del código.
 
@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 71 | 5 |
+| Completo | 70 | 5 |
 | Solo backend | 0 | 0 |
-| Parcial | 0 | 5 |
+| Parcial | 1 | 5 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 3 | 0 |
 | **Total** | **75** | **10** |
@@ -93,18 +93,18 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF27 | El docente solicita, con tipo práctica o evaluación | Completo | `SolicitudService::crear()`, `/panel/solicitudes/nueva` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | |
 | RF28 | Caso, fecha y hora, materia, **grupo** y **estudiantes**; sin sala; fecha del registro previo en sesiones apartadas | Completo | `SolicitudService::crear()`, `buscarEstudiantes()`, `estudiantesPorCodigo()`, tabla `estudiante_solicitud`, `/panel/solicitudes/nueva` | `EstudiantesDeLaSesionTest`, `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest`, `CapacidadDeEscenarioTest` | El docente busca por nombre o código, o pega los códigos del grupo. Solo estudiantes activos. La cantidad sale de la lista y es la que limita la capacidad (RF74). La fecha desde el registro previo es parte de RF57 |
 | RF29 | Precarga del inventario del caso | Completo | `SolicitudService::itemsSugeridos()` | `PantallaSolicitudDocenteTest`, `FlujoSolicitudTest` | |
-| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza** | Completo | `SolicitudService::marcarRevisada()`, `rechazar()`, `SolicitudPolicy::rechazar()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest`, `SolicitudPolicyTest` | Rechazo en dos fases hecho. Mejora pendiente, no exigida para cerrar el RF: la bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). |
-| RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Queda borrar el bloque comentado de `SolicitudPolicy::aprobar()` |
+| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza**; la revisión incluye cruces de horario y estado del espacio físico | Parcial | `SolicitudService::marcarRevisada()`, `rechazar()`, `SolicitudPolicy::rechazar()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest`, `SolicitudPolicyTest` | Rechazo en dos fases hecho. **Falta** (el enunciado lo incluye en la revisión; la auditoría de QA lo pasó a Parcial): la bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). Los avisos de cruce ya existen en `RegistroPrevioService::advertencias()` y servirían de base |
+| RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Aprobar, rechazar y revisar releen la fila con bloqueo (`CarreraDeTransicionesTest`, QA-02): dos personas con la misma bandeja no pueden dejarla aprobada y rechazada. El bloque comentado de `SolicitudPolicy::aprobar()` ya no existe |
 | RF32 | Comentario opcional al rechazar | Completo | `SolicitudService::rechazar()` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | |
 | RF33 | Correo al docente con el resultado | Completo | Eventos `SolicitudAprobada`/`SolicitudRechazada`, listener en cola | `FlujoSolicitudTest`, `ListenersRegistradosTest` | |
-| RF34 | Calendario de aprobadas, cada rol con lo suyo (docente: lo que dicta; estudiante: donde está en la lista; gestión: todo), con la sala cuando exista | Completo | `SolicitudService::paraCalendario($desde, $hasta, $actor)`, `SolicitudPolicy::verTodoElCalendario()` y hermanas, `/panel/calendario` | `CalendarioSolicitudesTest`, `PantallaCalendarioTest` | D19. Vistas mes, semana y día; las sesiones simultáneas van lado a lado y el mes recorta con «+N más». Muestra a quien dicta, con «en reemplazo de…» |
+| RF34 | Calendario de aprobadas, cada rol con lo suyo (docente: lo que dicta; estudiante: donde está en la lista; gestión: todo), con la sala cuando exista | Completo | `SolicitudService::paraCalendario($desde, $hasta, $actor)`, `SolicitudPolicy::verTodoElCalendario()` y hermanas, `/panel/calendario` | `CalendarioSolicitudesTest`, `PantallaCalendarioTest` | D19. Vistas mes, semana y día; las sesiones simultáneas van lado a lado y el mes recorta con «+N más». Muestra a quien dicta, con «en reemplazo de…». El rango que pide el calendario se limita a 62 días (QA-22) |
 | RF35 | Historial del docente con estado, sala y motivo | Completo | `SolicitudService::historialDelDocente()`, `/panel/mis-solicitudes` | `PantallaSolicitudDocenteTest` | |
 
 ## Preparación e inventario (RF36–RF40)
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Completo | `PreparacionService::asignarSala()`, `salasLibresPara()`, evento `SalaAsignada` → `EnviarCorreoSalaAsignada`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest`, `UbicacionDeSalasTest` | Solo se ofrecen salas libres; las vinculadas al escenario, primero (D14). El correo sale al asignar y al cambiar la sala, no si se vuelve a elegir la misma |
+| RF36 | Vista diaria, asignar sala **y avisar al docente por correo** | Completo | `PreparacionService::asignarSala()`, `salasLibresPara()`, evento `SalaAsignada` → `EnviarCorreoSalaAsignada`, `/panel/preparaciones` | `PreparacionEscenarioTest`, `PantallaPreparacionTest`, `PreparacionPolicyTest`, `UbicacionDeSalasTest` | Solo se ofrecen salas libres; las vinculadas al escenario, primero (D14). El correo sale al asignar y al cambiar la sala, no si se vuelve a elegir la misma; llega a quien dicta, no al titular sustituido (QA-03) |
 | RF37 | Ítems alistados, estado del montaje, observaciones, avance parcial por otra persona | Completo | `PreparacionService`, `/panel/preparaciones` | `TableroDiarioTest`, `PantallaPreparacionTest` | |
 | RF38 | Registrar y actualizar inventario, retirar unidades, distinguir consumibles de **accesorios y repuestos de un simulador** | Completo | `InventarioService`, `/panel/inventario` | `InventarioTest`, `PantallaInventarioTest`, `EstadoFuncionalInventarioTest`, `AccesoriosEIngenieroTest` | Tipo nuevo «Accesorio o repuesto» ligado a un simulador del inventario (D13). Un `CHECK` de PostgreSQL exige que todo accesorio tenga simulador y que nada más lo tenga. El listado dice de qué simulador es |
 | RF39 | Nivel de fidelidad, solo el ADMIN | Completo | `ItemInventarioPolicy` | `PantallaInventarioTest` | |
@@ -141,8 +141,8 @@ Pantallas: `/panel/evaluaciones` (el docente registra sobre sus sesiones de eval
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF54 | Uso de escenarios, con horas atribuidas al docente que dictó e indicando sustitución | Completo | `ReporteService::usoDeEscenarios()`, `/panel/reportes` | `ReporteUsoDeEscenariosTest`, `PantallaDeReportesTest`, `ReporteExportacionTest`, `NovedadesDeSesionTest` | Las horas van a quien dictó (el reemplazo si lo hubo) y la columna «Por sustitución» cuenta las que dictó en reemplazo. El filtro por docente también usa a quien dictó |
-| RF55 | Resultados de evaluación, PDF y Excel | Completo | `ReporteService::resultadosDeEvaluacion()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | |
+| RF54 | Uso de escenarios, con horas atribuidas al docente que dictó e indicando sustitución | Completo | `ReporteService::usoDeEscenarios()`, `/panel/reportes` | `ReporteUsoDeEscenariosTest`, `PantallaDeReportesTest`, `ReporteExportacionTest`, `NovedadesDeSesionTest` | Las horas van a quien dictó (el reemplazo si lo hubo) y la columna «Por sustitución» cuenta las que dictó en reemplazo. El filtro por docente también usa a quien dictó. **El PDF tiene tope** (QA-01): rango de hasta 31 días y 500 filas (`REPORTES_PDF_DIAS_MAXIMOS`, `REPORTES_PDF_FILAS_MAXIMAS`); el Excel no tiene tope. El tope de días es una propuesta pendiente de confirmar (pregunta Q1) |
+| RF55 | Resultados de evaluación, PDF y Excel | Completo | `ReporteService::resultadosDeEvaluacion()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest`, `LimiteDelPdfTest` | Mismo tope de filas del PDF que RF54; el supervisor (RF77) se acota por periodo, no por días |
 | RF56 | Sesiones de evaluación aprobadas sin evaluación registrada | Completo | `ReporteService::evaluacionesNoRegistradas()` | `ReporteEvaluacionesTest`, `PantallaDeReportesTest` | |
 
 ## Programación de sesiones (RF57–RF61, RF73)
@@ -154,7 +154,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | RF57 | Los administrativos registran las sesiones apartadas antes del semestre, a mano y en parte, conviviendo con las solicitudes del semestre | Completo | `RegistroPrevioService::registrar()`, `/panel/sesiones-apartadas` | `SesionesApartadasTest` | Docente, materia, escenario, tipo, fecha, franja, cantidad y grupo si viene. Queda registrado quién la cargó. Valida la capacidad del escenario (RF74). Los estudiantes los pone el docente después, desde Participantes (D15); hasta entonces rige la cantidad registrada |
 | RF58 | Validar sala y simuladores al registrar, con aviso de cruces; sin tiempo de montaje impuesto | Completo | `RegistroPrevioService::advertencias()`, `registrarFormatoIntramural()` | `SesionesApartadasTest` | Mientras se llena el formulario se avisa de sesiones en la misma franja, del docente con otra sesión y de que no quedaría sala libre (D17). Son avisos, no impedimentos. Los simuladores se validan al registrar el formato intramural, que es cuando se conocen: se avisa de lo que no alcanza en la franja. La sala se elige en la preparación entre las libres (P4) |
 | RF59 | Formato intramural como paso posterior a la fecha | Completo | `RegistroPrevioService::registrarFormatoIntramural()`, `/panel/solicitudes/{solicitud}/formato-intramural` | `SesionesApartadasTest` | Lo digita el administrativo (P3). Se precarga el inventario del escenario y se ajusta; al guardar pasa a la preparación. La solicitud del docente lo trae desde que se crea |
-| RF60 | Alerta a administrativos y docente de sesiones próximas sin formato intramural, con antelación configurable | Completo | `RegistroPrevioService::avisarSinFormatoIntramural()`, comando `sesiones:avisar-formato-intramural` (diario, 6:00), servicio `programador` del compose, ajuste en `/admin/ajustes-del-laboratorio` | `SesionesApartadasTest` | Un correo diario por persona con todas sus sesiones (D16): al docente las suyas, a cada administrativo activo todas. Antelación de 3 días por defecto, la cambia el ADMIN (D5). La lista de sesiones apartadas marca las que no lo tienen |
+| RF60 | Alerta a administrativos y docente de sesiones próximas sin formato intramural, con antelación configurable | Completo | `RegistroPrevioService::avisarSinFormatoIntramural()`, comando `sesiones:avisar-formato-intramural` (diario, 6:00), servicio `programador` del compose, ajuste en `/admin/ajustes-del-laboratorio` | `SesionesApartadasTest` | Un correo diario por persona con todas sus sesiones (D16): al docente las suyas, a cada administrativo activo todas. Antelación de 3 días por defecto, la cambia el ADMIN (D5). La lista de sesiones apartadas marca las que no lo tienen. Con una sustitución, el aviso va a quien dicta (QA-03) |
 | RF61 | Reprogramar una sesión aprobada con motivo, constancia de comunicación y correo al docente | Completo | `NovedadesDeSesionService::reprogramar()`, tabla `reprogramaciones`, `/panel/solicitudes/{solicitud}/novedades` | `NovedadesDeSesionTest` | Administrativos y coordinación. Fecha, franja o escenario, con motivo y constancia obligatorios (D4); avisa de cruces en la franja nueva. Sigue aprobada; si cambia la franja se libera la sala, si cambia el escenario se revalida la capacidad y se borra el formato intramural. Correo al docente que dicta |
 | RF73 | Sustituir al docente de una sesión, con el original y el reemplazo | Completo | `NovedadesDeSesionService::sustituir()`, tabla `sustituciones`, `solicitudes.docente_que_dicta_id` | `NovedadesDeSesionTest` | Administrativos y coordinación (D11). El reemplazo es un docente activo y recibe un correo; ve la sesión en su historial, gestiona los participantes y registra la evaluación. Elegir al titular deshace la sustitución |
 
@@ -180,7 +180,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
 |---|---|---|---|---|---|
-| RF62 | Bitácora de aprobaciones, rechazos, reprogramaciones, retiros y cambios de rol, con usuario, fecha y motivo | Completo | `BitacoraService`, tabla `bitacora`, `/panel/bitacora` | `BitacoraTest` | Cada Service escribe su entrada en la misma transacción que la acción: aprobación, rechazo (con la fase), sesión apartada registrada, reprogramación, sustitución, retiro de participante, retiro y baja de unidades, asignación y revocación de rol, bloqueo y levantamiento. La descripción se guarda escrita, con los nombres de ese día. La consultan coordinación y el ADMIN, con filtros por acción, persona y fechas (D9). No se reconstruyó lo anterior a esta versión |
+| RF62 | Bitácora de aprobaciones, rechazos, reprogramaciones, retiros y cambios de rol, con usuario, fecha y motivo | Completo | `BitacoraService`, tabla `bitacora`, `/panel/bitacora` | `BitacoraTest` | Cada Service escribe su entrada en la misma transacción que la acción: aprobación, rechazo (con la fase), sesión apartada registrada, reprogramación, sustitución, retiro de participante, retiro y baja de unidades, asignación y revocación de rol, bloqueo y levantamiento, y desde la auditoría de QA (QA-10) también la verificación y el rechazo de formatos, la entrega en físico, abrir, cerrar y reabrir el periodo, y finalizar una evaluación. La descripción se guarda escrita, con los nombres de ese día. La consultan coordinación y el ADMIN, con filtros por acción, persona y fechas (D9). No se reconstruyó lo anterior a esta versión |
 | RF63 | Elevar a coordinador temporalmente, con vigencia y registro | Completo | `AsignacionDeRolService`, `/panel/usuarios` | `RolesConVigenciaTest`, `RolActivoEnLivewireTest`, `BitacoraTest` | La elevación lleva fecha de fin y motivo, y queda en `asignaciones_de_rol` y en la bitácora. La fecha de fin no se obliga: ver D12 |
 | RF64 | Rol administrativo temporal para pasantes | Completo | `AsignacionDeRolService`, filtro en `User::roles()` | `RolesConVigenciaTest` | |
 
@@ -192,7 +192,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | RF66 | Estado funcional por ítem con motivo y responsable | Completo | `InventarioService::cambiarEstado()`, `retirarUnidades()`, `reponerUnidades()`, `darDeBaja()` | `EstadoFuncionalInventarioTest`, `InventarioTest`, `DisponibilidadInventarioTest` | |
 | RF67 | Lista de reposición que alimentan los administrativos y confirma la coordinadora, exportable una vez confirmada | Completo | `ReposicionService`, `/panel/reposicion` | `ListaDeReposicionTest`, `PantallaDeReportesTest` | |
 | RF72 | Distinguir en la preparación lo que monta el administrativo de lo que requiere al ingeniero | Completo | `PreparacionService::requiereIngeniero()`, `/panel/preparaciones` | `AccesoriosEIngenieroTest` | Los simuladores de alta fidelidad van aparte y primero en el material del montaje, y la tarjeta del día dice cuántos esperan al ingeniero (D10). El administrativo marca el ítem cuando el ingeniero termina |
-| RF74 | Capacidad máxima de estudiantes por caso clínico; la de la sala solo informa | Completo | `SolicitudService::crear()` (`CapacidadDeEstudiantesExcedida`), `/admin/casos-clinicos` | `CapacidadDeEscenarioTest`, `PantallaCasosClinicosTest` | Aplicarla también al registrar sesiones apartadas (RF57) |
+| RF74 | Capacidad máxima de estudiantes por caso clínico; la de la sala solo informa | Completo | `SolicitudService::crear()` (`CapacidadDeEstudiantesExcedida`), `/admin/casos-clinicos` | `CapacidadDeEscenarioTest`, `PantallaCasosClinicosTest` | `RegistroPrevioService::registrar()` ya la aplica (la columna estaba desactualizada) |
 
 ## Control de acceso de participantes (RF68–RF71)
 
@@ -207,16 +207,59 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 
 | RNF | Pide | Estado | Dónde vive | Falta |
 |---|---|---|---|---|
-| RNF01 | ~700 estudiantes y ~150 docentes | Parcial | Paginación, índices (`2026_09_23_120000_indexa_las_llaves_que_se_consultan`), exportación por lotes, tests de consultas N+1 | Una prueba de carga con ese volumen |
-| RNF02 | Disponible en el horario académico | Parcial | `restart` en los servicios del compose de producción, copias de seguridad probadas en la CI | Depende del servidor. No hay monitoreo ni aviso si la plataforma cae |
+| RNF01 | ~700 estudiantes y ~150 docentes | Parcial | Paginación, índices (`2026_09_23_120000_indexa_las_llaves_que_se_consultan`), exportación por lotes, tests de consultas N+1. La auditoría de QA cargó 882 usuarios, 2.064 solicitudes y 16.498 inscripciones: las pantallas respondieron en 76–213 ms | El PDF de un semestre no cabe en memoria (QA-01): se limitó el PDF y el Excel es la salida para rangos grandes. Falta incorporar la carga a la CI |
+| RNF02 | Disponible en el horario académico | Parcial | `restart` en los servicios del compose de producción, copias de seguridad probadas en la CI | `app` y `web` tienen healthcheck y los registros de Docker rotan (QA-14). Depende del servidor. **Falta un monitor externo** (p. ej. Uptime Kuma contra `/up`) que avise por correo si la plataforma cae |
 | RNF03 | Docker sobre Debian 13 | Completo | `docker-compose.produccion.yml`, `docker/php/Dockerfile`, job de Docker en la CI | Falta desplegarlo en el servidor real (ver [Bloqueos externos](#bloqueos-externos)) |
 | RNF04 | Acceso por rol, herencia coordinador → administrativo, control total del ADMIN | Completo | Policies, `RecursoDelAdmin`, middleware persistentes de Livewire | |
-| RNF05 | Responsiva en computador y celular | Parcial | Panel con Tailwind, móvil primero. La portada se revisó a 390 px y a 1440 px, con y sin fotos, sin desbordes | El panel sigue sin una revisión sistemática a ancho de celular |
+| RNF05 | Responsiva en computador y celular | Parcial | Panel con Tailwind, móvil primero. La portada se revisó a 390 px y a 1440 px, con y sin fotos, sin desbordes | La auditoría de QA revisó 92 pantallas a 390 px y 1440 px: sin desbordes horizontales. Sus hallazgos de accesibilidad (QA-12) están corregidos; falta correr axe en la CI |
 | RNF06 | Arquitectura por capas documentada para terceros | Completo | `CLAUDE.md`, `README.md`, `arquitectura-y-modelo-datos.md`, Larastan nivel 6 | El documento de arquitectura quedó al día con el código el 9-oct-2026 (RF01–RF75, todos los Services, el modelo de datos completo y la matriz de permisos). Mantenerlo es parte de cada cambio de esquema |
 | RNF07 | Información de estudiantes y evaluaciones solo para roles autorizados | Completo | Disco privado, `DescargaConfidencialidadController`, Policies, `EvaluacionEstudiantePolicy` | |
-| RNF08 | Chrome, Firefox y Edge | Parcial | Sin dependencias exóticas de JavaScript | Nunca se ha probado en Firefox ni en Edge |
+| RNF08 | Chrome, Firefox y Edge | Parcial | Sin dependencias exóticas de JavaScript | Nunca se ha probado en Firefox ni en Edge (la auditoría de QA solo tuvo Chromium) |
 | RNF09 | Agregar módulos sin afectar los existentes | Completo | Capas Service/Policy, tests por módulo | |
-| RNF10 | Conexiones lentas y equipos de gama baja | Parcial | `ImagenPublicaService` (WebP a 1600 px), exportación por lotes, FullCalendar solo en su pantalla. Portada: JavaScript propio de 1,4 KB comprimido, CSS de 8,5 KB, Onest de 34 KB servida localmente, imágenes con carga diferida y video sin descargarse hasta reproducirse | Las fotos de la portada se sirven a 1600 px también en el celular: falta guardar una versión más pequeña y usar `srcset` |
+| RNF10 | Conexiones lentas y equipos de gama baja | Parcial | `ImagenPublicaService` (WebP a 1600 px), exportación por lotes, FullCalendar solo en su pantalla. Portada: JavaScript propio de 1,4 KB comprimido, CSS de 8,5 KB, Onest de 34 KB servida localmente, imágenes con carga diferida y video sin descargarse hasta reproducirse | nginx comprime CSS y JavaScript (QA-13) y el panel ya no descarga axios. Las fotos de la portada se sirven a 1600 px también en el celular: falta guardar una versión más pequeña y usar `srcset` |
+
+---
+
+## Auditoría de QA
+
+Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos). Estado de cada uno en esta rama:
+
+| ID | Sev. | Qué | Estado |
+|---|---|---|---|
+| QA-01 | Alta | PDF de un semestre agota la memoria | Corregido: tope de 31 días y 500 filas; Excel sin tope. **Pregunta Q1** |
+| QA-02 | Alta | Transiciones sin bloqueo de fila | Corregido |
+| QA-03 | Alta | Sustituto: correo de sala y aviso del RF60 al titular | Corregido (el calendario ya estaba bien) |
+| QA-04 | Media | Doble toque termina en 500 | Corregido |
+| QA-05 | Media | Fechas pasadas | Corregido |
+| QA-06 | Media | Se reemplaza un formato verificado | Corregido. **Pregunta Q2** |
+| QA-07 | Media | El único ADMIN se quita el rol | Corregido |
+| QA-08 | Media | Fórmulas en los Excel | Corregido |
+| QA-09 | Media | Dependencias con avisos de seguridad | Corregido; `composer audit --locked` y Dependabot en la repo |
+| QA-10 | Media | Bitácora incompleta | Corregido |
+| QA-11 | Media | Política de datos | Enlace listo; **pregunta Q3** (la URL) y el aviso del RF09 cuando se construya |
+| QA-12 | Media | Accesibilidad WCAG 2.2 AA | Corregido; falta correr axe en la CI |
+| QA-13 | Media | Sin gzip y JavaScript muerto | Corregido |
+| QA-14 | Media | Healthchecks, registros, monitor | Healthchecks y rotación hechos; **falta el monitor externo** |
+| QA-15 | Media | Datos que no vienen de la pantalla | Corregido |
+| QA-16 | Baja | Mutantes vivos | Corregido (pruebas) |
+| QA-17 | Baja | Entradas malformadas en la URL | Corregido |
+| QA-18 | Baja | Plantilla sin versión activa | Corregido |
+| QA-19 | Baja | Mensaje que revela nombres | Corregido |
+| QA-20 | Baja | Dominio vacío falla abierto | Corregido (en producción falla cerrado) |
+| QA-21 | Baja | Cierre de la lista de reposición fuera del Service | Corregido |
+| QA-22 | Baja | Robustez varia | Corregido |
+| QA-23 | Baja | Documentación | Corregida (README, esta matriz y `CLAUDE.md`) |
+| QA-24 | Baja | Avisos de `npm audit` | Parcial: quedan 7 de herramientas de compilación que solo se arreglan con Tailwind 4 |
+
+### Preguntas de producto abiertas por la auditoría
+
+| # | Pregunta | Por defecto mientras tanto |
+|---|---|---|
+| Q1 | ¿Cuál es el tope de días del reporte en PDF? | 31 días y 500 filas, configurable por variable de entorno. Para rangos mayores, Excel |
+| Q2 | Al reemplazar un formato de confidencialidad cargado (no verificado), ¿se conservan las versiones anteriores? | No: se borra la anterior al confirmar. Un formato verificado nunca se reemplaza |
+| Q3 | ¿Cuál es la URL de la política de tratamiento de datos de la universidad? | `POLITICA_DE_DATOS_URL` vacía: el enlace no se muestra |
+| Q4 | ¿Un monitor externo de disponibilidad (RNF02)? | Recomendado: Uptime Kuma contra `/up`, con aviso por correo |
+| Q5 | Aprobar una solicitud cuya fecha ya pasó mientras esperaba revisión, ¿se bloquea? | No se bloquea: lo decide la persona que aprueba |
 
 ---
 
