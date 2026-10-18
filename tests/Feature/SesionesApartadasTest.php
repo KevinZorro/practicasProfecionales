@@ -289,3 +289,19 @@ it('deja al ADMIN cambiar la antelación desde su panel, y a nadie más', functi
         ->and(fn () => app(AjustesService::class)->guardar([AjusteDelLaboratorio::DiasDeAvisoIntramural->value => 9], User::factory()->coordinador()->create()))
         ->toThrow(AuthorizationException::class);
 });
+
+it('avisa del formato intramural a quien dicta, no al titular sustituido (QA-03)', function (): void {
+    Mail::fake();
+    $reemplazo = User::factory()->docente()->create(['nombre' => 'Diana Mejía']);
+    $sesion = $this->servicio->registrar(apartada($this->docente), $this->administrativo);
+    $sesion->update(['docente_que_dicta_id' => $reemplazo->id]);
+
+    $enviados = $this->servicio->avisarSinFormatoIntramural();
+
+    // El reemplazo y el administrativo; el titular no recibe nada.
+    expect($enviados)->toBe(2);
+    Mail::assertQueued(AvisoFormatoIntramuralMail::class, 2);
+    Mail::assertQueued(AvisoFormatoIntramuralMail::class, fn (AvisoFormatoIntramuralMail $correo): bool => $correo->hasTo($reemplazo->email) && $correo->sesiones->count() === 1);
+    Mail::assertNotQueued(AvisoFormatoIntramuralMail::class, fn (AvisoFormatoIntramuralMail $correo): bool => $correo->hasTo($this->docente->email));
+    Mail::assertQueued(AvisoFormatoIntramuralMail::class, fn (AvisoFormatoIntramuralMail $correo): bool => $correo->hasTo($this->administrativo->email) && str_contains($correo->render(), 'Diana Mejía'));
+});

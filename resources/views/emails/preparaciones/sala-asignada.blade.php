@@ -1,4 +1,5 @@
 @php($solicitud = $preparacion->solicitud)
+@php($dicta = $solicitud->docenteQueDicta ?? $solicitud->docente)
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -6,7 +7,7 @@
     <title>{{ $esCambio ? 'Cambio de sala' : 'Sala asignada' }}</title>
 </head>
 <body style="font-family: sans-serif; color: #1f2937; line-height: 1.5;">
-    <p>Buen día, {{ $solicitud->docente->nombre }}:</p>
+    <p>Buen día, {{ $dicta->nombre }}:</p>
 
     @if ($esCambio)
         <p>La sala de su sesión <strong>cambió</strong>. La nueva es:</p>

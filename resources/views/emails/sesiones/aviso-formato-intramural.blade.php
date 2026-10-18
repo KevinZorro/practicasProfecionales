@@ -31,7 +31,7 @@
                 <td>{{ $sesion->casoClinico->nombre }}</td>
                 <td>{{ $sesion->materia->nombre }}</td>
                 @unless ($paraDocente)
-                    <td>{{ $sesion->docente->nombre }}</td>
+                    <td>{{ ($sesion->docenteQueDicta ?? $sesion->docente)->nombre }}</td>
                 @endunless
             </tr>
         @endforeach
