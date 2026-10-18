@@ -97,7 +97,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Queda borrar el bloque comentado de `SolicitudPolicy::aprobar()` |
 | RF32 | Comentario opcional al rechazar | Completo | `SolicitudService::rechazar()` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | |
 | RF33 | Correo al docente con el resultado | Completo | Eventos `SolicitudAprobada`/`SolicitudRechazada`, listener en cola | `FlujoSolicitudTest`, `ListenersRegistradosTest` | |
-| RF34 | Calendario de aprobadas para estudiantes, docentes, administrativos y coordinación, con la sala cuando exista | Completo | `SolicitudService::paraCalendario()`, `/panel/calendario` | `CalendarioSolicitudesTest`, `PantallaCalendarioTest` | |
+| RF34 | Calendario de aprobadas, cada rol con lo suyo (docente: lo que dicta; estudiante: donde está en la lista; gestión: todo), con la sala cuando exista | Completo | `SolicitudService::paraCalendario($desde, $hasta, $actor)`, `SolicitudPolicy::verTodoElCalendario()` y hermanas, `/panel/calendario` | `CalendarioSolicitudesTest`, `PantallaCalendarioTest` | D19. Vistas mes, semana y día; las sesiones simultáneas van lado a lado y el mes recorta con «+N más». Muestra a quien dicta, con «en reemplazo de…» |
 | RF35 | Historial del docente con estado, sala y motivo | Completo | `SolicitudService::historialDelDocente()`, `/panel/mis-solicitudes` | `PantallaSolicitudDocenteTest` | |
 
 ## Preparación e inventario (RF36–RF40)
@@ -242,6 +242,7 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | D16 | Para no gastar el cupo diario de la cuenta del laboratorio ni llenar de correos a la gente: el aviso de RF60 es **un correo diario por persona** con todas sus sesiones pendientes, no uno por sesión; y el formulario público de RF09 tiene límite de envíos por IP y un campo trampa contra robots. Es la excepción a "sin límite de peticiones por IP" del `CLAUDE.md`, que habla de la entrada con Google, no de un formulario anónimo | RF09, RF60 |
 | D17 | Al registrar una sesión apartada, si en esa franja no queda ninguna sala libre se avisa, sin impedir el registro: la sala se resuelve en la preparación | RF58 |
 | D18 | La portada no anuncia talleres ni eventos con fecha pasada: siguen en /admin, pero ya no son oferta. Hoy se cuenta en la zona de la aplicación | RF04, RF05 |
+| D19 | El calendario (RF34) es de cada quien: el docente ve solo las sesiones que dicta, el estudiante solo aquellas donde está en la lista, y quien gestiona las solicitudes ve todas. **Sin franjas «Ocupado»**: el docente no ve nada ajeno, ni sin datos. El detalle de cada sesión se abre al tocar o hacer clic; no hay agrandado al pasar el mouse, para no sumar movimiento en equipos de gama baja. Corrige un fallo de seguridad: antes cualquier rol recibía docente, materia y cantidad de estudiantes de todas las sesiones | RF34 |
 
 ---
 

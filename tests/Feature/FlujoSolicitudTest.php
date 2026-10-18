@@ -287,3 +287,18 @@ it('permite a un docente que además coordina resolver, hasta que el cliente dec
 
     expect($ambosRoles->can('aprobar', $suya))->toBeTrue();
 });
+
+it('permite tres sesiones a la misma hora: solicitar y aprobar no rechazan por cruce', function (): void {
+    Mail::fake();
+    $fecha = now()->addWeek()->format('Y-m-d');
+
+    foreach (range(1, 3) as $n) {
+        $docente = User::factory()->docente()->create();
+        $datos = datosDeSolicitud();
+        $solicitud = $this->servicio->crear($docente, new DatosNuevaSolicitud(...[...get_object_vars($datos), 'fecha' => $fecha]));
+        $this->servicio->marcarRevisada($solicitud, $this->administrativo);
+        $this->servicio->aprobar($solicitud, $this->coordinadora);
+    }
+
+    expect(Solicitud::query()->where('fecha', $fecha)->where('estado', EstadoSolicitud::Aprobada)->count())->toBe(3);
+});

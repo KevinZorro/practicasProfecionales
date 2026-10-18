@@ -22,9 +22,16 @@ if (contenedor) {
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
-            right: 'dayGridMonth,timeGridWeek',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay',
         },
         height: 'auto',
+        // Varias sesiones a la misma hora en salas distintas son válidas:
+        // en las vistas por horas van lado a lado y en la mensual se
+        // recortan con «+N más» en vez de empujar el resto de la semana.
+        scrollTime: '06:00:00',
+        slotEventOverlap: false,
+        dayMaxEvents: 3,
+        moreLinkClick: 'timeGridDay',
         events: (info, exito, fallo) => {
             const url = new URL(contenedor.dataset.eventos, window.location.origin);
             url.searchParams.set('desde', info.startStr.slice(0, 10));
@@ -52,8 +59,9 @@ function mostrarDetalle(contenedorDetalle, evento) {
         ['Tipo de sesión', d.tipo],
         ['Fecha', d.fecha],
         ['Hora', d.hora],
-        ['Docente', d.docente],
+        ['Docente que dicta', d.enReemplazoDe ? `${d.docente} (en reemplazo de ${d.enReemplazoDe})` : d.docente],
         ['Materia', d.materia],
+        ['Grupo', d.grupo ?? 'Sin grupo'],
         ['Estudiantes', d.estudiantes],
         ['Sala', d.sala],
     ];

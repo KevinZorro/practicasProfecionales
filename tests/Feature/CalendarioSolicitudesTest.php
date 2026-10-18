@@ -6,6 +6,7 @@ use App\Enums\EstadoSolicitud;
 use App\Models\Preparacion;
 use App\Models\Sala;
 use App\Models\Solicitud;
+use App\Models\User;
 use App\Services\SolicitudService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,10 @@ use Illuminate\Support\Facades\DB;
 beforeEach(function (): void {
     $this->seed(RolSeeder::class);
     $this->servicio = app(SolicitudService::class);
+    // Los roles se cargan una vez por usuario; se precargan para no contarlos como consultas del calendario.
+    $this->administrativo = User::factory()->administrativo()->create()->load('roles');
+    // Y la primera comprobación de permisos carga el registro de spatie.
+    $this->servicio->paraCalendario('2000-01-01', '2000-01-02', $this->administrativo);
 });
 
 // preventLazyLoading es un interruptor estático: si queda encendido,
@@ -44,7 +49,7 @@ it('devuelve solo las reservas aprobadas del rango', function (): void {
     Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente, 'fecha' => '2026-03-15']);
     Solicitud::factory()->create(['estado' => EstadoSolicitud::Rechazada, 'fecha' => '2026-03-18']);
 
-    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31');
+    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo);
 
     expect($reservas)->toHaveCount(2);
 });
@@ -54,7 +59,7 @@ it('incluye el tipo de sesión y la sala cuando ya fue asignada', function (): v
     reservaAprobada('2026-03-10', $sala);
     reservaAprobada('2026-03-11');
 
-    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31');
+    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo);
 
     $conSala = $reservas->firstWhere('fecha.day', 10);
     $sinSala = $reservas->firstWhere('fecha.day', 11);
@@ -72,7 +77,7 @@ it('ordena las reservas por fecha y hora', function (): void {
         'estado' => EstadoSolicitud::Aprobada, 'fecha' => '2026-03-10', 'hora_inicio' => '07:00:00',
     ]);
 
-    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31');
+    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo);
 
     expect($reservas->first()->hora_inicio)->toBe('07:00:00');
 });
@@ -87,7 +92,7 @@ it('no genera consultas N+1 al recorrer el calendario', function (): void {
     }
 
     DB::enableQueryLog();
-    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31');
+    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo);
 
     foreach ($reservas as $reserva) {
         $reserva->docente->nombre;
@@ -110,7 +115,7 @@ it('mantiene constante el número de consultas al crecer el calendario', functio
     $medir = function (): int {
         DB::flushQueryLog();
         DB::enableQueryLog();
-        foreach ($this->servicio->paraCalendario('2026-03-01', '2026-03-31') as $reserva) {
+        foreach ($this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo) as $reserva) {
             $reserva->docente->nombre;
             $reserva->materia->nombre;
             $reserva->casoClinico->nombre;
@@ -133,4 +138,21 @@ it('mantiene constante el número de consultas al crecer el calendario', functio
 
     // Si hubiera N+1, triplicar las reservas dispararía el conteo.
     expect($conSeis)->toBe($conDos);
+});
+
+it('no rechaza tres sesiones a la misma hora en salas distintas', function (): void {
+    foreach (['Sala 1', 'Sala 2', 'Sala 3'] as $nombre) {
+        $solicitud = Solicitud::factory()->aprobada()->create([
+            'fecha' => '2026-03-10', 'hora_inicio' => '07:00:00', 'hora_fin' => '09:00:00',
+        ]);
+        Preparacion::factory()->create([
+            'solicitud_id' => $solicitud->id,
+            'sala_id' => Sala::factory()->create(['nombre' => $nombre])->id,
+        ]);
+    }
+
+    $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo);
+
+    expect($reservas)->toHaveCount(3)
+        ->and($reservas->pluck('preparacion.sala.nombre')->all())->toBe(['Sala 1', 'Sala 2', 'Sala 3']);
 });
