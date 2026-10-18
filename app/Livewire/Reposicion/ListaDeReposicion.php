@@ -13,6 +13,7 @@ use App\Models\ListaDeReposicion as Lista;
 use App\Models\NecesidadDeReposicion;
 use App\Services\DatosNecesidad;
 use App\Services\ReposicionService;
+use App\Support\FiltroDeUrl;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -66,6 +67,8 @@ final class ListaDeReposicion extends Component
     public function mount(ReposicionService $reposicion): void
     {
         $this->origenFijado = $reposicion->origenDelSiguienteBorrador();
+        $this->desde = FiltroDeUrl::fecha($this->desde);
+        $this->hasta = FiltroDeUrl::fecha($this->hasta);
 
         // En cuanto hay una lista cerrada, el borrador arranca donde terminó
         // aquella y deja de ser editable: así ningún movimiento puede quedar

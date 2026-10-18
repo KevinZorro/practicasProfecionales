@@ -6,11 +6,13 @@ use App\Http\Middleware\SoloEnDesarrollo;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Services\AccesoService;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -59,5 +61,15 @@ return Application::configure(basePath: dirname(__DIR__))
         // Una regla de dominio rota por una petición (un segundo toque, una
         // URL escrita a mano, una acción llamada desde la consola) es un
         // «no se puede» con su mensaje, no un fallo del servidor (QA-04).
+        // PostgreSQL rechaza un valor por su tipo (22P02 bigint o enum mal
+        // escrito, 22007/22008 fecha inválida): lo escrito a mano en una URL
+        // no existe, y no es un fallo del servidor (QA-17).
+        $exceptions->render(static function (QueryException $consulta) {
+            if (in_array($consulta->getCode(), ['22P02', '22007', '22008'], true)) {
+                throw new NotFoundHttpException(previous: $consulta);
+            }
+
+            return null;
+        });
         $exceptions->map(DomainException::class, static fn (DomainException $regla): HttpException => new HttpException(422, $regla->getMessage(), $regla));
     })->create();

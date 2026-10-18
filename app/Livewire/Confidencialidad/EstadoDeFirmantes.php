@@ -12,6 +12,7 @@ use App\Models\Materia;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\ConfidencialidadService;
+use App\Support\FiltroDeUrl;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -46,11 +47,11 @@ final class EstadoDeFirmantes extends Component
 
     /** Una sesión: sus estudiantes y su docente (RF71). Llega desde la lista de la sesión. */
     #[Url(as: 'sesion', keep: false)]
-    public ?int $sesion = null;
+    public int|string|null $sesion = null;
 
     /** Quienes van o dictan sesiones de una materia (RF53). */
     #[Url(as: 'materia', keep: false)]
-    public ?int $materia = null;
+    public int|string|null $materia = null;
 
     /** El programa académico de la persona, el que trae la sincronización (RF53). */
     #[Url(as: 'programa', keep: false)]
@@ -60,6 +61,11 @@ final class EstadoDeFirmantes extends Component
 
     public function mount(ConfidencialidadService $confidencialidad): void
     {
+        // Union con string: un valor ilegible en la URL no revienta la
+        // asignación de la propiedad y aquí se descarta (QA-17).
+        $this->sesion = FiltroDeUrl::entero($this->sesion);
+        $this->materia = FiltroDeUrl::entero($this->materia);
+
         if ($this->periodo === '') {
             $this->periodo = $confidencialidad->periodoVigente() ?? '';
         }
@@ -111,13 +117,13 @@ final class EstadoDeFirmantes extends Component
                 periodo: $this->periodo,
                 soloSinVigente: $this->soloSinVigente(),
                 busqueda: $this->busqueda,
-                solicitudId: $this->sesion,
-                materiaId: $this->materia,
+                solicitudId: FiltroDeUrl::entero($this->sesion),
+                materiaId: FiltroDeUrl::entero($this->materia),
                 programa: $this->programa,
             ),
             'programas' => (array) config('laboratorio.sincronizacion.programas'),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre']),
-            'laSesion' => $this->sesion === null ? null : Solicitud::with(['casoClinico:id,nombre', 'materia:id,nombre'])->find($this->sesion),
+            'laSesion' => FiltroDeUrl::entero($this->sesion) === null ? null : Solicitud::with(['casoClinico:id,nombre', 'materia:id,nombre'])->find(FiltroDeUrl::entero($this->sesion)),
         ]);
     }
 

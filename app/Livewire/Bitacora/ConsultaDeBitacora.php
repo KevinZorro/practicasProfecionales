@@ -8,6 +8,7 @@ use App\Enums\AccionAuditada;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\RegistroDeBitacora;
 use App\Services\BitacoraService;
+use App\Support\FiltroDeUrl;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -32,6 +33,13 @@ final class ConsultaDeBitacora extends Component
 
     #[Url(as: 'hasta', keep: false)]
     public string $hasta = '';
+
+    public function mount(): void
+    {
+        // Una fecha escrita a mano en la URL que no es fecha no filtra.
+        $this->desde = FiltroDeUrl::fecha($this->desde);
+        $this->hasta = FiltroDeUrl::fecha($this->hasta);
+    }
 
     public function updated(string $propiedad): void
     {
