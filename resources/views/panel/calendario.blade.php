@@ -1,7 +1,7 @@
 @extends('layouts.panel')
 
 @section('titulo', 'Calendario de escenarios')
-@section('descripcion', 'Los escenarios aprobados. Toca uno para ver su detalle.')
+@section('descripcion', 'Tus escenarios aprobados. Toca uno para ver su detalle.')
 
 @section('contenido')
     <div class="space-y-5">
