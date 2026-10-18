@@ -16,12 +16,25 @@ final class SolicitudInvalida extends DomainException
     /**
      * @param  list<string>  $nombres
      */
-    public static function noSonEstudiantesActivos(array $nombres): self
+    /**
+     * @param  list<string>  $inactivos  estudiantes que ya no tienen cuenta activa
+     * @param  int  $ajenos  cuántos de los ids ni siquiera son estudiantes
+     */
+    public static function noSonEstudiantesActivos(array $inactivos, int $ajenos = 0): self
     {
-        return new self(sprintf(
-            'Solo se pueden incluir estudiantes con cuenta activa. No lo son: %s.',
-            implode(', ', $nombres),
-        ));
+        // Los nombres solo de quienes son estudiantes: un id de otra persona
+        // (un docente, coordinación) no debe revelar quién es (QA-19).
+        $partes = [];
+
+        if ($inactivos !== []) {
+            $partes[] = 'sin cuenta activa: '.implode(', ', $inactivos);
+        }
+
+        if ($ajenos > 0) {
+            $partes[] = $ajenos === 1 ? '1 persona que no es estudiante' : $ajenos.' personas que no son estudiantes';
+        }
+
+        return new self('Solo se pueden incluir estudiantes con cuenta activa. No cumplen: '.implode('; ', $partes).'.');
     }
 
     public static function docenteBloqueado(string $motivo): self

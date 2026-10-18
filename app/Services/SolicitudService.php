@@ -300,9 +300,9 @@ final class SolicitudService
         $invalidos = array_diff($estudianteIds, $validos);
 
         if ($invalidos !== []) {
-            throw SolicitudInvalida::noSonEstudiantesActivos(
-                User::query()->whereIn('id', $invalidos)->orderBy('nombre')->pluck('nombre')->all(),
-            );
+            $estudiantes = User::query()->whereIn('id', $invalidos)->role(Rol::Estudiante->value)->orderBy('nombre')->pluck('nombre')->all();
+
+            throw SolicitudInvalida::noSonEstudiantesActivos($estudiantes, count($invalidos) - count($estudiantes));
         }
 
         return $estudianteIds;
