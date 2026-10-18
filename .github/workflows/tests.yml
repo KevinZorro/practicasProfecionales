@@ -56,6 +56,11 @@ jobs:
       - name: Instalar dependencias
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      # Avisos de seguridad de las dependencias de PHP (QA-09). Lee el lock,
+      # no lo instalado, y cae si alguna versión fijada tiene un aviso.
+      - name: Auditar las dependencias
+        run: composer audit --locked
+
       - name: Preparar el entorno
         run: |
           cp .env.example .env
