@@ -18,7 +18,7 @@ use App\Models\User;
  * | Rechazar una pendiente |       |      ✓      |       ✓        |         |            |
  * | Aprobar una revisada   |   ✓   |      ✓      |                |         |            |
  * | Rechazar una revisada  |   ✓   |      ✓      |                |         |            |
- * | Ver calendario         |   ✓   |      ✓      |       ✓        |    ✓    |     ✓      |
+ * | Ver calendario         | todas | todas       | todas          | las suyas | las suyas |
  *
  * El ADMIN aprueba cuando la coordinadora no está disponible, pero no revisa:
  * la revisión administrativa previa es condición para aprobar, así que quien
@@ -149,12 +149,31 @@ final class SolicitudPolicy
     }
 
     /**
-     * El calendario de reservas aprobadas (RF34) es la única vista que
-     * comparten los cinco roles.
+     * Qué sesiones ve cada rol en el calendario (RF34): quien gestiona las
+     * solicitudes, todas; el docente, las que dicta; el estudiante, las de
+     * su lista. Nadie ve datos de sesiones ajenas, ni siquiera «ocupado»
+     * (D19). Con varios roles manda el rol activo.
      */
     public function verCalendario(User $usuario): bool
     {
-        return $usuario->hasAnyRole(array_column(Rol::cases(), 'value'));
+        return $this->verTodoElCalendario($usuario)
+            || $this->verSusSesionesComoDocente($usuario)
+            || $this->verSusSesionesComoEstudiante($usuario);
+    }
+
+    public function verTodoElCalendario(User $usuario): bool
+    {
+        return $this->accedeALaBandeja($usuario);
+    }
+
+    public function verSusSesionesComoDocente(User $usuario): bool
+    {
+        return $usuario->hasRole(Rol::Docente->value);
+    }
+
+    public function verSusSesionesComoEstudiante(User $usuario): bool
+    {
+        return $usuario->hasRole(Rol::Estudiante->value);
     }
 
     /**

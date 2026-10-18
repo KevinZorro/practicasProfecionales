@@ -73,6 +73,15 @@ it('registra la sesión aprobada, con su preparación y sin formato intramural',
         ->and($sesion->preparacion->items()->count())->toBe(0);
 });
 
+it('registra tres sesiones a la misma hora: los cruces son avisos, no impedimentos', function (): void {
+    foreach (range(1, 3) as $n) {
+        $docente = User::factory()->docente()->create();
+        $this->servicio->registrar(apartada($docente, ['fecha' => '2030-03-04']), $this->administrativo);
+    }
+
+    expect(Solicitud::query()->where('fecha', '2030-03-04')->where('estado', EstadoSolicitud::Aprobada)->count())->toBe(3);
+});
+
 it('deja el grupo vacío si el formato físico no lo trae', function (): void {
     expect($this->servicio->registrar(apartada($this->docente), $this->administrativo)->grupo)->toBeNull();
 });

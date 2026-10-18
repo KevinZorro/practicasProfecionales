@@ -51,7 +51,7 @@
 - **RF31** *(modificado)* — El sistema debe permitir a coordinación aprobar o rechazar las solicitudes previamente revisadas. La solicitud pasa así por dos fases: el administrativo la acepta o la rechaza, y coordinación aprueba o rechaza la que el administrativo aceptó. El ADMIN puede aprobar en ausencia de la coordinadora, siempre que exista revisión administrativa previa registrada. Como toda solicitud pasa antes por la revisión administrativa, no se requiere un bloqueo adicional cuando la coordinadora aprueba una solicitud hecha por ella misma como docente.
 - **RF32** — En caso de rechazo, el sistema debe permitir registrar un comentario opcional con el motivo.
 - **RF33** — El sistema debe notificar por correo electrónico al docente el resultado de su solicitud.
-- **RF34** — El sistema debe mostrar las reservas aprobadas en un calendario visible para estudiantes, docentes, administrativos y coordinación, diferenciando visualmente las sesiones de práctica de las de evaluación. La sala se muestra una vez asignada.
+- **RF34** — El sistema debe mostrar las reservas aprobadas en un calendario, diferenciando visualmente las sesiones de práctica de las de evaluación. La sala se muestra una vez asignada. Cada persona ve solo sus sesiones: el docente, las que dicta (también las que recibe por sustitución); el estudiante, aquellas en cuya lista está. Administrativos, coordinación y ADMIN ven todas. Nadie ve ni siquiera las franjas ocupadas por otros.
 - **RF35** — El sistema debe permitir al docente consultar el historial de sus solicitudes con su estado, la sala asignada cuando ya esté definida y, en caso de rechazo, el motivo.
 
 ## Preparación de escenarios
@@ -178,6 +178,7 @@ No son requerimientos, pero condicionan la puesta en producción y dependen de l
 - **RF57 y RF58.** Conviven las sesiones registradas antes del semestre y las solicitudes del semestre, y el tiempo entre sesiones lo decide el personal.
 - **RF62.** La bitácora registra también los rechazos.
 - **RF67.** La coordinadora confirma la lista de reposición antes de exportarla.
+- **RF34.** El calendario ya no es igual para todos: cada rol ve solo lo suyo (D19). Antes decía «visible para estudiantes, docentes…» sin acotar y entregaba el docente, la materia y la cantidad de estudiantes de todas las sesiones.
 - **RF74.** La capacidad que limita la cantidad de estudiantes es la del caso clínico, no la de la sala.
 - **RF75.** Nuevo requerimiento para que el laboratorio abra y cierre el periodo académico sin fechas impuestas por el sistema.
 - **Aclaraciones del 9 de octubre.** RF28: el docente indica los estudiantes de cada sesión. RF31: coordinación también puede rechazar, en una segunda fase. RF36: solo se ofrecen salas libres. RF57: las sesiones apartadas llegan aprobadas. RF59: el formato intramural lo digitan los administrativos. RF65: las salas se ubican por bloque, piso y número.

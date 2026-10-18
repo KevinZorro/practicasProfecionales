@@ -459,19 +459,34 @@ final class SolicitudService
     }
 
     /**
-     * Reservas aprobadas de un rango de fechas, con la sala si el
-     * administrativo ya la asignó (RF34).
+     * Reservas aprobadas de un rango de fechas que `$actor` puede ver, con la
+     * sala si el administrativo ya la asignó (RF34). El alcance lo decide la
+     * Policy; aquí solo se traduce en la consulta. Varias sesiones a la misma
+     * hora son válidas: los cruces solo se avisan (RF58).
      *
      * @return Collection<int, Solicitud>
      */
-    public function paraCalendario(string $desde, string $hasta): Collection
+    public function paraCalendario(string $desde, string $hasta, User $actor): Collection
     {
-        return Solicitud::query()
+        $consulta = Solicitud::query()
             ->aprobadasEntre($desde, $hasta)
             ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
             ->orderBy('fecha')
-            ->orderBy('hora_inicio')
-            ->get();
+            ->orderBy('hora_inicio');
+
+        match (true) {
+            $actor->can('verTodoElCalendario', Solicitud::class) => null,
+            $actor->can('verSusSesionesComoDocente', Solicitud::class) => $consulta->where(
+                fn (Builder $sesiones) => $sesiones->where('docente_id', $actor->id)->orWhere('docente_que_dicta_id', $actor->id),
+            ),
+            $actor->can('verSusSesionesComoEstudiante', Solicitud::class) => $consulta->whereHas(
+                'estudiantesPresentes',
+                fn (Builder $lista) => $lista->where('users.id', $actor->id),
+            ),
+            default => $consulta->whereRaw('1 = 0'),
+        };
+
+        return $consulta->get();
     }
 
     /**
