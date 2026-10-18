@@ -59,6 +59,16 @@ final class SolicitudInvalida extends DomainException
         return new self('La sesión tiene que quedar a nombre de un docente.');
     }
 
+    public static function casoFueraDeLaMateria(): self
+    {
+        return new self('Ese escenario clínico no está asociado a la materia elegida.');
+    }
+
+    public static function equipoInvalido(): self
+    {
+        return new self('Alguno de los equipos pedidos no está en el inventario o trae una cantidad que no es válida.');
+    }
+
     public static function fechaPasada(): self
     {
         return new self('Ese día ya pasó: la sesión tiene que ser de hoy en adelante.');

@@ -42,10 +42,12 @@ beforeEach(function (): void {
 
 function apartada(User $docente, array $cambios = []): DatosSesionApartada
 {
+    // Si el cambio trae un escenario, la materia es una a la que ese escenario pertenece.
+    $par = isset($cambios['casoClinicoId']) ? materiaYCaso(caso: CasoClinico::findOrFail($cambios['casoClinicoId'])) : materiaYCaso();
+
     return new DatosSesionApartada(...[
         'docenteId' => $docente->id,
-        'materiaId' => Materia::factory()->create()->id,
-        'casoClinicoId' => CasoClinico::factory()->create()->id,
+        ...$par,
         'tipo' => TipoSesion::Practica,
         'fecha' => now()->addDays(2)->format('Y-m-d'),
         'horaInicio' => '07:00',
@@ -148,12 +150,14 @@ it('no avisa nada en una franja libre ni en una contigua', function (): void {
 
 it('registra desde la pantalla y enseña los cruces mientras se llena', function (): void {
     $existente = $this->servicio->registrar(apartada($this->docente), $this->administrativo);
+    $materia = Materia::factory()->create();
     $caso = CasoClinico::factory()->create(['nombre' => 'Atención de parto']);
+    $caso->materias()->attach($materia->id);
 
     Livewire::actingAs($this->administrativo)
         ->test(SesionesApartadas::class)
         ->set('docenteId', $this->docente->id)
-        ->set('materiaId', Materia::factory()->create()->id)
+        ->set('materiaId', $materia->id)
         ->set('casoClinicoId', $caso->id)
         ->set('cantidadEstudiantes', 8)
         ->set('fecha', $existente->fecha->format('Y-m-d'))

@@ -49,6 +49,42 @@ final class SolicitudService
         return Carbon::parse($fecha)->startOfDay()->isBefore(Carbon::today());
     }
 
+    /** Cantidad máxima por equipo en una solicitud: un tope de cordura, no de inventario. */
+    public const CANTIDAD_MAXIMA_POR_EQUIPO = 999;
+
+    /** El escenario está asociado a la materia (RF24). */
+    public function casoPerteneceALaMateria(int $casoClinicoId, int $materiaId): bool
+    {
+        return CasoClinico::query()->whereKey($casoClinicoId)->deLaMateria($materiaId)->exists();
+    }
+
+    public function garantizarCasoDeLaMateria(int $casoClinicoId, int $materiaId): void
+    {
+        if (! $this->casoPerteneceALaMateria($casoClinicoId, $materiaId)) {
+            throw SolicitudInvalida::casoFueraDeLaMateria();
+        }
+    }
+
+    /**
+     * Los equipos vienen de la pantalla, pero la petición puede traer otros:
+     * cada id tiene que existir y cada cantidad ser razonable.
+     *
+     * @param  array<int, int>  $items  id del ítem => cantidad
+     */
+    private function garantizarEquipos(array $items): void
+    {
+        if ($items === []) {
+            return;
+        }
+
+        $existentes = ItemInventario::query()->whereIn('id', array_keys($items))->count();
+        $cantidadesValidas = collect($items)->every(static fn (int $cantidad): bool => $cantidad >= 1 && $cantidad <= self::CANTIDAD_MAXIMA_POR_EQUIPO);
+
+        if ($existentes !== count($items) || ! $cantidadesValidas) {
+            throw SolicitudInvalida::equipoInvalido();
+        }
+    }
+
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
         if ($this->esFechaPasada($datos->fecha)) {
@@ -62,6 +98,8 @@ final class SolicitudService
             throw SolicitudInvalida::docenteBloqueado($bloqueo->motivo);
         }
 
+        $this->garantizarCasoDeLaMateria($datos->casoClinicoId, $datos->materiaId);
+        $this->garantizarEquipos($datos->items);
         $grupo = $this->normalizarGrupo($datos->grupo);
         $estudianteIds = $this->garantizarEstudiantes($datos->estudianteIds);
         $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));

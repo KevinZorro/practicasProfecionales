@@ -56,6 +56,7 @@ final class RegistroPrevioService
             throw SolicitudInvalida::fechaPasada();
         }
 
+        $this->solicitudes->garantizarCasoDeLaMateria($datos->casoClinicoId, $datos->materiaId);
         $this->solicitudes->garantizarCapacidad($datos->casoClinicoId, $datos->cantidadEstudiantes);
         $grupo = $this->normalizarGrupo($datos->grupo);
 
@@ -279,7 +280,7 @@ final class RegistroPrevioService
 
     private function garantizarDocente(int $docenteId): void
     {
-        $esDocente = User::query()->whereKey($docenteId)->role(Rol::Docente->value)->exists();
+        $esDocente = User::query()->activos()->whereKey($docenteId)->role(Rol::Docente->value)->exists();
 
         if (! $esDocente) {
             throw SolicitudInvalida::noEsDocente();

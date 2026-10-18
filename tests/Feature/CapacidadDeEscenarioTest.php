@@ -25,8 +25,7 @@ beforeEach(function (): void {
 function solicitudPara(CasoClinico $caso, Materia $materia, int $estudiantes): DatosNuevaSolicitud
 {
     return new DatosNuevaSolicitud(
-        materiaId: $materia->id,
-        casoClinicoId: $caso->id,
+        ...materiaYCaso($materia, $caso),
         tipo: TipoSesion::Practica,
         fecha: now()->addWeek()->format('Y-m-d'),
         horaInicio: '08:00',

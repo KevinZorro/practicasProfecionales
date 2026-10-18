@@ -60,6 +60,10 @@ final class NovedadesDeSesionService
             throw NovedadInvalida::sinCambios();
         }
 
+        if ($cambiaEscenario && ! $this->solicitudes->casoPerteneceALaMateria($datos->casoClinicoId, $solicitud->materia_id)) {
+            throw NovedadInvalida::casoFueraDeLaMateria();
+        }
+
         if ($cambiaEscenario) {
             $this->solicitudes->garantizarCapacidad($datos->casoClinicoId, $solicitud->cantidad_estudiantes);
         }

@@ -96,6 +96,17 @@ class CasoClinico extends Model
         return $this->hasMany(Solicitud::class);
     }
 
+    /**
+     * Los casos asociados a una materia (RF24). Sin materia no hay casos que
+     * ofrecer: el formulario pide primero la materia.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeDeLaMateria(Builder $consulta, ?int $materiaId): void
+    {
+        $consulta->whereHas('materias', static fn (Builder $materias) => $materias->whereKey($materiaId ?? 0));
+    }
+
     /** @param Builder<$this> $consulta */
     public function scopeActivos(Builder $consulta): void
     {

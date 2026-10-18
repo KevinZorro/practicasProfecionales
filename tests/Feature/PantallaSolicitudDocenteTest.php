@@ -89,11 +89,12 @@ it('crea la solicitud con lo que el docente ajustó', function (): void {
     $caso = casoConEquipos(['Maniquí de parto' => 1]);
     $maniqui = $caso->items->first();
     $materia = Materia::factory()->create();
+    $caso->materias()->attach($materia->id);
 
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
-        ->set('casoClinicoId', $caso->id)
         ->set('materiaId', $materia->id)
+        ->set('casoClinicoId', $caso->id)
         ->set('tipo', TipoSesion::Evaluacion->value)
         ->set('fecha', now()->addWeek()->format('Y-m-d'))
         ->set('horaInicio', '07:00')

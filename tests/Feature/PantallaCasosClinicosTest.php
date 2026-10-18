@@ -6,6 +6,7 @@ use App\Filament\Resources\CasoClinicoResource;
 use App\Filament\Resources\CasoClinicoResource\Pages\CreateCasoClinico;
 use App\Filament\Resources\CasoClinicoResource\Pages\EditCasoClinico;
 use App\Filament\Resources\CasoClinicoResource\Pages\ListCasosClinicos;
+use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\ItemNecesarioDelCaso;
@@ -218,14 +219,16 @@ it('enseña y conserva una materia ya asociada aunque después se haya desactiva
 });
 
 it('saca del formulario del docente el caso que el ADMIN desactiva', function (): void {
+    $materia = Materia::factory()->create();
     $caso = CasoClinico::factory()->create(['nombre' => 'Reanimación neonatal avanzada']);
+    $caso->materias()->attach($materia->id);
     $docente = User::factory()->docente()->create();
 
-    $this->actingAs($docente)->get(route('panel.solicitudes.nueva'))->assertSee('Reanimación neonatal avanzada');
+    Livewire::actingAs($docente)->test(FormularioSolicitud::class)->set('materiaId', $materia->id)->assertSee('Reanimación neonatal avanzada');
 
     editarCasoClinico($caso)->fillForm(['activo' => false])->call('save')->assertHasNoFormErrors();
 
-    $this->actingAs($docente)->get(route('panel.solicitudes.nueva'))->assertDontSee('Reanimación neonatal avanzada');
+    Livewire::actingAs($docente)->test(FormularioSolicitud::class)->set('materiaId', $materia->id)->assertDontSee('Reanimación neonatal avanzada');
 });
 
 it('no ofrece borrar casos clínicos en ninguna pantalla', function (): void {

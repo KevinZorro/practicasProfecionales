@@ -131,7 +131,7 @@ final class NovedadesDeLaSesion extends Component
 
         return view('livewire.solicitud.novedades-de-la-sesion', [
             'solicitud' => $solicitud,
-            'casosClinicos' => CasoClinico::activos()->orderBy('nombre')->get(['id', 'nombre']),
+            'casosClinicos' => CasoClinico::activos()->deLaMateria($solicitud->materia_id)->orderBy('nombre')->get(['id', 'nombre']),
             'docentes' => $registroPrevio->docentes(),
             'advertencias' => $franjaCompleta
                 ? $registroPrevio->advertencias($this->fecha, $this->horaInicio, $this->horaFin, $solicitud->idDelDocenteQueDicta(), $solicitud->id)

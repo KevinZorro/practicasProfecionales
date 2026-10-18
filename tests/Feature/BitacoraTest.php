@@ -7,11 +7,9 @@ use App\Enums\ResultadoEvaluacion;
 use App\Enums\Rol;
 use App\Enums\TipoSesion;
 use App\Livewire\Bitacora\ConsultaDeBitacora;
-use App\Models\CasoClinico;
 use App\Models\Evaluacion;
 use App\Models\FormatoConfidencialidad;
 use App\Models\ItemInventario;
-use App\Models\Materia;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\RegistroDeBitacora;
 use App\Models\Solicitud;
@@ -73,9 +71,8 @@ it('registra la aprobación y el rechazo, con su fase y motivo', function (): vo
 
 it('registra la sesión apartada, la reprogramación y la sustitución', function (): void {
     $sesion = app(RegistroPrevioService::class)->registrar(new DatosSesionApartada(
+        ...materiaYCaso(),
         docenteId: $this->docente->id,
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: CasoClinico::factory()->create()->id,
         tipo: TipoSesion::Practica,
         fecha: now()->addDays(3)->format('Y-m-d'),
         horaInicio: '07:00',

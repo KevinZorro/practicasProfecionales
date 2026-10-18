@@ -8,8 +8,6 @@ use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Livewire\Solicitud\NovedadesDeLaSesion;
 use App\Livewire\Solicitud\SesionesApartadas;
-use App\Models\CasoClinico;
-use App\Models\Materia;
 use App\Models\Preparacion;
 use App\Models\Sala;
 use App\Models\Solicitud;
@@ -38,8 +36,7 @@ beforeEach(function (): void {
 function solicitudParaElDia(string $fecha): DatosNuevaSolicitud
 {
     return new DatosNuevaSolicitud(
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: CasoClinico::factory()->create()->id,
+        ...materiaYCaso(),
         tipo: TipoSesion::Practica,
         fecha: $fecha,
         horaInicio: '07:00',
@@ -52,9 +49,8 @@ function solicitudParaElDia(string $fecha): DatosNuevaSolicitud
 function apartadaParaElDia(User $docente, string $fecha): DatosSesionApartada
 {
     return new DatosSesionApartada(
+        ...materiaYCaso(),
         docenteId: $docente->id,
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: CasoClinico::factory()->create()->id,
         tipo: TipoSesion::Practica,
         fecha: $fecha,
         horaInicio: '07:00',

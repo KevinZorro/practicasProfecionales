@@ -19,6 +19,7 @@ use App\Services\DatosNuevaSolicitud;
 use App\Services\SolicitudService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -35,13 +36,10 @@ final class FormularioSolicitud extends Component
     use AutorizaEnCadaPeticion;
     use AvisaDelResultado;
 
-    #[Validate('required|string')]
     public string $tipo = TipoSesion::Practica->value;
 
-    #[Validate('required|integer|exists:materias,id')]
     public ?int $materiaId = null;
 
-    #[Validate('required|integer|exists:casos_clinicos,id')]
     public ?int $casoClinicoId = null;
 
     #[Validate('required|date|after_or_equal:today')]
@@ -87,6 +85,15 @@ final class FormularioSolicitud extends Component
      * Al elegir el caso clínico se precarga su inventario (RF29). Es un
      * punto de partida: a partir de aquí el docente ajusta.
      */
+    /** Otra materia, otros escenarios: el elegido deja de valer si no es de ella. */
+    public function updatedMateriaId(): void
+    {
+        if ($this->casoClinicoId !== null && ! app(SolicitudService::class)->casoPerteneceALaMateria($this->casoClinicoId, (int) $this->materiaId)) {
+            $this->casoClinicoId = null;
+            $this->updatedCasoClinicoId(null);
+        }
+    }
+
     public function updatedCasoClinicoId(mixed $valor): void
     {
         $caso = CasoClinico::find((int) $valor);
@@ -139,6 +146,23 @@ final class FormularioSolicitud extends Component
 
         $this->codigosDesconocidos = $resultado['desconocidos'];
         $this->codigosPegados = '';
+    }
+
+    /**
+     * Materia, escenario y tipo se validan contra la base y los enums, no solo
+     * por formato: la petición puede traer lo que la pantalla no ofrece
+     * (materias o escenarios inactivos, un tipo inventado) (QA-15).
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+            'tipo' => ['required', Rule::enum(TipoSesion::class)],
+            'materiaId' => ['required', 'integer', Rule::exists('materias', 'id')->where('activo', true)],
+            'casoClinicoId' => ['required', 'integer', Rule::exists('casos_clinicos', 'id')->where('activo', true)],
+            'items.*' => ['integer', 'min:1', 'max:'.SolicitudService::CANTIDAD_MAXIMA_POR_EQUIPO],
+        ];
     }
 
     public function guardar(SolicitudService $solicitudes): void
@@ -194,7 +218,7 @@ final class FormularioSolicitud extends Component
             'seleccionados' => User::query()->whereIn('id', $this->estudianteIds)->orderBy('nombre')->get(['id', 'nombre', 'codigo_institucional']),
             'resultados' => $solicitudes->buscarEstudiantes($this->busquedaEstudiante, $this->estudianteIds),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre', 'semestre']),
-            'casosClinicos' => CasoClinico::activos()->orderBy('nombre')->get(['id', 'nombre']),
+            'casosClinicos' => CasoClinico::activos()->deLaMateria($this->materiaId)->orderBy('nombre')->get(['id', 'nombre']),
             'tiposDeSesion' => TipoSesion::cases(),
             'seleccionadosPorTipo' => $this->seleccionadosPorTipo(),
             'catalogo' => $this->catalogoParaAgregar(),

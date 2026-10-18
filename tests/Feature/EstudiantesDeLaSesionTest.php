@@ -7,8 +7,6 @@ use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Solicitud\BandejaRevision;
 use App\Livewire\Solicitud\ExpedienteDeSolicitud;
 use App\Livewire\Solicitud\FormularioSolicitud;
-use App\Models\CasoClinico;
-use App\Models\Materia;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\SolicitudService;
@@ -102,11 +100,12 @@ it('agrega de una vez los códigos pegados y dice cuáles no encontró', functio
 
 it('crea la sesión con los estudiantes elegidos en el formulario', function (): void {
     $ids = idsDeEstudiantes(3);
+    $par = materiaYCaso();
 
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
-        ->set('materiaId', Materia::factory()->create()->id)
-        ->set('casoClinicoId', CasoClinico::factory()->create()->id)
+        ->set('materiaId', $par['materiaId'])
+        ->set('casoClinicoId', $par['casoClinicoId'])
         ->set('fecha', '2026-10-20')
         ->set('horaInicio', '07:00')
         ->set('horaFin', '09:00')

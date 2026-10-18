@@ -9,7 +9,6 @@ use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
-use App\Models\Materia;
 use App\Models\Preparacion;
 use App\Models\Sala;
 use App\Models\Solicitud;
@@ -53,8 +52,7 @@ it('copia a la preparación los items pedidos, sin alistar, al aprobar', functio
 
     $solicitudes = app(SolicitudService::class);
     $solicitud = $solicitudes->crear(User::factory()->docente()->create(), new DatosNuevaSolicitud(
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: $caso->id,
+        ...materiaYCaso(caso: $caso),
         tipo: TipoSesion::Practica,
         fecha: now()->addWeek()->format('Y-m-d'),
         horaInicio: '07:00',

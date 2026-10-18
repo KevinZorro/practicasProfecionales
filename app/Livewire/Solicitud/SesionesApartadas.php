@@ -14,7 +14,9 @@ use App\Models\Materia;
 use App\Models\Solicitud;
 use App\Services\DatosSesionApartada;
 use App\Services\RegistroPrevioService;
+use App\Services\SolicitudService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -34,13 +36,10 @@ final class SesionesApartadas extends Component
     #[Validate('required|integer|exists:users,id')]
     public ?int $docenteId = null;
 
-    #[Validate('required|integer|exists:materias,id')]
     public ?int $materiaId = null;
 
-    #[Validate('required|integer|exists:casos_clinicos,id')]
     public ?int $casoClinicoId = null;
 
-    #[Validate('required|string')]
     public string $tipo = TipoSesion::Practica->value;
 
     #[Validate('required|date|after_or_equal:today')]
@@ -62,6 +61,30 @@ final class SesionesApartadas extends Component
     public bool $soloSinFormato = false;
 
     public ?string $errorDeRegla = null;
+
+    /**
+     * Materia, escenario y tipo se validan contra la base y los enums, no solo
+     * por formato: la petición puede traer lo que la pantalla no ofrece
+     * (materias o escenarios inactivos, un tipo inventado) (QA-15).
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+            'tipo' => ['required', Rule::enum(TipoSesion::class)],
+            'materiaId' => ['required', 'integer', Rule::exists('materias', 'id')->where('activo', true)],
+            'casoClinicoId' => ['required', 'integer', Rule::exists('casos_clinicos', 'id')->where('activo', true)],
+        ];
+    }
+
+    /** Otra materia, otros escenarios: el elegido deja de valer si no es de ella. */
+    public function updatedMateriaId(): void
+    {
+        if ($this->casoClinicoId !== null && ! app(SolicitudService::class)->casoPerteneceALaMateria($this->casoClinicoId, (int) $this->materiaId)) {
+            $this->casoClinicoId = null;
+        }
+    }
 
     public function updatedSoloSinFormato(): void
     {
@@ -112,7 +135,7 @@ final class SesionesApartadas extends Component
         return view('livewire.solicitud.sesiones-apartadas', [
             'docentes' => $registroPrevio->docentes(),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre', 'semestre']),
-            'casosClinicos' => CasoClinico::activos()->orderBy('nombre')->get(['id', 'nombre']),
+            'casosClinicos' => CasoClinico::activos()->deLaMateria($this->materiaId)->orderBy('nombre')->get(['id', 'nombre']),
             'tiposDeSesion' => TipoSesion::cases(),
             'advertencias' => $franjaCompleta
                 ? $registroPrevio->advertencias($this->fecha, $this->horaInicio, $this->horaFin, $this->docenteId)

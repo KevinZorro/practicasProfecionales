@@ -95,6 +95,7 @@ it('al cambiar el escenario borra el formato intramural y revalida la capacidad'
     $sesion = sesionAprobadaDe($this->titular, ['formato_intramural_at' => now(), 'formato_intramural_por' => $this->titular->id]);
     $sesion->items()->attach(ItemInventario::factory()->create()->id, ['cantidad' => 2]);
     $otro = CasoClinico::factory()->create();
+    $otro->materias()->attach($sesion->materia_id);
 
     $this->servicio->reprogramar($sesion, reprogramacion($sesion, ['casoClinicoId' => $otro->id]), $this->administrativo);
     $sesion->refresh();
@@ -105,6 +106,7 @@ it('al cambiar el escenario borra el formato intramural y revalida la capacidad'
         ->and($sesion->preparacion->sala_id)->not->toBeNull();
 
     $pequeno = CasoClinico::factory()->conCapacidad(3)->create();
+    $pequeno->materias()->attach($sesion->materia_id);
 
     expect(fn () => $this->servicio->reprogramar($sesion, reprogramacion($sesion, ['casoClinicoId' => $pequeno->id]), $this->administrativo))
         ->toThrow(CapacidadDeEstudiantesExcedida::class);
