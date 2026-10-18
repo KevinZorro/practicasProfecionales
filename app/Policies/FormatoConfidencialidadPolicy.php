@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
+use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\Rol;
 use App\Models\FormatoConfidencialidad;
 use App\Models\User;
@@ -59,7 +60,8 @@ final class FormatoConfidencialidadPolicy
     /** Solo el dueño reemplaza su entrega, y solo mientras no esté verificada. */
     public function update(User $usuario, FormatoConfidencialidad $entrega): bool
     {
-        return $this->esSuyo($usuario, $entrega);
+        return $this->esSuyo($usuario, $entrega)
+            && $entrega->estado !== EstadoFormatoConfidencialidad::Verificado;
     }
 
     /**

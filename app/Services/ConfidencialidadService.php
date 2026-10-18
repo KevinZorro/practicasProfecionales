@@ -20,6 +20,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * Formato de confidencialidad de prácticas (RF51-RF53).
@@ -225,11 +226,35 @@ final class ConfidencialidadService
         $periodo = $this->periodoAbierto();
 
         return DB::transaction(function () use ($firmante, $archivo, $plantilla, $periodo): FormatoConfidencialidad {
-            $entrega = $this->entregaDelPeriodo($firmante, $periodo) ?? new FormatoConfidencialidad;
-            $this->borrarArchivoFirmado($entrega);
+            $entrega = FormatoConfidencialidad::query()
+                ->where('firmante_id', $firmante->id)
+                ->delPeriodo($periodo)
+                ->lockForUpdate()
+                ->first() ?? new FormatoConfidencialidad;
 
-            $entrega->fill($this->atributosDeEntrega($firmante, $plantilla, $archivo, $periodo));
-            $entrega->save();
+            // El documento verificado es la prueba de la autorización de
+            // captación de imágenes (Ley 1581): no se reemplaza (QA-06).
+            if ($entrega->estado === EstadoFormatoConfidencialidad::Verificado) {
+                throw FormatoConfidencialidadInvalido::yaEstaVerificado();
+            }
+
+            $rutaAnterior = $entrega->archivo_firmado_path;
+            $atributos = $this->atributosDeEntrega($firmante, $plantilla, $archivo, $periodo);
+
+            try {
+                $entrega->fill($atributos)->save();
+            } catch (Throwable $fallo) {
+                // El archivo nuevo quedaría huérfano en el disco.
+                $this->disco()->delete($atributos['archivo_firmado_path']);
+
+                throw $fallo;
+            }
+
+            // El anterior se borra al confirmar: si la transacción se
+            // revierte, la base sigue apuntando a él.
+            if (is_string($rutaAnterior)) {
+                DB::afterCommit(fn () => $this->disco()->delete($rutaAnterior));
+            }
 
             return $entrega;
         });

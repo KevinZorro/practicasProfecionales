@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\Rol;
 use App\Exceptions\FormatoConfidencialidadInvalido;
+use App\Livewire\Confidencialidad\MiFormato;
 use App\Models\FormatoConfidencialidad;
 use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
@@ -15,7 +16,9 @@ use Database\Seeders\RolSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 
 beforeEach(function (): void {
     Storage::fake('local');
@@ -354,4 +357,78 @@ it('busca a un firmante por su código institucional', function (): void {
     $encontrados = $this->servicio->estadoDeLosFirmantes('2026-2', busqueda: 'EST-4321');
 
     expect($encontrados->pluck('id')->all())->toBe([$buscado->id]);
+});
+
+// ---------------------------------------------------------------------
+// QA-06: un formato verificado no se reemplaza
+// ---------------------------------------------------------------------
+
+it('no deja reemplazar un formato ya verificado y conserva su documento firmado', function (): void {
+    $entrega = entregaCargada($this->estudiante);
+    $ruta = $entrega->archivo_firmado_path;
+    $this->servicio->verificar($entrega, $this->administrativo);
+
+    expect(fn () => $this->servicio->registrarEntrega($this->estudiante, pdfDePrueba()))
+        ->toThrow(FormatoConfidencialidadInvalido::class, 'verificado');
+
+    $guardada = $entrega->fresh();
+    expect($guardada->estado)->toBe(EstadoFormatoConfidencialidad::Verificado)
+        ->and($guardada->verificado_por)->toBe($this->administrativo->id)
+        ->and($guardada->verificado_at)->not->toBeNull()
+        ->and($guardada->archivo_firmado_path)->toBe($ruta);
+    Storage::disk('local')->assertExists($ruta);
+});
+
+it('al reemplazar un formato cargado borra el archivo anterior solo al confirmar', function (): void {
+    $primera = entregaCargada($this->estudiante);
+    $rutaAnterior = $primera->archivo_firmado_path;
+
+    $segunda = $this->servicio->registrarEntrega($this->estudiante, pdfDePrueba());
+
+    expect($segunda->id)->toBe($primera->id)
+        ->and($segunda->archivo_firmado_path)->not->toBe($rutaAnterior);
+    Storage::disk('local')->assertMissing($rutaAnterior);
+    Storage::disk('local')->assertExists($segunda->archivo_firmado_path);
+});
+
+it('si la transacción se revierte, el archivo anterior sigue en el disco', function (): void {
+    $primera = entregaCargada($this->estudiante);
+    $rutaAnterior = $primera->archivo_firmado_path;
+
+    try {
+        DB::transaction(function (): void {
+            $this->servicio->registrarEntrega($this->estudiante, pdfDePrueba());
+
+            throw new RuntimeException('falla después de guardar');
+        });
+    } catch (RuntimeException) {
+    }
+
+    Storage::disk('local')->assertExists($rutaAnterior);
+    expect($primera->fresh()->archivo_firmado_path)->toBe($rutaAnterior);
+});
+
+it('la pantalla tampoco deja reemplazar un formato verificado, aunque se llame la acción a mano', function (): void {
+    $entrega = entregaCargada($this->estudiante);
+    $ruta = $entrega->archivo_firmado_path;
+    $this->servicio->verificar($entrega, $this->administrativo);
+
+    Livewire::actingAs($this->estudiante)
+        ->test(MiFormato::class)
+        ->set('documento', pdfDePrueba())
+        ->call('entregar')
+        ->assertSet('errorDeRegla', fn (?string $mensaje): bool => str_contains((string) $mensaje, 'verificado'));
+
+    Storage::disk('local')->assertExists($ruta);
+    expect($entrega->fresh()->estado)->toBe(EstadoFormatoConfidencialidad::Verificado);
+});
+
+it('la Policy no deja actualizar una entrega verificada, pero sí una cargada', function (): void {
+    $entrega = entregaCargada($this->estudiante);
+
+    expect($this->estudiante->can('update', $entrega))->toBeTrue();
+
+    $this->servicio->verificar($entrega, $this->administrativo);
+
+    expect($this->estudiante->can('update', $entrega->fresh()))->toBeFalse();
 });

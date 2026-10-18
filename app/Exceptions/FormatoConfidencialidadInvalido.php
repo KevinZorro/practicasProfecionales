@@ -36,6 +36,11 @@ final class FormatoConfidencialidadInvalido extends DomainException
         return new self('La entrega en físico de este formato ya estaba registrada.');
     }
 
+    public static function yaEstaVerificado(): self
+    {
+        return new self('Este formato ya está verificado y no se reemplaza: es la prueba de la autorización firmada.');
+    }
+
     public static function noEstaCargado(EstadoFormatoConfidencialidad $estado): self
     {
         return new self(sprintf(
