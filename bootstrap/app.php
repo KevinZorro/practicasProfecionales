@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -55,5 +56,8 @@ return Application::configure(basePath: dirname(__DIR__))
         });
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Una regla de dominio rota por una petición (un segundo toque, una
+        // URL escrita a mano, una acción llamada desde la consola) es un
+        // «no se puede» con su mensaje, no un fallo del servidor (QA-04).
+        $exceptions->map(DomainException::class, static fn (DomainException $regla): HttpException => new HttpException(422, $regla->getMessage(), $regla));
     })->create();

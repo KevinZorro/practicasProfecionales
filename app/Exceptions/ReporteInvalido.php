@@ -8,12 +8,6 @@ use DomainException;
 
 final class ReporteInvalido extends DomainException
 {
-    /** La descarga es un enlace: el error se ve como página con su mensaje. */
-    public function render(): never
-    {
-        abort(422, $this->getMessage());
-    }
-
     public static function elPdfNecesitaUnRango(int $diasMaximos): self
     {
         return new self(sprintf(

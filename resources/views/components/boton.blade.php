@@ -9,7 +9,8 @@
     - texto: sin fondo; lo de menos peso en una fila.
 
     Mientras Livewire procesa el clic, el botón queda atenuado
-    (data-loading lo pone Livewire en el elemento que lanzó la petición).
+    (data-loading lo pone Livewire en el elemento que lanzó la petición) y
+    deshabilitado (wire:loading.attr), así un segundo toque no repite la acción.
 --}}
 @props([
     'variante' => 'primario',
@@ -44,5 +45,8 @@
 @if ($href)
     <a href="{{ $href }}" {{ $attributes->except('type')->class($clases) }}>{{ $slot }}</a>
 @else
-    <button type="{{ $tipoDelBoton }}" {{ $attributes->except('type')->class($clases) }}>{{ $slot }}</button>
+    {{-- wire:loading.attr: deshabilitado mientras Livewire procesa, para que
+         un doble toque en el celular no lance la acción dos veces (QA-04).
+         Fuera de Livewire no hace nada. --}}
+    <button type="{{ $tipoDelBoton }}" wire:loading.attr="disabled" {{ $attributes->except('type')->class($clases) }}>{{ $slot }}</button>
 @endif

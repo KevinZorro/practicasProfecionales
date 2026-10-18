@@ -19,6 +19,7 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -67,6 +68,15 @@ final class EvaluacionService
     public function agregarEstudiante(Evaluacion $evaluacion, User $estudiante): EvaluacionEstudiante
     {
         $this->garantizarBorrador($evaluacion);
+
+        // Agregar a quien ya está no hace nada: un segundo toque en el
+        // celular no es un error (QA-04).
+        $yaEsta = $evaluacion->estudiantes()->where('estudiante_id', $estudiante->id)->first();
+
+        if ($yaEsta instanceof EvaluacionEstudiante) {
+            return $yaEsta;
+        }
+
         $this->garantizarQueVaALaSesion($evaluacion->solicitud, $estudiante);
 
         $impedimentos = $this->participacion->impedimentosDe($estudiante);
@@ -76,11 +86,16 @@ final class EvaluacionService
         }
 
         // Nace sin resultado: lo decide el docente más adelante (RF46).
-        return $evaluacion->estudiantes()->create([
-            'estudiante_id' => $estudiante->id,
-            'resultado' => null,
-            'intento' => $this->calcularIntento($estudiante, $evaluacion->tipoEvaluacion),
-        ]);
+        try {
+            return $evaluacion->estudiantes()->create([
+                'estudiante_id' => $estudiante->id,
+                'resultado' => null,
+                'intento' => $this->calcularIntento($estudiante, $evaluacion->tipoEvaluacion),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Dos peticiones a la vez: ganó la otra.
+            return $evaluacion->estudiantes()->where('estudiante_id', $estudiante->id)->firstOrFail();
+        }
     }
 
     public function quitarEstudiante(Evaluacion $evaluacion, User $estudiante): void
