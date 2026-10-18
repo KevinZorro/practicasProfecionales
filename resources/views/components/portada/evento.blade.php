@@ -4,6 +4,12 @@
      el título, el tipo y si está abierto al público. --}}
 <article class="revelar flex grow basis-full flex-col rounded-[28px] bg-[var(--pieza)] p-7 sm:basis-[calc(50%-0.5rem)] lg:basis-[calc(25%-0.75rem)]"
          style="--orden: {{ min($orden, 3) }}">
+    @if ($evento->imagen || $evento->video)
+        <div class="-mx-2 -mt-2 mb-6 aspect-[16/10] overflow-hidden rounded-[20px] bg-[var(--pieza-inversa)]">
+            <x-portada.medio :imagen="$evento->imagen" :video="$evento->video" :alt="''" :etiqueta="$evento->titulo" />
+        </div>
+    @endif
+
     <p class="flex items-baseline gap-3">
         <time datetime="{{ $evento->fecha->toDateString() }}" class="contents">
             <span class="text-[4rem] font-light leading-none tracking-[-0.04em] text-portada-rojo tabular-nums">{{ $evento->fecha->format('j') }}</span>

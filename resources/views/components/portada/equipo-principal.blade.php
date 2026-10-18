@@ -20,10 +20,10 @@
         <x-portada.caracteristicas :lista="$equipo->caracteristicas ?? []" class="lg:col-span-5" />
     </div>
 
-    @if ($equipo->imagen)
+    @if ($equipo->imagen || $equipo->video)
         <div class="mt-12 overflow-hidden rounded-[28px] bg-[var(--pieza)] md:mt-16" data-acercamiento>
             <div class="aspect-[4/5] sm:aspect-[16/10] lg:aspect-[2/1]">
-                <x-portada.foto :ruta="$equipo->imagen" :alt="$equipo->nombre" class="portada-acercamiento" />
+                <x-portada.medio :imagen="$equipo->imagen" :video="$equipo->video" :alt="$equipo->nombre" :etiqueta="$equipo->nombre" class="portada-acercamiento" />
             </div>
         </div>
     @endif

@@ -182,7 +182,7 @@
                 // cerrar su fila, en tablet (2 columnas) y en escritorio (3).
                 $total = $contenido->escenarios->count();
                 $conDestacado = $total > 2;
-                $celdasDestacado = ! $conDestacado ? 1 : ($contenido->escenarios->first()->imagen ? 4 : 2);
+                $celdasDestacado = ! $conDestacado ? 1 : ($contenido->escenarios->first()->imagen || $contenido->escenarios->first()->video ? 4 : 2);
                 $sobranEnEscritorio = ($total - 1 + $celdasDestacado) % 3;
                 $sobranEnTablet = ($total - 1 + ($conDestacado ? 2 : 1)) % 2;
             @endphp
@@ -248,7 +248,7 @@
                                 'lg:col-span-3' => ! $loop->first && $loop->last && $sobranEnEscritorio === 2,
                                 'lg:col-span-2' => ! $loop->first && $loop->last && $sobranEnEscritorio === 3,
                             ])>
-                        <x-portada.foto :ruta="$foto->imagen_path" :alt="$foto->titulo" />
+                        <x-portada.medio :imagen="$foto->imagen_path" :video="$foto->video" :alt="$foto->titulo" :etiqueta="$foto->titulo" />
                         <figcaption class="sr-only">{{ $foto->titulo }}</figcaption>
                     </figure>
                 @endforeach

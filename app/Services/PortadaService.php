@@ -22,8 +22,8 @@ use Illuminate\Support\Facades\Storage;
  * Lo que muestra la portada pública (RF01–RF07). Solo lee: todo lo gestiona
  * el ADMIN desde /admin (RF10–RF17).
  *
- * Una imagen registrada cuyo archivo ya no está en el disco se trata como
- * si no hubiera foto: la portada tiene un estado sin foto para cada bloque,
+ * Una imagen o un video registrado cuyo archivo ya no está en el disco se
+ * trata como si no hubiera foto: la portada tiene un estado sin foto para cada bloque,
  * y una imagen rota se ve peor que ninguna.
  */
 final class PortadaService
@@ -31,7 +31,10 @@ final class PortadaService
     /** Los otros escenarios que se sugieren al final del detalle de uno. */
     public const OTROS_ESCENARIOS = 3;
 
-    public function __construct(private readonly ConfiguracionLandingService $configuracion) {}
+    public function __construct(
+        private readonly ConfiguracionLandingService $configuracion,
+        private readonly VideoPublicoService $videos,
+    ) {}
 
     public function contenido(): ContenidoDePortada
     {
@@ -44,18 +47,20 @@ final class PortadaService
             video: $video,
             tipoDeVideo: $video === null ? null : $this->tipoDeVideo($video),
             cifras: EstadisticaLanding::query()->publicadas()->get(),
-            equipos: $this->sinImagenesPerdidas(EquipoDestacado::query()->publicados()->get(), 'imagen'),
+            equipos: $this->sinImagenesPerdidas(EquipoDestacado::query()->publicados()->get(), 'imagen', 'video'),
             escenarios: $this->sinImagenesPerdidas(
                 CasoClinico::query()->visiblesEnPublico()->with('capacidades:id,nombre')->get(),
                 'imagen',
+                'video',
             ),
-            talleres: $this->sinImagenesPerdidas($this->vigentes(Taller::query()->publicados())->get(), 'imagen'),
+            talleres: $this->sinImagenesPerdidas($this->vigentes(Taller::query()->publicados())->get(), 'imagen', 'video'),
             eventos: $this->sinImagenesPerdidas(
                 $this->vigentes(Evento::query()->publicados())->with('tipoEvento:id,nombre')->get(),
                 'imagen',
+                'video',
             ),
-            fotos: GaleriaFoto::query()->publicadas()->get()
-                ->filter(fn (GaleriaFoto $foto): bool => $this->siExiste($foto->imagen_path) !== null)
+            fotos: $this->sinImagenesPerdidas(GaleriaFoto::query()->publicadas()->get(), 'imagen_path', 'video')
+                ->filter(fn (GaleriaFoto $foto): bool => $foto->imagen_path !== null || $foto->video !== null)
                 ->values(),
             certificaciones: $this->sinImagenesPerdidas(Certificacion::query()->publicadas()->get(), 'imagen_insignia'),
             docentes: $this->sinImagenesPerdidas(PerfilDocente::query()->publicados()->with('titulos')->get(), 'foto'),
@@ -76,7 +81,7 @@ final class PortadaService
             ->with(['capacidades:id,nombre', 'items:id,nombre'])
             ->findOrFail($id);
 
-        return $this->sinImagenesPerdidas(new Collection([$escenario]), 'imagen')->first() ?? $escenario;
+        return $this->sinImagenesPerdidas(new Collection([$escenario]), 'imagen', 'video')->first() ?? $escenario;
     }
 
     /** @return Collection<int, CasoClinico> */
@@ -89,6 +94,7 @@ final class PortadaService
                 ->limit(self::OTROS_ESCENARIOS)
                 ->get(),
             'imagen',
+            'video',
         );
     }
 
@@ -116,13 +122,15 @@ final class PortadaService
      * @param  Collection<int, TModelo>  $modelos
      * @return Collection<int, TModelo>
      */
-    private function sinImagenesPerdidas(Collection $modelos, string $columna): Collection
+    private function sinImagenesPerdidas(Collection $modelos, string ...$columnas): Collection
     {
         foreach ($modelos as $modelo) {
-            $ruta = $modelo->getAttribute($columna);
+            foreach ($columnas as $columna) {
+                $ruta = $modelo->getAttribute($columna);
 
-            if ($this->siExiste(is_string($ruta) ? $ruta : null) === null) {
-                $modelo->setAttribute($columna, null);
+                if ($this->siExiste(is_string($ruta) ? $ruta : null) === null) {
+                    $modelo->setAttribute($columna, null);
+                }
             }
         }
 
@@ -140,6 +148,6 @@ final class PortadaService
 
     private function tipoDeVideo(string $ruta): string
     {
-        return str_ends_with(mb_strtolower($ruta), '.webm') ? 'video/webm' : 'video/mp4';
+        return $this->videos->tipoDe($ruta);
     }
 }
