@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\Rol;
 use App\Exceptions\FormatoConfidencialidadInvalido;
@@ -45,6 +46,7 @@ final class ConfidencialidadService
 
     public function __construct(
         private readonly PeriodoAcademicoService $periodos,
+        private readonly BitacoraService $bitacora,
     ) {}
 
     /**
@@ -299,6 +301,7 @@ final class ConfidencialidadService
                 'recibido_fisico_por' => $administrativo->id,
             ]);
             $entrega->save();
+            $this->bitacora->registrar(AccionAuditada::EntregaFisicaRecibida, $administrativo, $entrega, $this->describir('Recibió en físico', $entrega));
 
             return $entrega;
         });
@@ -322,6 +325,7 @@ final class ConfidencialidadService
                 'verificado_por' => $verificador->id,
                 'verificado_at' => now(),
             ]);
+            $this->bitacora->registrar(AccionAuditada::FormatoVerificado, $verificador, $entrega, $this->describir('Verificó', $entrega));
         });
 
         return $entrega;
@@ -341,7 +345,7 @@ final class ConfidencialidadService
     ): FormatoConfidencialidad {
         $this->garantizarPermiso($verificador, 'rechazar', $entrega);
 
-        DB::transaction(function () use ($entrega, $motivo): void {
+        DB::transaction(function () use ($entrega, $verificador, $motivo): void {
             $this->bloquearYGarantizarCargado($entrega);
             $ruta = $entrega->archivo_firmado_path;
 
@@ -352,6 +356,7 @@ final class ConfidencialidadService
                 'verificado_por' => null,
                 'verificado_at' => null,
             ]);
+            $this->bitacora->registrar(AccionAuditada::FormatoRechazado, $verificador, $entrega, $this->describir('Rechazó', $entrega), $motivo);
 
             if (is_string($ruta)) {
                 DB::afterCommit(fn () => $this->disco()->delete($ruta));
@@ -581,6 +586,20 @@ final class ConfidencialidadService
         if ($archivo->getSize() > $maximoKb * 1024) {
             throw FormatoConfidencialidadInvalido::archivoDemasiadoGrande($maximoKb);
         }
+    }
+
+    /**
+     * Quién y de qué periodo, con el nombre de ese día. Nunca el archivo:
+     * la bitácora no lleva datos del documento firmado.
+     */
+    private function describir(string $verbo, FormatoConfidencialidad $entrega): string
+    {
+        return sprintf(
+            '%s el formato de confidencialidad de %s (periodo %s).',
+            $verbo,
+            $entrega->firmante()->value('nombre'),
+            $entrega->periodo_academico,
+        );
     }
 
     /**

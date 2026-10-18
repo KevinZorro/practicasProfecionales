@@ -219,7 +219,7 @@ it('no finaliza si algún estudiante se quedó sin resultado', function (): void
     $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
     $this->servicio->registrarResultado($conResultado, ResultadoEvaluacion::Aprobado);
 
-    expect(fn () => $this->servicio->finalizar($evaluacion))
+    expect(fn () => $this->servicio->finalizar($evaluacion, $evaluacion->docente))
         ->toThrow(EvaluacionInvalida::class, '1 estudiante(s) sin resultado');
 
     expect($evaluacion->fresh()->estado)->toBe(EstadoEvaluacion::Borrador);
@@ -230,7 +230,7 @@ it('no modifica una evaluación ya finalizada', function (string $metodo): void 
     $evaluacion = $this->servicio->crear($solicitud, $tipo, $this->docente);
     $registro = $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create());
     $this->servicio->registrarResultado($registro, ResultadoEvaluacion::Aprobado);
-    $this->servicio->finalizar($evaluacion);
+    $this->servicio->finalizar($evaluacion, $evaluacion->docente);
 
     $accion = match ($metodo) {
         'agregarEstudiante' => fn () => $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create()),
@@ -238,7 +238,7 @@ it('no modifica una evaluación ya finalizada', function (string $metodo): void 
         'marcarItem' => fn () => $this->servicio->marcarItem($registro->fresh(), $evaluacion->items->first()),
         'registrarResultado' => fn () => $this->servicio->registrarResultado($registro->fresh(), ResultadoEvaluacion::NoAprobado),
         'registrarObservaciones' => fn () => $this->servicio->registrarObservaciones($registro->fresh(), 'tarde'),
-        'finalizar' => fn () => $this->servicio->finalizar($evaluacion->fresh()),
+        'finalizar' => fn () => $this->servicio->finalizar($evaluacion->fresh(), $evaluacion->docente),
     };
 
     expect($accion)->toThrow(EvaluacionInvalida::class, 'no se modifica');
@@ -258,7 +258,7 @@ it('recorre el flujo completo hasta dejar la evaluación finalizada', function (
     $this->servicio->registrarResultado($reprobado, ResultadoEvaluacion::NoAprobado);
     $this->servicio->registrarObservaciones($reprobado, 'Debe repasar la técnica.');
 
-    $this->servicio->finalizar($evaluacion);
+    $this->servicio->finalizar($evaluacion, $evaluacion->docente);
 
     expect($evaluacion->fresh()->estado)->toBe(EstadoEvaluacion::Finalizada)
         ->and($reprobado->fresh()->observaciones)->toBe('Debe repasar la técnica.')

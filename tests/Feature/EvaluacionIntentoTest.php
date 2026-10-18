@@ -35,7 +35,7 @@ function presentar(
     $evaluacion = $servicio->crear($solicitud, $tipo, $docente);
     $registro = $servicio->agregarEstudiante($evaluacion, $estudiante);
     $servicio->registrarResultado($registro, $resultado);
-    $servicio->finalizar($evaluacion);
+    $servicio->finalizar($evaluacion, $evaluacion->docente);
 
     return $registro->fresh()->intento;
 }
@@ -112,9 +112,9 @@ it('recalcula el intento al finalizar, no al agregar al estudiante', function ()
     expect($enPrimera->intento)->toBe(1)->and($enSegunda->intento)->toBe(1);
 
     $this->servicio->registrarResultado($enPrimera, ResultadoEvaluacion::NoAprobado);
-    $this->servicio->finalizar($primera);
+    $this->servicio->finalizar($primera, $primera->docente);
     $this->servicio->registrarResultado($enSegunda, ResultadoEvaluacion::Aprobado);
-    $this->servicio->finalizar($segunda);
+    $this->servicio->finalizar($segunda, $segunda->docente);
 
     expect($enPrimera->fresh()->intento)->toBe(1)
         ->and($enSegunda->fresh()->intento)->toBe(2);

@@ -105,7 +105,7 @@ final class RegistroDeEvaluacion extends Component
         $evaluacion = Evaluacion::findOrFail($this->evaluacionId);
         $this->authorize('finalizar', $evaluacion);
 
-        if ($this->ejecutar(fn () => $evaluaciones->finalizar($evaluacion))) {
+        if ($this->ejecutar(fn () => $evaluaciones->finalizar($evaluacion, Auth::user()))) {
             $this->avisar('Evaluación finalizada. Los estudiantes ya pueden ver sus resultados.');
         }
     }

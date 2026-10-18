@@ -44,7 +44,7 @@ function evaluacionFinalizada(User $docente, TipoEvaluacion $tipo, Materia $mate
         $servicio->marcarItem($registro, $evaluacion->items->first());
         $servicio->registrarResultado($registro, $resultado);
     }
-    $servicio->finalizar($evaluacion);
+    $servicio->finalizar($evaluacion, $evaluacion->docente);
 
     return $evaluacion;
 }

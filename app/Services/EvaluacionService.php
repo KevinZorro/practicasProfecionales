@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoEvaluacion;
 use App\Enums\EstadoSolicitud;
 use App\Enums\ResultadoEvaluacion;
@@ -34,7 +35,10 @@ final class EvaluacionService
 {
     public const POR_PAGINA = 15;
 
-    public function __construct(private readonly ParticipacionService $participacion) {}
+    public function __construct(
+        private readonly ParticipacionService $participacion,
+        private readonly BitacoraService $bitacora,
+    ) {}
 
     public function crear(Solicitud $solicitud, TipoEvaluacion $tipo, User $docente): Evaluacion
     {
@@ -167,14 +171,15 @@ final class EvaluacionService
         return $registro;
     }
 
-    public function finalizar(Evaluacion $evaluacion): Evaluacion
+    public function finalizar(Evaluacion $evaluacion, User $actor): Evaluacion
     {
         $this->garantizarBorrador($evaluacion);
         $this->garantizarResultadosCompletos($evaluacion);
 
-        DB::transaction(function () use ($evaluacion): void {
+        DB::transaction(function () use ($evaluacion, $actor): void {
             $this->fijarIntentos($evaluacion);
             $evaluacion->update(['estado' => EstadoEvaluacion::Finalizada]);
+            $this->bitacora->registrar(AccionAuditada::EvaluacionFinalizada, $actor, $evaluacion, $this->describirCierre($evaluacion));
         });
 
         return $evaluacion;
@@ -366,6 +371,25 @@ final class EvaluacionService
         if ($evaluacion->estado !== EstadoEvaluacion::Borrador) {
             throw EvaluacionInvalida::noEsBorrador();
         }
+    }
+
+    /** Cuántos evaluados y cómo les fue, para quien lea la bitácora sin abrir la evaluación. */
+    private function describirCierre(Evaluacion $evaluacion): string
+    {
+        $resultados = $evaluacion->estudiantes()->pluck('resultado');
+        $aprobados = $resultados->filter(static fn (mixed $resultado): bool => $resultado === ResultadoEvaluacion::Aprobado)->count();
+        $total = $resultados->count();
+
+        return sprintf(
+            'Finalizó %s: %d %s, %d %s y %d no aprobado%s.',
+            $evaluacion->tipoEvaluacion()->value('nombre'),
+            $total,
+            $total === 1 ? 'estudiante' : 'estudiantes',
+            $aprobados,
+            $aprobados === 1 ? 'aprobado' : 'aprobados',
+            $total - $aprobados,
+            $total - $aprobados === 1 ? '' : 's',
+        );
     }
 
     private function garantizarResultadosCompletos(Evaluacion $evaluacion): void
