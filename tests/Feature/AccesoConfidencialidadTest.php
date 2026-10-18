@@ -7,6 +7,7 @@ use App\Models\FormatoConfidencialidad;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function (): void {
     $this->seed(RolSeeder::class);
@@ -80,3 +81,42 @@ it('deja bajar el archivo firmado a quien lo verifica', function (Rol $rol): voi
 
     expect($usuario->can('descargar', $this->entrega))->toBeTrue();
 })->with([Rol::Administrativo, Rol::Coordinador, Rol::Admin]);
+
+// QA-18: la descarga de la plantilla
+
+it('responde 404 con su mensaje si no hay plantilla activa, no 500', function (): void {
+    // La entrega del beforeEach trae su propia plantilla: se desactiva.
+    PlantillaConfidencialidad::query()->update(['activo' => false]);
+
+    $this->actingAs($this->estudiante)
+        ->get(route('panel.formatos-confidencialidad.plantilla'))
+        ->assertNotFound()
+        ->assertSee('No hay plantilla de confidencialidad activa', false);
+});
+
+it('baja la plantilla activa y una versión concreta del historial', function (): void {
+    Storage::fake('local');
+    $plantilla = PlantillaConfidencialidad::factory()->create(['version' => '3.0']);
+    Storage::disk('local')->put($plantilla->archivo_path, '%PDF-1.4 plantilla');
+    $admin = User::factory()->admin()->create();
+
+    $this->actingAs($this->estudiante)
+        ->get(route('panel.formatos-confidencialidad.plantilla'))
+        ->assertOk()
+        ->assertDownload('formato-de-confidencialidad.pdf');
+
+    $this->actingAs($admin)
+        ->get(route('panel.formatos-confidencialidad.version', $plantilla))
+        ->assertOk()
+        ->assertDownload('formato-confidencialidad-v3.0.pdf');
+});
+
+it('responde 404 si el archivo de la plantilla ya no está en el disco', function (): void {
+    Storage::fake('local');
+    $plantilla = PlantillaConfidencialidad::factory()->create();
+
+    $this->actingAs($this->estudiante)
+        ->get(route('panel.formatos-confidencialidad.plantilla'))
+        ->assertNotFound();
+    expect($plantilla->archivo_path)->not->toBeEmpty();
+});
