@@ -26,6 +26,13 @@ final class AsignacionDeRolInvalida extends DomainException
         return new self(sprintf('La fecha de fin (%s) ya pasó: elige hoy o una fecha posterior.', $hasta));
     }
 
+    public static function nadieSeQuitaElRolDeAdmin(): self
+    {
+        // Solo un ADMIN revoca, así que el único ADMIN que se quita el rol
+        // dejaría la plataforma sin nadie que pueda devolvérselo.
+        return new self('Nadie se quita a sí mismo el rol de ADMIN: la plataforma podría quedarse sin administrador. Que otro ADMIN lo haga.');
+    }
+
     public static function laElevacionExigeMotivo(): self
     {
         return new self('Elevar a coordinador exige escribir el motivo de la delegación.');

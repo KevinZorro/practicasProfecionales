@@ -149,6 +149,14 @@ final class AsignacionDeRolService
     {
         $this->garantizarPermiso($actor, 'revocar');
 
+        // Como deshabilitar a sí mismo (UserPolicy): un clic que deja la
+        // plataforma sin ADMIN, y volver atrás exige entrar a la base (QA-07).
+        // Solo un ADMIN puede revocar, así que mientras el actor no sea el
+        // revocado siempre queda al menos él.
+        if ($rol === Rol::Admin && $actor->is($usuario)) {
+            throw AsignacionDeRolInvalida::nadieSeQuitaElRolDeAdmin();
+        }
+
         $fila = $this->filaDelPivote($usuario, $this->role($rol));
 
         if ($fila === null) {
