@@ -236,6 +236,7 @@ it('no modifica una evaluación ya finalizada', function (string $metodo): void 
         'agregarEstudiante' => fn () => $this->servicio->agregarEstudiante($evaluacion, User::factory()->estudiante()->habilitado()->create()),
         'quitarEstudiante' => fn () => $this->servicio->quitarEstudiante($evaluacion, $registro->estudiante),
         'marcarItem' => fn () => $this->servicio->marcarItem($registro->fresh(), $evaluacion->items->first()),
+        'desmarcarItem' => fn () => $this->servicio->desmarcarItem($registro->fresh(), $evaluacion->items->first()),
         'registrarResultado' => fn () => $this->servicio->registrarResultado($registro->fresh(), ResultadoEvaluacion::NoAprobado),
         'registrarObservaciones' => fn () => $this->servicio->registrarObservaciones($registro->fresh(), 'tarde'),
         'finalizar' => fn () => $this->servicio->finalizar($evaluacion->fresh(), $evaluacion->docente),
@@ -243,7 +244,7 @@ it('no modifica una evaluación ya finalizada', function (string $metodo): void 
 
     expect($accion)->toThrow(EvaluacionInvalida::class, 'no se modifica');
 })->with([
-    'agregarEstudiante', 'quitarEstudiante', 'marcarItem',
+    'agregarEstudiante', 'quitarEstudiante', 'marcarItem', 'desmarcarItem',
     'registrarResultado', 'registrarObservaciones', 'finalizar',
 ]);
 
