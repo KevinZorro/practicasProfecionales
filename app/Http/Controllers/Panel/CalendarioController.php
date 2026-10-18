@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Panel;
 use App\Http\Controllers\Controller;
 use App\Models\Solicitud;
 use App\Services\SolicitudService;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,6 +18,8 @@ use Illuminate\View\View;
  */
 final class CalendarioController extends Controller
 {
+    private const DIAS_MAXIMOS_DEL_RANGO = 62;
+
     public function index(Request $peticion): View
     {
         abort_unless($peticion->user()->can('verCalendario', Solicitud::class), 403);
@@ -34,7 +37,20 @@ final class CalendarioController extends Controller
 
         $datos = $peticion->validate([
             'desde' => ['required', 'date'],
-            'hasta' => ['required', 'date', 'after_or_equal:desde'],
+            'hasta' => [
+                'required', 'date', 'after_or_equal:desde',
+                // FullCalendar pide a lo sumo seis semanas (la vista mensual
+                // con los días de las semanas vecinas). Sin tope, un rango de
+                // años devolvería todas las sesiones de la historia (QA-22).
+                static function (string $atributo, mixed $hasta, Closure $falla) use ($peticion): void {
+                    $desde = $peticion->input('desde');
+
+                    if (is_string($desde) && strtotime((string) $hasta) !== false && strtotime($desde) !== false
+                        && (strtotime((string) $hasta) - strtotime($desde)) / 86400 > self::DIAS_MAXIMOS_DEL_RANGO) {
+                        $falla('El rango del calendario no puede pasar de '.self::DIAS_MAXIMOS_DEL_RANGO.' días.');
+                    }
+                },
+            ],
         ]);
 
         return response()->json(

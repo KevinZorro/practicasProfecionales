@@ -133,6 +133,9 @@ final class NovedadesDeLaSesion extends Component
             'solicitud' => $solicitud,
             'casosClinicos' => CasoClinico::activos()->deLaMateria($solicitud->materia_id)->orderBy('nombre')->get(['id', 'nombre']),
             'docentes' => $registroPrevio->docentes(),
+            'avisosDeSustitucion' => $this->reemplazoId === null
+                ? []
+                : app(NovedadesDeSesionService::class)->avisosDeSustitucion($solicitud, User::findOrFail($this->reemplazoId)),
             'advertencias' => $franjaCompleta
                 ? $registroPrevio->advertencias($this->fecha, $this->horaInicio, $this->horaFin, $solicitud->idDelDocenteQueDicta(), $solicitud->id)
                 : [],

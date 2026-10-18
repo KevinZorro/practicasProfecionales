@@ -28,7 +28,38 @@ final class NovedadesDeSesionService
     public function __construct(
         private readonly SolicitudService $solicitudes,
         private readonly BitacoraService $bitacora,
+        private readonly BloqueoService $bloqueos,
     ) {}
+
+    /**
+     * Lo que conviene saber antes de poner a este docente en la sesión: si
+     * está bloqueado (RF68) o ya dicta otra sesión a esa hora. Son avisos y no
+     * impedimentos, como los cruces de RF58: el laboratorio decide.
+     *
+     * @return list<string>
+     */
+    public function avisosDeSustitucion(Solicitud $solicitud, User $reemplazo): array
+    {
+        $avisos = [];
+        $bloqueo = $this->bloqueos->vigenteDe($reemplazo);
+
+        if ($bloqueo !== null) {
+            $avisos[] = sprintf('%s está bloqueado para el uso del laboratorio: %s.', $reemplazo->nombre, $bloqueo->motivo);
+        }
+
+        $cruzadas = Solicitud::query()
+            ->whereKeyNot($solicitud->id)
+            ->aprobadas()
+            ->queDicta($reemplazo)
+            ->queSeSolapanCon($solicitud->fecha->format('Y-m-d'), $solicitud->hora_inicio, $solicitud->hora_fin)
+            ->count();
+
+        if ($cruzadas > 0) {
+            $avisos[] = sprintf('%s ya dicta otra sesión que se cruza con esta franja.', $reemplazo->nombre);
+        }
+
+        return $avisos;
+    }
 
     /**
      * Cambia fecha, franja o escenario. La sesión sigue aprobada; se

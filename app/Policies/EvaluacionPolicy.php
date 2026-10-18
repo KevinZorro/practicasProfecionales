@@ -6,6 +6,7 @@ namespace App\Policies;
 
 use App\Enums\Rol;
 use App\Models\Evaluacion;
+use App\Models\Solicitud;
 use App\Models\User;
 
 /**
@@ -25,6 +26,16 @@ final class EvaluacionPolicy
     public function create(User $usuario): bool
     {
         return $usuario->hasRole(Rol::Docente->value);
+    }
+
+    /**
+     * Registrar la evaluación de una sesión: quien la dicta, que con una
+     * sustitución (RF73) es el reemplazo y no el titular. Ni coordinación
+     * evalúa por el docente.
+     */
+    public function registrarEnSesion(User $usuario, Solicitud $solicitud): bool
+    {
+        return $this->create($usuario) && $solicitud->idDelDocenteQueDicta() === $usuario->id;
     }
 
     /**
