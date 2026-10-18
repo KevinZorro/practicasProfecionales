@@ -28,6 +28,7 @@ class EquipoDestacado extends Model
         'nombre',
         'resumen',
         'imagen',
+        'video',
         'caracteristicas',
         'orden',
         'activo',

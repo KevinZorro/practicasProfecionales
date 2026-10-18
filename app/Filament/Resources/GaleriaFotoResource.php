@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Formularios\CampoDeImagen;
+use App\Filament\Formularios\CampoDeVideo;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\GaleriaFotoResource\Pages;
 use App\Models\GaleriaFoto;
@@ -12,6 +13,7 @@ use App\Services\ImagenPublicaService;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
@@ -47,6 +49,11 @@ final class GaleriaFotoResource extends RecursoDelAdmin
         return ['imagen_path'];
     }
 
+    public static function camposDeVideo(): array
+    {
+        return ['video'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -57,7 +64,9 @@ final class GaleriaFotoResource extends RecursoDelAdmin
                 ->maxLength(255),
             CampoDeImagen::make('imagen_path', 'galeria')
                 ->label('Foto')
-                ->required(),
+                ->required(static fn (Get $get): bool => blank($get('video'))),
+            CampoDeVideo::make('video', 'galeria')
+                ->required(static fn (Get $get): bool => blank($get('imagen_path'))),
             Toggle::make('activo')
                 ->label('Publicada')
                 ->helperText('Una foto sin publicar se conserva, pero no sale en la landing.')
@@ -70,6 +79,7 @@ final class GaleriaFotoResource extends RecursoDelAdmin
         return $table
             ->columns([
                 ImageColumn::make('imagen_path')->label('Foto')->disk(ImagenPublicaService::DISCO)->height(48),
+                IconColumn::make('video')->label('Video')->boolean()->getStateUsing(static fn (GaleriaFoto $registro): bool => filled($registro->video)),
                 TextColumn::make('titulo')->label('Título')->searchable(),
                 IconColumn::make('activo')->label('Publicada')->boolean(),
             ])
@@ -81,7 +91,7 @@ final class GaleriaFotoResource extends RecursoDelAdmin
             ->actions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->after(static fn (GaleriaFoto $record) => app(ImagenPublicaService::class)->borrarAlConfirmar($record->imagen_path)),
+                    ->after(static fn (GaleriaFoto $record) => self::borrarArchivosDe($record)),
             ]);
     }
 

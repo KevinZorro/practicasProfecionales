@@ -25,6 +25,7 @@ class Taller extends Model
         'titulo',
         'descripcion',
         'imagen',
+        'video',
         'tema',
         'fecha',
         'modalidad',

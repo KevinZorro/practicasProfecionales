@@ -6,6 +6,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ModalidadTaller;
 use App\Filament\Formularios\CampoDeImagen;
+use App\Filament\Formularios\CampoDeVideo;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\TallerResource\Pages;
 use App\Models\Taller;
@@ -53,6 +54,11 @@ final class TallerResource extends RecursoDelAdmin
         return ['imagen'];
     }
 
+    public static function camposDeVideo(): array
+    {
+        return ['video'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -82,6 +88,8 @@ final class TallerResource extends RecursoDelAdmin
                     ->required(),
                 CampoDeImagen::make('imagen', 'talleres')
                     ->label('Imagen')
+                    ->columnSpanFull(),
+                CampoDeVideo::make('video', 'talleres')
                     ->columnSpanFull(),
             ]),
             Section::make('Publicación')->columns(2)->schema([
@@ -123,7 +131,7 @@ final class TallerResource extends RecursoDelAdmin
             ->actions([
                 EditAction::make(),
                 DeleteAction::make()
-                    ->after(static fn (Taller $record) => app(ImagenPublicaService::class)->borrarAlConfirmar($record->imagen)),
+                    ->after(static fn (Taller $record) => self::borrarArchivosDe($record)),
             ]);
     }
 

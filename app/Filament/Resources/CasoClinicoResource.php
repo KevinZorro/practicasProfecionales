@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources;
 
 use App\Filament\Formularios\CampoDeImagen;
+use App\Filament\Formularios\CampoDeVideo;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\CasoClinicoResource\Pages;
 use App\Models\CasoClinico;
@@ -62,6 +63,11 @@ final class CasoClinicoResource extends RecursoDelAdmin
         return ['imagen'];
     }
 
+    public static function camposDeVideo(): array
+    {
+        return ['video'];
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -93,6 +99,7 @@ final class CasoClinicoResource extends RecursoDelAdmin
                 ->schema([
                     CampoDeImagen::make('imagen', 'casos-clinicos')
                         ->label('Imagen'),
+                    CampoDeVideo::make('video', 'casos-clinicos'),
                     Toggle::make('visible_publico')
                         ->label('Visible en la landing')
                         ->helperText('Solo sale si además está activo.')
