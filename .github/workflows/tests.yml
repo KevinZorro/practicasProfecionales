@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Instalar PHP 8.3
         uses: shivammathur/setup-php@v2
@@ -104,7 +104,7 @@ jobs:
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Preparar el .env
         run: |
@@ -252,7 +252,7 @@ jobs:
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # El ejemplo con sus marcas <...> llenas. Si al ejemplo le falta algo
       # que el compose exige, falla aquí y no en el servidor.
