@@ -17,6 +17,7 @@
 
         <div class="flex flex-col gap-4 pt-6 text-xs text-portada-gris sm:flex-row sm:items-center sm:justify-between">
             <p>© {{ now()->year }} Universidad Francisco de Paula Santander</p>
+            <x-politica-de-datos class="underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo" />
             <a href="{{ route('panel.inicio') }}"
                class="font-medium text-portada-tinta underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">
                 Ingresar a la plataforma

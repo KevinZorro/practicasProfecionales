@@ -187,6 +187,10 @@
         @endif
 
         @yield('contenido')
+
+        <p class="mt-10 text-[13px] text-gray-600">
+            <x-politica-de-datos class="underline underline-offset-4 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo" />
+        </p>
     </main>
 </div>
 
