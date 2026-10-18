@@ -102,6 +102,7 @@
 ## Periodo académico *(nuevo)*
 
 - **RF75** *(nuevo)* — Los administrativos, la coordinación y el ADMIN deben poder abrir y cerrar el periodo académico vigente desde la plataforma, sin que el sistema imponga fechas. El formato de confidencialidad y los demás procesos semestrales se rigen por el periodo que ellos definan.
+- **RF76** *(nuevo)* — El ADMIN debe poder subir un video, en lugar de una foto o además de ella, en la galería, los escenarios, los talleres, los eventos y el equipamiento destacado. Las certificaciones y los perfiles docentes siguen solo con foto. El video es un archivo MP4 o WebM ya comprimido (no un enlace a otro sitio), de hasta 30 MB, es decir unos 90 segundos a 720p. La portada lo muestra sin reproducirlo sola.
 
 ## Auditoría y roles
 
@@ -181,5 +182,6 @@ No son requerimientos, pero condicionan la puesta en producción y dependen de l
 - **RF34.** El calendario ya no es igual para todos: cada rol ve solo lo suyo (D19). Antes decía «visible para estudiantes, docentes…» sin acotar y entregaba el docente, la materia y la cantidad de estudiantes de todas las sesiones.
 - **RF74.** La capacidad que limita la cantidad de estudiantes es la del caso clínico, no la de la sala.
 - **RF75.** Nuevo requerimiento para que el laboratorio abra y cierre el periodo académico sin fechas impuestas por el sistema.
+- **RF76.** Nuevo requerimiento: videos en el contenido público, como archivo y con tope de 30 MB, sin enlaces a otros sitios (D20).
 - **Aclaraciones del 9 de octubre.** RF28: el docente indica los estudiantes de cada sesión. RF31: coordinación también puede rechazar, en una segunda fase. RF36: solo se ofrecen salas libres. RF57: las sesiones apartadas llegan aprobadas. RF59: el formato intramural lo digitan los administrativos. RF65: las salas se ubican por bloque, piso y número.
 - **Pendientes cerrados.** Autoaprobación, antelación del formato intramural, aviso de sala al docente, solicitudes fuera de la programación, tipos de evento, quién rechaza, retiro de inventario, cierre de la lista de reposición, grupos, tiempo entre sesiones, canal de videos, participantes sin formato o bloqueados, conciliación de capacidades, mes de inicio del semestre y hoja de alistamiento.
