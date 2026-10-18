@@ -23,6 +23,13 @@ enum AccionAuditada: string
     case UsuarioHabilitado = 'usuario_habilitado';
     case DocenteSupervisadoAsignado = 'docente_supervisado_asignado';
     case DocenteSupervisadoRetirado = 'docente_supervisado_retirado';
+    case FormatoVerificado = 'formato_verificado';
+    case FormatoRechazado = 'formato_rechazado';
+    case EntregaFisicaRecibida = 'entrega_fisica_recibida';
+    case PeriodoAbierto = 'periodo_abierto';
+    case PeriodoCerrado = 'periodo_cerrado';
+    case PeriodoReabierto = 'periodo_reabierto';
+    case EvaluacionFinalizada = 'evaluacion_finalizada';
 
     public function etiqueta(): string
     {
@@ -43,6 +50,13 @@ enum AccionAuditada: string
             self::UsuarioHabilitado => 'Cuenta habilitada',
             self::DocenteSupervisadoAsignado => 'Docente asignado a un supervisor',
             self::DocenteSupervisadoRetirado => 'Docente retirado de un supervisor',
+            self::FormatoVerificado => 'Formato de confidencialidad verificado',
+            self::FormatoRechazado => 'Formato de confidencialidad rechazado',
+            self::EntregaFisicaRecibida => 'Formato de confidencialidad recibido en físico',
+            self::PeriodoAbierto => 'Periodo académico abierto',
+            self::PeriodoCerrado => 'Periodo académico cerrado',
+            self::PeriodoReabierto => 'Periodo académico reabierto',
+            self::EvaluacionFinalizada => 'Evaluación finalizada',
         };
     }
 }

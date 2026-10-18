@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Panel;
 
+use App\Exceptions\FormatoConfidencialidadInvalido;
 use App\Http\Controllers\Controller;
 use App\Models\FormatoConfidencialidad;
 use App\Models\PlantillaConfidencialidad;
 use App\Services\ConfidencialidadService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -22,9 +24,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 final class DescargaConfidencialidadController extends Controller
 {
     /** La plantilla en blanco: no lleva datos de nadie, pero tampoco se enlaza directo. */
-    public function plantilla(Request $peticion, ConfidencialidadService $confidencialidad): StreamedResponse
+    public function plantilla(Request $peticion, ConfidencialidadService $confidencialidad): StreamedResponse|Response
     {
-        $plantilla = $confidencialidad->plantillaVigente();
+        try {
+            $plantilla = $confidencialidad->plantillaVigente();
+        } catch (FormatoConfidencialidadInvalido $sinPlantilla) {
+            // Todavía no hay nada que bajar: es un «no existe», no un fallo.
+            // El 404 por defecto no enseña el mensaje, y aquí sí hace falta.
+            return response()->view('panel.confidencialidad.sin-plantilla', ['mensaje' => $sinPlantilla->getMessage()], 404);
+        }
+
         abort_unless($peticion->user()->can('descargar', $plantilla), 403);
 
         return $this->entregar($plantilla->archivo_path, 'formato-de-confidencialidad.pdf');

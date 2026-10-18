@@ -25,10 +25,9 @@ beforeEach(function (): void {
 function solicitudPara(CasoClinico $caso, Materia $materia, int $estudiantes): DatosNuevaSolicitud
 {
     return new DatosNuevaSolicitud(
-        materiaId: $materia->id,
-        casoClinicoId: $caso->id,
+        ...materiaYCaso($materia, $caso),
         tipo: TipoSesion::Practica,
-        fecha: '2026-10-05',
+        fecha: now()->addWeek()->format('Y-m-d'),
         horaInicio: '08:00',
         horaFin: '10:00',
         grupo: 'A',
@@ -104,7 +103,7 @@ it('enseña el error junto a la lista de estudiantes y no registra nada', functi
         ->test(FormularioSolicitud::class)
         ->set('materiaId', $this->materia->id)
         ->set('casoClinicoId', $caso->id)
-        ->set('fecha', '2026-10-05')
+        ->set('fecha', now()->addWeek()->format('Y-m-d'))
         ->set('horaInicio', '08:00')
         ->set('horaFin', '10:00')
         ->set('grupo', 'A')

@@ -1,0 +1,24 @@
+version: 2
+
+# Propone las actualizaciones de seguridad y de versión de lo que el
+# proyecto instala (QA-09). Un cambio a la vez, con la CI como juez.
+updates:
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      symfony:
+        patterns: ['symfony/*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

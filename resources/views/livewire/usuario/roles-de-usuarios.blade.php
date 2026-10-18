@@ -88,6 +88,7 @@
                                         <span class="font-medium text-amber-800">· temporal hasta {{ $role->pivot->hasta->format('d/m/Y') }}</span>
                                     @endif
 
+                                    @if (! ($rol === \App\Enums\Rol::Admin && $usuario->is(auth()->user())))
                                     @can('revocar', \App\Models\AsignacionDeRol::class)
                                         <button type="button" wire:click="revocar({{ $usuario->id }}, '{{ $rol->value }}')"
                                                 wire:loading.attr="disabled" wire:confirm="¿Revocar el rol {{ $rol->etiqueta() }} a {{ $usuario->nombre }}? Deja de tener efecto en el acto."
@@ -95,6 +96,7 @@
                                             Revocar
                                         </button>
                                     @endcan
+                                    @endif
                                 </li>
                             @endforeach
                         </ul>

@@ -22,6 +22,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -38,8 +39,58 @@ final class SolicitudService
         private readonly BitacoraService $bitacora,
     ) {}
 
+    /**
+     * Una fecha anterior a hoy, en la zona de la aplicación. Hoy sí vale.
+     * Lo usan los tres caminos que ponen una sesión en el calendario: la
+     * solicitud, la sesión apartada y la reprogramación (QA-05).
+     */
+    public function esFechaPasada(string $fecha): bool
+    {
+        return Carbon::parse($fecha)->startOfDay()->isBefore(Carbon::today());
+    }
+
+    /** Cantidad máxima por equipo en una solicitud: un tope de cordura, no de inventario. */
+    public const CANTIDAD_MAXIMA_POR_EQUIPO = 999;
+
+    /** El escenario está asociado a la materia (RF24). */
+    public function casoPerteneceALaMateria(int $casoClinicoId, int $materiaId): bool
+    {
+        return CasoClinico::query()->whereKey($casoClinicoId)->deLaMateria($materiaId)->exists();
+    }
+
+    public function garantizarCasoDeLaMateria(int $casoClinicoId, int $materiaId): void
+    {
+        if (! $this->casoPerteneceALaMateria($casoClinicoId, $materiaId)) {
+            throw SolicitudInvalida::casoFueraDeLaMateria();
+        }
+    }
+
+    /**
+     * Los equipos vienen de la pantalla, pero la petición puede traer otros:
+     * cada id tiene que existir y cada cantidad ser razonable.
+     *
+     * @param  array<int, int>  $items  id del ítem => cantidad
+     */
+    private function garantizarEquipos(array $items): void
+    {
+        if ($items === []) {
+            return;
+        }
+
+        $existentes = ItemInventario::query()->whereIn('id', array_keys($items))->count();
+        $cantidadesValidas = collect($items)->every(static fn (int $cantidad): bool => $cantidad >= 1 && $cantidad <= self::CANTIDAD_MAXIMA_POR_EQUIPO);
+
+        if ($existentes !== count($items) || ! $cantidadesValidas) {
+            throw SolicitudInvalida::equipoInvalido();
+        }
+    }
+
     public function crear(User $docente, DatosNuevaSolicitud $datos): Solicitud
     {
+        if ($this->esFechaPasada($datos->fecha)) {
+            throw SolicitudInvalida::fechaPasada();
+        }
+
         // Un docente bloqueado no pide escenarios nuevos (RF68, D2).
         $bloqueo = $this->bloqueos->vigenteDe($docente);
 
@@ -47,6 +98,8 @@ final class SolicitudService
             throw SolicitudInvalida::docenteBloqueado($bloqueo->motivo);
         }
 
+        $this->garantizarCasoDeLaMateria($datos->casoClinicoId, $datos->materiaId);
+        $this->garantizarEquipos($datos->items);
         $grupo = $this->normalizarGrupo($datos->grupo);
         $estudianteIds = $this->garantizarEstudiantes($datos->estudianteIds);
         $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
@@ -247,9 +300,9 @@ final class SolicitudService
         $invalidos = array_diff($estudianteIds, $validos);
 
         if ($invalidos !== []) {
-            throw SolicitudInvalida::noSonEstudiantesActivos(
-                User::query()->whereIn('id', $invalidos)->orderBy('nombre')->pluck('nombre')->all(),
-            );
+            $estudiantes = User::query()->whereIn('id', $invalidos)->role(Rol::Estudiante->value)->orderBy('nombre')->pluck('nombre')->all();
+
+            throw SolicitudInvalida::noSonEstudiantesActivos($estudiantes, count($invalidos) - count($estudiantes));
         }
 
         return $estudianteIds;
@@ -407,22 +460,24 @@ final class SolicitudService
 
     public function marcarRevisada(Solicitud $solicitud, User $administrativo): Solicitud
     {
-        $this->garantizarTransicion($solicitud, EstadoSolicitud::Revisada);
+        DB::transaction(function () use ($solicitud, $administrativo): void {
+            $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Revisada);
 
-        $solicitud->update([
-            'estado' => EstadoSolicitud::Revisada,
-            'revisada_por' => $administrativo->id,
-            'revisada_at' => now(),
-        ]);
+            $solicitud->update([
+                'estado' => EstadoSolicitud::Revisada,
+                'revisada_por' => $administrativo->id,
+                'revisada_at' => now(),
+            ]);
+        });
 
         return $solicitud;
     }
 
     public function aprobar(Solicitud $solicitud, User $coordinador): Solicitud
     {
-        $this->garantizarTransicion($solicitud, EstadoSolicitud::Aprobada);
-
         DB::transaction(function () use ($solicitud, $coordinador): void {
+            $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Aprobada);
+
             $solicitud->update($this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador));
             $this->preparaciones->crearDesdeSolicitud($solicitud);
             $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.');
@@ -441,9 +496,9 @@ final class SolicitudService
      */
     public function rechazar(Solicitud $solicitud, User $actor, ?string $motivo = null): Solicitud
     {
-        $this->garantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
-
         DB::transaction(function () use ($solicitud, $actor, $motivo): void {
+            $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
+
             $fase = $solicitud->estado === EstadoSolicitud::Pendiente ? 'en la revisión' : 'en la aprobación';
 
             $solicitud->update([
@@ -544,6 +599,21 @@ final class SolicitudService
                 $item->id => (int) $item->pivot->cantidad,
             ])
             ->all();
+    }
+
+    /**
+     * Dos personas con la misma bandeja abierta tienen dos copias del mismo
+     * registro, cada una con el estado que leyó. Se bloquea la fila y se
+     * vuelve a leer antes de decidir, para que la segunda en actuar vea lo
+     * que hizo la primera (QA-02). Solo dentro de una transacción: el bloqueo
+     * se suelta al confirmarla.
+     */
+    private function bloquearYGarantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void
+    {
+        Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+        $solicitud->refresh();
+
+        $this->garantizarTransicion($solicitud, $destino);
     }
 
     private function garantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void

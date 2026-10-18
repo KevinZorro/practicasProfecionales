@@ -51,6 +51,12 @@ final class RegistroPrevioService
     {
         $this->garantizarPermiso($actor, 'registrarApartada', Solicitud::class);
         $this->garantizarDocente($datos->docenteId);
+
+        if ($this->solicitudes->esFechaPasada($datos->fecha)) {
+            throw SolicitudInvalida::fechaPasada();
+        }
+
+        $this->solicitudes->garantizarCasoDeLaMateria($datos->casoClinicoId, $datos->materiaId);
         $this->solicitudes->garantizarCapacidad($datos->casoClinicoId, $datos->cantidadEstudiantes);
         $grupo = $this->normalizarGrupo($datos->grupo);
 
@@ -203,7 +209,7 @@ final class RegistroPrevioService
             ->aprobadas()
             ->sinFormatoIntramural()
             ->whereBetween('fecha', [now()->toDateString(), now()->addDays($dias)->toDateString()])
-            ->with(['docente', 'materia:id,nombre', 'casoClinico:id,nombre'])
+            ->with(['docente', 'docenteQueDicta', 'materia:id,nombre', 'casoClinico:id,nombre'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->get();
@@ -224,8 +230,10 @@ final class RegistroPrevioService
 
         $enviados = 0;
 
-        foreach ($sesiones->groupBy('docente_id') as $suyas) {
-            $docente = $suyas->first()->docente;
+        // Al que dicta, no al titular: con una sustitución (RF73) el titular
+        // no va a la sesión (QA-03).
+        foreach ($sesiones->groupBy(static fn (Solicitud $sesion): int => $sesion->idDelDocenteQueDicta()) as $suyas) {
+            $docente = $suyas->first()->docenteQueDicta ?? $suyas->first()->docente;
             Mail::to($docente->email)->queue(new AvisoFormatoIntramuralMail($docente, $suyas, paraDocente: true));
             $enviados++;
         }
@@ -272,7 +280,7 @@ final class RegistroPrevioService
 
     private function garantizarDocente(int $docenteId): void
     {
-        $esDocente = User::query()->whereKey($docenteId)->role(Rol::Docente->value)->exists();
+        $esDocente = User::query()->activos()->whereKey($docenteId)->role(Rol::Docente->value)->exists();
 
         if (! $esDocente) {
             throw SolicitudInvalida::noEsDocente();

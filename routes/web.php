@@ -27,6 +27,21 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| Identificadores numéricos (QA-17)
+|--------------------------------------------------------------------------
+|
+| Todo parámetro de ruta que resuelve un modelo es un número. Sin esto,
+| /panel/solicitudes/abc/novedades llega a PostgreSQL, que rechaza 'abc'
+| como bigint, y la persona ve un error 500 en vez de «no existe».
+|
+*/
+
+foreach (['cuenta', 'entrega', 'escenario', 'evaluacion', 'item', 'lista', 'plantilla', 'solicitud', 'supervisor'] as $parametro) {
+    Route::pattern($parametro, '[0-9]+');
+}
+
+/*
+|--------------------------------------------------------------------------
 | Portada pública (RF01–RF07)
 |--------------------------------------------------------------------------
 |

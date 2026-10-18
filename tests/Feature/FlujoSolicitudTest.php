@@ -36,8 +36,7 @@ beforeEach(function (): void {
 function datosDeSolicitud(?CasoClinico $caso = null, array $items = []): DatosNuevaSolicitud
 {
     return new DatosNuevaSolicitud(
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: ($caso ?? CasoClinico::factory()->create())->id,
+        ...materiaYCaso(caso: $caso),
         tipo: TipoSesion::Practica,
         fecha: now()->addWeek()->format('Y-m-d'),
         horaInicio: '07:00',

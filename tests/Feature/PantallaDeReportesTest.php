@@ -261,7 +261,7 @@ it('descarga el Excel con el mismo filtro que la pantalla', function (): void {
 });
 
 it('descarga el PDF de cada reporte', function (Reporte $reporte): void {
-    $respuesta = $this->actingAs($this->coordinadora)->get(route('panel.reportes.pdf', ['reporte' => $reporte]));
+    $respuesta = $this->actingAs($this->coordinadora)->get(route('panel.reportes.pdf', ['reporte' => $reporte, 'desde' => '2026-04-01', 'hasta' => '2026-04-30']));
 
     $respuesta->assertOk()->assertDownload("{$reporte->nombreDeArchivo()}.pdf");
     expect((string) $respuesta->getContent())->toStartWith('%PDF');
@@ -296,10 +296,10 @@ it('descarga el PDF con la descripción completa del filtro en la cabecera', fun
     });
 
     $this->actingAs($this->coordinadora)
-        ->get(route('panel.reportes.pdf', ['reporte' => Reporte::UsoDeEscenarios, 'docente' => $docente->id]))
+        ->get(route('panel.reportes.pdf', ['reporte' => Reporte::UsoDeEscenarios, 'desde' => '2026-04-01', 'hasta' => '2026-04-30', 'docente' => $docente->id]))
         ->assertOk();
 
-    expect($cabecera)->toBe('Todo el histórico · Docente: Ana Gómez');
+    expect($cabecera)->toBe('Del 2026-04-01 al 2026-04-30 · Docente: Ana Gómez');
 });
 
 it('escribe en la cabecera del PDF todos los filtros, no solo las fechas', function (): void {

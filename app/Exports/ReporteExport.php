@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
 
 /**
  * Base de las tres exportaciones a Excel.
@@ -24,7 +26,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
  * WithChunkReading hace que la hoja se arme por lotes en vez de cargar todo
  * el resultado en memoria (RNF10).
  */
-abstract class ReporteExport implements FromQuery, ShouldAutoSize, WithChunkReading, WithHeadings, WithMapping
+abstract class ReporteExport implements FromQuery, ShouldAutoSize, WithChunkReading, WithCustomValueBinder, WithHeadings, WithMapping
 {
     /** @param Builder<covariant \Illuminate\Database\Eloquent\Model> $consulta */
     public function __construct(protected Builder $consulta) {}
@@ -35,6 +37,12 @@ abstract class ReporteExport implements FromQuery, ShouldAutoSize, WithChunkRead
     public function query(): Builder
     {
         return $this->consulta;
+    }
+
+    /** Todo texto se escribe como texto, nunca como fórmula (QA-08). */
+    public function bindValue(Cell $cell, mixed $value): bool
+    {
+        return (new ValorSeguro)->bindValue($cell, $value);
     }
 
     public function chunkSize(): int

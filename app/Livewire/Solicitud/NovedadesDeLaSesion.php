@@ -59,7 +59,7 @@ final class NovedadesDeLaSesion extends Component
         $solicitud = $this->solicitud();
         $this->authorize('reprogramar', $solicitud);
         $this->validate([
-            'fecha' => 'required|date',
+            'fecha' => 'required|date|after_or_equal:today',
             'horaInicio' => 'required|date_format:H:i',
             'horaFin' => 'required|date_format:H:i|after:horaInicio',
             'casoClinicoId' => 'required|integer|exists:casos_clinicos,id',
@@ -131,8 +131,11 @@ final class NovedadesDeLaSesion extends Component
 
         return view('livewire.solicitud.novedades-de-la-sesion', [
             'solicitud' => $solicitud,
-            'casosClinicos' => CasoClinico::activos()->orderBy('nombre')->get(['id', 'nombre']),
+            'casosClinicos' => CasoClinico::activos()->deLaMateria($solicitud->materia_id)->orderBy('nombre')->get(['id', 'nombre']),
             'docentes' => $registroPrevio->docentes(),
+            'avisosDeSustitucion' => $this->reemplazoId === null
+                ? []
+                : app(NovedadesDeSesionService::class)->avisosDeSustitucion($solicitud, User::findOrFail($this->reemplazoId)),
             'advertencias' => $franjaCompleta
                 ? $registroPrevio->advertencias($this->fecha, $this->horaInicio, $this->horaFin, $solicitud->idDelDocenteQueDicta(), $solicitud->id)
                 : [],

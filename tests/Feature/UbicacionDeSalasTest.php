@@ -205,3 +205,18 @@ it('avisa otra vez si la sala cambia, y no si se vuelve a elegir la misma', func
     Mail::assertSent(SalaAsignadaMail::class, 2);
     Mail::assertSent(SalaAsignadaMail::class, static fn (SalaAsignadaMail $correo): bool => $correo->esCambio);
 });
+
+it('avisa de la sala a quien dicta la sesión, no al titular sustituido (QA-03)', function (): void {
+    Mail::fake();
+    $preparacion = preparacionDe(CasoClinico::factory()->create());
+    $titular = $preparacion->solicitud->docente;
+    $reemplazo = User::factory()->docente()->create(['nombre' => 'Diana Mejía']);
+    $preparacion->solicitud->update(['docente_que_dicta_id' => $reemplazo->id]);
+
+    app(PreparacionService::class)->asignarSala($preparacion->fresh(), Sala::factory()->create());
+
+    Mail::assertSent(SalaAsignadaMail::class, 1);
+    Mail::assertSent(SalaAsignadaMail::class, static fn (SalaAsignadaMail $correo): bool => $correo->hasTo($reemplazo->email)
+        && ! $correo->hasTo($titular->email)
+        && str_contains($correo->render(), 'Diana Mejía'));
+});

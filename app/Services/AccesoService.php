@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\EstadoUsuario;
 use App\Exceptions\AccesoRechazado;
 use App\Models\User;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Quién puede entrar a la plataforma (regla 8 del CLAUDE.md).
@@ -86,6 +87,15 @@ final class AccesoService
         }
 
         $dominio = $this->dominioInstitucional();
+
+        // Sin dominio, en producción, la restricción del RF18 no existiría:
+        // se niega la entrada en vez de abrirla a cualquier cuenta de Google
+        // (QA-20). En local y en pruebas se permite, para desarrollar.
+        if ($dominio === null && app()->isProduction()) {
+            Log::error('GOOGLE_DOMINIO_INSTITUCIONAL está vacío: se niega la entrada con Google hasta configurarlo.');
+
+            throw AccesoRechazado::sinDominioConfigurado();
+        }
 
         if ($dominio !== null && mb_strtolower((string) $identidad->dominio) !== $dominio) {
             throw AccesoRechazado::fueraDelDominio($dominio);

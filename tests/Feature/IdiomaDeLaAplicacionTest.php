@@ -41,7 +41,7 @@ it('dice en español qué campo falla, con su nombre legible', function (): void
 it('pagina en español', function (): void {
     expect(__('Showing'))->toBe('Mostrando')
         ->and(__('results'))->toBe('resultados')
-        ->and(__('pagination.next'))->toBe('Siguiente &raquo;');
+        ->and(__('pagination.next'))->toBe('Siguiente »');
 });
 
 it('responde en español cuando no hay permiso', function (): void {

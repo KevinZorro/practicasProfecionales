@@ -399,3 +399,45 @@ it('deja la preparación a medias del pasante para que otro la continúe', funct
 
     expect($preparacion->fresh()->preparado_por)->toBe($otro->id);
 });
+
+// ---------------------------------------------------------------------
+// QA-07: la plataforma no se queda sin ADMIN
+// ---------------------------------------------------------------------
+
+it('no deja que el único ADMIN se quite su propio rol', function (): void {
+    expect(fn () => $this->servicio->revocar($this->admin, $this->admin, Rol::Admin))
+        ->toThrow(AsignacionDeRolInvalida::class, 'ADMIN');
+
+    expect(tieneElRol($this->admin, Rol::Admin))->toBeTrue()
+        ->and(AsignacionDeRol::query()->whereNotNull('revocada_at')->count())->toBe(0);
+});
+
+it('tampoco deja que un ADMIN se quite el rol aunque haya otro', function (): void {
+    User::factory()->admin()->create();
+
+    expect(fn () => $this->servicio->revocar($this->admin, $this->admin, Rol::Admin))
+        ->toThrow(AsignacionDeRolInvalida::class);
+    expect(tieneElRol($this->admin, Rol::Admin))->toBeTrue();
+});
+
+it('deja que un ADMIN le quite el rol a otro ADMIN mientras quede uno vigente', function (): void {
+    $otro = User::factory()->admin()->create();
+
+    $this->servicio->revocar($this->admin, $otro, Rol::Admin);
+
+    expect(tieneElRol($otro, Rol::Admin))->toBeFalse()
+        ->and(tieneElRol($this->admin, Rol::Admin))->toBeTrue();
+});
+
+it('la pantalla no ofrece revocar el propio rol de ADMIN y rechaza la acción a mano', function (): void {
+    $otro = User::factory()->admin()->create();
+
+    Livewire::actingAs($this->admin)
+        ->test(RolesDeUsuarios::class)
+        ->assertDontSeeHtml("revocar({$this->admin->id}, 'admin')")
+        ->assertSeeHtml("revocar({$otro->id}, 'admin')")
+        ->call('revocar', $this->admin->id, Rol::Admin->value)
+        ->assertSet('errorDeRegla', fn (?string $mensaje): bool => str_contains((string) $mensaje, 'ADMIN'));
+
+    expect(tieneElRol($this->admin, Rol::Admin))->toBeTrue();
+});

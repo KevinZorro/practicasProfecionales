@@ -122,8 +122,7 @@ function idsDeEstudiantes(int $cuantos): array
 function sesionCon(array $estudianteIds, string $grupo = 'A', ?string $fecha = null): DatosNuevaSolicitud
 {
     return new DatosNuevaSolicitud(
-        materiaId: Materia::factory()->create()->id,
-        casoClinicoId: CasoClinico::factory()->create()->id,
+        ...materiaYCaso(),
         tipo: TipoSesion::Practica,
         fecha: $fecha ?? now()->addWeek()->format('Y-m-d'),
         horaInicio: '07:00',
@@ -131,4 +130,25 @@ function sesionCon(array $estudianteIds, string $grupo = 'A', ?string $fecha = n
         grupo: $grupo,
         estudianteIds: $estudianteIds,
     );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Materia y escenario relacionados (RF24)
+|--------------------------------------------------------------------------
+|
+| El Service no registra un escenario en una materia a la que no está
+| asociado. Devuelve los dos ids con los nombres de los datos de una sesión,
+| para esparcirlos en el constructor: new DatosNuevaSolicitud(...materiaYCaso(), …).
+|
+*/
+
+/** @return array{materiaId: int, casoClinicoId: int} */
+function materiaYCaso(?Materia $materia = null, ?CasoClinico $caso = null): array
+{
+    $materia ??= Materia::factory()->create();
+    $caso ??= CasoClinico::factory()->create();
+    $caso->materias()->syncWithoutDetaching([$materia->id]);
+
+    return ['materiaId' => $materia->id, 'casoClinicoId' => $caso->id];
 }

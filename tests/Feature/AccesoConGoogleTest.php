@@ -9,6 +9,7 @@ use App\Services\AccesoService;
 use App\Services\IdentidadDeGoogle;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Testing\TestResponse;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
@@ -335,4 +336,27 @@ it('da por no verificado el correo si Socialite no trae los datos crudos de Goog
 
     expect($identidad->emailVerificado)->toBeFalse()
         ->and($identidad->dominio)->toBeNull();
+});
+
+it('en producción, sin dominio institucional configurado, niega la entrada y deja el error en el registro (QA-20)', function (): void {
+    app()->detectEnvironment(static fn (): string => 'production');
+    config(['services.google.dominio' => null]);
+    $usuario = docenteDeLaUfps();
+    googleDevuelve(['hd' => null]);
+    Log::shouldReceive('error')->once()->withArgs(static fn (string $mensaje): bool => str_contains($mensaje, 'GOOGLE_DOMINIO_INSTITUCIONAL'));
+
+    volverDeGoogle()->assertSessionHasErrors(['acceso']);
+
+    expect(Auth::check())->toBeFalse()
+        ->and($usuario->fresh()->google_id)->toBeNull();
+});
+
+it('en producción, con el dominio configurado, deja entrar como siempre', function (): void {
+    app()->detectEnvironment(static fn (): string => 'production');
+    $usuario = docenteDeLaUfps();
+    googleDevuelve();
+
+    volverDeGoogle()->assertRedirect(route('panel.inicio'));
+
+    expect(Auth::id())->toBe($usuario->id);
 });

@@ -23,7 +23,10 @@ en tu máquina.**
 | Estilos | Tailwind CSS 3 |
 | Base de datos | PostgreSQL 16 |
 | Permisos | spatie/laravel-permission 7 |
-| Autenticación | Laravel Breeze (instalado, sin publicar todavía) |
+| Pantallas del ADMIN | Filament 3 (`/admin`) |
+| Autenticación | Laravel Socialite: solo Google institucional (RF18), sin contraseñas |
+| Calendario | FullCalendar 6 |
+| Reportes | barryvdh/laravel-dompdf (PDF) y maatwebsite/excel (Excel) |
 | Tests | Pest 3 |
 | Assets | Vite |
 
@@ -91,7 +94,7 @@ sesiones próximas sin formato intramural (RF60). Para lanzarlo a mano:
 ## Verificar que quedó bien
 
 ```bash
-# Los cinco servicios en estado "Up"
+# Los seis servicios en estado "Up"
 docker compose ps
 
 # Debe mostrar "Laravel Framework 12.x"
@@ -100,7 +103,7 @@ docker compose exec app php artisan --version
 # La suite de pruebas debe pasar en verde
 docker compose exec app php artisan test
 
-# La página de bienvenida debe responder 200
+# La portada pública debe responder 200
 curl -I http://localhost
 ```
 
@@ -111,6 +114,8 @@ curl -I http://localhost
 | Servicio | Imagen | Puerto en el host | Para qué sirve |
 |---|---|---|---|
 | `app` | build de `docker/php/Dockerfile` | — | PHP 8.3-FPM: ejecuta la aplicación, artisan, composer y los tests |
+| `queue` | la misma imagen de `app` | — | Trabajador de la cola (`queue:listen`): envía los correos |
+| `programador` | la misma imagen de `app` | — | Tareas programadas (`schedule:work`): el aviso diario del RF60 |
 | `nginx` | `nginx:alpine` | `80` | Servidor web; entrega los estáticos y delega el PHP a `app` |
 | `db` | `postgres:16` | `5432` | Base de datos, con volumen persistente `datos_postgres` |
 | `node` | `node:22-alpine` | `5173` | Compila los assets con Vite y sirve el recargado en caliente |
@@ -260,6 +265,25 @@ Referrer-Policy, Permissions-Policy y, sobre HTTPS, HSTS. Si la
 Content-Security-Policy rompiera alguna pantalla, se apaga con
 `POLITICA_DE_CONTENIDO=false` en el `.env` mientras se corrige
 (`config/seguridad.php` explica cada directiva).
+
+### Vigilancia y registros
+
+`app` y `web` tienen *healthcheck*: `docker compose -f docker-compose.produccion.yml ps`
+marca `unhealthy` al que se cuelga (`restart: always` solo levanta al que se
+cae). Los registros de Docker rotan solos (cinco archivos de 10 MB por
+contenedor). **Falta un monitor externo de disponibilidad:** nadie avisa si la
+plataforma cae. Lo recomendable es un Uptime Kuma en el mismo servidor, o el
+monitor de la universidad, apuntando a `https://<dominio>/up` y avisando por
+correo.
+
+### Valores que cambian el comportamiento
+
+| Variable | Qué hace |
+|---|---|
+| `GOOGLE_DOMINIO_INSTITUCIONAL` | Dominio de las cuentas que pueden entrar. **Vacía, en producción nadie entra con Google.** |
+| `POLITICA_DE_DATOS_URL` | Política de tratamiento de datos de la universidad (Ley 1581). Vacía, el enlace no se muestra. |
+| `REPORTES_PDF_DIAS_MAXIMOS` | Rango máximo de un reporte en PDF (31 días). Para rangos mayores, el Excel no tiene tope. |
+| `REPORTES_PDF_FILAS_MAXIMAS` | Filas máximas de un PDF (500). |
 
 ### Copias de seguridad
 

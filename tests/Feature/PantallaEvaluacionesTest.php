@@ -192,7 +192,7 @@ it('enseña al estudiante sus resultados con el checklist completo', function ()
     $registro = $servicio->agregarEstudiante($evaluacion, $ana);
     $servicio->marcarItem($registro, $evaluacion->items()->first());
     $servicio->registrarResultado($registro, ResultadoEvaluacion::Aprobado);
-    $servicio->finalizar($evaluacion);
+    $servicio->finalizar($evaluacion, $evaluacion->docente);
 
     Livewire::actingAs($ana)
         ->test(MisResultados::class)

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\Reporte;
+use App\Exceptions\ReporteInvalido;
 use App\Exports\EvaluacionesNoRegistradasExport;
 use App\Exports\ListaDeReposicionExport;
 use App\Exports\ReporteExport;
@@ -14,6 +15,7 @@ use App\Models\Materia;
 use App\Models\Sala;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -81,30 +83,69 @@ final class GeneradorDeReportes
      *
      * @return Collection<int, list<mixed>>
      */
-    public function filas(Reporte $reporte, FiltroReporte $filtro): Collection
+    public function filas(Reporte $reporte, FiltroReporte $filtro, ?int $maximo = null): Collection
     {
         $exportador = $this->exportador($reporte, $filtro);
         $filas = new Collection;
 
         $this->reportes->porLotes(
             $exportador->query(),
-            static function (Collection $lote) use ($exportador, $filas): void {
+            static function (Collection $lote) use ($exportador, $filas, $maximo): void {
                 $lote->each(static fn ($fila) => $filas->push($exportador->map($fila)));
+
+                // Se corta apenas se pasa, antes de seguir llenando memoria.
+                if ($maximo !== null && $filas->count() > $maximo) {
+                    throw ReporteInvalido::elPdfTieneDemasiadasFilas($maximo);
+                }
             },
         );
 
         return $filas;
     }
 
+    /**
+     * Por qué no se puede pedir el PDF de este filtro, o null si se puede.
+     * La pantalla lo usa para no ofrecer un enlace que respondería error.
+     *
+     * Solo mira el rango de fechas, que es barato; el tope de filas se
+     * comprueba al generar. Las listas de reposición cerradas (RF67) y los
+     * resultados del supervisor (RF77) no se acotan por días: lo uno es un
+     * documento ya cerrado y lo otro se acota por periodo, no por rango.
+     */
+    public function motivoSinPdf(FiltroReporte $filtro): ?string
+    {
+        if ($filtro->listaDeReposicionId !== null || $filtro->docenteIds !== null) {
+            return null;
+        }
+
+        $diasMaximos = (int) config('laboratorio.reportes.pdf_dias_maximos');
+
+        if ($filtro->desde === null || $filtro->hasta === null) {
+            return ReporteInvalido::elPdfNecesitaUnRango($diasMaximos)->getMessage();
+        }
+
+        $dias = CarbonImmutable::parse($filtro->desde)->diffInDays(CarbonImmutable::parse($filtro->hasta)) + 1;
+
+        return $dias > $diasMaximos
+            ? ReporteInvalido::elRangoDelPdfEsMuyLargo($diasMaximos)->getMessage()
+            : null;
+    }
+
     public function pdf(Reporte $reporte, FiltroReporte $filtro): Response
     {
+        $motivo = $this->motivoSinPdf($filtro);
+
+        if ($motivo !== null) {
+            throw new ReporteInvalido($motivo);
+        }
+
         $exportador = $this->exportador($reporte, $filtro);
 
         return Pdf::loadView($reporte->plantillaPdf(), [
             'titulo' => $reporte->titulo(),
             'descripcionDelFiltro' => $this->describir($filtro),
             'encabezados' => $exportador->headings(),
-            'filas' => $this->filas($reporte, $filtro),
+            'filas' => $this->filas($reporte, $filtro, (int) config('laboratorio.reportes.pdf_filas_maximas')),
         ])->setPaper('a4', 'landscape')->download("{$reporte->nombreDeArchivo()}.pdf");
     }
 

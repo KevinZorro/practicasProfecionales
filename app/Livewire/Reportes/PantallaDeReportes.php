@@ -86,6 +86,7 @@ final class PantallaDeReportes extends Component
             'reportes' => Reporte::agregados(),
             'encabezados' => $generador->exportador($reporte, $filtro)->headings(),
             'filas' => $filtrosValidos ? $generador->paraPantalla($reporte, $filtro) : null,
+            'motivoSinPdf' => $filtrosValidos ? $generador->motivoSinPdf($filtro) : null,
             'consultaDeDescarga' => $filtrosValidos ? array_filter($this->filtros(), static fn (string $valor): bool => $valor !== '') : null,
             'docentes' => $reportes->docentesConSolicitudes(),
             'materias' => Materia::query()->orderBy('nombre')->get(['id', 'nombre', 'activo']),

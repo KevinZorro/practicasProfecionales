@@ -19,10 +19,20 @@
                         Ahora la dicta su docente original, <strong class="font-semibold text-gray-900">{{ $solicitud->docente->nombre }}</strong>.
                     @endif
                 </p>
+                @if ($avisosDeSustitucion !== [])
+                    <x-aviso tono="atencion" role="status" class="mb-4">
+                        <p class="font-semibold">Ten en cuenta (puedes registrar el cambio igual):</p>
+                        <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                            @foreach ($avisosDeSustitucion as $aviso)
+                                <li>{{ $aviso }}</li>
+                            @endforeach
+                        </ul>
+                    </x-aviso>
+                @endif
                 <form wire:submit="sustituir" id="form-sustituir" class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="reemplazoId" class="campo-etiqueta">Docente que la dictará</label>
-                        <select wire:model="reemplazoId" id="reemplazoId" class="campo">
+                        <select wire:model.live="reemplazoId" id="reemplazoId" class="campo">
                             <option value="">Elige un docente</option>
                             @foreach ($docentes as $docente)
                                 <option value="{{ $docente->id }}">{{ $docente->nombre }}{{ $docente->id === $solicitud->docente_id ? ' (docente original)' : '' }}</option>
@@ -46,7 +56,7 @@
                 <form wire:submit="reprogramar" id="form-reprogramar" class="grid gap-4 sm:grid-cols-2">
                     <div>
                         <label for="fecha" class="campo-etiqueta">Fecha</label>
-                        <input type="date" wire:model.live="fecha" id="fecha" class="campo">
+                        <input type="date" wire:model.live="fecha" id="fecha" min="{{ now()->toDateString() }}" class="campo">
                         @error('fecha') <p class="campo-error">{{ $message }}</p> @enderror
                     </div>
                     <div class="grid grid-cols-2 gap-3">

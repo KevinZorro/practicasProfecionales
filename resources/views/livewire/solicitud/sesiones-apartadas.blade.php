@@ -19,7 +19,7 @@
 
             <div>
                 <label for="materiaId" class="campo-etiqueta">Materia</label>
-                <select wire:model="materiaId" id="materiaId" class="campo">
+                <select wire:model.live="materiaId" id="materiaId" class="campo">
                     <option value="">Elige una materia</option>
                     @foreach ($materias as $materia)
                         <option value="{{ $materia->id }}">{{ $materia->nombre }} · semestre {{ $materia->semestre }}</option>
@@ -65,7 +65,7 @@
 
             <div>
                 <label for="fecha" class="campo-etiqueta">Fecha</label>
-                <input type="date" wire:model.live="fecha" id="fecha" class="campo">
+                <input type="date" wire:model.live="fecha" id="fecha" min="{{ now()->toDateString() }}" class="campo">
                 @error('fecha') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 

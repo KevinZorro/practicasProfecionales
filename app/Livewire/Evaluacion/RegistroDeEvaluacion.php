@@ -87,7 +87,14 @@ final class RegistroDeEvaluacion extends Component
     {
         $this->evaluacionParaRegistrar();
         $registro = $this->registro($registroId);
-        $this->ejecutar(fn () => $evaluaciones->registrarResultado($registro, ResultadoEvaluacion::from($resultado)));
+        $decidido = ResultadoEvaluacion::tryFrom($resultado);
+
+        // Un valor que la pantalla no ofrece no decide nada.
+        if (! $decidido instanceof ResultadoEvaluacion) {
+            return;
+        }
+
+        $this->ejecutar(fn () => $evaluaciones->registrarResultado($registro, $decidido));
     }
 
     public function guardarObservaciones(int $registroId, EvaluacionService $evaluaciones): void
@@ -105,7 +112,7 @@ final class RegistroDeEvaluacion extends Component
         $evaluacion = Evaluacion::findOrFail($this->evaluacionId);
         $this->authorize('finalizar', $evaluacion);
 
-        if ($this->ejecutar(fn () => $evaluaciones->finalizar($evaluacion))) {
+        if ($this->ejecutar(fn () => $evaluaciones->finalizar($evaluacion, Auth::user()))) {
             $this->avisar('Evaluación finalizada. Los estudiantes ya pueden ver sus resultados.');
         }
     }

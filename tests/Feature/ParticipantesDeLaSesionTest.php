@@ -143,6 +143,7 @@ it('no vuelve a agregar a un retirado, porque el retiro queda registrado', funct
 it('completa la lista sin pasar la capacidad del escenario', function (): void {
     $caso = CasoClinico::factory()->conCapacidad(3)->create();
     $datos = sesionCon(idsDeEstudiantes(2));
+    $caso->materias()->attach($datos->materiaId);
     $sesion = $this->servicio->crear($this->docente, new DatosNuevaSolicitud(
         materiaId: $datos->materiaId, casoClinicoId: $caso->id, tipo: $datos->tipo, fecha: $datos->fecha,
         horaInicio: $datos->horaInicio, horaFin: $datos->horaFin, grupo: 'A', estudianteIds: $datos->estudianteIds,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Enums\Rol;
 use App\Exceptions\FormatoConfidencialidadInvalido;
@@ -20,6 +21,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * Formato de confidencialidad de prácticas (RF51-RF53).
@@ -44,6 +46,7 @@ final class ConfidencialidadService
 
     public function __construct(
         private readonly PeriodoAcademicoService $periodos,
+        private readonly BitacoraService $bitacora,
     ) {}
 
     /**
@@ -225,11 +228,35 @@ final class ConfidencialidadService
         $periodo = $this->periodoAbierto();
 
         return DB::transaction(function () use ($firmante, $archivo, $plantilla, $periodo): FormatoConfidencialidad {
-            $entrega = $this->entregaDelPeriodo($firmante, $periodo) ?? new FormatoConfidencialidad;
-            $this->borrarArchivoFirmado($entrega);
+            $entrega = FormatoConfidencialidad::query()
+                ->where('firmante_id', $firmante->id)
+                ->delPeriodo($periodo)
+                ->lockForUpdate()
+                ->first() ?? new FormatoConfidencialidad;
 
-            $entrega->fill($this->atributosDeEntrega($firmante, $plantilla, $archivo, $periodo));
-            $entrega->save();
+            // El documento verificado es la prueba de la autorización de
+            // captación de imágenes (Ley 1581): no se reemplaza (QA-06).
+            if ($entrega->estado === EstadoFormatoConfidencialidad::Verificado) {
+                throw FormatoConfidencialidadInvalido::yaEstaVerificado();
+            }
+
+            $rutaAnterior = $entrega->archivo_firmado_path;
+            $atributos = $this->atributosDeEntrega($firmante, $plantilla, $archivo, $periodo);
+
+            try {
+                $entrega->fill($atributos)->save();
+            } catch (Throwable $fallo) {
+                // El archivo nuevo quedaría huérfano en el disco.
+                $this->disco()->delete($atributos['archivo_firmado_path']);
+
+                throw $fallo;
+            }
+
+            // El anterior se borra al confirmar: si la transacción se
+            // revierte, la base sigue apuntando a él.
+            if (is_string($rutaAnterior)) {
+                DB::afterCommit(fn () => $this->disco()->delete($rutaAnterior));
+            }
 
             return $entrega;
         });
@@ -274,6 +301,7 @@ final class ConfidencialidadService
                 'recibido_fisico_por' => $administrativo->id,
             ]);
             $entrega->save();
+            $this->bitacora->registrar(AccionAuditada::EntregaFisicaRecibida, $administrativo, $entrega, $this->describir('Recibió en físico', $entrega));
 
             return $entrega;
         });
@@ -287,14 +315,18 @@ final class ConfidencialidadService
     public function verificar(FormatoConfidencialidad $entrega, User $verificador): FormatoConfidencialidad
     {
         $this->garantizarPermiso($verificador, 'verificar', $entrega);
-        $this->garantizarCargado($entrega);
 
-        $entrega->update([
-            'estado' => EstadoFormatoConfidencialidad::Verificado,
-            'motivo_rechazo' => null,
-            'verificado_por' => $verificador->id,
-            'verificado_at' => now(),
-        ]);
+        DB::transaction(function () use ($entrega, $verificador): void {
+            $this->bloquearYGarantizarCargado($entrega);
+
+            $entrega->update([
+                'estado' => EstadoFormatoConfidencialidad::Verificado,
+                'motivo_rechazo' => null,
+                'verificado_por' => $verificador->id,
+                'verificado_at' => now(),
+            ]);
+            $this->bitacora->registrar(AccionAuditada::FormatoVerificado, $verificador, $entrega, $this->describir('Verificó', $entrega));
+        });
 
         return $entrega;
     }
@@ -303,6 +335,8 @@ final class ConfidencialidadService
      * Devuelve la entrega a pendiente para que quien firma vuelva a
      * subirla. El archivo rechazado se borra: son datos personales que ya no
      * hacen falta, y un registro pendiente no debe conservar documento.
+     * Se borra al confirmar la transacción: si esta se revierte, la base
+     * seguiría apuntando a un archivo que ya no existe.
      */
     public function rechazar(
         FormatoConfidencialidad $entrega,
@@ -310,16 +344,24 @@ final class ConfidencialidadService
         ?string $motivo = null,
     ): FormatoConfidencialidad {
         $this->garantizarPermiso($verificador, 'rechazar', $entrega);
-        $this->garantizarCargado($entrega);
-        $this->borrarArchivoFirmado($entrega);
 
-        $entrega->update([
-            'estado' => EstadoFormatoConfidencialidad::Pendiente,
-            'archivo_firmado_path' => null,
-            'motivo_rechazo' => $motivo,
-            'verificado_por' => null,
-            'verificado_at' => null,
-        ]);
+        DB::transaction(function () use ($entrega, $verificador, $motivo): void {
+            $this->bloquearYGarantizarCargado($entrega);
+            $ruta = $entrega->archivo_firmado_path;
+
+            $entrega->update([
+                'estado' => EstadoFormatoConfidencialidad::Pendiente,
+                'archivo_firmado_path' => null,
+                'motivo_rechazo' => $motivo,
+                'verificado_por' => null,
+                'verificado_at' => null,
+            ]);
+            $this->bitacora->registrar(AccionAuditada::FormatoRechazado, $verificador, $entrega, $this->describir('Rechazó', $entrega), $motivo);
+
+            if (is_string($ruta)) {
+                DB::afterCommit(fn () => $this->disco()->delete($ruta));
+            }
+        });
 
         return $entrega;
     }
@@ -544,6 +586,33 @@ final class ConfidencialidadService
         if ($archivo->getSize() > $maximoKb * 1024) {
             throw FormatoConfidencialidadInvalido::archivoDemasiadoGrande($maximoKb);
         }
+    }
+
+    /**
+     * Quién y de qué periodo, con el nombre de ese día. Nunca el archivo:
+     * la bitácora no lleva datos del documento firmado.
+     */
+    private function describir(string $verbo, FormatoConfidencialidad $entrega): string
+    {
+        return sprintf(
+            '%s el formato de confidencialidad de %s (periodo %s).',
+            $verbo,
+            $entrega->firmante()->value('nombre'),
+            $entrega->periodo_academico,
+        );
+    }
+
+    /**
+     * Relee la entrega con la fila bloqueada: dos administrativas con la
+     * misma bandeja abierta no pueden verificar y rechazar a la vez (QA-02).
+     * Solo dentro de una transacción.
+     */
+    private function bloquearYGarantizarCargado(FormatoConfidencialidad $entrega): void
+    {
+        FormatoConfidencialidad::query()->whereKey($entrega->getKey())->lockForUpdate()->firstOrFail();
+        $entrega->refresh();
+
+        $this->garantizarCargado($entrega);
     }
 
     private function garantizarCargado(FormatoConfidencialidad $entrega): void

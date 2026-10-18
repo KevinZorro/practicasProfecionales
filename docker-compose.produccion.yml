@@ -16,6 +16,15 @@
 
 name: laboratorio
 
+# Los registros de Docker no rotan solos y la aplicación escribe a stderr: con
+# meses de uso llenarían el disco del servidor (QA-14). Cinco archivos de
+# 10 MB por contenedor.
+x-registros: &registros
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   # PHP-FPM con la aplicación. Al arrancar guarda en caché la configuración,
   # las rutas y las vistas (docker/produccion/arrancar.sh).
@@ -26,10 +35,21 @@ services:
       target: produccion
     image: laboratorio-simulacion/app:produccion
     restart: always
+    logging: *registros
     env_file: .env
     volumes:
       - archivos_publicos:/var/www/html/storage/app/public
       - archivos_privados:/var/www/html/storage/app/private
+    # PHP-FPM escuchando. restart: always reinicia lo que se cae, no lo que se
+    # cuelga; con esto Docker lo marca "unhealthy" y el monitor externo lo ve.
+    # queue y programador no tienen una sonda barata que no sea tautológica:
+    # si mueren, el contenedor sale y restart los levanta.
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000, $$e, $$m, 2) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       db:
         condition: service_healthy
@@ -42,6 +62,7 @@ services:
   queue:
     image: laboratorio-simulacion/app:produccion
     restart: always
+    logging: *registros
     env_file: .env
     command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90", "--max-time=3600"]
     volumes:
@@ -61,6 +82,7 @@ services:
   programador:
     image: laboratorio-simulacion/app:produccion
     restart: always
+    logging: *registros
     env_file: .env
     command: ["php", "artisan", "schedule:work"]
     depends_on:
@@ -80,10 +102,18 @@ services:
       target: web
     image: laboratorio-simulacion/web:produccion
     restart: always
+    logging: *registros
     ports:
       - "${APP_PORT:-80}:80"
     volumes:
       - archivos_publicos:/var/www/html/storage/app/public:ro
+    # /up recorre nginx y PHP-FPM y responde 200 solo si la aplicación arranca.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       - app
     networks:
@@ -93,6 +123,7 @@ services:
   db:
     image: postgres:16
     restart: always
+    logging: *registros
     environment:
       POSTGRES_DB: ${DB_DATABASE:?Falta DB_DATABASE en .env}
       POSTGRES_USER: ${DB_USERNAME:?Falta DB_USERNAME en .env}
@@ -113,6 +144,7 @@ services:
   copias:
     image: postgres:16-alpine
     restart: always
+    logging: *registros
     entrypoint: ["/scripts/programar.sh"]
     environment: &entorno_copias
       PGHOST: db

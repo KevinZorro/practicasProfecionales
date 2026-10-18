@@ -21,7 +21,7 @@
 
 <li {{ $attributes->class('relative grid grid-cols-[3rem_minmax(0,1fr)] gap-x-4 gap-y-2.5 px-4 py-4 transition-colors duration-150 hover:bg-gray-100 sm:grid-cols-[3rem_minmax(0,1fr)_12.5rem] sm:items-center sm:px-5') }}>
     <div class="row-span-2 text-center sm:row-span-1" aria-hidden="true">
-        <span class="block text-[12px] font-semibold text-gray-500">{{ $solicitud->fecha->translatedFormat('M') }}</span>
+        <span class="block text-[12px] font-semibold text-gray-600">{{ $solicitud->fecha->translatedFormat('M') }}</span>
         <span class="block text-[22px] font-bold leading-none tracking-[-0.02em] text-gray-900">{{ $solicitud->fecha->format('j') }}</span>
     </div>
 
@@ -34,7 +34,7 @@
             </a>
             <x-tipo-de-sesion :tipo="$solicitud->tipo" />
         </div>
-        <p class="mt-0.5 text-pretty text-[14px] leading-snug text-gray-500">
+        <p class="mt-0.5 text-pretty text-[14px] leading-snug text-gray-600">
             @if ($conDocente)
                 {{ ($solicitud->docenteQueDicta ?? $solicitud->docente)->nombre }} ·
             @endif

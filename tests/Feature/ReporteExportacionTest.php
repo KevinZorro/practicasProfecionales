@@ -150,7 +150,7 @@ it('pide lotes de quinientos en la exportación a Excel', function (): void {
 it('genera el PDF de cada reporte', function (Reporte $reporte): void {
     datosParaLosTresReportes();
 
-    $respuesta = $this->generador->pdf($reporte, new FiltroReporte);
+    $respuesta = $this->generador->pdf($reporte, new FiltroReporte(desde: '2026-04-01', hasta: '2026-04-30'));
 
     expect($respuesta->getStatusCode())->toBe(200)
         ->and($respuesta->headers->get('content-type'))->toContain('application/pdf')

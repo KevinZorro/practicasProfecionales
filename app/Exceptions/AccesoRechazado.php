@@ -22,6 +22,12 @@ final class AccesoRechazado extends DomainException
         return new self("Entra con tu cuenta institucional, la que termina en @{$dominio}.");
     }
 
+    public static function sinDominioConfigurado(): self
+    {
+        // La causa va al registro; a la persona no se le explica la configuración.
+        return new self('La entrada con Google no está configurada del todo. Avisa al laboratorio.');
+    }
+
     public static function sinCuenta(): self
     {
         return new self('No hay una cuenta de la plataforma para ese correo. Si eres estudiante, docente o funcionario del laboratorio, comunícate con el laboratorio.');

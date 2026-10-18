@@ -14,6 +14,7 @@ use App\Models\Preparacion;
 use App\Models\Sala;
 use App\Services\ParticipacionService;
 use App\Services\PreparacionService;
+use App\Support\FiltroDeUrl;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
@@ -50,6 +51,8 @@ final class TableroDiario extends Component
 
     public function mount(): void
     {
+        $this->fecha = FiltroDeUrl::fecha($this->fecha);
+
         if ($this->fecha === '') {
             $this->fecha = now()->toDateString();
         }
@@ -126,9 +129,15 @@ final class TableroDiario extends Component
     {
         $preparacion = $this->preparacion($preparacionId);
         $this->authorize('preparar', $preparacion);
+        $nuevoEstado = EstadoPreparacion::tryFrom($destino);
+
+        // Un estado que la pantalla no ofrece no cambia nada.
+        if (! $nuevoEstado instanceof EstadoPreparacion) {
+            return;
+        }
 
         try {
-            $preparaciones->cambiarEstado($preparacion, EstadoPreparacion::from($destino), Auth::user());
+            $preparaciones->cambiarEstado($preparacion, $nuevoEstado, Auth::user());
         } catch (TransicionDePreparacionInvalida $invalida) {
             $this->conflictos[$preparacionId] = $invalida->getMessage();
         }

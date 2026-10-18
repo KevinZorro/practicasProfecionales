@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Exceptions\PeriodoAcademicoInvalido;
 use App\Models\PeriodoAcademico;
 use App\Models\User;
@@ -22,6 +23,8 @@ use Illuminate\Support\Facades\DB;
 final class PeriodoAcademicoService
 {
     public const POR_PAGINA = 15;
+
+    public function __construct(private readonly BitacoraService $bitacora) {}
 
     /**
      * El periodo que rige hoy: el abierto, o si no hay ninguno, el último
@@ -71,6 +74,7 @@ final class PeriodoAcademicoService
             $periodo->abierto_at = now();
             $periodo->abierto_por = $actor->id;
             $periodo->save();
+            $this->bitacora->registrar(AccionAuditada::PeriodoAbierto, $actor, $periodo, sprintf('Abrió el periodo académico %s.', $periodo->nombre));
 
             return $periodo;
         });
@@ -84,9 +88,12 @@ final class PeriodoAcademicoService
             throw PeriodoAcademicoInvalido::yaEstaCerrado($periodo);
         }
 
-        $periodo->cerrado_at = now();
-        $periodo->cerrado_por = $actor->id;
-        $periodo->save();
+        DB::transaction(function () use ($periodo, $actor): void {
+            $periodo->cerrado_at = now();
+            $periodo->cerrado_por = $actor->id;
+            $periodo->save();
+            $this->bitacora->registrar(AccionAuditada::PeriodoCerrado, $actor, $periodo, sprintf('Cerró el periodo académico %s.', $periodo->nombre));
+        });
 
         return $periodo;
     }
@@ -100,7 +107,7 @@ final class PeriodoAcademicoService
     {
         $this->garantizarPermiso($actor, 'reabrir', $periodo);
 
-        return DB::transaction(function () use ($periodo): PeriodoAcademico {
+        return DB::transaction(function () use ($periodo, $actor): PeriodoAcademico {
             $this->garantizarQueNingunoEstaAbierto();
 
             $ultimo = $this->vigente();
@@ -112,6 +119,7 @@ final class PeriodoAcademicoService
             $periodo->cerrado_at = null;
             $periodo->cerrado_por = null;
             $periodo->save();
+            $this->bitacora->registrar(AccionAuditada::PeriodoReabierto, $actor, $periodo, sprintf('Reabrió el periodo académico %s.', $periodo->nombre));
 
             return $periodo;
         });

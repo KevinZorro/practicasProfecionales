@@ -63,10 +63,15 @@
                      veces convierte los & de la consulta en &amp;amp;, con lo que
                      se perderían todos los filtros menos el primero. --}}
                 <x-boton :href="route('panel.reportes.excel', ['reporte' => $elegido, ...$consultaDeDescarga])">Descargar Excel</x-boton>
-                <x-boton variante="secundario" :href="route('panel.reportes.pdf', ['reporte' => $elegido, ...$consultaDeDescarga])">Descargar PDF</x-boton>
+                @if ($motivoSinPdf === null)
+                    <x-boton variante="secundario" :href="route('panel.reportes.pdf', ['reporte' => $elegido, ...$consultaDeDescarga])">Descargar PDF</x-boton>
+                @endif
             @endif
             <x-boton variante="texto" tipo="button" wire:click="limpiarFiltros">Quitar filtros</x-boton>
         </div>
+        @if ($consultaDeDescarga !== null && $motivoSinPdf !== null)
+            <p class="mt-2 text-[14px] text-gray-600">{{ $motivoSinPdf }}</p>
+        @endif
     </x-tarjeta>
 
     @if ($filas === null)
@@ -82,7 +87,7 @@
     @else
         <p class="text-[14px] text-gray-500">{{ $filas->total() }} {{ $filas->total() === 1 ? 'registro' : 'registros' }}</p>
 
-        <x-tabla :encabezados="$encabezados">
+        <x-tabla :encabezados="$encabezados" etiqueta="Resultados del reporte">
             @foreach ($filas as $fila)
                 <tr wire:key="fila-{{ $filas->currentPage() }}-{{ $loop->index }}">
                     @foreach ($fila as $celda)

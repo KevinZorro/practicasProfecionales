@@ -56,6 +56,11 @@ jobs:
       - name: Instalar dependencias
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      # Avisos de seguridad de las dependencias de PHP (QA-09). Lee el lock,
+      # no lo instalado, y cae si alguna versión fijada tiene un aviso.
+      - name: Auditar las dependencias
+        run: composer audit --locked
+
       - name: Preparar el entorno
         run: |
           cp .env.example .env
@@ -326,6 +331,19 @@ jobs:
           grep -qi 'cache-control: .*immutable' css.txt || { echo "::error::$css sin caché larga"; exit 1; }
           codigo=$(curl -sS -o /dev/null -w '%{http_code}' http://localhost/css/filament/filament/app.css)
           [ "$codigo" = "200" ] || { echo "::error::la hoja de estilos de Filament respondió $codigo"; exit 1; }
+
+      # RNF10: sin compresión, el panel baja el triple por una conexión lenta.
+      # La CSS compilada pesa 57 KB y comprimida 11.
+      - name: Comprobar que nginx comprime el CSS y el JavaScript
+        run: |
+          css=$(grep -oE '/build/assets/app-[A-Za-z0-9_-]+\.css' pagina.html | head -1)
+          curl -sS -H 'Accept-Encoding: gzip' -D gzip.txt -o /dev/null "http://localhost$css"
+          grep -qi '^content-encoding: gzip' gzip.txt || { echo "::error::nginx no comprime $css"; cat gzip.txt; exit 1; }
+          js=$(grep -oE '/build/assets/[A-Za-z0-9_-]+\.js' pagina.html | head -1)
+          if [ -n "$js" ]; then
+            curl -sS -H 'Accept-Encoding: gzip' -D gzip.txt -o /dev/null "http://localhost$js"
+            grep -qi '^content-encoding: gzip' gzip.txt || { echo "::error::nginx no comprime $js"; cat gzip.txt; exit 1; }
+          fi
 
       - name: Comprobar que un error no enseña trazas
         run: |

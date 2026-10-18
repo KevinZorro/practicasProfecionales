@@ -7,8 +7,6 @@ use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Solicitud\BandejaRevision;
 use App\Livewire\Solicitud\ExpedienteDeSolicitud;
 use App\Livewire\Solicitud\FormularioSolicitud;
-use App\Models\CasoClinico;
-use App\Models\Materia;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\SolicitudService;
@@ -51,9 +49,26 @@ it('no deja incluir a quien no es estudiante ni a un estudiante inactivo', funct
     $egresado = User::factory()->estudiante()->create(['nombre' => 'Egresado Inactivo', 'estado' => EstadoUsuario::Inactivo]);
 
     expect(fn () => $this->servicio->crear($this->docente, sesionCon([...idsDeEstudiantes(2), $otroDocente->id, $egresado->id])))
-        ->toThrow(SolicitudInvalida::class, 'Docente Colado, Egresado Inactivo');
+        ->toThrow(SolicitudInvalida::class, 'Egresado Inactivo');
 
     expect(Solicitud::count())->toBe(0);
+});
+
+it('no revela el nombre de quien no es estudiante al rechazar un id ajeno (QA-19)', function (): void {
+    $otroDocente = User::factory()->docente()->create(['nombre' => 'Sandra Milena Ospina']);
+    $coordinadora = User::factory()->coordinador()->create(['nombre' => 'Coordi Nadora']);
+
+    try {
+        $this->servicio->crear($this->docente, sesionCon([...idsDeEstudiantes(1), $otroDocente->id, $coordinadora->id]));
+        $mensaje = '';
+    } catch (SolicitudInvalida $invalida) {
+        $mensaje = $invalida->getMessage();
+    }
+
+    expect($mensaje)->not->toBe('')
+        ->and($mensaje)->not->toContain('Sandra Milena Ospina')
+        ->and($mensaje)->not->toContain('Coordi Nadora')
+        ->and($mensaje)->toContain('2 personas que no son estudiantes');
 });
 
 it('busca estudiantes activos por nombre o código, sin los que ya están en la lista', function (): void {
@@ -102,11 +117,12 @@ it('agrega de una vez los códigos pegados y dice cuáles no encontró', functio
 
 it('crea la sesión con los estudiantes elegidos en el formulario', function (): void {
     $ids = idsDeEstudiantes(3);
+    $par = materiaYCaso();
 
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
-        ->set('materiaId', Materia::factory()->create()->id)
-        ->set('casoClinicoId', CasoClinico::factory()->create()->id)
+        ->set('materiaId', $par['materiaId'])
+        ->set('casoClinicoId', $par['casoClinicoId'])
         ->set('fecha', '2026-10-20')
         ->set('horaInicio', '07:00')
         ->set('horaFin', '09:00')

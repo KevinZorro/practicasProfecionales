@@ -19,6 +19,9 @@ if (contenedor) {
         plugins: [dayGridPlugin, timeGridPlugin],
         locale: esLocale,
         initialView: 'dayGridMonth',
+        // Con texto, FullCalendar no pinta el ícono sin nombre (role="img")
+        // en anterior y siguiente (QA-12).
+        buttonText: { prev: 'Anterior', next: 'Siguiente', today: 'Hoy' },
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',

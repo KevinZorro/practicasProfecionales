@@ -66,4 +66,34 @@ return [
         'tamano_maximo_kb' => 5120,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tope de los reportes en PDF (QA-01)
+    |--------------------------------------------------------------------------
+    |
+    | dompdf gasta cerca de medio megabyte por fila: un semestre completo
+    | agota los 512 MB de PHP. El PDF acepta como máximo "pdf_dias_maximos"
+    | días de rango y "pdf_filas_maximas" filas; el Excel no tiene tope y es
+    | la salida para los rangos grandes.
+    |
+    */
+
+    'reportes' => [
+        'pdf_dias_maximos' => (int) env('REPORTES_PDF_DIAS_MAXIMOS', 31),
+        'pdf_filas_maximas' => (int) env('REPORTES_PDF_FILAS_MAXIMAS', 500),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Política de tratamiento de datos personales (QA-11)
+    |--------------------------------------------------------------------------
+    |
+    | La Ley 1581 de 2012 y el Decreto 1377 de 2013 piden poner la política a
+    | disposición del titular. La URL la entrega la universidad; vacía, el
+    | enlace no se muestra. Solo se acepta http o https.
+    |
+    */
+
+    'politica_de_datos_url' => env('POLITICA_DE_DATOS_URL'),
+
 ];

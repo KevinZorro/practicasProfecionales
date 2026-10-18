@@ -18,7 +18,6 @@
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; }
         th { background: #f3f4f6; font-weight: bold; }
-        tbody tr:nth-child(even) { background: #fafafa; }
         .vacio { color: #6b7280; font-style: italic; padding: 12px 0; }
     </style>
 </head>

@@ -16,12 +16,25 @@ final class SolicitudInvalida extends DomainException
     /**
      * @param  list<string>  $nombres
      */
-    public static function noSonEstudiantesActivos(array $nombres): self
+    /**
+     * @param  list<string>  $inactivos  estudiantes que ya no tienen cuenta activa
+     * @param  int  $ajenos  cuántos de los ids ni siquiera son estudiantes
+     */
+    public static function noSonEstudiantesActivos(array $inactivos, int $ajenos = 0): self
     {
-        return new self(sprintf(
-            'Solo se pueden incluir estudiantes con cuenta activa. No lo son: %s.',
-            implode(', ', $nombres),
-        ));
+        // Los nombres solo de quienes son estudiantes: un id de otra persona
+        // (un docente, coordinación) no debe revelar quién es (QA-19).
+        $partes = [];
+
+        if ($inactivos !== []) {
+            $partes[] = 'sin cuenta activa: '.implode(', ', $inactivos);
+        }
+
+        if ($ajenos > 0) {
+            $partes[] = $ajenos === 1 ? '1 persona que no es estudiante' : $ajenos.' personas que no son estudiantes';
+        }
+
+        return new self('Solo se pueden incluir estudiantes con cuenta activa. No cumplen: '.implode('; ', $partes).'.');
     }
 
     public static function docenteBloqueado(string $motivo): self
@@ -57,6 +70,21 @@ final class SolicitudInvalida extends DomainException
     public static function noEsDocente(): self
     {
         return new self('La sesión tiene que quedar a nombre de un docente.');
+    }
+
+    public static function casoFueraDeLaMateria(): self
+    {
+        return new self('Ese escenario clínico no está asociado a la materia elegida.');
+    }
+
+    public static function equipoInvalido(): self
+    {
+        return new self('Alguno de los equipos pedidos no está en el inventario o trae una cantidad que no es válida.');
+    }
+
+    public static function fechaPasada(): self
+    {
+        return new self('Ese día ya pasó: la sesión tiene que ser de hoy en adelante.');
     }
 
     public static function grupoInvalido(string $grupo): self

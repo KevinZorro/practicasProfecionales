@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Enums\EstadoSolicitud;
+use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
@@ -50,8 +51,10 @@ final class ExpedienteDeSolicitud extends Component
         $solicitud = $this->solicitud();
         $this->authorize('revisar', $solicitud);
 
-        $solicitudes->marcarRevisada($solicitud, $this->actor());
-        $this->terminar('Solicitud marcada como revisada. Pasa a coordinación para aprobarla.');
+        $this->transicionar(
+            fn () => $solicitudes->marcarRevisada($solicitud, $this->actor()),
+            'Solicitud marcada como revisada. Pasa a coordinación para aprobarla.',
+        );
     }
 
     public function aprobar(SolicitudService $solicitudes): void
@@ -59,8 +62,10 @@ final class ExpedienteDeSolicitud extends Component
         $solicitud = $this->solicitud();
         $this->authorize('aprobar', $solicitud);
 
-        $solicitudes->aprobar($solicitud, $this->actor());
-        $this->terminar('Solicitud aprobada. El docente recibirá la notificación.');
+        $this->transicionar(
+            fn () => $solicitudes->aprobar($solicitud, $this->actor()),
+            'Solicitud aprobada. El docente recibirá la notificación.',
+        );
     }
 
     public function pedirMotivo(): void
@@ -81,8 +86,10 @@ final class ExpedienteDeSolicitud extends Component
         $this->authorize('rechazar', $solicitud);
         $this->validate(['motivoRechazo' => 'nullable|string|max:1000']);
 
-        $solicitudes->rechazar($solicitud, $this->actor(), $this->motivoRechazo ?: null);
-        $this->terminar('Solicitud rechazada. El docente recibirá el motivo.');
+        $this->transicionar(
+            fn () => $solicitudes->rechazar($solicitud, $this->actor(), $this->motivoRechazo ?: null),
+            'Solicitud rechazada. El docente recibirá el motivo.',
+        );
     }
 
     /** El permiso que exige el controlador de la página. */
@@ -145,6 +152,23 @@ final class ExpedienteDeSolicitud extends Component
     {
         return $solicitud->estado === EstadoSolicitud::Aprobada
             && in_array($solicitud->id, app(InventarioService::class)->solicitudesAprobadasSinCobertura(), true);
+    }
+
+    /**
+     * Si otra persona (o un segundo toque) ya movió la solicitud, no es un
+     * fallo: se avisa y se recarga el expediente para ver cómo quedó (QA-04).
+     */
+    private function transicionar(callable $accion, string $mensajeDeExito): void
+    {
+        try {
+            $accion();
+        } catch (TransicionDeSolicitudInvalida) {
+            $this->terminar('Esta solicitud ya había cambiado de estado. Así quedó.');
+
+            return;
+        }
+
+        $this->terminar($mensajeDeExito);
     }
 
     private function terminar(string $mensaje): void
