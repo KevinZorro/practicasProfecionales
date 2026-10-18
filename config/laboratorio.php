@@ -66,4 +66,21 @@ return [
         'tamano_maximo_kb' => 5120,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Tope de los reportes en PDF (QA-01)
+    |--------------------------------------------------------------------------
+    |
+    | dompdf gasta cerca de medio megabyte por fila: un semestre completo
+    | agota los 512 MB de PHP. El PDF acepta como máximo "pdf_dias_maximos"
+    | días de rango y "pdf_filas_maximas" filas; el Excel no tiene tope y es
+    | la salida para los rangos grandes.
+    |
+    */
+
+    'reportes' => [
+        'pdf_dias_maximos' => (int) env('REPORTES_PDF_DIAS_MAXIMOS', 31),
+        'pdf_filas_maximas' => (int) env('REPORTES_PDF_FILAS_MAXIMAS', 500),
+    ],
+
 ];
