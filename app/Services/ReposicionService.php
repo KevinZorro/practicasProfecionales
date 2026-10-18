@@ -35,6 +35,9 @@ final class ReposicionService
 {
     public const POR_PAGINA = 25;
 
+    /** Identificador del candado de PostgreSQL que serializa los cierres de lista. */
+    private const CANDADO_DE_CIERRE = 67_001;
+
     /**
      * Lo que habría que pedir en un rango de fechas, agrupado por ítem y
      * motivo.
@@ -90,18 +93,23 @@ final class ReposicionService
             throw ReposicionInvalida::laListaYaEstaCerrada();
         }
 
-        $this->garantizarLaFrontera($lista);
+        return DB::transaction(function () use ($actor, $lista, $observaciones): ListaDeReposicion {
+            // Dos cierres a la vez pasarían la validación de la frontera los
+            // dos: se atienden de uno en uno, y el segundo ve el cierre del
+            // primero (QA-21).
+            DB::select('SELECT pg_advisory_xact_lock(?)', [self::CANDADO_DE_CIERRE]);
 
-        $lineas = $this->previsualizar(
-            $lista->desde->format('Y-m-d'),
-            $lista->hasta->format('Y-m-d'),
-        );
+            $this->garantizarLaFrontera($lista);
 
-        if ($lineas->isEmpty()) {
-            throw ReposicionInvalida::noHayNadaQuePedir();
-        }
+            $lineas = $this->previsualizar(
+                $lista->desde->format('Y-m-d'),
+                $lista->hasta->format('Y-m-d'),
+            );
 
-        return DB::transaction(function () use ($actor, $lista, $lineas, $observaciones): ListaDeReposicion {
+            if ($lineas->isEmpty()) {
+                throw ReposicionInvalida::noHayNadaQuePedir();
+            }
+
             $lista->lineas()->createMany($lineas->map(static fn (array $linea): array => [
                 'item_inventario_id' => $linea['item_inventario_id'],
                 'descripcion' => $linea['descripcion'],
@@ -120,6 +128,23 @@ final class ReposicionService
             $lista->save();
 
             return $lista;
+        });
+    }
+
+    /**
+     * Crea la lista del rango y la cierra, todo o nada: si el cierre se
+     * rechaza no queda una lista huérfana sin cerrar entre las anteriores
+     * (QA-21). Es lo que llama la pantalla, que no escribe en la base.
+     */
+    public function cerrarElRango(User $actor, string $desde, string $hasta, ?string $observaciones = null): ListaDeReposicion
+    {
+        $borrador = new ListaDeReposicion(['desde' => $desde, 'hasta' => $hasta]);
+        $this->garantizarPermiso($actor, 'cerrar', $borrador);
+
+        return DB::transaction(function () use ($actor, $borrador, $observaciones): ListaDeReposicion {
+            $borrador->save();
+
+            return $this->cerrar($actor, $borrador, $observaciones);
         });
     }
 

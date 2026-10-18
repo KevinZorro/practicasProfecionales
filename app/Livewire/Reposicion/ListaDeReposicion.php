@@ -169,16 +169,12 @@ final class ListaDeReposicion extends Component
     /** Congela la lista: a partir de aquí no cambia (RF67). */
     public function cerrar(ReposicionService $reposicion): void
     {
-        $lista = new Lista(['desde' => $this->desde, 'hasta' => $this->hasta]);
-        $this->authorize('cerrar', $lista);
+        $this->authorize('cerrar', new Lista(['desde' => $this->desde, 'hasta' => $this->hasta]));
         $this->errorDeRegla = null;
 
-        $lista->save();
-
         try {
-            $reposicion->cerrar(Auth::user(), $lista, $this->observaciones === '' ? null : $this->observaciones);
+            $lista = $reposicion->cerrarElRango(Auth::user(), $this->desde, $this->hasta, $this->observaciones === '' ? null : $this->observaciones);
         } catch (ReposicionInvalida $invalida) {
-            $lista->delete();
             $this->errorDeRegla = $invalida->getMessage();
 
             return;

@@ -675,3 +675,33 @@ it('no deja a un docente descargar el soporte', function (): void {
         ->get(route('panel.reposicion.excel', $lista))
         ->assertForbidden();
 });
+
+// ---------------------------------------------------------------------
+// QA-21: el cierre es del Service, todo o nada
+// ---------------------------------------------------------------------
+
+it('cierra el rango sin dejar a medias una lista si el cierre se rechaza', function (): void {
+    expect(fn () => $this->reposicion->cerrarElRango($this->coordinadora, '2026-01-01', '2026-01-31'))
+        ->toThrow(ReposicionInvalida::class, 'No hay nada que pedir');
+
+    // Sin nada que pedir no quedó ninguna lista huérfana en «anteriores».
+    expect(ListaDeReposicion::query()->count())->toBe(0);
+});
+
+it('el segundo cierre del mismo rango no pasa: la frontera ya la movió el primero', function (): void {
+    $this->reposicion->registrarNecesidad($this->coordinadora, new DatosNecesidad(cantidad: 4, justificacion: 'No llegaron', descripcion: 'Pilas AA'));
+    $hasta = now()->toDateString();
+
+    $primera = $this->reposicion->cerrarElRango($this->coordinadora, '2026-01-01', $hasta);
+
+    expect($primera->estaCerrada())->toBeTrue()
+        ->and(fn () => $this->reposicion->cerrarElRango($this->coordinadora, '2026-01-01', $hasta))
+        ->toThrow(ReposicionInvalida::class)
+        ->and(ListaDeReposicion::query()->count())->toBe(1);
+});
+
+it('cerrarElRango pide el permiso de cerrar', function (): void {
+    expect(fn () => $this->reposicion->cerrarElRango(User::factory()->docente()->create(), '2026-01-01', now()->toDateString()))
+        ->toThrow(AuthorizationException::class);
+    expect(ListaDeReposicion::query()->count())->toBe(0);
+});
