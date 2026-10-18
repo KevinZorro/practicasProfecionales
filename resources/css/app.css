@@ -75,7 +75,7 @@
     }
 
     .casilla {
-        @apply size-[1.125rem] shrink-0 cursor-pointer rounded border-gray-300 disabled:cursor-not-allowed;
+        @apply size-6 shrink-0 cursor-pointer rounded border-gray-300 disabled:cursor-not-allowed;
     }
 }
 

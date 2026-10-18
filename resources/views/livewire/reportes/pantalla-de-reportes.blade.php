@@ -87,7 +87,7 @@
     @else
         <p class="text-[14px] text-gray-500">{{ $filas->total() }} {{ $filas->total() === 1 ? 'registro' : 'registros' }}</p>
 
-        <x-tabla :encabezados="$encabezados">
+        <x-tabla :encabezados="$encabezados" etiqueta="Resultados del reporte">
             @foreach ($filas as $fila)
                 <tr wire:key="fila-{{ $filas->currentPage() }}-{{ $loop->index }}">
                     @foreach ($fila as $celda)

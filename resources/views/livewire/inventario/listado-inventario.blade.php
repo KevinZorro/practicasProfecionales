@@ -96,7 +96,7 @@
 
         {{-- Tabla en pantalla ancha. --}}
         <div class="hidden lg:block">
-            <x-tabla :encabezados="['Nombre', 'Tipo', 'Fidelidad', 'Unidades', 'Desglose', '']">
+            <x-tabla etiqueta="Inventario" :encabezados="['Nombre', 'Tipo', 'Fidelidad', 'Unidades', 'Desglose', '']">
                 @foreach ($items as $item)
                     <tr wire:key="item-tabla-{{ $item->id }}" @class(['opacity-75' => ! $item->activo])>
                         <td class="font-semibold text-gray-900">

@@ -4,9 +4,13 @@
     desde el celular. Sin cifras tabulares: en Onest separan el 1 de los
     demás dígitos y «15» se leía «1 5».
 --}}
-@props(['encabezados' => []])
+@props(['encabezados' => [], 'etiqueta' => null])
 
-<div {{ $attributes->class('overflow-x-auto rounded-2xl bg-white') }}>
+{{-- Con etiqueta, la pieza que se desplaza es una región con nombre y entra
+     en el orden del teclado: sin esto, quien no usa mouse no puede ver las
+     columnas que quedan fuera (QA-12). --}}
+<div {{ $attributes->class('overflow-x-auto rounded-2xl bg-white') }}
+     @if ($etiqueta) tabindex="0" role="region" aria-label="{{ $etiqueta }}" @endif>
     <table class="min-w-full text-left text-[14px]">
         @if ($encabezados !== [])
             <thead>
@@ -20,7 +24,7 @@
             </thead>
         @endif
 
-        <tbody class="divide-y divide-gray-100 [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_td]:px-4 [&_td]:py-3 [&_tr]:transition-colors [&_tr:hover]:bg-gray-100/60">
+        <tbody class="divide-y divide-gray-100 [&_td:first-child]:pl-5 [&_td:last-child]:pr-5 [&_td]:px-4 [&_td]:py-3 [&_a]:inline-block [&_a]:py-0.5 [&_tr]:transition-colors [&_tr:hover]:bg-gray-100/60">
             {{ $slot }}
         </tbody>
     </table>

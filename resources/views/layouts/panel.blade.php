@@ -38,7 +38,8 @@
     --}}
     @livewireStyles
 </head>
-<body class="min-h-screen bg-niebla font-sans text-[15px] text-gray-900 antialiased">
+<body class="min-h-screen bg-niebla font-sans text-[15px] text-gray-900 antialiased"
+      x-data="{ menu: false }" @keydown.escape.window="menu = false">
 
 <a href="#contenido"
    class="sr-only rounded-full bg-gray-900 px-4 py-2 text-[14px] font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60]">
@@ -46,21 +47,23 @@
 </a>
 
 {{--
-    El checkbox tiene que ser hermano de lo que abre y cierra para que
-    peer-checked lo alcance: la variante compila al combinador de hermanos,
-    que no atraviesa niveles.
+    El checkbox solo guarda el estado para el CSS: tiene que ser hermano de lo
+    que abre y cierra para que peer-checked lo alcance (la variante compila
+    al combinador de hermanos, que no atraviesa niveles). No es un control:
+    quien lo maneja son los botones, con nombre, aria-expanded y foco visible
+    (QA-12), y Alpine mantiene la casilla al día.
 --}}
-<input type="checkbox" id="alternar-menu" class="peer sr-only">
+<input type="checkbox" id="alternar-menu" class="peer sr-only" aria-hidden="true" tabindex="-1" x-model="menu">
 
 {{-- Barra superior: celular y tableta. --}}
 <header class="sticky top-0 z-30 flex h-14 items-center gap-2 bg-gray-900 px-2 text-white lg:hidden">
-    <label for="alternar-menu"
-           class="flex size-11 cursor-pointer items-center justify-center rounded-full hover:bg-white/10"
-           aria-label="Abrir el menú">
+    <button type="button" @click="menu = true" aria-controls="menu-del-panel" aria-expanded="false" :aria-expanded="menu.toString()"
+            class="flex size-11 cursor-pointer items-center justify-center rounded-full hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            aria-label="Abrir el menú">
         <svg class="size-[22px]" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
         </svg>
-    </label>
+    </button>
     <a href="{{ route('panel.inicio') }}" class="flex min-w-0 items-center gap-2.5 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo">
         <img src="{{ asset('marca/ufps-simbolo.webp') }}" alt="" class="size-7 shrink-0 rounded-[6px]" width="28" height="28">
         <span class="truncate text-[15px] font-semibold">Laboratorio de Simulación</span>
@@ -68,10 +71,10 @@
 </header>
 
 {{-- Velo detrás del riel abierto en el celular: tocarlo lo cierra. --}}
-<label for="alternar-menu" class="fixed inset-0 z-40 hidden bg-black/40 peer-checked:block lg:!hidden" aria-hidden="true"></label>
+<div @click="menu = false" class="fixed inset-0 z-40 hidden bg-black/40 peer-checked:block lg:!hidden" aria-hidden="true"></div>
 
 {{-- Riel de navegación. --}}
-<aside class="fixed inset-y-0 left-0 z-50 hidden w-[17rem] max-w-[86vw] flex-col bg-gray-900 text-white peer-checked:flex lg:flex lg:w-[15.5rem]">
+<aside id="menu-del-panel" class="fixed inset-y-0 left-0 z-50 hidden w-[17rem] max-w-[86vw] flex-col bg-gray-900 text-white peer-checked:flex lg:flex lg:w-[15.5rem]">
     <div class="flex items-center gap-3 px-5 pb-4 pt-5">
         <a href="{{ route('panel.inicio') }}" class="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-rojo">
             <img src="{{ asset('marca/ufps-simbolo.webp') }}" alt="" class="size-9 shrink-0 rounded-[7px]" width="36" height="36">
@@ -80,13 +83,13 @@
                 <span class="mt-0.5 block text-[12px] font-normal text-white/55">UFPS · Ciencias de la Salud</span>
             </span>
         </a>
-        <label for="alternar-menu"
-               class="-mr-2 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white lg:hidden"
-               aria-label="Cerrar el menú">
+        <button type="button" @click="menu = false"
+                class="-mr-2 flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-white/70 hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:hidden"
+                aria-label="Cerrar el menú">
             <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
-        </label>
+        </button>
     </div>
 
     <nav aria-label="Secciones del sistema" class="min-h-0 flex-1 overflow-y-auto px-3 pb-4 [scrollbar-color:theme(colors.gray.700)_transparent]">
