@@ -407,22 +407,24 @@ final class SolicitudService
 
     public function marcarRevisada(Solicitud $solicitud, User $administrativo): Solicitud
     {
-        $this->garantizarTransicion($solicitud, EstadoSolicitud::Revisada);
+        DB::transaction(function () use ($solicitud, $administrativo): void {
+            $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Revisada);
 
-        $solicitud->update([
-            'estado' => EstadoSolicitud::Revisada,
-            'revisada_por' => $administrativo->id,
-            'revisada_at' => now(),
-        ]);
+            $solicitud->update([
+                'estado' => EstadoSolicitud::Revisada,
+                'revisada_por' => $administrativo->id,
+                'revisada_at' => now(),
+            ]);
+        });
 
         return $solicitud;
     }
 
     public function aprobar(Solicitud $solicitud, User $coordinador): Solicitud
     {
-        $this->garantizarTransicion($solicitud, EstadoSolicitud::Aprobada);
-
         DB::transaction(function () use ($solicitud, $coordinador): void {
+            $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Aprobada);
+
             $solicitud->update($this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador));
             $this->preparaciones->crearDesdeSolicitud($solicitud);
             $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.');
@@ -441,9 +443,9 @@ final class SolicitudService
      */
     public function rechazar(Solicitud $solicitud, User $actor, ?string $motivo = null): Solicitud
     {
-        $this->garantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
-
         DB::transaction(function () use ($solicitud, $actor, $motivo): void {
+            $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Rechazada);
+
             $fase = $solicitud->estado === EstadoSolicitud::Pendiente ? 'en la revisión' : 'en la aprobación';
 
             $solicitud->update([
@@ -544,6 +546,21 @@ final class SolicitudService
                 $item->id => (int) $item->pivot->cantidad,
             ])
             ->all();
+    }
+
+    /**
+     * Dos personas con la misma bandeja abierta tienen dos copias del mismo
+     * registro, cada una con el estado que leyó. Se bloquea la fila y se
+     * vuelve a leer antes de decidir, para que la segunda en actuar vea lo
+     * que hizo la primera (QA-02). Solo dentro de una transacción: el bloqueo
+     * se suelta al confirmarla.
+     */
+    private function bloquearYGarantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void
+    {
+        Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+        $solicitud->refresh();
+
+        $this->garantizarTransicion($solicitud, $destino);
     }
 
     private function garantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void

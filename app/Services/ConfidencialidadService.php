@@ -287,14 +287,17 @@ final class ConfidencialidadService
     public function verificar(FormatoConfidencialidad $entrega, User $verificador): FormatoConfidencialidad
     {
         $this->garantizarPermiso($verificador, 'verificar', $entrega);
-        $this->garantizarCargado($entrega);
 
-        $entrega->update([
-            'estado' => EstadoFormatoConfidencialidad::Verificado,
-            'motivo_rechazo' => null,
-            'verificado_por' => $verificador->id,
-            'verificado_at' => now(),
-        ]);
+        DB::transaction(function () use ($entrega, $verificador): void {
+            $this->bloquearYGarantizarCargado($entrega);
+
+            $entrega->update([
+                'estado' => EstadoFormatoConfidencialidad::Verificado,
+                'motivo_rechazo' => null,
+                'verificado_por' => $verificador->id,
+                'verificado_at' => now(),
+            ]);
+        });
 
         return $entrega;
     }
@@ -303,6 +306,8 @@ final class ConfidencialidadService
      * Devuelve la entrega a pendiente para que quien firma vuelva a
      * subirla. El archivo rechazado se borra: son datos personales que ya no
      * hacen falta, y un registro pendiente no debe conservar documento.
+     * Se borra al confirmar la transacción: si esta se revierte, la base
+     * seguiría apuntando a un archivo que ya no existe.
      */
     public function rechazar(
         FormatoConfidencialidad $entrega,
@@ -310,16 +315,23 @@ final class ConfidencialidadService
         ?string $motivo = null,
     ): FormatoConfidencialidad {
         $this->garantizarPermiso($verificador, 'rechazar', $entrega);
-        $this->garantizarCargado($entrega);
-        $this->borrarArchivoFirmado($entrega);
 
-        $entrega->update([
-            'estado' => EstadoFormatoConfidencialidad::Pendiente,
-            'archivo_firmado_path' => null,
-            'motivo_rechazo' => $motivo,
-            'verificado_por' => null,
-            'verificado_at' => null,
-        ]);
+        DB::transaction(function () use ($entrega, $motivo): void {
+            $this->bloquearYGarantizarCargado($entrega);
+            $ruta = $entrega->archivo_firmado_path;
+
+            $entrega->update([
+                'estado' => EstadoFormatoConfidencialidad::Pendiente,
+                'archivo_firmado_path' => null,
+                'motivo_rechazo' => $motivo,
+                'verificado_por' => null,
+                'verificado_at' => null,
+            ]);
+
+            if (is_string($ruta)) {
+                DB::afterCommit(fn () => $this->disco()->delete($ruta));
+            }
+        });
 
         return $entrega;
     }
@@ -544,6 +556,19 @@ final class ConfidencialidadService
         if ($archivo->getSize() > $maximoKb * 1024) {
             throw FormatoConfidencialidadInvalido::archivoDemasiadoGrande($maximoKb);
         }
+    }
+
+    /**
+     * Relee la entrega con la fila bloqueada: dos administrativas con la
+     * misma bandeja abierta no pueden verificar y rechazar a la vez (QA-02).
+     * Solo dentro de una transacción.
+     */
+    private function bloquearYGarantizarCargado(FormatoConfidencialidad $entrega): void
+    {
+        FormatoConfidencialidad::query()->whereKey($entrega->getKey())->lockForUpdate()->firstOrFail();
+        $entrega->refresh();
+
+        $this->garantizarCargado($entrega);
     }
 
     private function garantizarCargado(FormatoConfidencialidad $entrega): void
