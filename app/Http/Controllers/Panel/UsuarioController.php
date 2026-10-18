@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Panel;
 
 use App\Http\Controllers\Controller;
 use App\Models\AsignacionDeRol;
+use App\Models\Supervision;
 use App\Models\User;
 use App\Support\EnlaceDeVuelta;
 use Illuminate\Http\Request;
@@ -37,6 +38,14 @@ final class UsuarioController extends Controller
         abort_unless($peticion->user()->can('update', $cuenta), 403);
 
         return view('panel.usuarios.formulario', ['cuenta' => $cuenta, 'volver' => $this->vueltaALaLista($peticion)]);
+    }
+
+    /** Los docentes a cargo de un docente supervisor (RF77). */
+    public function supervision(Request $peticion, User $supervisor): View
+    {
+        abort_unless($peticion->user()->can('gestionar', Supervision::class), 403);
+
+        return view('panel.usuarios.supervision', ['supervisor' => $supervisor, 'volver' => $this->vueltaALaLista($peticion)]);
     }
 
     private function vueltaALaLista(Request $peticion): EnlaceDeVuelta

@@ -39,6 +39,7 @@ final readonly class ResumenDelDia
         public ?Collection $ultimosResultados = null,
         public ?int $formatosPorVerificar = null,
         public ?EstadoDeMiFormato $miFormato = null,
+        public ?ResumenDeSupervision $supervision = null,
     ) {}
 
     /** Si no hay ningún bloque que enseñar a esta persona. */
@@ -52,6 +53,7 @@ final readonly class ResumenDelDia
             && $this->porEvaluar === null
             && $this->ultimosResultados === null
             && $this->formatosPorVerificar === null
-            && $this->miFormato === null;
+            && $this->miFormato === null
+            && $this->supervision === null;
     }
 }

@@ -16,7 +16,7 @@ Plataforma web de gestión del Laboratorio de Simulación Clínica de la Faculta
 
 **Contexto del desarrollo:** proyecto de práctica empresarial, un solo desarrollador, plazo cerrado. El sistema lo mantendrá después el administrador del servidor, que conoce PHP pero no participó del desarrollo. **Prioriza claridad sobre ingenio.** Código que un tercero pueda leer y modificar sin explicación previa.
 
-### Los cinco roles
+### Los seis roles
 
 | Rol | Qué hace |
 |---|---|
@@ -24,6 +24,7 @@ Plataforma web de gestión del Laboratorio de Simulación Clínica de la Faculta
 | `coordinador` | Aprueba o rechaza solicitudes de escenario, verifica formatos de confidencialidad, genera reportes. **Hereda todos los permisos del administrativo** |
 | `administrativo` | Revisa solicitudes, asigna sala, prepara escenarios, gestiona inventario |
 | `docente` | Solicita escenarios, registra evaluaciones de habilidades y entrega su formato de confidencialidad |
+| `supervisor` | Docente supervisor (RF77): consulta —en pantalla, PDF y Excel— los resultados de las evaluaciones de los docentes que el ADMIN le asignó. No solicita, no evalúa, no ve calendario ni inventario y no firma el formato de confidencialidad |
 | `estudiante` | Consulta sus resultados y entrega el formato de confidencialidad |
 
 Un usuario puede tener varios roles a la vez (una coordinadora puede además ser docente). El rol activo se elige con un selector y vive en sesión.
@@ -186,6 +187,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `PortadaService` | Lo que muestra la portada pública (RF01–RF07): solo lo publicado, talleres y eventos de hoy en adelante (D18), sin imágenes cuyo archivo falta; el detalle de un escenario publicado (RF03) |
 | `ResumenDelDiaService` | La pantalla «Hoy» del panel (`/panel`): lo que espera a cada persona con su rol activo. Solo lee; cada bloque aparece si la Policy de su módulo lo permite, nunca por rol |
 | `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (RF22), con origen `manual`; deshabilitar y volver a habilitar, siempre con motivo y en la bitácora |
+| `SupervisionService` | Docentes a cargo de cada docente supervisor y lo que este consulta (RF77). Asignar y retirar es solo del ADMIN y queda en la bitácora; la lectura es una sola consulta —la del reporte de resultados de evaluación, RF55— limitada a sus docentes, que sale siempre de la base y nunca de la petición. Una evaluación es de quien la hizo, que en una sustitución es quien dictó (D23). Las filas de `docente_supervisor` sobreviven a la revocación del rol y no dan acceso sin él |
 | `UsuarioSyncService` | Sincronización con la base institucional (RF19, RF20), comando `usuarios:sincronizar`. Lee de una `FuenteInstitucional`; **hoy solo existe la simulada** (`database/datos/institucional-simulada.json`), porque la real depende del pendiente 2. La pasada programada está apagada salvo con `SINCRONIZACION_PROGRAMADA=true` |
 
 **Lo que la sincronización no hace, y no debe empezar a hacer:**

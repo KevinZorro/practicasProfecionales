@@ -121,6 +121,10 @@ final class GeneradorDeReportes
             $partes[] = 'Docente: '.User::query()->whereKey($filtro->docenteId)->value('nombre');
         }
 
+        if ($filtro->docenteIds !== null) {
+            $partes[] = 'Docentes supervisados: '.count($filtro->docenteIds);
+        }
+
         if ($filtro->materiaId !== null) {
             $partes[] = 'Materia: '.Materia::query()->whereKey($filtro->materiaId)->value('nombre');
         }

@@ -21,7 +21,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
  * La pantalla «Hoy»: lo que espera a cada persona con el rol que tiene
  * puesto. A coordinación, lo que espera su aprobación; al administrativo,
  * los escenarios del día y lo que falta montar; al docente, sus próximas
- * sesiones; al estudiante, sus resultados y su formato.
+ * sesiones; al supervisor, sus docentes y lo que evaluaron; al estudiante, sus resultados y su formato.
  *
  * Solo lee. Cada bloque aparece si la Policy de su módulo deja a la persona
  * hacer lo que el bloque propone: aquí no se pregunta por roles, y si
@@ -39,6 +39,7 @@ final class ResumenDelDiaService
         private readonly PreparacionService $preparaciones,
         private readonly ConfidencialidadService $confidencialidad,
         private readonly EvaluacionService $evaluaciones,
+        private readonly SupervisionService $supervision,
     ) {}
 
     public function para(User $persona, CarbonInterface $hoy): ResumenDelDia
@@ -57,6 +58,7 @@ final class ResumenDelDiaService
                 : null,
             formatosPorVerificar: $persona->can('viewAny', FormatoConfidencialidad::class) ? $this->formatosPorVerificar() : null,
             miFormato: $persona->can('create', FormatoConfidencialidad::class) ? $this->miFormato($persona) : null,
+            supervision: $persona->can('supervisar', Evaluacion::class) ? $this->deSupervision($persona) : null,
         );
     }
 
@@ -124,6 +126,18 @@ final class ResumenDelDiaService
             ->delPeriodo($periodo)
             ->where('estado', EstadoFormatoConfidencialidad::Cargado)
             ->count();
+    }
+
+    /** Los docentes a cargo del supervisor y lo que evaluaron en el periodo vigente (RF77). */
+    private function deSupervision(User $supervisor): ResumenDeSupervision
+    {
+        $periodo = $this->supervision->periodoDe(null);
+
+        return new ResumenDeSupervision(
+            docentes: count($this->supervision->idsDeLosDocentesDe($supervisor)),
+            evaluaciones: $this->supervision->cuantasEvaluaciones($supervisor, $periodo),
+            periodo: $periodo?->nombre,
+        );
     }
 
     private function miFormato(User $firmante): EstadoDeMiFormato

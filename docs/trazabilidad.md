@@ -170,6 +170,12 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 |---|---|---|---|---|---|
 | RF76 | El ADMIN sube un video, en lugar de una foto o además de ella, en galería, escenarios, talleres, eventos y equipamiento destacado | Completo | `CampoDeVideo`, `VideoPublicoService`, columna `video` (migración `agrega_video_al_contenido_publico`), componente `portada/medio`, `PortadaService` | `VideosPublicosTest`, `ConfiguracionLandingTest` (topes de PHP, nginx y Livewire) | D20, D21. Certificaciones y perfiles docentes siguen solo con foto |
 
+## Docente supervisor (RF77)
+
+| RF | Pide | Estado | Dónde | Tests | Falta |
+|---|---|---|---|---|---|
+| RF77 | El ADMIN eleva a un docente a supervisor y le reparte docentes; el supervisor solo consulta (y descarga) los resultados de las evaluaciones de sus docentes, del periodo vigente o del historial | Completo | `Rol::Supervisor`, `SupervisionService`, `SupervisionPolicy`, `EvaluacionPolicy::supervisar()`, tabla `docente_supervisor`, `/panel/supervision` (+ `/excel` y `/pdf`), `/panel/usuarios/{supervisor}/supervision`, bloque en «Hoy» | `DocenteSupervisorTest` | D22–D25. El rol se asigna por `AsignacionDeRolService`, con fecha de fin opcional (RF63) |
+
 ## Auditoría y roles (RF62–RF64)
 
 | RF | Pide | Estado | Dónde | Tests | Falta |
@@ -251,6 +257,10 @@ Una sesión apartada es una solicitud con `origen` = `registro_previo`: la regis
 | D19 | El calendario (RF34) es de cada quien: el docente ve solo las sesiones que dicta, el estudiante solo aquellas donde está en la lista, y quien gestiona las solicitudes ve todas. **Sin franjas «Ocupado»**: el docente no ve nada ajeno, ni sin datos. El detalle de cada sesión se abre al tocar o hacer clic; no hay agrandado al pasar el mouse, para no sumar movimiento en equipos de gama baja. Corrige un fallo de seguridad: antes cualquier rol recibía docente, materia y cantidad de estudiantes de todas las sesiones | RF34 |
 | D20 | Los videos del contenido público son **archivos** MP4 o WebM ya comprimidos, nunca enlaces a YouTube: por seguridad, para no abrir la CSP a otro sitio y para no depender de un tercero. Tope de **30 MB** por video (hasta unos 90 segundos a 720p, a unos 2,5 Mbps; 1080p cabe en menos tiempo y 4K no hace falta). El del hero sigue en 15 MB. No se recodifican (no hay ffmpeg) | RF76, RF11 |
 | D21 | Con video y foto en la misma pieza, la foto es la portada del video. Los videos no se reproducen solos ni en bucle y se piden con `preload="metadata"`, para no cargar nada que nadie pidió en conexiones lentas ni equipos de gama baja. En la tarjeta de un escenario, que es un enlace, el video se ve como su primer cuadro y se reproduce en su detalle. Los eventos, que no mostraban su imagen, la muestran ahora junto con el video | RF76 |
+| D22 | El docente supervisor es un **rol propio**, distinto del docente: solo ve las evaluaciones de sus docentes y nada más (ni solicitudes, ni calendario, ni inventario, ni reportes). No firma el formato de confidencialidad porque no entra a la práctica (`Rol::queFirmanElFormato()` no lo incluye). Nada impide que una misma persona tenga también el rol de docente —un usuario puede tener varios—, pero entonces cada uno rige solo mientras es el rol activo. La sincronización institucional nunca lo reparte (`OrigenUsuario::rolPermanente()`): solo el ADMIN, desde `/panel/usuarios` | RF77 |
+| D23 | Una evaluación es de quien la hizo (`evaluaciones.docente_id`): en una sesión con sustitución, quien dictó. El supervisor del reemplazo ve esa evaluación; el del titular, no | RF77, RF73 |
+| D24 | La agrupación supervisor–docentes es **permanente hasta que el ADMIN la cambie**: el periodo académico no tiene fechas fijas (RF75), así que «todo el semestre» es no ponerle fin y retirarla al cambiar de semestre. La fecha de fin, si se quiere, va en el **rol** (RF63), no en la agrupación; si el rol vence o se revoca, las filas quedan pero no dan acceso (`SupervisionService` lo comprueba con la Policy). Asignar y retirar queda en la bitácora | RF77, RF63 |
+| D25 | La pantalla abre con el periodo vigente y deja elegir un periodo anterior o todo el historial. El periodo se aplica por la fecha de la sesión evaluada, dentro de lo que abrió y cerró el laboratorio. El supervisor descarga PDF y Excel del mismo reporte de resultados de evaluación (RF55), limitado a sus docentes con el mismo filtro que ve. «Hoy» le muestra un solo bloque: cuántos docentes tiene y cuántas evaluaciones finalizaron en el periodo vigente | RF77, RF55 |
 
 ---
 

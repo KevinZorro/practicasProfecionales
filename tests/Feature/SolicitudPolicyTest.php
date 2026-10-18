@@ -123,9 +123,13 @@ it('deja ver cualquier solicitud a quien entra a la bandeja', function (): void 
         ->and(usuarioCon(Rol::Estudiante)->can('view', $this->solicitud))->toBeFalse();
 });
 
-it('deja ver el calendario a los cinco roles', function (Rol $rol): void {
+it('deja ver el calendario a los cinco roles que participan en las sesiones', function (Rol $rol): void {
     expect(usuarioCon($rol)->can('verCalendario', Solicitud::class))->toBeTrue();
-})->with(Rol::cases());
+})->with([Rol::Admin, Rol::Coordinador, Rol::Administrativo, Rol::Docente, Rol::Estudiante]);
+
+it('no deja ver el calendario al docente supervisor: solo consulta resultados (RF77)', function (): void {
+    expect(usuarioCon(Rol::Supervisor)->can('verCalendario', Solicitud::class))->toBeFalse();
+});
 
 it('no deja ver el calendario a un usuario sin rol', function (): void {
     expect(User::factory()->create()->can('verCalendario', Solicitud::class))->toBeFalse();

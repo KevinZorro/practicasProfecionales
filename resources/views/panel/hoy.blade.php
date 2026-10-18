@@ -120,6 +120,25 @@
                                              :enlace="route('panel.evaluaciones')" />
                 @endif
 
+                @if ($resumen->supervision !== null)
+                    <x-tarjeta titulo="Tus docentes supervisados">
+                        @if ($resumen->supervision->docentes === 0)
+                            <p class="text-[14px] text-gray-500">Todavía no tienes docentes a cargo. El administrador de la plataforma los asigna.</p>
+                        @else
+                            <p class="text-[15px] leading-snug text-gray-900">
+                                <span class="font-semibold">{{ trans_choice(':count docente|:count docentes', $resumen->supervision->docentes, ['count' => $resumen->supervision->docentes]) }}</span> a tu cargo.
+                            </p>
+                            <p class="mt-1 text-[14px] text-gray-500">
+                                {{ trans_choice(':count evaluación finalizada|:count evaluaciones finalizadas', $resumen->supervision->evaluaciones, ['count' => $resumen->supervision->evaluaciones]) }}
+                                @if ($resumen->supervision->periodo) en el periodo {{ $resumen->supervision->periodo }} @endif
+                            </p>
+                        @endif
+                        <x-slot:pie>
+                            <a href="{{ route('panel.supervision') }}" class="font-semibold text-gray-900 underline decoration-gray-300 underline-offset-4 hover:decoration-gray-900">Ver sus evaluaciones</a>
+                        </x-slot:pie>
+                    </x-tarjeta>
+                @endif
+
                 @if ($resumen->ultimosResultados !== null)
                     <x-tarjeta titulo="Tus últimos resultados">
                         @if ($resumen->ultimosResultados->isEmpty())

@@ -10,7 +10,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 /**
- * Los cinco roles de la plataforma. Un usuario puede tener varios a la vez:
+ * Los seis roles de la plataforma. Un usuario puede tener varios a la vez:
  * una coordinadora puede además ser docente.
  */
 class RolSeeder extends Seeder
