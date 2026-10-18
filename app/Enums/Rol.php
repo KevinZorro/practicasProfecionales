@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Enums;
 
 /**
- * Los cinco roles de la plataforma. Se registran como roles de
+ * Los seis roles de la plataforma. Se registran como roles de
  * spatie/laravel-permission; este enum evita escribir sus nombres a mano
  * en seeders, Policies y Gates.
  */
@@ -15,6 +15,7 @@ enum Rol: string
     case Coordinador = 'coordinador';
     case Administrativo = 'administrativo';
     case Docente = 'docente';
+    case Supervisor = 'supervisor';
     case Estudiante = 'estudiante';
 
     /**
@@ -39,6 +40,7 @@ enum Rol: string
             self::Coordinador => 'Coordinador',
             self::Administrativo => 'Administrativo',
             self::Docente => 'Docente',
+            self::Supervisor => 'Docente supervisor',
             self::Estudiante => 'Estudiante',
         };
     }
@@ -50,6 +52,7 @@ enum Rol: string
             self::Coordinador => 'Aprueba o rechaza solicitudes de escenario, verifica formatos y genera reportes. Hereda todos los permisos del administrativo.',
             self::Administrativo => 'Revisa solicitudes, asigna sala, prepara escenarios y gestiona el inventario.',
             self::Docente => 'Solicita escenarios, registra evaluaciones de habilidades y entrega el formato de confidencialidad.',
+            self::Supervisor => 'Consulta los resultados de las evaluaciones que hacen los docentes que el ADMIN le asignó. No solicita escenarios, no evalúa y no gestiona nada más.',
             self::Estudiante => 'Consulta sus resultados y entrega el formato de confidencialidad.',
         };
     }

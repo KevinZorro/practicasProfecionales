@@ -92,6 +92,7 @@ final class ReporteService
             ])
             ->whereHas('evaluacion', fn (Builder $c) => $c->where('estado', EstadoEvaluacion::Finalizada)
                 ->when($filtro->docenteId !== null, fn (Builder $e) => $e->where('docente_id', $filtro->docenteId))
+                ->when($filtro->docenteIds !== null, fn (Builder $e) => $e->whereIn('docente_id', $filtro->docenteIds))
                 ->whereHas('solicitud', fn (Builder $s) => $this->aplicarFechaYMateria($s, $filtro)))
             ->orderBy('evaluacion_id')->orderBy('estudiante_id')->orderBy('intento');
     }

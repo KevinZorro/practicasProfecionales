@@ -12,9 +12,9 @@ it('define la modalidad de un taller como virtual o presencial', function (): vo
         ->toEqualCanonicalizing(['virtual', 'presencial']);
 });
 
-it('define los cinco roles de la plataforma', function (): void {
+it('define los seis roles de la plataforma', function (): void {
     expect(array_column(Rol::cases(), 'value'))
-        ->toEqualCanonicalizing(['admin', 'coordinador', 'administrativo', 'docente', 'estudiante']);
+        ->toEqualCanonicalizing(['admin', 'coordinador', 'administrativo', 'docente', 'supervisor', 'estudiante']);
 });
 
 it('define la sesión como práctica o evaluación', function (): void {

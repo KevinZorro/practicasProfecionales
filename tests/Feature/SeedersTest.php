@@ -19,10 +19,10 @@ use Database\Seeders\DatosPruebaSeeder;
 use Database\Seeders\RolSeeder;
 use Spatie\Permission\Models\Role;
 
-it('registra los cinco roles con su descripción', function (): void {
+it('registra los seis roles con su descripción', function (): void {
     $this->seed(RolSeeder::class);
 
-    expect(Role::count())->toBe(5);
+    expect(Role::count())->toBe(6);
 
     foreach (Rol::cases() as $rol) {
         $registro = Role::where('name', $rol->value)->first();
@@ -36,7 +36,7 @@ it('no duplica roles al ejecutarse dos veces', function (): void {
     $this->seed(RolSeeder::class);
     $this->seed(RolSeeder::class);
 
-    expect(Role::count())->toBe(5);
+    expect(Role::count())->toBe(6);
 });
 
 describe('DatosPruebaSeeder', function (): void {
@@ -53,7 +53,7 @@ describe('DatosPruebaSeeder', function (): void {
             ->and(ItemInventario::simuladores()->count())->toBe(6);
     });
 
-    it('crea usuarios de los cinco roles', function (): void {
+    it('crea usuarios de los seis roles', function (): void {
         foreach (Rol::cases() as $rol) {
             expect(User::role($rol->value)->count())
                 ->toBeGreaterThan(0, "no hay usuarios con el rol {$rol->value}");

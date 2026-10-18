@@ -27,6 +27,11 @@ final readonly class FiltroReporte
         // RF67: la lista de reposición se exporta ya cerrada, así que el
         // filtro no es un rango sino el documento concreto.
         public ?int $listaDeReposicionId = null,
+        // RF77: los docentes que ve un supervisor. Null no limita; una lista
+        // vacía es «ninguno» y no devuelve nada, que es lo que hace falta
+        // cuando el supervisor todavía no tiene docentes.
+        /** @var list<int>|null */
+        public ?array $docenteIds = null,
     ) {}
 
     public static function deObjetos(

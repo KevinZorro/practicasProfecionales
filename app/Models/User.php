@@ -13,6 +13,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
@@ -124,6 +125,26 @@ class User extends Authenticatable implements FilamentUser, HasName
     public function asignacionesDeRol(): HasMany
     {
         return $this->hasMany(AsignacionDeRol::class);
+    }
+
+    /**
+     * Los docentes que este docente supervisor tiene a su cargo (RF77).
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function docentesSupervisados(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'docente_supervisor', 'supervisor_id', 'docente_id')->withTimestamps();
+    }
+
+    /**
+     * Los supervisores de este docente (RF77).
+     *
+     * @return BelongsToMany<User, $this>
+     */
+    public function supervisores(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'docente_supervisor', 'docente_id', 'supervisor_id')->withTimestamps();
     }
 
     /** @return HasMany<Solicitud, $this> */

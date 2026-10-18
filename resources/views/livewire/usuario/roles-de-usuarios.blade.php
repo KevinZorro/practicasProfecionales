@@ -109,6 +109,11 @@
                         @can('update', $usuario)
                             <x-boton variante="texto" tamano="chico" href="{{ route('panel.usuarios.editar', $usuario) }}" wire:navigate>Editar datos</x-boton>
                         @endcan
+                        @can('gestionar', \App\Models\Supervision::class)
+                            @if ($usuario->roles->contains('name', \App\Enums\Rol::Supervisor->value))
+                                <x-boton variante="texto" tamano="chico" href="{{ route('panel.usuarios.supervision', $usuario) }}" wire:navigate>Docentes a su cargo</x-boton>
+                            @endif
+                        @endcan
                         @if ($usuario->estaDeshabilitado())
                             @can('habilitar', $usuario)
                                 <x-boton variante="texto" tamano="chico" type="button" wire:click="abrirAcceso({{ $usuario->id }})">Volver a habilitar</x-boton>

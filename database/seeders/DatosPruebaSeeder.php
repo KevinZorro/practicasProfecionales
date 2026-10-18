@@ -38,6 +38,7 @@ use App\Models\Preparacion;
 use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\SolicitudInformacion;
+use App\Models\Supervision;
 use App\Models\Taller;
 use App\Models\TipoEvaluacion;
 use App\Models\TipoEvento;
@@ -427,6 +428,18 @@ class DatosPruebaSeeder extends Seeder
             $usuario->assignRole(Rol::Docente->value);
 
             return $usuario;
+        });
+
+        // El docente supervisor consulta las evaluaciones de los docentes a su
+        // cargo (RF77): aquí, los dos primeros.
+        $supervisor = $this->crearUsuario('Patricia Elena Ruiz', 'patricia.ruiz@ejemplo.edu.co', OrigenUsuario::Contratado, 'SUP-001');
+        $supervisor->assignRole(Rol::Supervisor->value);
+        $docentes->take(2)->each(function (User $docente) use ($supervisor, $admin): void {
+            $supervision = new Supervision;
+            $supervision->supervisor_id = $supervisor->id;
+            $supervision->docente_id = $docente->id;
+            $supervision->asignado_por = $admin->id;
+            $supervision->save();
         });
 
         $estudiantes = User::factory()

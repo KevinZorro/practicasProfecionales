@@ -21,6 +21,8 @@ enum AccionAuditada: string
     case BloqueoLevantado = 'bloqueo_levantado';
     case UsuarioDeshabilitado = 'usuario_deshabilitado';
     case UsuarioHabilitado = 'usuario_habilitado';
+    case DocenteSupervisadoAsignado = 'docente_supervisado_asignado';
+    case DocenteSupervisadoRetirado = 'docente_supervisado_retirado';
 
     public function etiqueta(): string
     {
@@ -39,6 +41,8 @@ enum AccionAuditada: string
             self::BloqueoLevantado => 'Bloqueo levantado',
             self::UsuarioDeshabilitado => 'Cuenta deshabilitada',
             self::UsuarioHabilitado => 'Cuenta habilitada',
+            self::DocenteSupervisadoAsignado => 'Docente asignado a un supervisor',
+            self::DocenteSupervisadoRetirado => 'Docente retirado de un supervisor',
         };
     }
 }

@@ -20,6 +20,7 @@ use App\Http\Controllers\Panel\ReporteController;
 use App\Http\Controllers\Panel\ReposicionController;
 use App\Http\Controllers\Panel\SelectorDeRolController;
 use App\Http\Controllers\Panel\SolicitudController;
+use App\Http\Controllers\Panel\SupervisionController;
 use App\Http\Controllers\Panel\UsuarioController;
 use App\Http\Controllers\PortadaController;
 use Illuminate\Support\Facades\Route;
@@ -92,6 +93,11 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('evaluaciones/{evaluacion}', [EvaluacionController::class, 'registro'])->name('evaluaciones.registro');
     Route::get('mis-resultados', [EvaluacionController::class, 'misResultados'])->name('mis-resultados');
 
+    /* Evaluaciones de los docentes supervisados (RF77). Solo el docente supervisor. */
+    Route::get('supervision', [SupervisionController::class, 'index'])->name('supervision');
+    Route::get('supervision/excel', [SupervisionController::class, 'excel'])->name('supervision.excel');
+    Route::get('supervision/pdf', [SupervisionController::class, 'pdf'])->name('supervision.pdf');
+
     /* Bitácora de auditoría (RF62). Coordinación y ADMIN. */
     Route::get('bitacora', BitacoraController::class)->name('bitacora');
 
@@ -104,6 +110,7 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('usuarios', [UsuarioController::class, 'roles'])->name('usuarios');
     Route::get('usuarios/nueva', [UsuarioController::class, 'nueva'])->name('usuarios.nueva');
     Route::get('usuarios/{cuenta}/editar', [UsuarioController::class, 'editar'])->name('usuarios.editar');
+    Route::get('usuarios/{supervisor}/supervision', [UsuarioController::class, 'supervision'])->name('usuarios.supervision');
 
     /*
      * Lista de insumos por pedir (RF67). Las descargas solo existen para

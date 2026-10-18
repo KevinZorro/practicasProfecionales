@@ -68,6 +68,11 @@ class UserFactory extends Factory
         return $this->afterCreating(fn (User $usuario) => $usuario->assignRole(Rol::Docente->value));
     }
 
+    public function supervisor(): static
+    {
+        return $this->afterCreating(fn (User $usuario) => $usuario->assignRole(Rol::Supervisor->value));
+    }
+
     public function estudiante(): static
     {
         return $this->state(fn (array $atributos): array => [

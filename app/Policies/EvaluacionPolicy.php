@@ -14,6 +14,7 @@ use App\Models\User;
  * | Acción                          | ADMIN | Coordinador | Administrativo | Docente | Estudiante |
  * | Crear y registrar evaluaciones  |       |             |                |    ✓    |            |
  * | Consultar resultados propios    |       |             |                |         |     ✓      |
+ * | Consultar los de sus docentes   |       |             |                |         | supervisor |
  * | Generar reportes                |   ✓   |      ✓      |                |         |            |
  *
  * A diferencia de las solicitudes y del montaje, aquí el ADMIN sí entra:
@@ -38,6 +39,17 @@ final class EvaluacionPolicy
     public function viewAny(User $usuario): bool
     {
         return $usuario->hasRole(Rol::Docente->value) || $this->generaReportes($usuario);
+    }
+
+    /**
+     * El docente supervisor consulta los resultados de las evaluaciones de
+     * los docentes que tiene a cargo (RF77). Es solo lectura y no abre
+     * ninguna otra pantalla de evaluaciones: viewAny y view siguen siendo
+     * del docente, de coordinación y del ADMIN.
+     */
+    public function supervisar(User $usuario): bool
+    {
+        return $usuario->hasRole(Rol::Supervisor->value);
     }
 
     /** El listado de todas las evaluaciones, no solo las propias. */
