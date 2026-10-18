@@ -28,7 +28,7 @@
     <link rel="apple-touch-icon" href="{{ asset('marca/apple-touch-icon.png') }}">
     <link rel="preload" href="{{ asset('fonts/onest/onest-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 
     {{--
         Livewire trae Alpine, y por su cuenta solo inyecta sus scripts en las

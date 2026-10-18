@@ -8,7 +8,7 @@
 
     <title>{{ $title ?? config('app.name') }}</title>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
     {{ $slot }}

@@ -106,3 +106,34 @@ it('no mete en las imágenes lo que suben los usuarios ni las copias', function 
         ->toMatch('#^\.env$#m')
         ->toMatch('#^copias$#m');
 });
+
+// ---------------------------------------------------------------------
+// QA-13: conexiones lentas (RNF10)
+// ---------------------------------------------------------------------
+
+it('comprime en nginx el texto que más pesa: JavaScript, CSS, JSON y SVG', function (): void {
+    $nginx = archivoDeProduccion('docker/produccion/nginx.conf');
+
+    expect($nginx)->toMatch('/^\s*gzip\s+on;$/m');
+
+    preg_match('/^\s*gzip_types\s+([^;]+);$/m', $nginx, $tipos);
+    $tipos = preg_split('/\s+/', trim($tipos[1] ?? '')) ?: [];
+
+    expect($tipos)->toContain('text/css', 'application/javascript', 'application/json', 'image/svg+xml')
+        ->not->toContain('image/webp', 'video/mp4', 'application/pdf');
+});
+
+it('no descarga JavaScript que nadie usa', function (): void {
+    $paquete = json_decode(archivoDeProduccion('package.json'), true, flags: JSON_THROW_ON_ERROR);
+    $dependencias = array_merge($paquete['dependencies'] ?? [], $paquete['devDependencies'] ?? []);
+
+    // axios solo se cargaba en window y nadie lo llamaba; concurrently no
+    // está en ningún script.
+    expect($dependencias)->not->toHaveKeys(['axios', 'concurrently'])
+        ->and(base_path('resources/js/bootstrap.js'))->not->toBeFile()
+        ->and(archivoDeProduccion('vite.config.js'))->not->toContain('resources/js/app.js');
+
+    foreach (['components/pantalla-de-acceso', 'components/layouts/app', 'layouts/panel'] as $vista) {
+        expect(archivoDeProduccion("resources/views/{$vista}.blade.php"))->not->toContain('resources/js/app.js');
+    }
+});

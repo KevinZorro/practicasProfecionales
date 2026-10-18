@@ -15,7 +15,7 @@
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="32x32">
     <link rel="apple-touch-icon" href="{{ asset('marca/apple-touch-icon.png') }}">
     <link rel="preload" href="{{ asset('fonts/onest/onest-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
 <body class="flex min-h-full flex-col items-center justify-center bg-niebla px-4 py-10 font-sans text-[15px] text-gray-900 antialiased">
 
