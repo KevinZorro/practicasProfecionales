@@ -102,14 +102,14 @@ it('en modo manual publica la cifra escrita y en automático la calculada', func
 });
 
 it('muestra la cifra en la portada con separador de miles y la omite en cero', function (): void {
-    $this->get('/')->assertOk()->assertDontSee('han practicado en el laboratorio');
+    $this->get('/')->assertOk()->assertDontSee('Estudiantes en el laboratorio');
 
     configurarModo(ModoCifraDeEstudiantes::Manual, '3500');
 
     $this->get('/')->assertOk()
         ->assertSee('En cifras.')
         ->assertSee('3.500')
-        ->assertSee('Estudiantes han practicado en el laboratorio');
+        ->assertSee('Estudiantes en el laboratorio');
 });
 
 it('deja al ADMIN elegir el modo y escribir la cifra', function (): void {

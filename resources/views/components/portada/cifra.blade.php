@@ -10,6 +10,10 @@
     // vacías para 1 a 6 cifras, que es lo que maneja el laboratorio.
     $principal = $indice === 0 && $total >= 3;
 
+    // Un valor de seis caracteres o más («12.500») no cabe al tamaño normal
+    // dentro de la pieza: se achica en vez de recortarse con overflow-hidden.
+    $largo = mb_strlen((string) $cifra->valor) >= 6;
+
     $tamano = match (true) {
         $total === 1 => 'sm:col-span-2 lg:col-span-4',
         $total === 2 => 'lg:col-span-2',
@@ -30,8 +34,10 @@
     <dt class="text-[13px] font-semibold uppercase tracking-[0.14em] text-portada-gris">{{ $cifra->etiqueta }}</dt>
     <dd @class([
             'font-light leading-none tracking-[-0.04em] text-portada-rojo tabular-nums',
-            'text-[clamp(4.5rem,2.6rem+7vw,9rem)]' => $principal,
-            'text-[clamp(3.25rem,2.5rem+2.6vw,4.75rem)]' => ! $principal,
+            'text-[clamp(4.5rem,2.6rem+7vw,9rem)]' => $principal && ! $largo,
+            'text-[clamp(3.5rem,2rem+5vw,6.5rem)]' => $principal && $largo,
+            'text-[clamp(3.25rem,2.5rem+2.6vw,4.75rem)]' => ! $principal && ! $largo,
+            'text-[clamp(2.25rem,1.7rem+1.8vw,3.25rem)]' => ! $principal && $largo,
         ])>
         @if ($principal)
             {{-- Como en un monitor: la onda encima de la lectura, de borde a

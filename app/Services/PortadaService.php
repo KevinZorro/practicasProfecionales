@@ -74,7 +74,9 @@ final class PortadaService
     /**
      * La cifra de estudiantes no es una fila de estadisticas_landing: no se
      * guarda, se arma en memoria con lo que diga EstudiantesAtendidosService y
-     * va al final. En cero no se publica: un «0» en la portada es peor que nada.
+     * va primera, porque la primera cifra es la pieza grande de la rejilla y
+     * esta es la que más dice del laboratorio. En cero no se publica: un «0»
+     * en la portada es peor que nada.
      *
      * @param  Collection<int, EstadisticaLanding>  $cifras
      * @return Collection<int, EstadisticaLanding>
@@ -87,9 +89,9 @@ final class PortadaService
             return $cifras;
         }
 
-        return $cifras->push(new EstadisticaLanding([
+        return $cifras->prepend(new EstadisticaLanding([
             'valor' => number_format($estudiantes, 0, ',', '.'),
-            'etiqueta' => 'Estudiantes han practicado en el laboratorio',
+            'etiqueta' => 'Estudiantes en el laboratorio',
         ]));
     }
 
