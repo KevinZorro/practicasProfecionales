@@ -34,6 +34,7 @@ final class PortadaService
     public function __construct(
         private readonly ConfiguracionLandingService $configuracion,
         private readonly VideoPublicoService $videos,
+        private readonly EstudiantesAtendidosService $estudiantes,
     ) {}
 
     public function contenido(): ContenidoDePortada
@@ -46,7 +47,7 @@ final class PortadaService
             subtitulo: $valores[ClaveConfiguracionLanding::HeroSubtitulo->value],
             video: $video,
             tipoDeVideo: $video === null ? null : $this->tipoDeVideo($video),
-            cifras: EstadisticaLanding::query()->publicadas()->get(),
+            cifras: $this->conCifraDeEstudiantes(EstadisticaLanding::query()->publicadas()->get()),
             equipos: $this->sinImagenesPerdidas(EquipoDestacado::query()->publicados()->get(), 'imagen', 'video'),
             escenarios: $this->sinImagenesPerdidas(
                 CasoClinico::query()->visiblesEnPublico()->with('capacidades:id,nombre')->get(),
@@ -68,6 +69,28 @@ final class PortadaService
             telefono: $valores[ClaveConfiguracionLanding::ContactoTelefono->value],
             direccion: $valores[ClaveConfiguracionLanding::ContactoDireccion->value],
         );
+    }
+
+    /**
+     * La cifra de estudiantes no es una fila de estadisticas_landing: no se
+     * guarda, se arma en memoria con lo que diga EstudiantesAtendidosService y
+     * va al final. En cero no se publica: un «0» en la portada es peor que nada.
+     *
+     * @param  Collection<int, EstadisticaLanding>  $cifras
+     * @return Collection<int, EstadisticaLanding>
+     */
+    private function conCifraDeEstudiantes(Collection $cifras): Collection
+    {
+        $estudiantes = $this->estudiantes->cifraPublicada();
+
+        if ($estudiantes === 0) {
+            return $cifras;
+        }
+
+        return $cifras->push(new EstadisticaLanding([
+            'valor' => number_format($estudiantes, 0, ',', '.'),
+            'etiqueta' => 'Estudiantes han practicado en el laboratorio',
+        ]));
     }
 
     /**

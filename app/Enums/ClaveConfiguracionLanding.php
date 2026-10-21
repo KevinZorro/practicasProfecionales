@@ -17,4 +17,8 @@ enum ClaveConfiguracionLanding: string
     case ContactoEmail = 'contacto_email';
     case ContactoTelefono = 'contacto_telefono';
     case ContactoDireccion = 'contacto_direccion';
+    /** Un ModoCifraDeEstudiantes; sin valor guardado rige el automático. */
+    case EstudiantesModo = 'estudiantes_modo';
+    /** Cifra escrita por el ADMIN; solo se publica en modo manual. */
+    case EstudiantesManual = 'estudiantes_manual';
 }

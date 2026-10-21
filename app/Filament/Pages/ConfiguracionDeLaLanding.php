@@ -5,16 +5,20 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Enums\ClaveConfiguracionLanding as Clave;
+use App\Enums\ModoCifraDeEstudiantes;
 use App\Models\ConfiguracionLanding;
 use App\Services\ConfiguracionLandingService;
+use App\Services\EstudiantesAtendidosService;
 use App\Services\ImagenPublicaService;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
@@ -53,7 +57,10 @@ final class ConfiguracionDeLaLanding extends Page implements HasForms
 
     public function mount(ConfiguracionLandingService $configuracion): void
     {
-        $this->form->fill($configuracion->valores());
+        $valores = $configuracion->valores();
+        $valores[Clave::EstudiantesModo->value] ??= ModoCifraDeEstudiantes::Automatico->value;
+
+        $this->form->fill($valores);
     }
 
     public function form(Form $form): Form
@@ -80,6 +87,30 @@ final class ConfiguracionDeLaLanding extends Page implements HasForms
                             intdiv(ConfiguracionLandingService::TAMANO_MAXIMO_VIDEO_KB, 1024),
                         )),
                 ]),
+                Section::make('Estudiantes en el laboratorio')
+                    ->description('La cifra de estudiantes que han practicado, en «En cifras» de la portada.')
+                    ->schema([
+                        Select::make(Clave::EstudiantesModo->value)
+                            ->label('Cómo se obtiene')
+                            ->options(collect(ModoCifraDeEstudiantes::cases())
+                                ->mapWithKeys(fn (ModoCifraDeEstudiantes $modo): array => [$modo->value => $modo->etiqueta()]))
+                            ->required()
+                            ->native(false)
+                            ->live()
+                            ->helperText(sprintf(
+                                'Automático cuenta, en cada periodo académico, los estudiantes distintos de las sesiones aprobadas ya realizadas (sin retirados) y suma los periodos. Hoy da %s.',
+                                number_format(app(EstudiantesAtendidosService::class)->calcular(), 0, ',', '.'),
+                            )),
+                        TextInput::make(Clave::EstudiantesManual->value)
+                            ->label('Total de estudiantes')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(0)
+                            ->maxValue(1_000_000)
+                            ->visible(fn (Get $get): bool => $get(Clave::EstudiantesModo->value) === ModoCifraDeEstudiantes::Manual->value)
+                            ->required(fn (Get $get): bool => $get(Clave::EstudiantesModo->value) === ModoCifraDeEstudiantes::Manual->value)
+                            ->helperText('Se publica tal cual. Con 0 la cifra no aparece en la portada.'),
+                    ]),
                 Section::make('Contacto')->columns(2)->schema([
                     TextInput::make(Clave::ContactoEmail->value)
                         ->label('Correo')
