@@ -110,8 +110,8 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
 
     /* Evaluaciones de los docentes supervisados (RF77). Solo el docente supervisor. */
     Route::get('supervision', [SupervisionController::class, 'index'])->name('supervision');
-    Route::get('supervision/excel', [SupervisionController::class, 'excel'])->name('supervision.excel');
-    Route::get('supervision/pdf', [SupervisionController::class, 'pdf'])->name('supervision.pdf');
+    Route::get('supervision/excel', [SupervisionController::class, 'excel'])->middleware('throttle:descargas')->name('supervision.excel');
+    Route::get('supervision/pdf', [SupervisionController::class, 'pdf'])->middleware('throttle:descargas')->name('supervision.pdf');
 
     /* Bitácora de auditoría (RF62). Coordinación y ADMIN. */
     Route::get('bitacora', BitacoraController::class)->name('bitacora');
@@ -133,8 +133,8 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
      * cambiar después de entregarlo.
      */
     Route::get('reposicion', [ReposicionController::class, 'index'])->name('reposicion');
-    Route::get('reposicion/{lista}/excel', [ReposicionController::class, 'excel'])->name('reposicion.excel');
-    Route::get('reposicion/{lista}/pdf', [ReposicionController::class, 'pdf'])->name('reposicion.pdf');
+    Route::get('reposicion/{lista}/excel', [ReposicionController::class, 'excel'])->middleware('throttle:descargas')->name('reposicion.excel');
+    Route::get('reposicion/{lista}/pdf', [ReposicionController::class, 'pdf'])->middleware('throttle:descargas')->name('reposicion.pdf');
 
     /*
      * Reportes agregados (RF54-RF56). Las descargas llevan en la URL los
@@ -144,8 +144,8 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     $reportesAgregados = array_map(static fn (Reporte $reporte): string => $reporte->value, Reporte::agregados());
 
     Route::get('reportes', [ReporteController::class, 'index'])->name('reportes');
-    Route::get('reportes/{reporte}/excel', [ReporteController::class, 'excel'])->whereIn('reporte', $reportesAgregados)->name('reportes.excel');
-    Route::get('reportes/{reporte}/pdf', [ReporteController::class, 'pdf'])->whereIn('reporte', $reportesAgregados)->name('reportes.pdf');
+    Route::get('reportes/{reporte}/excel', [ReporteController::class, 'excel'])->whereIn('reporte', $reportesAgregados)->middleware('throttle:descargas')->name('reportes.excel');
+    Route::get('reportes/{reporte}/pdf', [ReporteController::class, 'pdf'])->whereIn('reporte', $reportesAgregados)->middleware('throttle:descargas')->name('reportes.pdf');
 
     Route::get('inventario/nuevo', [InventarioController::class, 'nuevo'])->name('inventario.nuevo');
     Route::get('inventario/disponibilidad', [InventarioController::class, 'disponibilidad'])->name('inventario.disponibilidad');
@@ -162,9 +162,9 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('formatos-confidencialidad/estado', [ConfidencialidadController::class, 'estado'])->name('formatos-confidencialidad.estado');
     Route::get('plantillas-confidencialidad', [ConfidencialidadController::class, 'plantillas'])->name('plantillas-confidencialidad');
 
-    Route::get('formatos-confidencialidad/plantilla', [DescargaConfidencialidadController::class, 'plantilla'])->name('formatos-confidencialidad.plantilla');
-    Route::get('formatos-confidencialidad/plantilla/{plantilla}', [DescargaConfidencialidadController::class, 'versionDePlantilla'])->name('formatos-confidencialidad.version');
-    Route::get('formatos-confidencialidad/{entrega}/documento', [DescargaConfidencialidadController::class, 'firmado'])->name('formatos-confidencialidad.firmado');
+    Route::get('formatos-confidencialidad/plantilla', [DescargaConfidencialidadController::class, 'plantilla'])->middleware('throttle:descargas')->name('formatos-confidencialidad.plantilla');
+    Route::get('formatos-confidencialidad/plantilla/{plantilla}', [DescargaConfidencialidadController::class, 'versionDePlantilla'])->middleware('throttle:descargas')->name('formatos-confidencialidad.version');
+    Route::get('formatos-confidencialidad/{entrega}/documento', [DescargaConfidencialidadController::class, 'firmado'])->middleware('throttle:descargas')->name('formatos-confidencialidad.firmado');
 
     /* Abrir y cerrar el periodo académico (RF75). */
     Route::get('periodo-academico', PeriodoAcademicoController::class)->name('periodo-academico');

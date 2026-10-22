@@ -297,6 +297,12 @@ Las copias están en el mismo servidor: protegen de un error, no de que se
 dañe el disco. **Hay que llevarlas fuera** con el sistema de copias de la
 universidad. Tienen datos personales.
 
+**`APP_KEY` no va en esas copias y es tan importante como ellas.** El documento
+de identidad de cada cuenta (`users.documento`) está cifrado con esa clave:
+una copia de la base sin la clave no lo revela, y **sin la clave esos datos
+no se pueden recuperar**. Guarda el `.env` de producción en un lugar seguro
+distinto del de las copias, y no cambies `APP_KEY` con datos cargados.
+
 ```bash
 # Hacer una copia ahora
 docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia.sh

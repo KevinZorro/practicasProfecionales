@@ -17,7 +17,10 @@ use App\Services\FuenteInstitucional;
 use App\Services\FuenteInstitucionalSimulada;
 use App\Support\RolActivo;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use RuntimeException;
@@ -53,6 +56,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->registrarPermisoDeReportes();
         $this->registrarAccesoAlPanelDelAdmin();
+        $this->registrarLimiteDeDescargas();
 
         // Las acciones de un componente ya abierto van a /livewire/update,
         // fuera del grupo de rutas del panel. Livewire solo vuelve a aplicar
@@ -64,6 +68,20 @@ class AppServiceProvider extends ServiceProvider
             VerificarUsuarioActivo::class,
             EstablecerRolActivo::class,
         ]);
+    }
+
+    /**
+     * Las descargas pesadas (reportes en PDF y Excel, listas de reposición,
+     * formatos de confidencialidad) cuestan CPU y memoria, y una de ellas
+     * entrega datos personales. El tope es por persona y no por IP: en la
+     * universidad cientos de usuarios salen por la misma dirección, y una
+     * IP compartida no puede dejar sin descargas a quien no hizo nada.
+     * Treinta por minuto sobra para quien trabaja y frena a un script.
+     */
+    private function registrarLimiteDeDescargas(): void
+    {
+        RateLimiter::for('descargas', static fn (Request $peticion): Limit => Limit::perMinute(30)
+            ->by((string) ($peticion->user()?->getAuthIdentifier() ?? $peticion->ip())));
     }
 
     /**

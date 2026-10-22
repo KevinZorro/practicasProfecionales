@@ -18,7 +18,14 @@
 # "produccion" y "web".
 
 # ---------------------------------------------------------------------------
-FROM php:8.3-fpm-bookworm AS base
+#
+# La versión de PHP se fija a un parche concreto, no a "8.3": con un tag móvil
+# nadie sabe qué corre en producción ni si ya tiene el último arreglo de
+# seguridad. 8.3.36 corrige PHP2Shell (CVE-2026-109618 y CVE-2026-109619). Al
+# subir de parche, cambia solo este número; ConfiguracionDeProduccionTest
+# falla si queda por debajo de ese mínimo.
+ARG PHP_VERSION=8.3.36
+FROM php:${PHP_VERSION}-fpm-bookworm AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
