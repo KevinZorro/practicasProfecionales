@@ -22,6 +22,27 @@ Los puntos que **no se pueden dejar pasar** son tres:
 
 **Veredicto:** *aceptable para operar solo después de cerrar el hallazgo S-01 y de decidir los S-02 y S-03.* Nada de lo encontrado indica una brecha previa; no se hizo análisis forense.
 
+### Estado de la remediación (actualizado el 22-oct-2026)
+
+Las correcciones de S-01, S-02, S-03 y S-06 están **escritas y subidas, pero no verificadas**: en el entorno donde se hicieron no se pudieron instalar las dependencias de Composer (límite de descargas de GitHub), así que no se corrió la suite de tests, PHPStan ni Pint, ni se pudo probar nginx (sin Docker). Solo se comprobó la sintaxis de los archivos PHP. **Hasta que la CI los pase, ninguno de esos hallazgos está cerrado.**
+
+| ID | Estado | Qué se hizo | Qué falta |
+|---|---|---|---|
+| S-01 | Corregido, sin verificar | `ARG PHP_VERSION=8.3.36` fijado en el Dockerfile; `session.upload_progress.enabled=0`; test que impide bajar de 8.3.36 | Reconstruir y desplegar en el servidor, comprobar `php -v`, y rotar secretos si hubo exposición |
+| S-02 | Parcial, sin verificar | Topes de peticiones, conexiones y tiempos de espera en nginx; tope de 30 descargas/minuto por usuario; `request_terminate_timeout` en PHP-FPM | WAF o protección DDoS de la universidad; saber si hay proxy delante para que nginx vea la IP real |
+| S-03 | Parcial, sin verificar | `users.documento` cifrado con migración de los datos existentes | Ver "Decisiones del cliente" |
+| S-04 | Abierto | — | Test que exija Policy en toda ruta con modelo; ids públicos |
+| S-05 | Riesgo aceptado | — | — |
+| S-06 | Parcial, sin verificar | La sesión se cifra por defecto. El ejemplo de producción ya traía `SESSION_SECURE_COOKIE=true` | Definir `PROXIES_DE_CONFIANZA` (depende del proxy) |
+| S-07 a S-10 | Abiertos | — | Ver §7 |
+
+### Decisiones del cliente (22-oct-2026)
+
+- **Columnas cifradas:** solo el documento de identidad. Quedan en claro las observaciones de evaluación y los motivos de bloqueo y deshabilitación.
+- **Formatos de confidencialidad firmados (PDF):** sin cifrado adicional en la aplicación ni en el disco. **Riesgo aceptado por el cliente.** Quien obtenga el volumen `archivos_privados` o una copia de seguridad lee los PDF con datos personales y firmas.
+- **Proxy de la universidad:** el cliente no lo sabe todavía. Pendiente.
+- **Consecuencia operativa:** `APP_KEY` pasó a proteger datos; sin ella los documentos no se recuperan (ver README, "Copias de seguridad").
+
 ### Conteo de hallazgos
 
 | Crítico | Alto | Medio | Bajo | Informativo |
