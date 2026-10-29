@@ -22,19 +22,26 @@ Los puntos que **no se pueden dejar pasar** son tres:
 
 **Veredicto:** *aceptable para operar solo después de cerrar el hallazgo S-01 y de decidir los S-02 y S-03.* Nada de lo encontrado indica una brecha previa; no se hizo análisis forense.
 
-### Estado de la remediación (actualizado el 22-oct-2026)
+### Estado de la remediación (actualizado el 29-oct-2026)
 
-Las correcciones de S-01, S-02, S-03 y S-06 están **escritas y subidas, pero no verificadas**: en el entorno donde se hicieron no se pudieron instalar las dependencias de Composer (límite de descargas de GitHub), así que no se corrió la suite de tests, PHPStan ni Pint, ni se pudo probar nginx (sin Docker). Solo se comprobó la sintaxis de los archivos PHP. **Hasta que la CI los pase, ninguno de esos hallazgos está cerrado.**
+Las correcciones de S-01, S-02, S-03 y S-06 **pasaron la CI del PR #70** (auditoría de dependencias, Pint, PHPStan, la suite completa, migraciones hacia delante y hacia atrás, y los dos jobs de Docker que construyen y levantan la imagen de producción). Eso prueba que el código compila, que los tests nuevos pasan y que nginx arranca con la configuración nueva. **No prueba el servidor real:** ninguna corrección está cerrada hasta desplegarla y comprobarla allí.
+
+Lo que la CI no cubre, y hay que comprobar a mano antes o durante el despliegue:
+- **La migración del documento sobre datos reales en claro.** La CI migra una base vacía o sembrada con cuentas nuevas, que ya nacen cifradas; el camino que cifra valores antiguos no lo ejecuta ninguna prueba. Probarlo con una copia de la base.
+- **Que nginx responda 429.** Se comprueba que carga las zonas, no que las aplique.
+- **La versión de PHP del servidor** (`php -v` dentro de `app`, `queue` y `programador`).
 
 | ID | Estado | Qué se hizo | Qué falta |
 |---|---|---|---|
-| S-01 | Corregido, sin verificar | `ARG PHP_VERSION=8.3.36` fijado en el Dockerfile; `session.upload_progress.enabled=0`; test que impide bajar de 8.3.36 | Reconstruir y desplegar en el servidor, comprobar `php -v`, y rotar secretos si hubo exposición |
-| S-02 | Parcial, sin verificar | Topes de peticiones, conexiones y tiempos de espera en nginx; tope de 30 descargas/minuto por usuario; `request_terminate_timeout` en PHP-FPM | WAF o protección DDoS de la universidad; saber si hay proxy delante para que nginx vea la IP real |
-| S-03 | Parcial, sin verificar | `users.documento` cifrado con migración de los datos existentes | Ver "Decisiones del cliente" |
+| S-01 | Corregido en el código; falta desplegar | `ARG PHP_VERSION=8.3.36` fijado en el Dockerfile; `session.upload_progress.enabled=0`; test que impide bajar de 8.3.36 | Reconstruir y desplegar en el servidor, comprobar `php -v`, y rotar secretos si hubo exposición |
+| S-02 | Parcial | Topes de peticiones, conexiones y tiempos de espera en nginx; tope de 30 descargas/minuto por usuario (con test del 429 de la aplicación); `request_terminate_timeout` en PHP-FPM | WAF o protección DDoS de la universidad; saber si hay proxy delante para que nginx vea la IP real |
+| S-03 | Parcial | `users.documento` cifrado, con migración que cifra los datos existentes | Probar esa migración con una copia real; ver "Decisiones del cliente" |
 | S-04 | Abierto | — | Test que exija Policy en toda ruta con modelo; ids públicos |
 | S-05 | Riesgo aceptado | — | — |
-| S-06 | Parcial, sin verificar | La sesión se cifra por defecto. El ejemplo de producción ya traía `SESSION_SECURE_COOKIE=true` | Definir `PROXIES_DE_CONFIANZA` (depende del proxy) |
+| S-06 | Parcial | La sesión se cifra por defecto (con test). El ejemplo de producción ya traía `SESSION_SECURE_COOKIE=true` | Definir `PROXIES_DE_CONFIANZA` (depende del proxy) |
 | S-07 a S-10 | Abiertos | — | Ver §7 |
+
+Además, la CI de `main` estaba en rojo desde el 18-oct por un método sin uso en PHPStan y por avisos nuevos de `phpoffice/phpspreadsheet` (CVE-2026-108357 a -108360) y `symfony/mime` (CVE-2026-45070). Quedó resuelto en los PR #68 y #69, que además actualizaron esos paquetes.
 
 ### Decisiones del cliente (22-oct-2026)
 
