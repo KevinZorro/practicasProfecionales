@@ -28,4 +28,3 @@ it('admite una cuenta sin documento', function (): void {
     expect(DB::table('users')->where('id', $cuenta->id)->value('documento'))->toBeNull()
         ->and($cuenta->fresh()->documento)->toBeNull();
 });
-
