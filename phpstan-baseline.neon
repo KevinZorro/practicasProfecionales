@@ -25,12 +25,6 @@ parameters:
 			path: app/Services/ConfidencialidadService.php
 
 		-
-			message: '#^Parameter \#1 \$relations of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:with\(\) expects array\<array\|\(Closure\(Illuminate\\Database\\Eloquent\\Relations\\Relation\<\*, \*, \*\>\)\: mixed\)\|string\>\|string, array\{formatosDeConfidencialidad\: static\-Closure\(Illuminate\\Database\\Eloquent\\Relations\\HasMany\)\: mixed, 0\: ''formatosDeConfidencialidad\.plantilla\:id,nombre,version'', 1\: ''formatosDeConfidencialidad\.recibidoFisicoPor\:id,nombre'', 2\: ''roles\:id,name''\} given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/ConfidencialidadService.php
-
-		-
 			message: '#^Method App\\Services\\GeneradorDeReportes\:\:paraPantalla\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
 			identifier: missingType.generics
 			count: 1
@@ -99,12 +93,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\CambioEstadoItem\:\:\$unidades\.$#'
 			identifier: property.notFound
-			count: 1
-			path: app/Services/ReposicionService.php
-
-		-
-			message: '#^Method App\\Services\\ReposicionService\:\:necesidadesPendientes\(\) should return Illuminate\\Support\\Collection\<int, array\{item_inventario_id\: int\|null, descripcion\: string, motivo\: App\\Enums\\MotivoReposicion, cantidad\: int\}\> but returns Illuminate\\Support\\Collection\<int, array\{item_inventario_id\: mixed, descripcion\: string, motivo\: App\\Enums\\MotivoReposicion\:\:Solicitada, cantidad\: int\}\>\.$#'
-			identifier: return.type
 			count: 1
 			path: app/Services/ReposicionService.php
 
