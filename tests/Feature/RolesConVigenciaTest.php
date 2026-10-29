@@ -412,6 +412,23 @@ it('le ofrece a un docente el rol de coordinador', function (): void {
         ->assertDontSee('no se asigna a estudiantes');
 });
 
+it('pide confirmar el rol y la persona antes de asignar', function (): void {
+    $docente = User::factory()->docente()->create(['nombre' => 'Dora Docente']);
+
+    $pantalla = Livewire::actingAs($this->admin)
+        ->test(RolesDeUsuarios::class)
+        ->call('abrir', $docente->id);
+
+    // Sin rol elegido no hay qué confirmar: lo dice la validación.
+    $pantalla->assertDontSeeHtml('wire:confirm="¿Asignar');
+
+    $pantalla->set('rolElegido', Rol::Administrativo->value)
+        ->assertSeeHtml('wire:confirm="¿Asignar el rol Administrativo a Dora Docente?"')
+        ->set('rolElegido', Rol::Supervisor->value)
+        ->assertSeeHtml('wire:confirm="¿Asignar el rol Docente supervisor a Dora Docente?"')
+        ->assertDontSeeHtml('¿Asignar el rol Administrativo');
+});
+
 it('no deja entrar a la pantalla de roles a nadie más que al ADMIN', function (string $rol): void {
     $this->actingAs(User::factory()->$rol()->create())
         ->get(route('panel.usuarios'))

@@ -183,8 +183,12 @@
                                     </div>
                                 @endif
 
+                                {{-- Se confirma antes de cambiar los permisos de otra persona.
+                                     Sin rol elegido no hay qué confirmar: lo dice la validación. --}}
+                                @php($elegido = \App\Enums\Rol::tryFrom($rolElegido))
                                 <div class="flex flex-wrap gap-2">
-                                    <x-boton tamano="chico" type="button" wire:click="asignar" wire:loading.attr="disabled">Asignar</x-boton>
+                                    <x-boton tamano="chico" type="button" wire:click="asignar" wire:loading.attr="disabled"
+                                             :wire:confirm="$elegido ? '¿Asignar el rol '.$elegido->etiqueta().' a '.$usuario->nombre.'?' : null">Asignar</x-boton>
                                     <x-boton variante="secundario" tamano="chico" type="button" wire:click="cerrar">Cancelar</x-boton>
                                 </div>
                             </div>
