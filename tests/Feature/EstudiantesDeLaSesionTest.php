@@ -123,7 +123,7 @@ it('crea la sesión con los estudiantes elegidos en el formulario', function ():
         ->test(FormularioSolicitud::class)
         ->set('materiaId', $par['materiaId'])
         ->set('casoClinicoId', $par['casoClinicoId'])
-        ->set('fecha', '2026-10-20')
+        ->set('fecha', now()->addWeek()->format('Y-m-d'))
         ->set('horaInicio', '07:00')
         ->set('horaFin', '09:00')
         ->set('grupo', 'a')
