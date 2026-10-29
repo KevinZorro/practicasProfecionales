@@ -47,7 +47,11 @@ it('pone el tope en todas las rutas de descarga pesada', function (): void {
 
     expect($descargas)->not->toBeEmpty();
 
-    foreach ($descargas as $ruta) {
-        expect($ruta->gatherMiddleware())->toContain('throttle:descargas', $ruta->getName());
-    }
+    $sinTope = $descargas
+        ->reject(fn ($ruta): bool => in_array('throttle:descargas', $ruta->gatherMiddleware(), true))
+        ->map(fn ($ruta): string => (string) $ruta->getName())
+        ->values()
+        ->all();
+
+    expect($sinTope)->toBe([]);
 });

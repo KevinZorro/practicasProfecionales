@@ -173,7 +173,7 @@ it('fija un PHP con el parche de PHP2Shell (8.3.36 o superior)', function (): vo
     // parche corre; el número exacto sí, y esta prueba impide bajarlo.
     preg_match('/^ARG PHP_VERSION=(\d+\.\d+\.\d+)$/m', archivoDeProduccion('docker/php/Dockerfile'), $version);
 
-    expect($version[1] ?? '0')->toSatisfy(fn (string $actual): bool => version_compare($actual, '8.3.36', '>='))
+    expect(version_compare($version[1] ?? '0', '8.3.36', '>='))->toBeTrue()
         ->and(archivoDeProduccion('docker/php/Dockerfile'))->toContain('FROM php:${PHP_VERSION}-fpm-bookworm');
 });
 
