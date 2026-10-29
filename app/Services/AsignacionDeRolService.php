@@ -59,6 +59,7 @@ final class AsignacionDeRolService
         ?string $motivo = null,
     ): AsignacionDeRol {
         $this->garantizarPermiso($actor, 'asignar');
+        $this->garantizarQueLoAdmite($usuario, $rol);
         $this->garantizarMotivo($rol, $motivo);
         $this->garantizarFechaDeFin($hasta);
         $this->garantizarQueNoLoTiene($usuario, $rol);
@@ -250,6 +251,20 @@ final class AsignacionDeRolService
     }
 
     /**
+     * Si a esta persona se le puede asignar este rol. Un estudiante no se
+     * eleva a coordinador: aprobaría las solicitudes de las prácticas a las
+     * que él mismo asiste y verificaría los formatos de sus compañeros. Sí
+     * puede ser administrativo temporal, que es el pasante (RF64).
+     *
+     * La pantalla lo consulta para no ofrecer el rol; asignar() lo hace
+     * cumplir, venga la petición de donde venga.
+     */
+    public function admiteElRol(User $usuario, Rol $rol): bool
+    {
+        return $rol !== Rol::Coordinador || ! $usuario->hasRole(Rol::Estudiante->value);
+    }
+
+    /**
      * Listado para la pantalla del ADMIN: personas con los roles que tienen
      * vigentes hoy.
      *
@@ -347,6 +362,13 @@ final class AsignacionDeRolService
     private function olvidarRolesCargados(User $usuario): void
     {
         $usuario->unsetRelation('roles');
+    }
+
+    private function garantizarQueLoAdmite(User $usuario, Rol $rol): void
+    {
+        if (! $this->admiteElRol($usuario, $rol)) {
+            throw AsignacionDeRolInvalida::unEstudianteNoEsCoordinador();
+        }
     }
 
     private function garantizarQueNoLoTiene(User $usuario, Rol $rol): void

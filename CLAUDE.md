@@ -274,7 +274,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
     **Toda escritura de roles pasa por `AsignacionDeRolService`. Nunca llames a `assignRole()`**, ni en código nuevo ni en un comando: calcula lo que el usuario ya tiene leyendo la relación **filtrada**, así que con una fila vencida en el pivote intenta insertar una que ya existe y revienta contra la llave primaria. Los `assignRole()` que quedan en seeders y factories son seguros porque solo reparten roles que el usuario no tiene.
 
-    Elevar a **coordinador** exige motivo escrito; los demás roles, no. Asignar y revocar es **solo del ADMIN**, sin herencia: si el coordinador pudiera, se ampliaría a sí mismo el rol que el RF63 reserva al administrador de la plataforma.
+    Elevar a **coordinador** exige motivo escrito; los demás roles, no. **A un estudiante no se le eleva a coordinador:** aprobaría las prácticas a las que él mismo asiste. Lo decide `AsignacionDeRolService::admiteElRol()`, que la pantalla consulta para no ofrecerlo; sí puede ser administrativo temporal, que es el pasante. Asignar y revocar es **solo del ADMIN**, sin herencia: si el coordinador pudiera, se ampliaría a sí mismo el rol que el RF63 reserva al administrador de la plataforma.
 
     **Al entrar se ve el rol permanente, no el temporal**, aunque el enum lo ponga después: la elevación es excepcional y la persona sigue haciendo su trabajo de siempre. Quien está usando un rol prestado lo ve dicho en la cabecera, con la fecha.
 

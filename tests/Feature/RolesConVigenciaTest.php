@@ -8,6 +8,7 @@ use App\Exceptions\AsignacionDeRolInvalida;
 use App\Livewire\Usuario\RolesDeUsuarios;
 use App\Models\AsignacionDeRol;
 use App\Models\Preparacion;
+use App\Models\RegistroDeBitacora;
 use App\Models\User;
 use App\Services\AsignacionDeRolService;
 use App\Services\PreparacionService;
@@ -189,6 +190,28 @@ it('guarda el motivo de la delegación', function (): void {
     expect($asignacion->motivo)->toBe('La coordinadora está en consejo de facultad');
 });
 
+it('no eleva a coordinador a un estudiante, ni con motivo ni con fecha de fin', function (?string $hasta): void {
+    $estudiante = User::factory()->estudiante()->create();
+
+    expect(fn () => $this->servicio->asignar($this->admin, $estudiante, Rol::Coordinador, $hasta, 'La coordinadora está en consejo'))
+        ->toThrow(AsignacionDeRolInvalida::class, 'estudiante');
+
+    expect(tieneElRol($estudiante, Rol::Coordinador))->toBeFalse()
+        ->and(AsignacionDeRol::query()->where('user_id', $estudiante->id)->count())->toBe(0)
+        ->and(RegistroDeBitacora::query()->count())->toBe(0);
+})->with([
+    'permanente' => [null],
+    'temporal' => [fn (): string => now()->addWeek()->toDateString()],
+]);
+
+it('deja que un estudiante sea el pasante administrativo', function (): void {
+    $estudiante = User::factory()->estudiante()->create();
+
+    $this->servicio->asignar($this->admin, $estudiante, Rol::Administrativo, now()->addMonth()->toDateString());
+
+    expect(tieneElRol($estudiante, Rol::Administrativo))->toBeTrue();
+});
+
 it('no asigna un rol que ya está vigente', function (): void {
     $administrativo = User::factory()->administrativo()->create();
 
@@ -360,6 +383,33 @@ it('avisa en la pantalla si falta el motivo de la elevación', function (): void
         ->assertSet('errorDeRegla', fn (?string $error): bool => str_contains((string) $error, 'motivo'));
 
     expect(tieneElRol($docente, Rol::Coordinador))->toBeFalse();
+});
+
+it('no le ofrece a un estudiante el rol de coordinador y rechaza la acción a mano', function (): void {
+    $estudiante = User::factory()->estudiante()->create();
+
+    Livewire::actingAs($this->admin)
+        ->test(RolesDeUsuarios::class)
+        ->call('abrir', $estudiante->id)
+        ->assertDontSeeHtml('<option value="coordinador">')
+        ->assertSeeHtml('<option value="administrativo">')
+        ->assertSee('El rol de Coordinador no se asigna a estudiantes.')
+        ->set('rolElegido', Rol::Coordinador->value)
+        ->set('motivo', 'La coordinadora está en consejo')
+        ->call('asignar')
+        ->assertSet('errorDeRegla', fn (?string $error): bool => str_contains((string) $error, 'estudiante'));
+
+    expect(tieneElRol($estudiante, Rol::Coordinador))->toBeFalse();
+});
+
+it('le ofrece a un docente el rol de coordinador', function (): void {
+    $docente = User::factory()->docente()->create();
+
+    Livewire::actingAs($this->admin)
+        ->test(RolesDeUsuarios::class)
+        ->call('abrir', $docente->id)
+        ->assertSeeHtml('<option value="coordinador">')
+        ->assertDontSee('no se asigna a estudiantes');
 });
 
 it('no deja entrar a la pantalla de roles a nadie más que al ADMIN', function (string $rol): void {

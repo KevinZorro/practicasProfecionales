@@ -159,6 +159,9 @@
                                                 <option value="{{ $asignable->value }}">{{ $asignable->etiqueta() }}</option>
                                             @endforeach
                                         </select>
+                                        @unless (in_array(\App\Enums\Rol::Coordinador, $rolesAsignables, true))
+                                            <p class="campo-ayuda">El rol de Coordinador no se asigna a estudiantes.</p>
+                                        @endunless
                                         @error('rolElegido') <p class="campo-error">{{ $message }}</p> @enderror
                                     </div>
 

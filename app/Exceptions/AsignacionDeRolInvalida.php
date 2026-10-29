@@ -37,4 +37,9 @@ final class AsignacionDeRolInvalida extends DomainException
     {
         return new self('Elevar a coordinador exige escribir el motivo de la delegación.');
     }
+
+    public static function unEstudianteNoEsCoordinador(): self
+    {
+        return new self(sprintf('Esta persona es estudiante, y el rol de %s no se asigna a estudiantes.', Rol::Coordinador->etiqueta()));
+    }
 }

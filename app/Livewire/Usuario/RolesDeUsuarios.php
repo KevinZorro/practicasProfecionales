@@ -183,8 +183,25 @@ final class RolesDeUsuarios extends Component
         return view('livewire.usuario.roles-de-usuarios', [
             'usuarios' => $roles->usuariosConSusRoles($this->busqueda),
             'proximosAVencer' => $roles->proximosAVencer(),
-            'rolesAsignables' => Rol::cases(),
+            'rolesAsignables' => $this->rolesAsignables($roles),
             'diasDeAviso' => AsignacionDeRolService::DIAS_DE_AVISO,
         ]);
+    }
+
+    /**
+     * Los que se ofrecen en el formulario abierto: a un estudiante no se le
+     * ofrece el de coordinador. Lo decide el Service, que es quien lo hace
+     * cumplir al asignar.
+     *
+     * @return list<Rol>
+     */
+    private function rolesAsignables(AsignacionDeRolService $roles): array
+    {
+        $usuario = $this->asignandoA === null ? null : User::find($this->asignandoA);
+
+        return array_values(array_filter(
+            Rol::cases(),
+            static fn (Rol $rol): bool => $usuario === null || $roles->admiteElRol($usuario, $rol),
+        ));
     }
 }
