@@ -537,13 +537,6 @@ final class ConfidencialidadService
         );
     }
 
-    private function borrarArchivoFirmado(FormatoConfidencialidad $entrega): void
-    {
-        if (is_string($entrega->archivo_firmado_path)) {
-            $this->disco()->delete($entrega->archivo_firmado_path);
-        }
-    }
-
     private function disco(): Filesystem
     {
         return Storage::disk(config('laboratorio.confidencialidad.disco'));
