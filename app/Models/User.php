@@ -66,6 +66,8 @@ class User extends Authenticatable implements FilamentUser, HasName
         return [
             'email_verified_at' => 'datetime',
             'ultima_sincronizacion' => 'datetime',
+            // Cifrado con APP_KEY (S-03): no se puede buscar por SQL.
+            'documento' => 'encrypted',
             'estado' => EstadoUsuario::class,
             'origen' => OrigenUsuario::class,
             'deshabilitado_at' => 'datetime',

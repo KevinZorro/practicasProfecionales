@@ -167,3 +167,33 @@ it('rota los registros de Docker de todos los servicios que corren', function ()
         expect($bloque[1] ?? '')->toContain('logging: *registros');
     }
 });
+
+it('fija un PHP con el parche de PHP2Shell (8.3.36 o superior)', function (): void {
+    // CVE-2026-109618 y CVE-2026-109619. Un tag móvil como "8.3" no dice qué
+    // parche corre; el número exacto sí, y esta prueba impide bajarlo.
+    preg_match('/^ARG PHP_VERSION=(\d+\.\d+\.\d+)$/m', archivoDeProduccion('docker/php/Dockerfile'), $version);
+
+    expect(version_compare($version[1] ?? '0', '8.3.36', '>='))->toBeTrue()
+        ->and(archivoDeProduccion('docker/php/Dockerfile'))->toContain('FROM php:${PHP_VERSION}-fpm-bookworm');
+});
+
+it('apaga el progreso de subida de sesión, la mitigación de PHP2Shell', function (): void {
+    expect(archivoDeProduccion('docker/php/php-produccion.ini'))->toMatch('/^session\.upload_progress\.enabled\s*=\s*0$/m');
+});
+
+it('pone topes de peticiones y de espera en nginx y en PHP-FPM', function (): void {
+    expect(archivoDeProduccion('docker/produccion/nginx.conf'))
+        ->toContain('limit_req_zone $binary_remote_addr zone=general')
+        ->toContain('limit_req_zone $binary_remote_addr zone=pesadas')
+        ->toContain('limit_conn_zone $binary_remote_addr zone=conexiones')
+        ->toMatch('/^\s*limit_req zone=general /m')
+        ->toMatch('/^\s*limit_req zone=pesadas /m')
+        ->toMatch('/^\s*limit_conn conexiones /m')
+        ->toMatch('/^\s*client_body_timeout /m')
+        ->toMatch('/^\s*client_header_timeout /m')
+        ->and(archivoDeProduccion('docker/php/www.conf'))->toMatch('/^request_terminate_timeout\s*=/m');
+});
+
+it('cifra la sesión salvo que se apague a propósito', function (): void {
+    expect(archivoDeProduccion('config/session.php'))->toContain("env('SESSION_ENCRYPT', true)");
+});

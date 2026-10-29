@@ -72,8 +72,8 @@ it('crea las cuentas de las personas vigentes de los programas del laboratorio, 
 
     $resultado = sincronizar();
 
-    $estudiante = User::where('documento', '1001')->firstOrFail();
-    $docente = User::where('documento', '2002')->firstOrFail();
+    $estudiante = User::where('email', 'estudiante@ejemplo.edu.co')->firstOrFail();
+    $docente = User::where('email', 'docente@ejemplo.edu.co')->firstOrFail();
 
     expect($resultado->creadas)->toBe(2)
         ->and($estudiante->email)->toBe('estudiante@ejemplo.edu.co')
