@@ -164,6 +164,25 @@ it('enseña la bitácora a coordinación con filtros', function (): void {
         ->assertSee('Aprobó');
 });
 
+it('enseña «Yo» en lo que hizo quien consulta y el nombre en lo que hicieron los demás', function (): void {
+    app(SolicitudService::class)->rechazar(Solicitud::factory()->create(), $this->administrativo, 'Sin sala');
+    app(SolicitudService::class)->aprobar(Solicitud::factory()->revisada()->create(), $this->coordinadora);
+
+    Livewire::actingAs($this->coordinadora)
+        ->test(ConsultaDeBitacora::class)
+        ->assertSeeHtml('<span class="font-semibold">Yo</span>: Aprobó')
+        ->assertSeeHtml('<span class="font-semibold">Admin Istrativo</span>: Rechazó')
+        ->assertDontSee('Coordi Nadora');
+
+    // Para otro que consulta, la misma entrada lleva el nombre.
+    $admin = User::factory()->admin()->create();
+
+    Livewire::actingAs($admin)
+        ->test(ConsultaDeBitacora::class)
+        ->assertSeeHtml('<span class="font-semibold">Coordi Nadora</span>: Aprobó')
+        ->assertDontSeeHtml('<span class="font-semibold">Yo</span>');
+});
+
 it('no enseña la bitácora al administrativo ni al docente', function (Rol $rol): void {
     $usuario = User::factory()->create();
     $usuario->assignRole($rol->value);

@@ -9,6 +9,7 @@ use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Models\RegistroDeBitacora;
 use App\Services\BitacoraService;
 use App\Support\FiltroDeUrl;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -75,6 +76,8 @@ final class ConsultaDeBitacora extends Component
                 $this->hasta,
             ),
             'acciones' => AccionAuditada::cases(),
+            // Lo que hizo quien consulta se lee «Yo», no con su propio nombre.
+            'yo' => Auth::user(),
         ]);
     }
 }

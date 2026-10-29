@@ -43,7 +43,7 @@
                         <span class="text-[13px] text-gray-500">{{ $registro->created_at?->format('d/m/Y H:i') }}</span>
                     </div>
                     <p class="mt-1.5 text-[15px] leading-snug text-gray-900">
-                        <span class="font-semibold">{{ $registro->usuario->nombre }}</span>: {{ $registro->descripcion }}
+                        <span class="font-semibold">{{ $registro->usuario->is($yo) ? 'Yo' : $registro->usuario->nombre }}</span>: {{ $registro->descripcion }}
                     </p>
                     @if ($registro->motivo)
                         <p class="mt-0.5 text-[14px] leading-snug text-gray-600">Motivo: {{ $registro->motivo }}</p>
