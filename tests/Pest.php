@@ -53,7 +53,14 @@ pest()->extend(TestCase::class)
         // este tope la espera termina en error en vez de colgar la suite.
         DB::connection('segunda_sesion')->statement("SET lock_timeout = '1s'");
     })
-    ->afterEach(fn () => DB::disconnect('segunda_sesion'))
+    ->afterEach(function (): void {
+        DB::disconnect('segunda_sesion');
+
+        // DatabaseTruncation vacía la base antes de cada prueba, no después:
+        // sin esto, lo confirmado aquí lo verían las pruebas con
+        // RefreshDatabase que corran después en el mismo proceso.
+        $this->truncateTablesForAllConnections();
+    })
     ->in('Concurrencia');
 
 /**
