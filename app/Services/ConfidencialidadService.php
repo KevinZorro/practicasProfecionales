@@ -585,6 +585,18 @@ final class ConfidencialidadService
      * Quién y de qué periodo, con el nombre de ese día. Nunca el archivo:
      * la bitácora no lleva datos del documento firmado.
      */
+    /**
+     * Deja en la bitácora quién descarga un formato firmado, cuál y cuándo
+     * (B4.2 de la auditoría). Es el documento con más datos personales de la
+     * plataforma: la firma y la autorización de captación de imágenes (Ley
+     * 1581). Cuenta toda descarga, también la del propio firmante; quién
+     * puede descargar lo decide la Policy antes de llegar aquí.
+     */
+    public function registrarDescarga(FormatoConfidencialidad $entrega, User $actor): void
+    {
+        $this->bitacora->registrar(AccionAuditada::FormatoDescargado, $actor, $entrega, $this->describir('Descargó', $entrega));
+    }
+
     private function describir(string $verbo, FormatoConfidencialidad $entrega): string
     {
         return sprintf(
