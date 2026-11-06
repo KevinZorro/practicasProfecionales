@@ -32,9 +32,11 @@
     @endforeach
 </div>
 
-@if ($cambiandoEstado === $item->id)
-    @php($origen = \App\Enums\EstadoItemInventario::from($estadoOrigen))
-    @php($destino = \App\Enums\EstadoItemInventario::from($estadoDestino))
+@php($origen = \App\Enums\EstadoItemInventario::tryFrom($estadoOrigen))
+@php($destino = \App\Enums\EstadoItemInventario::tryFrom($estadoDestino))
+
+{{-- Un estado que la pantalla no ofrece no abre el formulario: no es un 500 (B4.3). --}}
+@if ($cambiandoEstado === $item->id && $origen && $destino)
     <div class="mt-3 space-y-4 rounded-xl bg-gray-50 p-3.5" role="alertdialog" aria-labelledby="mover-{{ $variante }}-{{ $item->id }}">
         <div>
             <p class="text-[15px] font-semibold text-gray-900" id="mover-{{ $variante }}-{{ $item->id }}">

@@ -106,7 +106,7 @@ final class ListaDeReposicion extends Component
     {
         $this->authorize('create', NecesidadDeReposicion::class);
         $this->validate([
-            'cantidad' => 'required|integer|min:1',
+            'cantidad' => 'required|integer|min:1|max:'.ReposicionService::CANTIDAD_MAXIMA,
             'justificacion' => 'required|string|min:5|max:1000',
             'descripcion' => 'nullable|string|max:200',
             'itemId' => 'nullable|integer|exists:items_inventario,id',

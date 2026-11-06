@@ -81,6 +81,12 @@ final class ListadoInventario extends Component
     {
         $item = ItemInventario::findOrFail($itemId);
         $this->authorize('cambiarEstadoFuncional', $item);
+        $estadoDeOrigen = EstadoItemInventario::tryFrom($origen);
+
+        // Un estado que la pantalla no ofrece no abre nada (B4.3).
+        if (! $estadoDeOrigen instanceof EstadoItemInventario || EstadoItemInventario::tryFrom($destino) === null) {
+            return;
+        }
 
         $this->cambiandoEstado = $itemId;
         $this->estadoOrigen = $origen;
@@ -88,7 +94,7 @@ final class ListadoInventario extends Component
         // Se propone mover todo lo que hay en el origen, que es el caso más
         // común en una pieza única; con ocho sondas la administrativa
         // corrige el número.
-        $this->cantidad = max(1, $item->cantidadEn(EstadoItemInventario::from($origen)));
+        $this->cantidad = max(1, $item->cantidadEn($estadoDeOrigen));
         $this->motivo = '';
         $this->errorDeRegla = null;
     }
@@ -101,8 +107,16 @@ final class ListadoInventario extends Component
     public function confirmarCambioDeEstado(InventarioService $inventario): void
     {
         $item = ItemInventario::findOrFail($this->cambiandoEstado);
-        $origen = EstadoItemInventario::from($this->estadoOrigen);
-        $destino = EstadoItemInventario::from($this->estadoDestino);
+        $origen = EstadoItemInventario::tryFrom($this->estadoOrigen);
+        $destino = EstadoItemInventario::tryFrom($this->estadoDestino);
+
+        // Un estado que la pantalla no ofrece no cambia nada y cierra el
+        // formulario, que se pinta con esos mismos estados (B4.3).
+        if (! $origen instanceof EstadoItemInventario || ! $destino instanceof EstadoItemInventario) {
+            $this->cancelarCambioDeEstado();
+
+            return;
+        }
 
         // La Policy vuelve a mirarse dentro del Service, que es donde vive la
         // diferencia entre dar de baja y el resto de movimientos.
