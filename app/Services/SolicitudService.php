@@ -136,6 +136,12 @@ final class SolicitudService
         $estudianteIds = $this->garantizarEstudiantes($estudianteIds);
 
         return DB::transaction(function () use ($solicitud, $estudianteIds): Solicitud {
+            // Con la solicitud bloqueada, dos personas que completan la lista a
+            // la vez se turnan, y la segunda ya cuenta los estudiantes de la
+            // primera: sin esto, cada una cuenta los mismos y juntas pasan del
+            // tope del escenario (B3.11, RF74).
+            Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+
             $enLista = $solicitud->estudiantes()->get();
             $retirado = $enLista->first(fn (User $e): bool => $this->fueRetirado($e) && in_array($e->id, $estudianteIds, true));
 
