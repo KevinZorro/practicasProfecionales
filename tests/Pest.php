@@ -8,6 +8,7 @@ use App\Models\Materia;
 use App\Models\PeriodoAcademico;
 use App\Models\User;
 use App\Services\DatosNuevaSolicitud;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
@@ -34,6 +35,16 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->in('Unit');
+
+/*
+| Las pruebas de concurrencia abren una segunda sesión de PostgreSQL, como
+| dos personas en dos peticiones. Esa sesión no ve lo que queda dentro de la
+| transacción de RefreshDatabase, así que aquí los datos se confirman de
+| verdad y la base se vacía antes de cada prueba.
+*/
+pest()->extend(TestCase::class)
+    ->use(DatabaseTruncation::class)
+    ->in('Concurrencia');
 
 /*
 |--------------------------------------------------------------------------

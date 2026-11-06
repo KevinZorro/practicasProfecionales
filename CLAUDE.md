@@ -356,6 +356,7 @@ Cada tarea termina con tests que la prueben. **Una funcionalidad sin test no est
 - Prueba también los caminos negativos: crear una evaluación sin solicitud aprobada debe fallar; un docente no debe poder aprobar su propia solicitud si esa regla se activa; quien verifica no debe poder entregar un formato de confidencialidad por otro.
 - Usa factories, nunca datos escritos a mano dentro del test.
 - Los tests describen comportamiento del dominio, no implementación: `un docente no puede evaluar sin escenario aprobado`.
+- **Las carreras se prueban con dos sesiones de verdad**, en `tests/Concurrencia`. Ahí no hay `RefreshDatabase`, porque su transacción le esconde los datos a la otra sesión: se usa `DatabaseTruncation`, y la segunda conexión entra justo antes de que la primera escriba. Llamar dos veces seguidas no detecta una carrera: pasaría igual sin el bloqueo. `AsignacionDeSalaConcurrenteTest` tiene el patrón.
 
 Antes de dar una tarea por terminada: `php artisan test` y `vendor/bin/phpstan analyse` en verde.
 
