@@ -17,6 +17,7 @@ use App\Models\Solicitud;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Montaje físico de los escenarios aprobados (RF36-RF37).
@@ -67,23 +68,40 @@ final class PreparacionService
     /**
      * El administrativo elige la sala (RF36). Si la sala cambia, el docente
      * recibe un correo con la nueva; si se vuelve a elegir la misma, no.
+     *
+     * Comprobar que la sala está libre y escribir van en una transacción con
+     * la fila de la sala bloqueada: dos administrativos con el tablero abierto
+     * que la asignan a la vez a franjas que se cruzan se turnan, y el segundo
+     * ya ve la reserva del primero (B3.11). Es el mismo criterio de las
+     * transiciones de solicitud (QA-02).
      */
     public function asignarSala(Preparacion $preparacion, Sala $sala): Preparacion
     {
-        $conflicto = $this->preparacionSolapada($preparacion, $sala);
-
-        if ($conflicto instanceof Preparacion) {
-            throw SalaOcupada::por($sala, $conflicto);
-        }
-
         $anterior = $preparacion->sala_id;
 
-        if ($anterior === $sala->id) {
+        $huboCambio = DB::transaction(function () use ($preparacion, $sala, $anterior): bool {
+            Sala::query()->whereKey($sala->getKey())->lockForUpdate()->firstOrFail();
+
+            $conflicto = $this->preparacionSolapada($preparacion, $sala);
+
+            if ($conflicto instanceof Preparacion) {
+                throw SalaOcupada::por($sala, $conflicto);
+            }
+
+            if ($anterior === $sala->id) {
+                return false;
+            }
+
+            $preparacion->update(['sala_id' => $sala->id]);
+
+            return true;
+        });
+
+        if (! $huboCambio) {
             return $preparacion;
         }
 
-        $preparacion->update(['sala_id' => $sala->id]);
-
+        // Después de confirmar: no sale un correo por una asignación que se deshizo.
         SalaAsignada::dispatch($preparacion, esCambio: $anterior !== null);
 
         return $preparacion;
