@@ -8,9 +8,11 @@ use App\Exceptions\AccesoRechazado;
 use App\Http\Controllers\Controller;
 use App\Services\AccesoService;
 use App\Services\IdentidadDeGoogle;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
@@ -70,6 +72,14 @@ final class AccesoConGoogleController extends Controller
             // El "state" no coincide: la persona volvió atrás, abrió el
             // enlace de retorno en otra pestaña o dejó pasar demasiado tiempo.
             return $this->rechazar('El ingreso con Google caducó. Vuelve a intentarlo.');
+        } catch (GuzzleException $falla) {
+            // Google no respondió dentro del tiempo máximo, rechazó el código
+            // (otra vez el botón atrás) o falló por dentro. Entrar no deja
+            // nada a medias, así que basta con volver a intentarlo. Se
+            // registra solo la clase: nada de datos de la persona.
+            Log::warning('La entrada con Google falló al hablar con Google.', ['falla' => $falla::class]);
+
+            return $this->rechazar('No pudimos confirmar tu cuenta con Google. Vuelve a intentarlo en un momento.');
         }
 
         try {

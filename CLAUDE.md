@@ -96,7 +96,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 
 Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:link`), con caché de un mes y `nosniff`: sus nombres se generan al subirlos y nunca se reescriben. `storage/app/public` vive en el volumen `archivos_publicos` del compose, montado en `app`, `queue` y `nginx`; el Dockerfile crea esa carpeta con dueño `www-data` porque Docker inicializa un volumen vacío con el dueño de la imagen, y sin eso la aplicación no podría escribir. El job de Docker de la CI comprueba que GD guarda WebP y que nginx sirve un archivo escrito por la aplicación.
 
-**Entrada con Google (RF18).** `AccesoConGoogleController` habla con Google por Socialite; quién entra lo decide `AccesoService::cuentaDeGoogle()`, que no conoce Socialite y recibe una `IdentidadDeGoogle`. Cinco decisiones que no son las del ejemplo de Socialite:
+**Entrada con Google (RF18).** `AccesoConGoogleController` habla con Google por Socialite; quién entra lo decide `AccesoService::cuentaDeGoogle()`, que no conoce Socialite y recibe una `IdentidadDeGoogle`. Lo que no es como en el ejemplo de Socialite:
 
 - **No crea cuentas.** Solo entra quien ya tiene cuenta en `users` (la crea la sincronización institucional o el laboratorio): un correo institucional no autoriza el ingreso (regla 8).
 - **Vincula `google_id` la primera vez**, encontrando la cuenta por el correo sin distinguir mayúsculas; desde entonces la encuentra por `google_id`, que no cambia aunque cambie el correo. Una cuenta ya vinculada a otro `google_id` no se entrega a quien coincida en el correo.
@@ -104,6 +104,7 @@ Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:
 - **Sin dominio configurado, en producción no se entra:** con `GOOGLE_DOMINIO_INSTITUCIONAL` vacío la restricción del RF18 no existiría, así que `AccesoService` niega la entrada y deja el error en el registro. En local y en pruebas se permite.
 - **Sin `GOOGLE_CLIENT_ID`, la entrada no existe:** las tres rutas dan 404 y el invitado va a la portada, o en `local` al acceso de desarrollo, que sigue ahí hasta probar la entrada con las credenciales reales.
 - **Sin límite de peticiones por IP:** en la universidad cientos de personas salen por la misma dirección y entran a la vez.
+- **La llamada a Google tiene tiempo máximo:** 5 s, y 3 s para conectar (`services.google.guzzle`). Sin él, una tanda de entradas lentas retiene los 20 workers de PHP-FPM y deja sin atender todo el panel (B3.1). Si Google no responde, rechaza el código o falla por dentro, la persona vuelve a la entrada con un mensaje y queda un aviso en el registro, nunca un 500.
 
 Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Google y la comprobación del `state` usan el proveedor real.
 
