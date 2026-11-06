@@ -2,18 +2,23 @@
 
 declare(strict_types=1);
 
+use App\Enums\EstadoItemInventario;
 use App\Enums\EstadoPreparacion;
 use App\Enums\TipoSesion;
 use App\Exceptions\NovedadInvalida;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Evaluacion\RegistroDeEvaluacion;
+use App\Livewire\Inventario\FormularioItem;
+use App\Livewire\Inventario\ListadoInventario;
 use App\Livewire\Preparacion\TableroDiario;
+use App\Livewire\Reposicion\ListaDeReposicion;
 use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Livewire\Solicitud\SesionesApartadas;
 use App\Models\CasoClinico;
 use App\Models\Evaluacion;
 use App\Models\ItemInventario;
 use App\Models\Materia;
+use App\Models\NecesidadDeReposicion;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -194,4 +199,55 @@ it('ignora un resultado de evaluación o un estado de preparación inventados', 
         ->call('cambiarEstado', $preparacion->id, 'inventado')
         ->assertOk();
     expect($preparacion->fresh()->estado)->toBe(EstadoPreparacion::Pendiente);
+});
+
+// ---------------------------------------------------------------------
+// Valores inventados y cantidades descabelladas (B4.3 de la auditoría)
+// ---------------------------------------------------------------------
+
+it('el formulario de inventario rechaza un tipo de ítem inventado, sin error del servidor', function (): void {
+    Livewire::actingAs($this->administrativo)
+        ->test(FormularioItem::class)
+        ->set('nombre', 'Sonda de prueba')
+        ->set('tipo', 'inventado')
+        ->set('cantidadTotal', 3)
+        ->call('guardar')
+        ->assertHasErrors(['tipo']);
+
+    expect(ItemInventario::query()->where('nombre', 'Sonda de prueba')->exists())->toBeFalse();
+});
+
+it('ignora un cambio de estado del inventario con un origen o un destino inventados', function (): void {
+    $item = ItemInventario::factory()->create();
+    $contadores = ['cantidad_operativa', 'cantidad_en_revision', 'cantidad_defectuosa'];
+    $antes = $item->fresh()->only($contadores);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(ListadoInventario::class)
+        ->call('pedirCambioDeEstado', $item->id, 'inventado', EstadoItemInventario::EnRevision->value)
+        ->assertOk()
+        ->assertSet('cambiandoEstado', null);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(ListadoInventario::class)
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Operativo->value, EstadoItemInventario::EnRevision->value)
+        ->set('estadoDestino', 'inventado')
+        ->set('motivo', 'Un destino que la pantalla no ofrece')
+        ->call('confirmarCambioDeEstado')
+        ->assertOk();
+
+    expect($item->fresh()->only($contadores))->toBe($antes);
+});
+
+it('rechaza una necesidad de reposición con una cantidad descabellada, sin error del servidor', function (): void {
+    Livewire::actingAs($this->administrativo)
+        ->test(ListaDeReposicion::class)
+        ->call('abrirFormulario')
+        ->set('descripcion', 'Gasas estériles')
+        ->set('cantidad', 3_000_000_000)
+        ->set('justificacion', 'Una cantidad que desborda la columna')
+        ->call('anotarNecesidad')
+        ->assertHasErrors(['cantidad']);
+
+    expect(NecesidadDeReposicion::query()->count())->toBe(0);
 });
