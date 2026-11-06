@@ -9,7 +9,6 @@ use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Services\PreparacionService;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
 /*
@@ -25,17 +24,6 @@ use Illuminate\Support\Facades\Event;
 
 beforeEach(function (): void {
     Event::fake([SalaAsignada::class]);
-
-    config(['database.connections.segunda_sesion' => config('database.connections.'.config('database.default'))]);
-
-    // La prueba corre en un solo proceso: si la segunda sesión espera un
-    // candado que tiene la primera, la primera nunca lo soltaría. Con este
-    // tope la espera termina en error en vez de colgar la suite.
-    DB::connection('segunda_sesion')->statement("SET lock_timeout = '1s'");
-});
-
-afterEach(function (): void {
-    DB::disconnect('segunda_sesion');
 });
 
 /** Montaje de una práctica aprobada el 10 de abril, todavía sin sala. */
@@ -53,14 +41,7 @@ function montajeSinSala(string $inicio, string $fin): Preparacion
 /** Lo que hace el segundo administrativo, desde su propia sesión de base de datos. */
 function asignarDesdeOtraSesion(int $preparacionId, int $salaId): void
 {
-    $principal = DB::getDefaultConnection();
-    DB::setDefaultConnection('segunda_sesion');
-
-    try {
-        app(PreparacionService::class)->asignarSala(Preparacion::findOrFail($preparacionId), Sala::findOrFail($salaId));
-    } finally {
-        DB::setDefaultConnection($principal);
-    }
+    enOtraSesion(fn () => app(PreparacionService::class)->asignarSala(Preparacion::findOrFail($preparacionId), Sala::findOrFail($salaId)));
 }
 
 it('dos administrativos que asignan a la vez la misma sala a franjas que se cruzan no la reservan dos veces', function (): void {
