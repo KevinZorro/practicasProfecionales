@@ -173,10 +173,20 @@ final class EvaluacionService
 
     public function finalizar(Evaluacion $evaluacion, User $actor): Evaluacion
     {
-        $this->garantizarBorrador($evaluacion);
-        $this->garantizarResultadosCompletos($evaluacion);
-
         DB::transaction(function () use ($evaluacion, $actor): void {
+            // Con la evaluación bloqueada, un doble «Finalizar» que llega a la
+            // vez se turna, y el segundo ya la ve finalizada (B3.3).
+            Evaluacion::query()->whereKey($evaluacion->getKey())->lockForUpdate()->firstOrFail();
+            $evaluacion->refresh();
+
+            $this->garantizarBorrador($evaluacion);
+            $this->garantizarResultadosCompletos($evaluacion);
+
+            // El intento cuenta las evaluaciones finalizadas del mismo tipo.
+            // Con el tipo bloqueado, dos que se finalizan a la vez se turnan
+            // y no le dan al estudiante el mismo número (B3.11).
+            TipoEvaluacion::query()->whereKey($evaluacion->tipo_evaluacion_id)->lockForUpdate()->firstOrFail();
+
             $this->fijarIntentos($evaluacion);
             $evaluacion->update(['estado' => EstadoEvaluacion::Finalizada]);
             $this->bitacora->registrar(AccionAuditada::EvaluacionFinalizada, $actor, $evaluacion, $this->describirCierre($evaluacion));

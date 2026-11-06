@@ -170,7 +170,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `SolicitudService` | Crear solicitud con su grupo y estudiantes, completar o retirar estudiantes de la sesión (RF28, RF69), precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
 | `PreparacionService` | Crear preparación al aprobar, asignar sala entre las libres (las vinculadas al escenario primero, con la sala bloqueada mientras comprueba el cruce) y avisar al docente por correo después de confirmar, marcar ítems alistados |
 | `SalaService` | Rastro de la ubicación de las salas (bloque, piso y número, RF65): una fila en `ubicaciones_sala` cada vez que cambia. Lo llaman las páginas de alta y edición de Filament |
-| `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
+| `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento. `finalizar` bloquea la evaluación y su tipo: dos finalizaciones a la vez no repiten intento ni duplican la entrada de la bitácora (B3.11, B3.3) |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `PeriodoAcademicoService` | Abrir, cerrar y reabrir el periodo académico (RF75). Es la única fuente del periodo vigente: el abierto, o entre semestres el último cerrado. Nunca se deriva del calendario |
 | `ConfidencialidadService` | Estado del formato de confidencialidad en el periodo vigente; solo recibe entregas con un periodo abierto |
