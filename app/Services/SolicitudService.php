@@ -12,6 +12,7 @@ use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
+use App\Exceptions\SolicitudVencida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Models\CasoClinico;
 use App\Models\EstudianteDeLaSesion;
@@ -47,6 +48,17 @@ final class SolicitudService
     public function esFechaPasada(string $fecha): bool
     {
         return Carbon::parse($fecha)->startOfDay()->isBefore(Carbon::today());
+    }
+
+    /**
+     * Pendiente o revisada con la fecha pasada: no se revisa ni se aprueba,
+     * solo se rechaza (decisión del 2026-11-07). La misma regla que el
+     * scope vencidas() del modelo, para una solicitud ya cargada.
+     */
+    public function estaVencida(Solicitud $solicitud): bool
+    {
+        return in_array($solicitud->estado, Solicitud::estadosQueVencen(), true)
+            && $this->esFechaPasada($solicitud->fecha->format('Y-m-d'));
     }
 
     /** Cantidad máxima por equipo en una solicitud: un tope de cordura, no de inventario. */
@@ -433,11 +445,35 @@ final class SolicitudService
     public function bandeja(?EstadoSolicitud $estado = null, int $porPagina = 15): LengthAwarePaginator
     {
         return Solicitud::query()
+            ->noVencidas()
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
             ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
+            ->orderBy('id')
             ->paginate($porPagina);
+    }
+
+    /**
+     * Las vencidas, aparte de la bandeja: pendientes o revisadas cuya fecha
+     * pasó sin que nadie las resolviera. Solo queda rechazarlas.
+     *
+     * @return LengthAwarePaginator<int, Solicitud>
+     */
+    public function vencidas(int $porPagina = 15): LengthAwarePaginator
+    {
+        return Solicitud::query()
+            ->vencidas()
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio')
+            ->orderBy('id')
+            ->paginate($porPagina);
+    }
+
+    public function cuantasVencidas(): int
+    {
+        return Solicitud::query()->vencidas()->count();
     }
 
     /**
@@ -623,6 +659,11 @@ final class SolicitudService
         $solicitud->refresh();
 
         $this->garantizarTransicion($solicitud, $destino);
+
+        // Rechazar sí: es la forma de cerrar una vencida.
+        if ($destino !== EstadoSolicitud::Rechazada && $this->estaVencida($solicitud)) {
+            throw SolicitudVencida::noSePuedeTramitar($solicitud);
+        }
     }
 
     private function garantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void

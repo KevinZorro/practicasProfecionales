@@ -23,6 +23,9 @@ final class BandejaRevision extends Component
     use AutorizaEnCadaPeticion;
     use WithPagination;
 
+    /** Valor del filtro que enseña aparte las vencidas: no es un estado. */
+    public const VENCIDAS = 'vencidas';
+
     #[Url(as: 'estado', keep: false)]
     public string $estado = '';
 
@@ -39,9 +42,13 @@ final class BandejaRevision extends Component
 
     public function render(SolicitudService $solicitudes): mixed
     {
+        $viendoVencidas = $this->estado === self::VENCIDAS;
+
         return view('livewire.solicitud.bandeja-revision', [
-            'solicitudes' => $solicitudes->bandeja(EstadoSolicitud::tryFrom($this->estado)),
+            'solicitudes' => $viendoVencidas ? $solicitudes->vencidas() : $solicitudes->bandeja(EstadoSolicitud::tryFrom($this->estado)),
             'estados' => EstadoSolicitud::cases(),
+            'viendoVencidas' => $viendoVencidas,
+            'cuantasVencidas' => $solicitudes->cuantasVencidas(),
             // RF66: prácticas ya aprobadas cuyo inventario dejó de dar.
             // Solo se avisa; qué hacer con ellas lo decide el cliente.
             'sinCobertura' => app(InventarioService::class)->solicitudesAprobadasSinCobertura(),

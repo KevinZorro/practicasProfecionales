@@ -1,7 +1,25 @@
 <div class="space-y-5">
 
     <x-filtro-pastillas leyenda="Filtrar por estado" nombre="estado" wire:model.live="estado"
-                        :opciones="['' => 'Todas'] + collect($estados)->mapWithKeys(fn ($unEstado) => [$unEstado->value => $unEstado->etiqueta()])->all()" />
+                        :opciones="['' => 'Todas'] + collect($estados)->mapWithKeys(fn ($unEstado) => [$unEstado->value => $unEstado->etiqueta()])->all() + [\App\Livewire\Solicitud\BandejaRevision::VENCIDAS => 'Vencidas']" />
+
+    @if ($viendoVencidas)
+        <x-aviso tono="atencion">
+            Su fecha pasó sin que nadie las resolviera. No se pueden revisar ni aprobar: si no se
+            dictaron, recházalas para cerrarlas.
+        </x-aviso>
+    @elseif ($cuantasVencidas > 0)
+        {{-- Aparte de la bandeja: no esperan revisión ni aprobación, solo que alguien las cierre. --}}
+        <x-aviso tono="atencion">
+            {{ trans_choice(
+                'Hay :count solicitud vencida: su fecha pasó sin resolverla.|Hay :count solicitudes vencidas: su fecha pasó sin resolverlas.',
+                $cuantasVencidas,
+                ['count' => $cuantasVencidas],
+            ) }}
+            <button type="button" wire:click="$set('estado', '{{ \App\Livewire\Solicitud\BandejaRevision::VENCIDAS }}')"
+                    class="font-semibold underline underline-offset-2">Verlas</button>
+        </x-aviso>
+    @endif
 
     @if ($sinCobertura !== [])
         {{-- RF66: el inventario dejó de dar para prácticas ya aprobadas.

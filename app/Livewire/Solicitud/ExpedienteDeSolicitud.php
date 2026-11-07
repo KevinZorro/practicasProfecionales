@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Enums\EstadoSolicitud;
+use App\Exceptions\SolicitudVencida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Livewire\Concerns\AvisaDelResultado;
@@ -106,10 +107,14 @@ final class ExpedienteDeSolicitud extends Component
         // Regla 5: el docente no ve la disponibilidad del inventario.
         $veInventario = $actor->can('viewAny', ItemInventario::class);
 
+        // Vencida: la fecha pasó sin resolverla. Solo se rechaza.
+        $vencida = $solicitudes->estaVencida($solicitud);
+
         return view('livewire.solicitud.expediente-de-solicitud', [
             'solicitud' => $solicitud,
-            'puedeRevisar' => $solicitud->estado === EstadoSolicitud::Pendiente && $actor->can('revisar', $solicitud),
-            'puedeAprobar' => $actor->can('aprobar', $solicitud),
+            'vencida' => $vencida,
+            'puedeRevisar' => ! $vencida && $solicitud->estado === EstadoSolicitud::Pendiente && $actor->can('revisar', $solicitud),
+            'puedeAprobar' => ! $vencida && $actor->can('aprobar', $solicitud),
             'puedeRechazar' => $actor->can('rechazar', $solicitud),
             'faltantes' => $veInventario ? $this->faltantesDeInventario($solicitud) : [],
             'sinCobertura' => $veInventario && $this->quedoSinCobertura($solicitud),
@@ -164,6 +169,10 @@ final class ExpedienteDeSolicitud extends Component
             $accion();
         } catch (TransicionDeSolicitudInvalida) {
             $this->terminar('Esta solicitud ya había cambiado de estado. Así quedó.');
+
+            return;
+        } catch (SolicitudVencida $vencida) {
+            $this->terminar($vencida->getMessage());
 
             return;
         }

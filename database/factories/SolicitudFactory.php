@@ -31,7 +31,9 @@ class SolicitudFactory extends Factory
             'materia_id' => Materia::factory(),
             'caso_clinico_id' => CasoClinico::factory(),
             'tipo' => TipoSesion::Practica,
-            'fecha' => $this->faker->dateTimeBetween('-1 month', '+1 month')->format('Y-m-d'),
+            // De hoy en adelante: una pendiente con la fecha pasada está vencida
+            // y ya no se revisa ni se aprueba. Quien necesite el pasado lo fija.
+            'fecha' => $this->faker->dateTimeBetween('today', '+1 month')->format('Y-m-d'),
             'hora_inicio' => sprintf('%02d:00:00', $horaInicio),
             'hora_fin' => sprintf('%02d:00:00', $horaInicio + 2),
             'cantidad_estudiantes' => $this->faker->numberBetween(4, 25),

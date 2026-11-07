@@ -16,6 +16,13 @@
         </x-aviso>
     @endif
 
+    @if ($vencida)
+        <x-aviso tono="atencion">
+            La fecha de esta solicitud ya pasó sin que se resolviera: no se puede revisar ni aprobar.
+            Si no se dictó, recházala para cerrarla.
+        </x-aviso>
+    @endif
+
     @if ($faltantes !== [])
         <x-aviso tono="atencion">
             Se pidieron más unidades de las que quedan libres en esa franja. El docente no ve

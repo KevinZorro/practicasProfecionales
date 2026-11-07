@@ -274,6 +274,9 @@ Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos)
 | P3 | ¿Las sesiones apartadas pasan por aprobación? ¿Quién digita el formato intramural? | Llegan aprobadas: coordinación es quien entrega el formato a los administrativos. Los insumos los digitan los administrativos desde el formato impreso | RF57, RF59 |
 | P4 | ¿Qué significa "sala disponible" en RF58? | La sala la elige el administrativo en la preparación, nunca el docente, y el sistema no le ofrece una sala ocupada en esa franja. El nombre de la sala es editable | RF36, RF58 |
 | P5 | ¿Qué es "reubicar" un espacio? | Pensado para un edificio nuevo: el ADMIN crea salas con bloque, piso y número de sala dentro de ese bloque y piso | RF65 |
+| P6 | ¿Qué pasa con una solicitud pendiente o revisada cuya fecha ya pasó? | Está vencida: no se revisa ni se aprueba, solo se rechaza para cerrarla. No es un estado nuevo; la bandeja la enseña aparte (respondida el 2026-11-07, auditoría B3.4) | RF30, RF31 |
+| P7 | ¿Hay horario del laboratorio o una antelación máxima para pedir? | No hay ninguno de los dos (2026-11-07) | RF28 |
+| P8 | ¿Lo ajeno responde 403 o 404? | 403, y el intento queda en la bitácora con quién, qué y sobre qué registro (2026-11-07, auditoría B4.2 y B4.5) | RF62 |
 | D1 | ¿Quién rechaza? | Los dos, en dos fases: el administrativo acepta o rechaza, y después coordinación aprueba o rechaza. El ADMIN, cuando actúa por coordinación, también puede rechazar (decisión por defecto, no corregida) | RF30, RF31 |
 
 ### Decisiones por defecto (se aplican si no se corrigen)

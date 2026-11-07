@@ -64,14 +64,17 @@ it('no deja a un docente ni a un estudiante acercarse a la bandeja', function (R
 })->with([Rol::Docente, Rol::Estudiante]);
 
 it('ordena la bandeja por la fecha de la práctica', function (): void {
-    Solicitud::factory()->create(['fecha' => '2026-11-20']);
-    Solicitud::factory()->create(['fecha' => '2026-10-05']);
-    Solicitud::factory()->create(['fecha' => '2026-12-01']);
+    // Fechas de hoy en adelante: una pendiente con la fecha pasada está
+    // vencida y la bandeja la enseña aparte.
+    [$primera, $segunda, $tercera] = [now()->addDays(2), now()->addDays(13), now()->addDays(24)];
+    Solicitud::factory()->create(['fecha' => $segunda->toDateString()]);
+    Solicitud::factory()->create(['fecha' => $primera->toDateString()]);
+    Solicitud::factory()->create(['fecha' => $tercera->toDateString()]);
 
     Livewire::actingAs($this->administrativo)
         ->test(BandejaRevision::class)
         ->assertViewHas('solicitudes', fn ($p): bool => $p->pluck('fecha')
-            ->map(fn ($f): string => $f->format('Y-m-d'))->all() === ['2026-10-05', '2026-11-20', '2026-12-01']);
+            ->map(fn ($f): string => $f->format('Y-m-d'))->all() === [$primera->toDateString(), $segunda->toDateString(), $tercera->toDateString()]);
 });
 
 it('filtra la bandeja por estado', function (): void {

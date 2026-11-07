@@ -70,7 +70,8 @@ final class ResumenDelDiaService
      */
     private function solicitudesEn(EstadoSolicitud $estado): LengthAwarePaginator
     {
-        return $this->conLoDeLaFila(Solicitud::query()->enEstado($estado))
+        // Las vencidas no esperan revisión ni aprobación: solo rechazo, desde la bandeja.
+        return $this->conLoDeLaFila(Solicitud::query()->enEstado($estado)->noVencidas())
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->paginate(self::FILAS_POR_BLOQUE, ['*'], 'pagina', 1);
