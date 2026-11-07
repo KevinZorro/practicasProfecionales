@@ -13,6 +13,7 @@ use App\Models\RegistroDeBitacora;
 use App\Models\Solicitud;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Routing\Route as Ruta;
 use Illuminate\Support\Facades\Route;
@@ -104,8 +105,8 @@ dataset('rutas del panel con id', static function (): Generator {
     }
 });
 
-/** @return Illuminate\Database\Eloquent\Collection<int, RegistroDeBitacora> */
-function accesosNegadosEnLaBitacora(): Illuminate\Database\Eloquent\Collection
+/** @return Collection<int, RegistroDeBitacora> */
+function accesosNegadosEnLaBitacora(): Collection
 {
     return RegistroDeBitacora::query()->where('accion', AccionAuditada::AccesoNegado)->get();
 }

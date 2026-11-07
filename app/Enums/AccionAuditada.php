@@ -27,6 +27,7 @@ enum AccionAuditada: string
     case FormatoRechazado = 'formato_rechazado';
     case EntregaFisicaRecibida = 'entrega_fisica_recibida';
     case FormatoDescargado = 'formato_descargado';
+    case AccesoNegado = 'acceso_negado';
     case PeriodoAbierto = 'periodo_abierto';
     case PeriodoCerrado = 'periodo_cerrado';
     case PeriodoReabierto = 'periodo_reabierto';
@@ -55,6 +56,7 @@ enum AccionAuditada: string
             self::FormatoRechazado => 'Formato de confidencialidad rechazado',
             self::EntregaFisicaRecibida => 'Formato de confidencialidad recibido en físico',
             self::FormatoDescargado => 'Formato de confidencialidad descargado',
+            self::AccesoNegado => 'Acceso negado',
             self::PeriodoAbierto => 'Periodo académico abierto',
             self::PeriodoCerrado => 'Periodo académico cerrado',
             self::PeriodoReabierto => 'Periodo académico reabierto',
