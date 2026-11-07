@@ -533,7 +533,10 @@ final class SolicitudService
             ->aprobadasEntre($desde, $hasta)
             ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
             ->orderBy('fecha')
-            ->orderBy('hora_inicio');
+            ->orderBy('hora_inicio')
+            // Sin desempate, dos sesiones a la misma hora salen en el orden
+            // que PostgreSQL quiera, y el calendario cambiaría al recargar.
+            ->orderBy('id');
 
         match (true) {
             $actor->can('verTodoElCalendario', Solicitud::class) => null,
