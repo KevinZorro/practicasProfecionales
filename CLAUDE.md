@@ -10,6 +10,8 @@ Plataforma web de gestión del Laboratorio de Simulación Clínica de la Faculta
 
 **Los enunciados de los requerimientos están en `docs/requerimientos.md`**, y el estado de cada uno contra el código, con las preguntas abiertas, en `docs/trazabilidad.md`. Si este archivo y el enunciado no coinciden, manda el enunciado: dilo y anótalo en la matriz.
 
+Las decisiones de arquitectura, con su porqué, están en `docs/decisions/` (ADR), y los escenarios de calidad con su medida, en `docs/escenarios-de-calidad.md`. Una decisión que cambia no se edita: se escribe otra que la reemplaza.
+
 **Usuarios:** ~700 estudiantes y ~150 docentes, más personal administrativo, coordinación y un administrador de la plataforma (RNF01, cifra confirmada con el cliente).
 
 **Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago.

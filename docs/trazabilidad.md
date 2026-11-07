@@ -288,7 +288,7 @@ Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos)
 | D4 | La constancia de comunicación es un texto obligatorio (medio, fecha, con quién habló). La sesión reprogramada sigue aprobada, se revalidan capacidad y disponibilidad, y si cambia la fecha se libera la sala asignada | RF61 |
 | D5 | La antelación del aviso la edita el ADMIN en la plataforma, con 3 días por defecto | RF60 |
 | D6 | Deshabilitar a mano es una marca propia que la sincronización no revierte. Los usuarios creados a mano (por ejemplo, un pasante externo) no los desactiva la sincronización | RF20, RF22 |
-| D7 | Tamaño máximo de cada video: 100 MB por defecto, configurable por variable de entorno | RF17 |
+| D7 | ~~Tamaño máximo de cada video: 100 MB por defecto, configurable por variable de entorno~~. **Reemplazada** por el ADR 0005 (`docs/decisions/0005-tamano-maximo-de-los-videos.md`): 30 MB, y 15 MB el de la portada, sin variable de entorno | RF17 |
 | D8 | El correo del formulario **sale** de la cuenta institucional del laboratorio (la misma de todos los correos) y **llega** al correo de contacto del laboratorio (RF11), con responder-a del interesado. También se guarda en `solicitudes_informacion` | RF09 |
 | D9 | "Retiro" en la bitácora cubre el retiro de participantes (RF69) y el de unidades de inventario (RF38). La bitácora la consultan coordinación y el ADMIN | RF62 |
 | D10 | Lo que requiere al ingeniero se deduce del nivel de fidelidad alta. El ingeniero no tiene cuenta: el administrativo marca el ítem cuando él termina | RF72 |
