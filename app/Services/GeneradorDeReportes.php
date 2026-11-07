@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\AccionAuditada;
 use App\Enums\Reporte;
 use App\Exceptions\ReporteInvalido;
 use App\Exports\EvaluacionesNoRegistradasExport;
@@ -36,6 +37,7 @@ final class GeneradorDeReportes
     public function __construct(
         private readonly ReporteService $reportes,
         private readonly Exporter $excel,
+        private readonly BitacoraService $bitacora,
     ) {}
 
     /**
@@ -131,7 +133,7 @@ final class GeneradorDeReportes
             : null;
     }
 
-    public function pdf(Reporte $reporte, FiltroReporte $filtro): Response
+    public function pdf(Reporte $reporte, FiltroReporte $filtro, User $quienExporta): Response
     {
         $motivo = $this->motivoSinPdf($filtro);
 
@@ -141,12 +143,16 @@ final class GeneradorDeReportes
 
         $exportador = $this->exportador($reporte, $filtro);
 
-        return Pdf::loadView($reporte->plantillaPdf(), [
+        $archivo = Pdf::loadView($reporte->plantillaPdf(), [
             'titulo' => $reporte->titulo(),
             'descripcionDelFiltro' => $this->describir($filtro),
             'encabezados' => $exportador->headings(),
             'filas' => $this->filas($reporte, $filtro, (int) config('laboratorio.reportes.pdf_filas_maximas')),
         ])->setPaper('a4', 'landscape')->download("{$reporte->nombreDeArchivo()}.pdf");
+
+        $this->registrarExportacion($quienExporta, $reporte, $filtro, 'PDF');
+
+        return $archivo;
     }
 
     /**
@@ -177,11 +183,29 @@ final class GeneradorDeReportes
         return implode(' · ', $partes);
     }
 
-    public function excel(Reporte $reporte, FiltroReporte $filtro): BinaryFileResponse
+    public function excel(Reporte $reporte, FiltroReporte $filtro, User $quienExporta): BinaryFileResponse
     {
-        return $this->excel->download(
+        $archivo = $this->excel->download(
             $this->exportador($reporte, $filtro),
             "{$reporte->nombreDeArchivo()}.xlsx",
+        );
+
+        $this->registrarExportacion($quienExporta, $reporte, $filtro, 'Excel');
+
+        return $archivo;
+    }
+
+    /**
+     * Un archivo con nombres y resultados circula sin la pantalla que lo
+     * generó: la bitácora guarda quién lo sacó, cuándo y con qué filtros
+     * (B4.2). Solo después de generarlo: el que no sale no deja rastro.
+     */
+    private function registrarExportacion(User $quienExporta, Reporte $reporte, FiltroReporte $filtro, string $formato): void
+    {
+        $this->bitacora->registrarSinSujeto(
+            AccionAuditada::ReporteExportado,
+            $quienExporta,
+            sprintf('Exportó en %s «%s»: %s.', $formato, $reporte->titulo(), $this->describir($filtro)),
         );
     }
 }

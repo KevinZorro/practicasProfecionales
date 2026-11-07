@@ -31,11 +31,11 @@ final class ReporteController extends Controller
 
     public function excel(FiltroDeReporteRequest $peticion, Reporte $reporte, GeneradorDeReportes $reportes): BinaryFileResponse
     {
-        return $reportes->excel($reporte, $peticion->filtroPara($reporte));
+        return $reportes->excel($reporte, $peticion->filtroPara($reporte), $peticion->user());
     }
 
     public function pdf(FiltroDeReporteRequest $peticion, Reporte $reporte, GeneradorDeReportes $reportes): Response
     {
-        return $reportes->pdf($reporte, $peticion->filtroPara($reporte));
+        return $reportes->pdf($reporte, $peticion->filtroPara($reporte), $peticion->user());
     }
 }

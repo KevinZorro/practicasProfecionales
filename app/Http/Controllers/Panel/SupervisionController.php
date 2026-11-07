@@ -32,12 +32,12 @@ final class SupervisionController extends Controller
 
     public function excel(FiltroDeSupervisionRequest $peticion, SupervisionService $supervision, GeneradorDeReportes $reportes): BinaryFileResponse
     {
-        return $reportes->excel(Reporte::ResultadosDeEvaluacion, $this->filtro($peticion, $supervision));
+        return $reportes->excel(Reporte::ResultadosDeEvaluacion, $this->filtro($peticion, $supervision), $peticion->user());
     }
 
     public function pdf(FiltroDeSupervisionRequest $peticion, SupervisionService $supervision, GeneradorDeReportes $reportes): Response
     {
-        return $reportes->pdf(Reporte::ResultadosDeEvaluacion, $this->filtro($peticion, $supervision));
+        return $reportes->pdf(Reporte::ResultadosDeEvaluacion, $this->filtro($peticion, $supervision), $peticion->user());
     }
 
     private function filtro(FiltroDeSupervisionRequest $peticion, SupervisionService $supervision): FiltroReporte

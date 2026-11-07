@@ -150,7 +150,7 @@ it('pide lotes de quinientos en la exportación a Excel', function (): void {
 it('genera el PDF de cada reporte', function (Reporte $reporte): void {
     datosParaLosTresReportes();
 
-    $respuesta = $this->generador->pdf($reporte, new FiltroReporte(desde: '2026-04-01', hasta: '2026-04-30'));
+    $respuesta = $this->generador->pdf($reporte, new FiltroReporte(desde: '2026-04-01', hasta: '2026-04-30'), User::factory()->coordinador()->create());
 
     expect($respuesta->getStatusCode())->toBe(200)
         ->and($respuesta->headers->get('content-type'))->toContain('application/pdf')
@@ -168,7 +168,7 @@ it('genera el Excel de cada reporte a partir del mismo exportador', function (Re
 
     // El generador recibe Excel por constructor, así que hay que resolverlo
     // después de fake() para que le llegue la instancia falsa.
-    app(GeneradorDeReportes::class)->excel($reporte, new FiltroReporte);
+    app(GeneradorDeReportes::class)->excel($reporte, new FiltroReporte, User::factory()->coordinador()->create());
 
     Excel::assertDownloaded("{$reporte->nombreDeArchivo()}.xlsx");
 })->with([
@@ -183,6 +183,7 @@ it('escribe en el PDF el título del reporte y la descripción del filtro', func
     $contenido = (string) $this->generador->pdf(
         Reporte::UsoDeEscenarios,
         new FiltroReporte(desde: '2026-04-01', hasta: '2026-04-30'),
+        User::factory()->coordinador()->create(),
     )->getContent();
 
     expect($contenido)->toStartWith('%PDF')
