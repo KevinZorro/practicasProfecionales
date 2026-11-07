@@ -9,6 +9,7 @@ use App\Events\SolicitudRechazada;
 use App\Mail\SolicitudAprobadaMail;
 use App\Mail\SolicitudRechazadaMail;
 use App\Models\Solicitud;
+use App\Support\EsperaEntreReintentos;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Mail;
  */
 final class EnviarCorreoResultadoSolicitud implements ShouldQueue
 {
+    use EsperaEntreReintentos;
     use InteractsWithQueue;
 
     public function handle(SolicitudAprobada|SolicitudRechazada $evento): void

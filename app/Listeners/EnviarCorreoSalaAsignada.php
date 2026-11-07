@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Events\SalaAsignada;
 use App\Mail\SalaAsignadaMail;
+use App\Support\EsperaEntreReintentos;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
  */
 final class EnviarCorreoSalaAsignada implements ShouldQueue
 {
+    use EsperaEntreReintentos;
     use InteractsWithQueue;
 
     public function handle(SalaAsignada $evento): void
