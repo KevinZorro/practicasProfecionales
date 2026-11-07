@@ -246,16 +246,20 @@ docker compose -f docker-compose.produccion.yml exec app php artisan migrate --f
 ```
 
 Después de cambiar el `.env`, los contenedores tienen que volver a leerlo:
-`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue programador`.
+`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue programador web`.
 
 ### HTTPS
 
-El nginx del compose escucha por HTTP en `APP_PORT`. El HTTPS lo termina quien
-esté delante: normalmente el proxy de la universidad. En ese caso su IP va en
-`PROXIES_DE_CONFIANZA` del `.env`, para que la aplicación sepa que la petición
-original era segura (enlaces `https://`, cookie segura y HSTS). `APP_URL`
-siempre con `https://`: de ella sale la dirección de retorno que se registra
-en Google.
+El nginx del compose escucha por HTTP en `APP_PORT`. El HTTPS lo termina el
+proxy de la universidad (`docs/decisions/0006-https-en-el-proxy-de-la-universidad.md`).
+Su IP va en `PROXIES_DE_CONFIANZA` del `.env`, y vale para dos cosas: que la
+aplicación sepa que la petición original era segura (enlaces `https://`,
+cookie segura y HSTS) y que nginx tome la IP real de cada visitante para sus
+topes por IP. Sin ella, nginx cuenta a toda la universidad como una sola
+dirección. Si el valor no es una IP ni un rango, nginx no arranca y lo dice
+en `docker compose -f docker-compose.produccion.yml logs web`. Después de
+cambiarla, recrea también `web`. `APP_URL` siempre con `https://`: de ella
+sale la dirección de retorno que se registra en Google.
 
 ### Cabeceras de seguridad
 

@@ -228,6 +228,12 @@ it('le dice a nginx que tome la IP real solo de los proxies de confianza', funct
         ->toContain("real_ip_recursive on;\n");
 });
 
+it('confía en cualquiera con «*», como Laravel, y no lo toma por un comodín de archivos', function (): void {
+    expect(ipRealCon('*')->successful())->toBeTrue()
+        ->and($this->ipRealEscrito)->toContain("set_real_ip_from 0.0.0.0/0;\n")
+        ->toContain("set_real_ip_from ::/0;\n");
+});
+
 it('no toca la IP que ve nginx si no hay proxy de confianza', function (): void {
     expect(ipRealCon('')->successful())->toBeTrue()
         ->and(trim($this->ipRealEscrito))->toBe('');
