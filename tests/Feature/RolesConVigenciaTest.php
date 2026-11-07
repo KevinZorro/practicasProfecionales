@@ -441,3 +441,21 @@ it('la pantalla no ofrece revocar el propio rol de ADMIN y rechaza la acción a 
 
     expect(tieneElRol($this->admin, Rol::Admin))->toBeTrue();
 });
+
+// ---------------------------------------------------------------------
+// La búsqueda de la pantalla (B1.4)
+// ---------------------------------------------------------------------
+
+it('busca por nombre, correo y código, y el documento cifrado no da coincidencias falsas', function (): void {
+    $buscada = User::factory()->create(['nombre' => 'Lina Buscada', 'codigo_institucional' => '1159001']);
+    User::factory()->create(['nombre' => 'Otra Persona', 'codigo_institucional' => '1159002']);
+
+    // Todo documento cifrado empieza igual: es base64 de {"iv":…}. Una
+    // búsqueda que compare contra la columna cifrada devolvería a todos.
+    $comienzoDelCifrado = substr((string) DB::table('users')->where('id', $buscada->id)->value('documento'), 0, 8);
+
+    expect($this->servicio->usuariosConSusRoles($comienzoDelCifrado)->total())->toBe(0)
+        ->and($this->servicio->usuariosConSusRoles('Lina')->pluck('id')->all())->toBe([$buscada->id])
+        ->and($this->servicio->usuariosConSusRoles('1159001')->pluck('id')->all())->toBe([$buscada->id])
+        ->and($this->servicio->usuariosConSusRoles(mb_strtoupper($buscada->email))->pluck('id')->all())->toBe([$buscada->id]);
+});
