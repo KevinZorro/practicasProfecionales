@@ -278,6 +278,7 @@ Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos)
 | P7 | ¿Hay horario del laboratorio o una antelación máxima para pedir? | No hay ninguno de los dos (2026-11-07) | RF28 |
 | P8 | ¿Lo ajeno responde 403 o 404? | 403, y el intento queda en la bitácora con quién, qué y sobre qué registro (2026-11-07, auditoría B4.2 y B4.5) | RF62 |
 | P9 | ¿Puede un estudiante estar en dos sesiones a la misma hora? ¿Y un docente con dos solicitudes que se cruzan? | No, ninguno de los dos: un estudiante no puede estar en dos sesiones y un docente solo puede estar en un salón. Se impide al solicitar, completar la lista, registrar una sesión apartada, reprogramar y sustituir; cuentan pendientes, revisadas y aprobadas (2026-11-07) | RF28, RF57, RF61, RF73 |
+| P10 | ¿Aprobar debe exigir que haya inventario disponible? | No: se puede aprobar aunque falten unidades en la franja, pero entonces las observaciones de la aprobación son obligatorias, para que el docente sepa qué falta. Le llegan en el correo (2026-11-07) | RF31, RF33 |
 | D1 | ¿Quién rechaza? | Los dos, en dos fases: el administrativo acepta o rechaza, y después coordinación aprueba o rechaza. El ADMIN, cuando actúa por coordinación, también puede rechazar (decisión por defecto, no corregida) | RF30, RF31 |
 
 ### Decisiones por defecto (se aplican si no se corrigen)

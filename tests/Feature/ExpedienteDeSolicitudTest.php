@@ -302,14 +302,17 @@ it('no avisa de faltantes en una aprobada, que ya cuenta entre lo comprometido',
     expedienteDe($this->administrativo, $solicitud)->assertDontSee('libres en esa franja');
 });
 
-it('no impide aprobar aunque falten unidades', function (): void {
-    // Es información para quien decide, no un bloqueo. Si el cliente decide
-    // después que debe bloquear, la regla entra en el Service.
+it('no impide aprobar aunque falten unidades, si se dice qué falta', function (): void {
+    // Decisión del cliente del 2026-11-07: se aprueba, pero el docente tiene
+    // que saber qué no va a encontrar (AprobarConFaltantesTest).
     $item = ItemInventario::factory()->create(['cantidad_total' => 1]);
     $solicitud = Solicitud::factory()->revisada()->create();
     $solicitud->items()->attach($item->id, ['cantidad' => 9]);
 
-    expedienteDe($this->coordinadora, $solicitud)->call('aprobar')->assertHasNoErrors();
+    expedienteDe($this->coordinadora, $solicitud)
+        ->set('observacionesAprobacion', 'Solo hay una unidad.')
+        ->call('aprobar')
+        ->assertHasNoErrors();
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Aprobada);
 });

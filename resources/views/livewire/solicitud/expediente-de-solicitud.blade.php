@@ -26,7 +26,15 @@
     @if ($faltantes !== [])
         <x-aviso tono="atencion">
             Se pidieron más unidades de las que quedan libres en esa franja. El docente no ve
-            disponibilidad al solicitar, así que puede pedir de más. Es un aviso, no un impedimento.
+            disponibilidad al solicitar, así que puede pedir de más. Se puede aprobar, pero diciéndole
+            en las observaciones qué falta.
+        </x-aviso>
+    @endif
+
+    @if ($solicitud->estado === $estados::Aprobada && filled($solicitud->observaciones_aprobacion))
+        <x-aviso tono="atencion">
+            <p class="font-semibold">Observaciones de la aprobación</p>
+            <p class="mt-0.5">{{ $solicitud->observaciones_aprobacion }}</p>
         </x-aviso>
     @endif
 
@@ -166,6 +174,21 @@
                     </div>
                 </form>
             @else
+                @if ($puedeAprobar)
+                    <div class="mb-3">
+                        <label for="observaciones-aprobacion" class="campo-etiqueta">
+                            Observaciones para el docente
+                            @if ($faltantes !== [])
+                                <span class="font-normal text-rojo-800">(obligatorias: faltan unidades, di cuáles)</span>
+                            @else
+                                <span class="font-normal text-gray-500">(opcional)</span>
+                            @endif
+                        </label>
+                        <textarea wire:model="observacionesAprobacion" id="observaciones-aprobacion" rows="2" class="campo"></textarea>
+                        @error('observacionesAprobacion') <p class="campo-error">{{ $message }}</p> @enderror
+                        <p class="campo-ayuda">Le llegan con el correo de la aprobación.</p>
+                    </div>
+                @endif
                 <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                     <p class="min-w-0 max-w-[52ch] flex-1 basis-64 text-[14px] leading-snug text-gray-600">
                         @if ($puedeRevisar)

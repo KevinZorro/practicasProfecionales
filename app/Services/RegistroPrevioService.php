@@ -10,7 +10,6 @@ use App\Enums\OrigenSolicitud;
 use App\Enums\Rol;
 use App\Exceptions\SolicitudInvalida;
 use App\Mail\AvisoFormatoIntramuralMail;
-use App\Models\ItemInventario;
 use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -262,28 +261,7 @@ final class RegistroPrevioService
      */
     private function faltantes(Solicitud $solicitud, array $items): array
     {
-        $catalogo = ItemInventario::query()->whereIn('id', array_keys($items))->get();
-        $libres = $this->inventario->disponibilidadDeVarios(
-            $catalogo,
-            $solicitud->fecha->format('Y-m-d'),
-            $solicitud->hora_inicio,
-            $solicitud->hora_fin,
-        );
-
-        // La sesión ya está aprobada: lo que tenía pedido cuenta como
-        // comprometido contra ella misma, así que se le devuelve.
-        $propios = $solicitud->items()->pluck('solicitud_item.cantidad', 'items_inventario.id')->all();
-        $faltantes = [];
-
-        foreach ($items as $id => $cantidad) {
-            $disponible = ($libres[$id] ?? 0) + (int) ($propios[$id] ?? 0);
-
-            if ($disponible < $cantidad) {
-                $faltantes[$id] = $disponible;
-            }
-        }
-
-        return $faltantes;
+        return $this->inventario->faltantesPara($solicitud, $items);
     }
 
     private function garantizarDocente(int $docenteId): void

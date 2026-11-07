@@ -42,6 +42,7 @@ class Solicitud extends Model
         'resuelta_por',
         'resuelta_at',
         'motivo_rechazo',
+        'observaciones_aprobacion',
         'observaciones',
         'grupo',
         'origen',

@@ -210,6 +210,7 @@ return [
         'motivoAtencion' => 'motivo',
         'motivoDeAcceso' => 'motivo',
         'motivoRechazo' => 'motivo del rechazo',
+        'observacionesAprobacion' => 'observaciones de la aprobación',
         'motivoLevantamiento' => 'motivo',
         'simuladorId' => 'simulador',
         'motivoRetiro' => 'motivo del retiro',

@@ -36,6 +36,11 @@
         </tr>
     </table>
 
+    @if (filled($solicitud->observaciones_aprobacion))
+        {{-- Obligatorias si faltan unidades: lo que no va a encontrar. --}}
+        <p><strong>Observaciones de la aprobación:</strong> {{ $solicitud->observaciones_aprobacion }}</p>
+    @endif
+
     {{-- La sala se asigna durante la preparación (RF36), y llega en otro correo. --}}
     <p>La sala la elige el laboratorio al preparar el escenario. Le llegará
        otro correo en cuanto la asigne.</p>

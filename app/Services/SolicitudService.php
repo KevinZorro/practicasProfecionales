@@ -39,6 +39,7 @@ final class SolicitudService
         private readonly BloqueoService $bloqueos,
         private readonly BitacoraService $bitacora,
         private readonly CrucesDeSesionService $cruces,
+        private readonly InventarioService $inventario,
     ) {}
 
     /**
@@ -524,14 +525,30 @@ final class SolicitudService
         return $solicitud;
     }
 
-    public function aprobar(Solicitud $solicitud, User $coordinador): Solicitud
+    /**
+     * Se puede aprobar aunque falten unidades en esa franja, pero entonces
+     * las observaciones son obligatorias: el docente tiene que saber qué no
+     * va a encontrar (decisión del 2026-11-07). Le llegan en el correo.
+     */
+    public function aprobar(Solicitud $solicitud, User $coordinador, ?string $observaciones = null): Solicitud
     {
-        DB::transaction(function () use ($solicitud, $coordinador): void {
+        $observaciones = trim((string) $observaciones) === '' ? null : trim((string) $observaciones);
+
+        DB::transaction(function () use ($solicitud, $coordinador, $observaciones): void {
             $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Aprobada);
 
-            $solicitud->update($this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador));
+            $pedido = $solicitud->items()->pluck('solicitud_item.cantidad', 'items_inventario.id')->map(static fn (mixed $cantidad): int => (int) $cantidad)->all();
+
+            if ($observaciones === null && $this->inventario->faltantesPara($solicitud, $pedido) !== []) {
+                throw SolicitudInvalida::faltantesSinObservaciones();
+            }
+
+            $solicitud->update([
+                ...$this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador),
+                'observaciones_aprobacion' => $observaciones,
+            ]);
             $this->preparaciones->crearDesdeSolicitud($solicitud);
-            $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.');
+            $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.', $observaciones);
         });
 
         // Fuera de la transacción: si algo la revierte, no debe salir correo.

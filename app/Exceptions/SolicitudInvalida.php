@@ -8,6 +8,11 @@ use DomainException;
 
 final class SolicitudInvalida extends DomainException
 {
+    public static function faltantesSinObservaciones(): self
+    {
+        return new self('Faltan unidades de algunos equipos en esa franja: escribe en las observaciones qué falta, para que el docente lo sepa.');
+    }
+
     public static function sinEstudiantes(): self
     {
         return new self('Indique qué estudiantes van a la sesión.');

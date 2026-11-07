@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Enums\EstadoSolicitud;
+use App\Exceptions\SolicitudInvalida;
 use App\Exceptions\SolicitudVencida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
@@ -40,6 +41,9 @@ final class ExpedienteDeSolicitud extends Component
 
     public bool $rechazando = false;
 
+    /** Lo que coordinación le dice al docente al aprobar: obligatorio si faltan unidades. */
+    public string $observacionesAprobacion = '';
+
     public string $motivoRechazo = '';
 
     public function mount(Solicitud $solicitud): void
@@ -62,11 +66,17 @@ final class ExpedienteDeSolicitud extends Component
     {
         $solicitud = $this->solicitud();
         $this->authorize('aprobar', $solicitud);
+        $this->validate(['observacionesAprobacion' => 'nullable|string|max:1000']);
 
-        $this->transicionar(
-            fn () => $solicitudes->aprobar($solicitud, $this->actor()),
-            'Solicitud aprobada. El docente recibirá la notificación.',
-        );
+        try {
+            $this->transicionar(
+                fn () => $solicitudes->aprobar($solicitud, $this->actor(), $this->observacionesAprobacion),
+                'Solicitud aprobada. El docente recibirá la notificación.',
+            );
+        } catch (SolicitudInvalida $invalida) {
+            // Faltan unidades y no se dijo qué: se pide aquí mismo, sin recargar.
+            $this->addError('observacionesAprobacion', $invalida->getMessage());
+        }
     }
 
     public function pedirMotivo(): void
@@ -128,8 +138,9 @@ final class ExpedienteDeSolicitud extends Component
      * ya cuenta entre lo comprometido, y lo que avisa entonces es
      * quedoSinCobertura().
      *
-     * Es información para quien decide, no un bloqueo: el docente no ve
-     * disponibilidad al solicitar, así que puede pedir de más.
+     * No impide aprobar, pero obliga a decirle al docente qué falta en las
+     * observaciones de la aprobación (decisión del 2026-11-07): el docente no
+     * ve disponibilidad al solicitar, así que puede pedir de más.
      *
      * @return array<int, int> id del ítem => unidades libres
      */
@@ -139,17 +150,10 @@ final class ExpedienteDeSolicitud extends Component
             return [];
         }
 
-        $disponibles = app(InventarioService::class)->disponibilidadDeVarios(
-            $solicitud->items,
-            $solicitud->fecha->format('Y-m-d'),
-            $solicitud->hora_inicio,
-            $solicitud->hora_fin,
+        return app(InventarioService::class)->faltantesPara(
+            $solicitud,
+            $solicitud->items->mapWithKeys(static fn (ItemInventario $item): array => [$item->id => (int) data_get($item, 'pivot.cantidad')])->all(),
         );
-
-        return $solicitud->items
-            ->filter(static fn (ItemInventario $item): bool => ($disponibles[$item->id] ?? 0) < (int) data_get($item, 'pivot.cantidad'))
-            ->mapWithKeys(static fn (ItemInventario $item): array => [$item->id => $disponibles[$item->id] ?? 0])
-            ->all();
     }
 
     /** RF66: aprobada, y alguno de sus equipos dejó de estar operativo después. */
