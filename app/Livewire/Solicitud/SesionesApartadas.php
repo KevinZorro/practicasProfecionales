@@ -6,6 +6,7 @@ namespace App\Livewire\Solicitud;
 
 use App\Enums\TipoSesion;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Exceptions\SesionQueSeCruza;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Livewire\Concerns\AvisaDelResultado;
@@ -109,7 +110,7 @@ final class SesionesApartadas extends Component
                 cantidadEstudiantes: (int) $datos['cantidadEstudiantes'],
                 grupo: $datos['grupo'],
             ), Auth::user());
-        } catch (SolicitudInvalida|CapacidadDeEstudiantesExcedida $invalida) {
+        } catch (SolicitudInvalida|CapacidadDeEstudiantesExcedida|SesionQueSeCruza $invalida) {
             $this->errorDeRegla = $invalida->getMessage();
 
             return;

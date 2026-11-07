@@ -6,6 +6,7 @@ namespace App\Livewire\Solicitud;
 
 use App\Enums\TipoSesion;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Exceptions\SesionQueSeCruza;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Livewire\Concerns\AvisaDelResultado;
@@ -172,7 +173,7 @@ final class FormularioSolicitud extends Component
 
         try {
             $solicitudes->crear(Auth::user(), $this->comoDatos($datos));
-        } catch (CapacidadDeEstudiantesExcedida|SolicitudInvalida $invalida) {
+        } catch (CapacidadDeEstudiantesExcedida|SolicitudInvalida|SesionQueSeCruza $invalida) {
             // La regla vive en el Service; aquí solo se traduce a un error
             // junto a la lista de estudiantes, no como un fallo del servidor.
             $this->addError('estudianteIds', $invalida->getMessage());

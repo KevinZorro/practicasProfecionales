@@ -41,6 +41,7 @@ final class RegistroPrevioService
         private readonly InventarioService $inventario,
         private readonly AjustesService $ajustes,
         private readonly BitacoraService $bitacora,
+        private readonly CrucesDeSesionService $cruces,
     ) {}
 
     /**
@@ -61,6 +62,13 @@ final class RegistroPrevioService
         $grupo = $this->normalizarGrupo($datos->grupo);
 
         return DB::transaction(function () use ($datos, $actor, $grupo): Solicitud {
+            // Un docente solo puede estar en un salón a la vez (CrucesDeSesionService).
+            $this->cruces->bloquearPersonas([$datos->docenteId]);
+            $this->cruces->garantizarDocenteLibre(
+                User::findOrFail($datos->docenteId),
+                new Franja($datos->fecha, $datos->horaInicio, $datos->horaFin),
+            );
+
             $solicitud = Solicitud::create([
                 'docente_id' => $datos->docenteId,
                 'materia_id' => $datos->materiaId,
@@ -112,7 +120,7 @@ final class RegistroPrevioService
         $avisos = [];
 
         if ($docenteId !== null && $cruces->contains('docente_id', $docenteId)) {
-            $avisos[] = 'El docente ya tiene otra sesión en esa franja.';
+            $avisos[] = 'El docente ya tiene otra sesión en esa franja: no se puede registrar otra.';
         }
 
         if ($cruces->isNotEmpty()) {

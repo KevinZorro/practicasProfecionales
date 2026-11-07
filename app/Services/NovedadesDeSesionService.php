@@ -29,12 +29,14 @@ final class NovedadesDeSesionService
         private readonly SolicitudService $solicitudes,
         private readonly BitacoraService $bitacora,
         private readonly BloqueoService $bloqueos,
+        private readonly CrucesDeSesionService $cruces,
     ) {}
 
     /**
      * Lo que conviene saber antes de poner a este docente en la sesión: si
-     * está bloqueado (RF68) o ya dicta otra sesión a esa hora. Son avisos y no
-     * impedimentos, como los cruces de RF58: el laboratorio decide.
+     * está bloqueado (RF68), que es un aviso y el laboratorio decide, o si
+     * ya dicta otra sesión a esa hora, que impide la sustitución
+     * (CrucesDeSesionService) y aquí se anticipa.
      *
      * @return list<string>
      */
@@ -55,7 +57,7 @@ final class NovedadesDeSesionService
             ->count();
 
         if ($cruzadas > 0) {
-            $avisos[] = sprintf('%s ya dicta otra sesión que se cruza con esta franja.', $reemplazo->nombre);
+            $avisos[] = sprintf('%s ya dicta otra sesión que se cruza con esta franja: no puede dictar esta.', $reemplazo->nombre);
         }
 
         return $avisos;
@@ -100,6 +102,10 @@ final class NovedadesDeSesionService
         }
 
         $reprogramacion = DB::transaction(function () use ($solicitud, $datos, $motivo, $constancia, $actor, $cambiaFranja, $cambiaEscenario): Reprogramacion {
+            if ($cambiaFranja) {
+                $this->garantizarFranjaLibre($solicitud, new Franja($datos->fecha, $datos->horaInicio, $datos->horaFin));
+            }
+
             $reprogramacion = $solicitud->reprogramaciones()->create([
                 'fecha_anterior' => $solicitud->fecha->format('Y-m-d'),
                 'hora_inicio_anterior' => $solicitud->hora_inicio,
@@ -181,6 +187,12 @@ final class NovedadesDeSesionService
         }
 
         $sustitucion = DB::transaction(function () use ($solicitud, $nuevo, $motivo, $actor, $anterior): Sustitucion {
+            // La sesión primero y el docente después, en el mismo orden que
+            // completar la lista: así dos transacciones no se esperan en cruz.
+            $bloqueada = Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+            $this->cruces->bloquearPersonas([$nuevo->id]);
+            $this->cruces->garantizarDocenteLibre($nuevo, Franja::deSolicitud($bloqueada), $bloqueada);
+
             $sustitucion = $solicitud->sustituciones()->create([
                 'docente_anterior_id' => $anterior,
                 'docente_nuevo_id' => $nuevo->id,
@@ -206,6 +218,22 @@ final class NovedadesDeSesionService
         Mail::to($nuevo->email)->queue(new SustitucionDocenteMail($sustitucion->load(['solicitud.materia', 'solicitud.casoClinico', 'docenteAnterior', 'docenteNuevo'])));
 
         return $sustitucion;
+    }
+
+    /**
+     * Ni el docente que la dicta ni los estudiantes que siguen en ella pueden
+     * estar en otra sesión de la franja nueva (CrucesDeSesionService).
+     */
+    private function garantizarFranjaLibre(Solicitud $solicitud, Franja $nueva): void
+    {
+        $bloqueada = Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+        $docente = User::findOrFail($bloqueada->idDelDocenteQueDicta());
+        /** @var list<int> $presentes */
+        $presentes = $bloqueada->estudiantesPresentes()->pluck('users.id')->all();
+
+        $this->cruces->bloquearPersonas([$docente->id, ...$presentes]);
+        $this->cruces->garantizarDocenteLibre($docente, $nueva, $bloqueada);
+        $this->cruces->garantizarEstudiantesLibres($presentes, $nueva, $bloqueada);
     }
 
     private function garantizarSesionVigente(Solicitud $solicitud): void

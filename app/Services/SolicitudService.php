@@ -38,6 +38,7 @@ final class SolicitudService
         private readonly PreparacionService $preparaciones,
         private readonly BloqueoService $bloqueos,
         private readonly BitacoraService $bitacora,
+        private readonly CrucesDeSesionService $cruces,
     ) {}
 
     /**
@@ -117,6 +118,12 @@ final class SolicitudService
         $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
 
         return DB::transaction(function () use ($docente, $datos, $grupo, $estudianteIds): Solicitud {
+            // Nadie en dos sesiones a la vez (CrucesDeSesionService).
+            $franja = new Franja($datos->fecha, $datos->horaInicio, $datos->horaFin);
+            $this->cruces->bloquearPersonas([$docente->id, ...$estudianteIds]);
+            $this->cruces->garantizarDocenteLibre($docente, $franja);
+            $this->cruces->garantizarEstudiantesLibres($estudianteIds, $franja);
+
             // El formato intramural viene con la solicitud del docente (RF59).
             $solicitud = Solicitud::create([
                 ...$this->atributosIniciales($docente, $datos),
@@ -152,7 +159,7 @@ final class SolicitudService
             // la vez se turnan, y la segunda ya cuenta los estudiantes de la
             // primera: sin esto, cada una cuenta los mismos y juntas pasan del
             // tope del escenario (B3.11, RF74).
-            Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+            $bloqueada = Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
 
             $enLista = $solicitud->estudiantes()->get();
             $retirado = $enLista->first(fn (User $e): bool => $this->fueRetirado($e) && in_array($e->id, $estudianteIds, true));
@@ -163,6 +170,8 @@ final class SolicitudService
 
             $nuevos = array_values(array_diff($estudianteIds, $enLista->pluck('id')->all()));
             $this->garantizarCapacidad($solicitud->caso_clinico_id, $this->presentes($solicitud) + count($nuevos));
+            $this->cruces->bloquearPersonas($nuevos);
+            $this->cruces->garantizarEstudiantesLibres($nuevos, Franja::deSolicitud($bloqueada), $bloqueada);
 
             $solicitud->estudiantes()->attach($nuevos);
             $this->actualizarCantidad($solicitud);
