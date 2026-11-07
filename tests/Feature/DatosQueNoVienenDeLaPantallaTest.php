@@ -12,6 +12,7 @@ use App\Livewire\Inventario\FormularioItem;
 use App\Livewire\Inventario\ListadoInventario;
 use App\Livewire\Preparacion\TableroDiario;
 use App\Livewire\Reposicion\ListaDeReposicion;
+use App\Livewire\Solicitud\FormatoIntramural;
 use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Livewire\Solicitud\SesionesApartadas;
 use App\Models\CasoClinico;
@@ -29,6 +30,8 @@ use App\Services\NovedadesDeSesionService;
 use App\Services\RegistroPrevioService;
 use App\Services\SolicitudService;
 use Database\Seeders\RolSeeder;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 /*
@@ -250,4 +253,37 @@ it('rechaza una necesidad de reposición con una cantidad descabellada, sin erro
         ->assertHasErrors(['cantidad']);
 
     expect(NecesidadDeReposicion::query()->count())->toBe(0);
+});
+
+it('no deja en la base un contador de inventario negativo aunque la suma cuadre', function (): void {
+    // El CHECK de RF66 controla la suma; este, que ninguna parte sea
+    // negativa. Es la última defensa: ni tinker ni un seeder lo saltan.
+    $item = ItemInventario::factory()->create(['cantidad_total' => 4]);
+
+    expect(fn () => DB::table('items_inventario')->where('id', $item->id)->update([
+        'cantidad_operativa' => -1,
+        'cantidad_en_revision' => 5,
+    ]))->toThrow(QueryException::class);
+});
+
+it('pone al formato intramural el mismo tope por equipo que a la solicitud', function (): void {
+    $sesion = app(RegistroPrevioService::class)->registrar(new DatosSesionApartada(
+        docenteId: $this->docente->id,
+        materiaId: $this->materia->id,
+        casoClinicoId: $this->caso->id,
+        tipo: TipoSesion::Practica,
+        fecha: now()->addDays(3)->toDateString(),
+        horaInicio: '07:00',
+        horaFin: '09:00',
+        cantidadEstudiantes: 10,
+    ), $this->administrativo);
+    $gasas = ItemInventario::factory()->equipoBasico()->create(['cantidad_total' => 2000]);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(FormatoIntramural::class, ['solicitud' => $sesion])
+        ->set('itemAAgregar', $gasas->id)
+        ->call('agregarItem')
+        ->set("items.{$gasas->id}", SolicitudService::CANTIDAD_MAXIMA_POR_EQUIPO + 1)
+        ->call('guardar')
+        ->assertHasErrors("items.{$gasas->id}");
 });
