@@ -170,7 +170,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | Service | Responsabilidad |
 |---|---|
 | `SolicitudService` | Crear solicitud con su grupo y estudiantes, completar o retirar estudiantes de la sesión (RF28, RF69), precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
-| `PreparacionService` | Crear preparación al aprobar, asignar sala entre las libres (las vinculadas al escenario primero, con la sala bloqueada mientras comprueba el cruce) y avisar al docente por correo después de confirmar, marcar ítems alistados |
+| `PreparacionService` | Crear preparación al aprobar, asignar sala entre las libres en las que cabe el grupo (P11) (las vinculadas al escenario primero, con la sala bloqueada mientras comprueba el cruce) y avisar al docente por correo después de confirmar, marcar ítems alistados |
 | `SalaService` | Rastro de la ubicación de las salas (bloque, piso y número, RF65): una fila en `ubicaciones_sala` cada vez que cambia. Lo llaman las páginas de alta y edición de Filament |
 | `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento. `finalizar` bloquea la evaluación y su tipo: dos finalizaciones a la vez no repiten intento ni duplican la entrada de la bitácora (B3.11, B3.3) |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |

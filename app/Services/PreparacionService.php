@@ -8,6 +8,7 @@ use App\Enums\EstadoPreparacion;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Events\SalaAsignada;
+use App\Exceptions\SalaInsuficiente;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
 use App\Models\ItemInventario;
@@ -80,7 +81,13 @@ final class PreparacionService
         $anterior = $preparacion->sala_id;
 
         $huboCambio = DB::transaction(function () use ($preparacion, $sala, $anterior): bool {
-            Sala::query()->whereKey($sala->getKey())->lockForUpdate()->firstOrFail();
+            $bloqueada = Sala::query()->whereKey($sala->getKey())->lockForUpdate()->firstOrFail();
+            $estudiantes = (int) $preparacion->solicitud()->value('cantidad_estudiantes');
+
+            // El grupo tiene que caber en la sala (decisión del 2026-11-07).
+            if ($bloqueada->capacidad < $estudiantes) {
+                throw SalaInsuficiente::para($bloqueada, $estudiantes);
+            }
 
             $conflicto = $this->preparacionSolapada($preparacion, $sala);
 
@@ -189,6 +196,8 @@ final class PreparacionService
 
         return Sala::query()
             ->activas()
+            // Solo las salas en las que cabe el grupo (decisión del 2026-11-07).
+            ->where('capacidad', '>=', $solicitud->cantidad_estudiantes)
             ->withExists(['casosClinicos as del_escenario' => static fn (Builder $caso) => $caso->whereKey($solicitud->caso_clinico_id)])
             ->whereDoesntHave('preparaciones', fn (Builder $consulta) => $consulta
                 ->whereKeyNot($preparacion->getKey())

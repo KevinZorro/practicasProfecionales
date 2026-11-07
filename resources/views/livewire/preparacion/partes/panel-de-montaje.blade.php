@@ -17,7 +17,8 @@
 
         @if ($salasLibres->isEmpty())
             <x-aviso tono="atencion">
-                No queda ninguna sala libre en esta franja.
+                No queda ninguna sala libre en esta franja en la que quepan sus
+                {{ $montaje->solicitud->cantidad_estudiantes }} estudiantes.
             </x-aviso>
         @else
             <div class="flex flex-wrap items-end gap-2">

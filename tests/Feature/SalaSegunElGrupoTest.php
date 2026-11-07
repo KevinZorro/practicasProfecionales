@@ -68,6 +68,7 @@ it('dice en el tablero por qué no asigna una sala en la que no cabe el grupo', 
 
     Livewire::actingAs($this->administrativo)
         ->test(TableroDiario::class, ['fecha' => $this->fecha])
+        ->call('abrir', $montaje->id)
         ->set('salaElegida', $chica->id)
         ->call('asignarSala', $montaje->id)
         ->assertSee('caben 6 personas');

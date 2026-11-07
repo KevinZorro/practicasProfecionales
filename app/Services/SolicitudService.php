@@ -227,7 +227,8 @@ final class SolicitudService
     /**
      * Estudiantes que el docente puede poner en una sesión, por nombre,
      * correo o código institucional (RF28). Solo cuentas activas con el rol
-     * de estudiante vigente.
+     * de estudiante vigente. Busca por correo, pero no lo devuelve: para
+     * armar la lista bastan el nombre y el código (minimización, Ley 1581).
      *
      * @param  list<int>  $excluir  los que ya están en la lista
      * @return Collection<int, User>
@@ -248,7 +249,7 @@ final class SolicitudService
                 ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]))
             ->orderBy('nombre')
             ->limit(self::RESULTADOS_DE_BUSQUEDA)
-            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+            ->get(['id', 'nombre', 'codigo_institucional']);
     }
 
     /**
@@ -266,7 +267,7 @@ final class SolicitudService
         $encontrados = $this->estudiantesQuePuedenIr()
             ->whereIn('codigo_institucional', $codigos)
             ->orderBy('nombre')
-            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+            ->get(['id', 'nombre', 'codigo_institucional']);
 
         return [
             'encontrados' => $encontrados,

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Preparacion;
 
 use App\Enums\EstadoPreparacion;
+use App\Exceptions\SalaInsuficiente;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
@@ -106,6 +107,8 @@ final class TableroDiario extends Component
             $this->avisar('Sala asignada.');
         } catch (SalaOcupada $choque) {
             $this->conflictos[$preparacionId] = $this->describir($choque);
+        } catch (SalaInsuficiente $insuficiente) {
+            $this->conflictos[$preparacionId] = $insuficiente->getMessage();
         }
     }
 
