@@ -194,14 +194,14 @@ it('enseña al docente el motivo por el que le rechazaron la solicitud', functio
 
 it('no enseña la sala hasta que el administrativo la asigna', function (): void {
     $solicitud = Solicitud::factory()->aprobada()->create(['docente_id' => $this->docente->id]);
-    $preparacion = Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => null]);
+    $preparacion = Preparacion::factory()->create(['solicitud_id' => $solicitud->id]);
 
     Livewire::actingAs($this->docente)
         ->test(MisSolicitudes::class)
         ->assertSee('Sala por asignar')
         ->assertDontSee('Sala de partos');
 
-    $preparacion->update(['sala_id' => Sala::factory()->create(['nombre' => 'Sala de partos'])->id]);
+    $preparacion->salas()->attach(Sala::factory()->create(['nombre' => 'Sala de partos'])->id);
 
     Livewire::actingAs($this->docente)
         ->test(MisSolicitudes::class)

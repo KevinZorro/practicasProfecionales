@@ -6,20 +6,25 @@ namespace App\Exceptions;
 
 use App\Models\Sala;
 use DomainException;
+use Illuminate\Support\Collection;
 
 /**
- * El grupo no cabe en la sala: su capacidad, cuánta gente cabe en el espacio
- * físico, no alcanza para los estudiantes de la sesión (decisión del
- * 2026-11-07).
+ * El grupo no cabe en las salas elegidas: su capacidad sumada, cuánta gente
+ * cabe en el espacio físico, no alcanza para los estudiantes de la sesión
+ * (P11). Abriendo las cortinas se pueden unir hasta tres (P16).
  */
 final class SalaInsuficiente extends DomainException
 {
-    public static function para(Sala $sala, int $estudiantes): self
+    /**
+     * @param  Collection<int, Sala>  $salas
+     */
+    public static function para(Collection $salas, int $estudiantes): self
     {
         return new self(sprintf(
-            'En %s caben %d personas y el grupo es de %d estudiantes. Elige una sala más grande.',
-            $sala->nombre,
-            $sala->capacidad,
+            '%s %s caben %d personas y el grupo es de %d estudiantes. Elige una sala más grande o únele otra abriendo la cortina.',
+            $salas->count() === 1 ? 'En' : 'Entre',
+            $salas->pluck('nombre')->implode(' y '),
+            (int) $salas->sum('capacidad'),
             $estudiantes,
         ));
     }

@@ -16,9 +16,12 @@ use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
 
 /*
- * El tablero no ofrece salas en las que no cabe el grupo: la capacidad de la
- * sala (cuánta gente cabe en el espacio físico) tiene que alcanzar para los
- * estudiantes de la sesión (decisión del 2026-11-07).
+ * El grupo tiene que caber en las salas que se le asignan: la capacidad de
+ * la sala (cuánta gente cabe en el espacio físico) tiene que alcanzar para
+ * los estudiantes de la sesión (P11, decisión del 2026-11-07). Desde que se
+ * pueden unir salas abriendo la cortina (P16), lo que cuenta es la capacidad
+ * sumada, y el tablero ofrece también las que solas no alcanzan: ver
+ * SalasUnidasTest.
  */
 
 beforeEach(function (): void {
@@ -40,26 +43,15 @@ function montajeDeUnGrupoDe(int $estudiantes): Preparacion
         'cantidad_estudiantes' => $estudiantes,
     ]);
 
-    return Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => null, 'estado' => EstadoPreparacion::Pendiente]);
+    return Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'estado' => EstadoPreparacion::Pendiente]);
 }
-
-it('no ofrece las salas en las que no cabe el grupo', function (): void {
-    $chica = Sala::factory()->create(['nombre' => 'Sala chica', 'capacidad' => 6]);
-    $justa = Sala::factory()->create(['nombre' => 'Sala justa', 'capacidad' => 12]);
-    $grande = Sala::factory()->create(['nombre' => 'Sala grande', 'capacidad' => 30]);
-
-    $libres = $this->servicio->salasLibresPara(montajeDeUnGrupoDe(12))->pluck('id')->all();
-
-    expect($libres)->toEqualCanonicalizing([$justa->id, $grande->id])
-        ->and($libres)->not->toContain($chica->id);
-});
 
 it('no asigna una sala en la que no cabe el grupo aunque se pida a mano', function (): void {
     $chica = Sala::factory()->create(['capacidad' => 6]);
     $montaje = montajeDeUnGrupoDe(12);
 
-    expect(fn () => $this->servicio->asignarSala($montaje, $chica))->toThrow(SalaInsuficiente::class)
-        ->and($montaje->fresh()->sala_id)->toBeNull();
+    expect(fn () => $this->servicio->asignarSalas($montaje, [$chica->id]))->toThrow(SalaInsuficiente::class)
+        ->and($montaje->fresh()->salas)->toBeEmpty();
 });
 
 it('dice en el tablero por qué no asigna una sala en la que no cabe el grupo', function (): void {
@@ -69,9 +61,9 @@ it('dice en el tablero por qué no asigna una sala en la que no cabe el grupo', 
     Livewire::actingAs($this->administrativo)
         ->test(TableroDiario::class, ['fecha' => $this->fecha])
         ->call('abrir', $montaje->id)
-        ->set('salaElegida', $chica->id)
-        ->call('asignarSala', $montaje->id)
+        ->set('salasElegidas', [$chica->id])
+        ->call('asignarSalas', $montaje->id)
         ->assertSee('caben 6 personas');
 
-    expect($montaje->fresh()->sala_id)->toBeNull();
+    expect($montaje->fresh()->salas)->toBeEmpty();
 });

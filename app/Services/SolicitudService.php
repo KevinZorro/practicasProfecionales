@@ -441,7 +441,7 @@ final class SolicitudService
         return Solicitud::query()
             ->where(static fn (Builder $c) => $c->delDocente($docente)->orWhere('docente_que_dicta_id', $docente->id))
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['materia', 'casoClinico', 'preparacion.sala', 'docente:id,nombre', 'docenteQueDicta:id,nombre'])
+            ->with(['materia', 'casoClinico', 'preparacion.salas', 'docente:id,nombre', 'docenteQueDicta:id,nombre'])
             ->orderByDesc('fecha')
             ->orderByDesc('hora_inicio')
             ->paginate($porPagina);
@@ -458,7 +458,7 @@ final class SolicitudService
         return Solicitud::query()
             ->noVencidas()
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.salas'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->orderBy('id')
@@ -475,7 +475,7 @@ final class SolicitudService
     {
         return Solicitud::query()
             ->vencidas()
-            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.salas'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->orderBy('id')
@@ -495,7 +495,7 @@ final class SolicitudService
     public function paraElExpediente(Solicitud $solicitud): Solicitud
     {
         return $solicitud->loadMissing([
-            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.sala',
+            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.salas',
         ]);
     }
 
@@ -594,7 +594,7 @@ final class SolicitudService
     {
         $consulta = Solicitud::query()
             ->aprobadasEntre($desde, $hasta)
-            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.salas'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             // Sin desempate, dos sesiones a la misma hora salen en el orden

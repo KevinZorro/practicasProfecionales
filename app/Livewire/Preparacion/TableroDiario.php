@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Preparacion;
 
 use App\Enums\EstadoPreparacion;
+use App\Exceptions\AsignacionDeSalasInvalida;
 use App\Exceptions\SalaInsuficiente;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
@@ -12,7 +13,6 @@ use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Livewire\Concerns\AvisaDelResultado;
 use App\Models\ItemInventario;
 use App\Models\Preparacion;
-use App\Models\Sala;
 use App\Services\ParticipacionService;
 use App\Services\PreparacionService;
 use App\Support\FiltroDeUrl;
@@ -46,7 +46,8 @@ final class TableroDiario extends Component
     /** @var array<int, string> id de preparación => mensaje de conflicto */
     public array $conflictos = [];
 
-    public ?int $salaElegida = null;
+    /** @var list<int> de una a tres salas, que se unen abriendo las cortinas (P16) */
+    public array $salasElegidas = [];
 
     public string $observaciones = '';
 
@@ -82,33 +83,36 @@ final class TableroDiario extends Component
         $this->authorize('view', $preparacion);
 
         $this->abierta = $preparacionId;
-        $this->salaElegida = $preparacion->sala_id;
+        $this->salasElegidas = $preparacion->salas->pluck('id')->all();
         $this->observaciones = (string) $preparacion->observaciones;
     }
 
     public function cerrar(): void
     {
         $this->abierta = null;
-        $this->salaElegida = null;
+        $this->salasElegidas = [];
         $this->observaciones = '';
         $this->conflictos = [];
     }
 
-    public function asignarSala(int $preparacionId, PreparacionService $preparaciones): void
+    public function asignarSalas(int $preparacionId, PreparacionService $preparaciones): void
     {
         $preparacion = $this->preparacion($preparacionId);
         $this->authorize('asignarSala', $preparacion);
-        $this->validate(['salaElegida' => 'required|integer|exists:salas,id']);
+        $this->validate([
+            'salasElegidas' => 'required|array|min:1|max:'.PreparacionService::MAXIMO_DE_SALAS,
+            'salasElegidas.*' => 'integer|distinct|exists:salas,id',
+        ]);
 
         unset($this->conflictos[$preparacionId]);
 
         try {
-            $preparaciones->asignarSala($preparacion, Sala::findOrFail($this->salaElegida));
-            $this->avisar('Sala asignada.');
+            $preparaciones->asignarSalas($preparacion, array_map('intval', $this->salasElegidas));
+            $this->avisar(count($this->salasElegidas) === 1 ? 'Sala asignada.' : 'Salas asignadas: se unen abriendo la cortina.');
         } catch (SalaOcupada $choque) {
             $this->conflictos[$preparacionId] = $this->describir($choque);
-        } catch (SalaInsuficiente $insuficiente) {
-            $this->conflictos[$preparacionId] = $insuficiente->getMessage();
+        } catch (SalaInsuficiente|AsignacionDeSalasInvalida $invalida) {
+            $this->conflictos[$preparacionId] = $invalida->getMessage();
         }
     }
 
@@ -206,7 +210,7 @@ final class TableroDiario extends Component
     /** Preparación del día en curso, con todo lo que la pantalla enseña. */
     private function preparacion(int $preparacionId): Preparacion
     {
-        return Preparacion::with(['solicitud.docente', 'solicitud.materia', 'solicitud.casoClinico', 'sala', 'items'])
+        return Preparacion::with(['solicitud.docente', 'solicitud.materia', 'solicitud.casoClinico', 'salas', 'items'])
             ->findOrFail($preparacionId);
     }
 
@@ -223,7 +227,8 @@ final class TableroDiario extends Component
         }
 
         return sprintf(
-            'Esa sala ya está ocupada de %s a %s por «%s», de %s.',
+            '%s ya está ocupada de %s a %s por «%s», de %s.',
+            $choque->sala->nombre ?? 'Esa sala',
             substr($otra->hora_inicio, 0, 5),
             substr($otra->hora_fin, 0, 5),
             $otra->casoClinico->nombre,

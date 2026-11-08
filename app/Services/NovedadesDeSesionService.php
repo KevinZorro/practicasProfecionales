@@ -130,8 +130,10 @@ final class NovedadesDeSesionService
 
             $preparacion = $solicitud->preparacion;
 
+            // Las salas se eligieron para la franja vieja: se sueltan todas y se
+            // vuelven a elegir al preparar.
             if ($cambiaFranja && $preparacion !== null) {
-                $preparacion->update(['sala_id' => null]);
+                $preparacion->salas()->detach();
             }
 
             if ($cambiaEscenario) {

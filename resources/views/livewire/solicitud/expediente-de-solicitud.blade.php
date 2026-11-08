@@ -135,8 +135,8 @@
                 <x-tarjeta titulo="Montaje">
                     <div class="flex items-center justify-between gap-3">
                         <x-etiqueta-estado :estado="$preparacion->estado" />
-                        @if ($preparacion->sala)
-                            <span class="min-w-0 truncate text-[14px] text-gray-700">{{ $preparacion->sala->nombre }}</span>
+                        @if ($preparacion->salas->isNotEmpty())
+                            <span class="min-w-0 truncate text-[14px] text-gray-700">{{ $preparacion->nombresDeLasSalas() }}</span>
                         @endif
                     </div>
                     <x-slot:pie>

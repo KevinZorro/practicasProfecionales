@@ -53,8 +53,8 @@
                         <dl class="mt-4 grid grid-cols-2 gap-3">
                             <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
                             <x-dato etiqueta="Sala">
-                                @if ($montaje->sala)
-                                    <span class="font-semibold">{{ $montaje->sala->nombreCompleto() }}</span>
+                                @if ($montaje->salas->isNotEmpty())
+                                    <span class="font-semibold">{{ $montaje->salas->map->nombreCompleto()->implode(' + ') }}</span>
                                 @else
                                     <span class="font-medium text-amber-800">Sin asignar</span>
                                 @endif

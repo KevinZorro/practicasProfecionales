@@ -9,7 +9,6 @@ use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Livewire\Solicitud\NovedadesDeLaSesion;
 use App\Livewire\Solicitud\SesionesApartadas;
 use App\Models\Preparacion;
-use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\DatosNuevaSolicitud;
@@ -68,7 +67,7 @@ function sesionParaReprogramar(User $docente): Solicitud
         'hora_fin' => '09:00:00',
         'cantidad_estudiantes' => 4,
     ]);
-    Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => Sala::factory()->create()->id]);
+    Preparacion::factory()->conSala()->create(['solicitud_id' => $solicitud->id]);
 
     return $solicitud;
 }

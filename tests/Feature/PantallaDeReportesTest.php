@@ -43,7 +43,7 @@ function usoDeEscenarioDe(User $docente, ?Sala $sala = null, string $fecha = '20
         'caso_clinico_id' => CasoClinico::factory()->create()->id,
         'fecha' => $fecha,
     ]);
-    Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => ($sala ?? Sala::factory()->create())->id]);
+    Preparacion::factory()->conSala($sala ?? Sala::factory()->create())->create(['solicitud_id' => $solicitud->id]);
 
     return $solicitud;
 }

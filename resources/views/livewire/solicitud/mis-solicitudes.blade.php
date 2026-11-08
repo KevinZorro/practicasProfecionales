@@ -25,7 +25,7 @@
                             <span class="font-semibold">Motivo del rechazo:</span>
                             {{ $solicitud->motivo_rechazo ?: 'No se dejó un motivo escrito.' }}
                         </p>
-                    @elseif ($solicitud->estado === \App\Enums\EstadoSolicitud::Aprobada && ! $solicitud->preparacion?->sala)
+                    @elseif ($solicitud->estado === \App\Enums\EstadoSolicitud::Aprobada && ! $solicitud->preparacion?->nombresDeLasSalas())
                         <p class="text-gray-500">Sala por asignar: se asigna al preparar el escenario.</p>
                     @endif
                 </x-fila-de-solicitud>

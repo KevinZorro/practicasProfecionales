@@ -48,7 +48,7 @@ function sesionAprobada(
     ]);
 
     if ($sala instanceof Sala) {
-        Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => $sala->id]);
+        Preparacion::factory()->conSala($sala)->create(['solicitud_id' => $solicitud->id]);
     }
 
     return $solicitud;

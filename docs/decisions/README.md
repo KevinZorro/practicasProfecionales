@@ -2,7 +2,7 @@
 
 Las decisiones de arquitectura de la plataforma, con su contexto, las alternativas que se descartaron y lo que cuestan. Sirven para que quien mantenga la plataforma sepa por qué está hecha así y cuándo conviene revisarlas.
 
-Las decisiones pequeñas, como las reglas por defecto D1–D25 o las preguntas respondidas P1–P15, siguen en `docs/trazabilidad.md`.
+Las decisiones pequeñas, como las reglas por defecto D1–D25 o las preguntas respondidas P1–P16, siguen en `docs/trazabilidad.md`.
 
 Una decisión no se edita: si cambia, se escribe una nueva que la reemplaza, y la vieja queda marcada como reemplazada.
 

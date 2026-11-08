@@ -43,7 +43,7 @@ function datosParaLosTresReportes(): void
             'hora_fin' => $fin,
             'cantidad_estudiantes' => 12,
         ]);
-        Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => $sala->id]);
+        Preparacion::factory()->conSala($sala)->create(['solicitud_id' => $solicitud->id]);
     }
 
     $evaluada = Solicitud::factory()->deEvaluacion()->aprobada()->create([

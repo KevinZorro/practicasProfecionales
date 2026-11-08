@@ -24,7 +24,6 @@ class Preparacion extends Model
      */
     protected $fillable = [
         'solicitud_id',
-        'sala_id',
         'estado',
         'preparado_por',
         'preparado_at',
@@ -48,10 +47,23 @@ class Preparacion extends Model
         return $this->belongsTo(Solicitud::class);
     }
 
-    /** @return BelongsTo<Sala, $this> */
-    public function sala(): BelongsTo
+    /**
+     * De una a tres salas (P16): abriendo las cortinas, varias salas son un
+     * solo salón. Las asigna el administrativo con PreparacionService.
+     *
+     * @return BelongsToMany<Sala, $this, SalaDeLaPreparacion>
+     */
+    public function salas(): BelongsToMany
     {
-        return $this->belongsTo(Sala::class);
+        return $this->belongsToMany(Sala::class, 'preparacion_sala')
+            ->using(SalaDeLaPreparacion::class)
+            ->orderBy('salas.nombre');
+    }
+
+    /** «SIM-01 + SIM-02», o null si todavía no tiene sala. */
+    public function nombresDeLasSalas(): ?string
+    {
+        return $this->salas->isEmpty() ? null : $this->salas->pluck('nombre')->implode(' + ');
     }
 
     /** @return BelongsTo<User, $this> */
@@ -76,7 +88,7 @@ class Preparacion extends Model
     /** @param Builder<$this> $consulta */
     public function scopeSinSala(Builder $consulta): void
     {
-        $consulta->whereNull('sala_id');
+        $consulta->whereDoesntHave('salas');
     }
 
     /**

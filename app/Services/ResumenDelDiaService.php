@@ -121,7 +121,7 @@ final class ResumenDelDiaService
     private function porEvaluar(User $docente): Collection
     {
         return $this->evaluaciones->sesionesPorEvaluar($docente)
-            ->load(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'preparacion.sala']);
+            ->load(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'preparacion.salas']);
     }
 
     /** Los formatos cargados del periodo vigente que esperan verificación (RF52). */
@@ -167,6 +167,6 @@ final class ResumenDelDiaService
      */
     private function conLoDeLaFila(Builder $consulta): Builder
     {
-        return $consulta->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.sala']);
+        return $consulta->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.salas']);
     }
 }

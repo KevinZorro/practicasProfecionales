@@ -6,6 +6,7 @@ use App\Events\SalaAsignada;
 use App\Exceptions\SalaOcupada;
 use App\Models\Preparacion;
 use App\Models\Sala;
+use App\Models\SalaDeLaPreparacion;
 use App\Models\Solicitud;
 use App\Services\PreparacionService;
 use Illuminate\Database\QueryException;
@@ -41,7 +42,7 @@ function montajeSinSala(string $inicio, string $fin): Preparacion
 /** Lo que hace el segundo administrativo, desde su propia sesión de base de datos. */
 function asignarDesdeOtraSesion(int $preparacionId, int $salaId): void
 {
-    enOtraSesion(fn () => app(PreparacionService::class)->asignarSala(Preparacion::findOrFail($preparacionId), Sala::findOrFail($salaId)));
+    enOtraSesion(fn () => app(PreparacionService::class)->asignarSalas(Preparacion::findOrFail($preparacionId), [$salaId]));
 }
 
 it('dos administrativos que asignan a la vez la misma sala a franjas que se cruzan no la reservan dos veces', function (): void {
@@ -51,8 +52,8 @@ it('dos administrativos que asignan a la vez la misma sala a franjas que se cruz
 
     $seInterpuso = false;
 
-    Preparacion::updating(function (Preparacion $montaje) use (&$seInterpuso, $primero, $segundo, $sala): void {
-        if ($seInterpuso || $montaje->id !== $primero->id) {
+    SalaDeLaPreparacion::creating(function (SalaDeLaPreparacion $reserva) use (&$seInterpuso, $primero, $segundo, $sala): void {
+        if ($seInterpuso || $reserva->preparacion_id !== $primero->id) {
             return;
         }
 
@@ -66,7 +67,7 @@ it('dos administrativos que asignan a la vez la misma sala a franjas que se cruz
         }
     });
 
-    app(PreparacionService::class)->asignarSala($primero, $sala);
+    app(PreparacionService::class)->asignarSalas($primero, [$sala->id]);
 
     // El segundo vuelve a intentarlo cuando el primero ya terminó.
     try {
@@ -76,7 +77,35 @@ it('dos administrativos que asignan a la vez la misma sala a franjas que se cruz
     }
 
     expect($seInterpuso)->toBeTrue()
-        ->and(Preparacion::query()->where('sala_id', $sala->id)->count())->toBe(1)
-        ->and($primero->fresh()->sala_id)->toBe($sala->id)
-        ->and($segundo->fresh()->sala_id)->toBeNull();
+        ->and($sala->preparaciones()->count())->toBe(1)
+        ->and($primero->fresh()->salas->pluck('id')->all())->toBe([$sala->id])
+        ->and($segundo->fresh()->salas)->toBeEmpty();
+});
+
+it('dos administrativos que eligen a la vez salas distintas para el mismo montaje no le suman las salas de los dos', function (): void {
+    [$a, $b, $c, $d, $e, $f] = Sala::factory()->count(6)->create()->all();
+    $montaje = montajeSinSala('07:00:00', '09:00:00');
+
+    $seInterpuso = false;
+
+    SalaDeLaPreparacion::creating(function () use (&$seInterpuso, $montaje, $d, $e, $f): void {
+        if ($seInterpuso) {
+            return;
+        }
+
+        $seInterpuso = true;
+
+        try {
+            enOtraSesion(fn () => app(PreparacionService::class)->asignarSalas(Preparacion::findOrFail($montaje->id), [$d->id, $e->id, $f->id]));
+        } catch (QueryException) {
+            // Si el montaje está protegido, el segundo se cansa de esperar el
+            // candado del primero; en producción esperaría y después
+            // reemplazaría la elección del primero por la suya.
+        }
+    });
+
+    app(PreparacionService::class)->asignarSalas($montaje, [$a->id, $b->id, $c->id]);
+
+    expect($seInterpuso)->toBeTrue()
+        ->and($montaje->fresh()->salas->pluck('id')->all())->toEqualCanonicalizing([$a->id, $b->id, $c->id]);
 });

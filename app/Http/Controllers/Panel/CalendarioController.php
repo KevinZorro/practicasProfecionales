@@ -65,7 +65,7 @@ final class CalendarioController extends Controller
      */
     private function comoEvento(Solicitud $solicitud): array
     {
-        $sala = $solicitud->preparacion?->sala?->nombre;
+        $sala = $solicitud->preparacion?->nombresDeLasSalas();
         $colores = $solicitud->tipo->coloresEnElCalendario();
         $fecha = $solicitud->fecha->format('Y-m-d');
         $dicta = $solicitud->docenteQueDicta ?? $solicitud->docente;

@@ -68,7 +68,7 @@ it('recorre el flujo completo hasta dejar el escenario listo para preparar', fun
     // Al aprobar nace la preparación, sin sala: la asigna el administrativo.
     expect($solicitud->preparacion)->not->toBeNull()
         ->and($solicitud->preparacion->estado)->toBe(EstadoPreparacion::Pendiente)
-        ->and($solicitud->preparacion->sala_id)->toBeNull();
+        ->and($solicitud->preparacion->salas)->toBeEmpty();
 });
 
 it('no asigna sala al crear la solicitud', function (): void {

@@ -12,9 +12,10 @@ use App\Models\LineaDeReposicion;
 use App\Models\Solicitud;
 use App\Models\User;
 use Illuminate\Contracts\Database\Query\Builder as BuilderContract;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as ColeccionDeModelos;
-use Illuminate\Database\Query\Builder as ConsultaCruda;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -50,24 +51,37 @@ final class ReporteService
      * Las horas salen de hora_inicio y hora_fin, no de un campo guardado, y
      * se suman en la base de datos: traer las filas para sumarlas en PHP
      * sería justo la carga en memoria que el RNF10 no admite.
+     *
+     * @return Builder<Solicitud>
      */
     public function usoDeEscenarios(FiltroReporte $filtro): Builder
     {
         return $this->solicitudesAprobadas($filtro)
             ->leftJoin('preparaciones', 'preparaciones.solicitud_id', '=', 'solicitudes.id')
-            ->leftJoin('salas', 'salas.id', '=', 'preparaciones.sala_id')
+            // Una sesión puede ocupar varias salas unidas (P16): van en una sola
+            // columna, «SIM-01 + SIM-02», para que la sesión cuente una vez.
+            ->leftJoinLateral(
+                DB::table('preparacion_sala')
+                    ->join('salas', 'salas.id', '=', 'preparacion_sala.sala_id')
+                    ->whereColumn('preparacion_sala.preparacion_id', 'preparaciones.id')
+                    ->selectRaw("string_agg(salas.nombre, ' + ' ORDER BY salas.nombre) as nombres"),
+                'salas_de_la_sesion',
+            )
             // Las horas son de quien dictó la sesión, que es el reemplazo
             // si hubo sustitución (RF54, RF73).
             ->join('users', 'users.id', '=', DB::raw('COALESCE(solicitudes.docente_que_dicta_id, solicitudes.docente_id)'))
             ->join('materias', 'materias.id', '=', 'solicitudes.materia_id')
             ->join('casos_clinicos', 'casos_clinicos.id', '=', 'solicitudes.caso_clinico_id')
-            ->when($filtro->salaId !== null, fn (Builder $c) => $c->where('preparaciones.sala_id', $filtro->salaId))
+            ->when($filtro->salaId !== null, fn (Builder $c) => $c->whereExists(static fn ($salas) => $salas
+                ->from('preparacion_sala')
+                ->whereColumn('preparacion_sala.preparacion_id', 'preparaciones.id')
+                ->where('preparacion_sala.sala_id', $filtro->salaId)))
             // Se agrupa por id, no por nombre: dos docentes homónimos o dos
             // casos clínicos con el mismo título son cosas distintas y no
             // pueden caer en el mismo renglón. PostgreSQL deja seleccionar
             // el resto de columnas de una tabla cuya clave primaria está
             // agrupada.
-            ->groupBy('users.id', 'materias.id', 'casos_clinicos.id', 'salas.id', 'solicitudes.tipo')
+            ->groupBy('users.id', 'materias.id', 'casos_clinicos.id', 'salas_de_la_sesion.nombres', 'solicitudes.tipo')
             ->orderBy('users.nombre')->orderBy('materias.nombre')->orderBy('casos_clinicos.nombre')
             ->select($this->columnasDeUso());
     }
@@ -78,6 +92,8 @@ final class ReporteService
      * Solo evaluaciones finalizadas: un borrador es una evaluación a medio
      * llenar, y sus resultados todavía pueden cambiar. Publicarlos en un
      * reporte sería dar por definitivo algo que el docente no ha cerrado.
+     *
+     * @return Builder<EvaluacionEstudiante>
      */
     public function resultadosDeEvaluacion(FiltroReporte $filtro): Builder
     {
@@ -107,6 +123,8 @@ final class ReporteService
      * porque existe la fila. Ese hueco es justo lo que el RF56 busca
      * evitar. La columna "motivo" distingue los dos casos para que el
      * coordinador sepa si hay que registrarla o solo terminarla.
+     *
+     * @return Builder<Solicitud>
      */
     public function evaluacionesNoRegistradas(FiltroReporte $filtro): Builder
     {
@@ -151,6 +169,7 @@ final class ReporteService
         return User::query()->whereHas('solicitudes')->orderBy('nombre')->get(['id', 'nombre']);
     }
 
+    /** @return LengthAwarePaginator<int, Model> */
     public function paginar(BuilderContract $consulta, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
     {
         return $consulta->paginate($porPagina);
@@ -173,6 +192,8 @@ final class ReporteService
      * Base común del RF54: solo solicitudes aprobadas. El reporte mide uso
      * real del laboratorio, y una solicitud pendiente o rechazada no ocupó
      * ni sala ni equipo.
+     *
+     * @return Builder<Solicitud>
      */
     private function solicitudesAprobadas(FiltroReporte $filtro): Builder
     {
@@ -208,7 +229,7 @@ final class ReporteService
      * La expresión es de PostgreSQL, que es el motor del proyecto en
      * desarrollo, pruebas y producción.
      *
-     * @return list<ConsultaCruda|string>
+     * @return list<Expression|string>
      */
     private function columnasDeUso(): array
     {
@@ -219,7 +240,7 @@ final class ReporteService
             'materias.nombre as materia_nombre',
             'materias.semestre as materia_semestre',
             'casos_clinicos.nombre as caso_clinico_nombre',
-            DB::raw("COALESCE(salas.nombre, 'Sin asignar') as sala_nombre"),
+            DB::raw("COALESCE(salas_de_la_sesion.nombres, 'Sin asignar') as sala_nombre"),
             // Sin alias, para que siga aplicando el cast a TipoSesion.
             'solicitudes.tipo',
             DB::raw('COUNT(solicitudes.id) as sesiones'),

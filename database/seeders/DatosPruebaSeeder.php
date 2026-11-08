@@ -651,12 +651,15 @@ class DatosPruebaSeeder extends Seeder
 
             $preparacion = Preparacion::create([
                 'solicitud_id' => $solicitud->id,
-                'sala_id' => isset($datos['sala']) ? $salas[$datos['sala']]->id : null,
                 'estado' => $preparada ? EstadoPreparacion::Preparado : EstadoPreparacion::Pendiente,
                 'preparado_por' => $preparada ? $administrativo->id : null,
                 'preparado_at' => $preparada ? $datos['fecha']->copy()->subHours(2) : null,
                 'observaciones' => $preparada ? null : 'Pendiente de asignar sala.',
             ]);
+
+            if (isset($datos['sala'])) {
+                $preparacion->salas()->attach($salas[$datos['sala']]->id);
+            }
 
             foreach ($solicitud->items as $item) {
                 $preparacion->items()->attach($item->id, [

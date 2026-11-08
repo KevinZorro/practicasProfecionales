@@ -37,42 +37,6 @@ parameters:
 			path: app/Services/PreparacionService.php
 
 		-
-			message: '#^Method App\\Services\\ReporteService\:\:columnasDeUso\(\) should return list\<Illuminate\\Database\\Query\\Builder\|string\> but returns array\{''users\.nombre as…'', ''materias\.nombre as…'', ''materias\.semestre…'', ''casos_clinicos…'', Illuminate\\Contracts\\Database\\Query\\Expression, ''solicitudes\.tipo'', Illuminate\\Contracts\\Database\\Query\\Expression, Illuminate\\Contracts\\Database\\Query\\Expression, \.\.\.\}\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Services/ReporteService.php
-
-		-
-			message: '#^Method App\\Services\\ReporteService\:\:evaluacionesNoRegistradas\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/ReporteService.php
-
-		-
-			message: '#^Method App\\Services\\ReporteService\:\:paginar\(\) return type with generic class Illuminate\\Pagination\\LengthAwarePaginator does not specify its types\: TKey, TValue$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/ReporteService.php
-
-		-
-			message: '#^Method App\\Services\\ReporteService\:\:resultadosDeEvaluacion\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/ReporteService.php
-
-		-
-			message: '#^Method App\\Services\\ReporteService\:\:solicitudesAprobadas\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/ReporteService.php
-
-		-
-			message: '#^Method App\\Services\\ReporteService\:\:usoDeEscenarios\(\) return type with generic class Illuminate\\Database\\Eloquent\\Builder does not specify its types\: TModel$#'
-			identifier: missingType.generics
-			count: 1
-			path: app/Services/ReporteService.php
-
-		-
 			message: '#^Access to an undefined property App\\Models\\CambioEstadoItem\:\:\$item_id\.$#'
 			identifier: property.notFound
 			count: 1

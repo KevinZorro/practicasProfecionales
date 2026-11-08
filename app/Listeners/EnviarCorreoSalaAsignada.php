@@ -22,7 +22,7 @@ final class EnviarCorreoSalaAsignada implements ShouldQueue
 
     public function handle(SalaAsignada $evento): void
     {
-        $preparacion = $evento->preparacion->loadMissing(['sala', 'solicitud.docente', 'solicitud.docenteQueDicta', 'solicitud.casoClinico', 'solicitud.materia']);
+        $preparacion = $evento->preparacion->loadMissing(['salas', 'solicitud.docente', 'solicitud.docenteQueDicta', 'solicitud.casoClinico', 'solicitud.materia']);
 
         // Quien dicta, que con una sustitución (RF73) no es el titular.
         $destinatario = $preparacion->solicitud->docenteQueDicta ?? $preparacion->solicitud->docente;

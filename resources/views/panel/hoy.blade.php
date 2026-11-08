@@ -71,8 +71,8 @@
                                                 {{ $solicitud->casoClinico->nombre }}
                                             </a>
                                             <p class="mt-0.5 text-[14px] leading-snug text-gray-500">
-                                                @if ($montaje->sala)
-                                                    {{ $montaje->sala->nombre }}
+                                                @if ($montaje->salas->isNotEmpty())
+                                                    {{ $montaje->nombresDeLasSalas() }}
                                                 @else
                                                     <span class="font-medium text-amber-800">Sin sala</span>
                                                 @endif

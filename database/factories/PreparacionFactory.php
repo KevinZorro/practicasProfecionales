@@ -19,7 +19,8 @@ class PreparacionFactory extends Factory
     protected $model = Preparacion::class;
 
     /**
-     * La sala llega nula: la asigna el administrativo el día de la práctica.
+     * Sin sala: la asigna el administrativo el día de la práctica (P16: de
+     * una a tres, en preparacion_sala).
      *
      * @return array<string, mixed>
      */
@@ -27,7 +28,6 @@ class PreparacionFactory extends Factory
     {
         return [
             'solicitud_id' => Solicitud::factory()->aprobada(),
-            'sala_id' => null,
             'estado' => EstadoPreparacion::Pendiente,
             'preparado_por' => null,
             'preparado_at' => null,
@@ -35,17 +35,17 @@ class PreparacionFactory extends Factory
         ];
     }
 
-    public function conSala(?Sala $sala = null): static
+    /** Con estas salas, o con una nueva si no se dice cuál. */
+    public function conSala(Sala ...$salas): static
     {
-        return $this->state(fn (array $atributos): array => [
-            'sala_id' => $sala?->id ?? Sala::factory(),
-        ]);
+        return $this->afterCreating(static function (Preparacion $preparacion) use ($salas): void {
+            $preparacion->salas()->attach($salas === [] ? [Sala::factory()->create()->id] : array_map(static fn (Sala $sala): int => $sala->id, $salas));
+        });
     }
 
     public function preparada(): static
     {
-        return $this->state(fn (array $atributos): array => [
-            'sala_id' => Sala::factory(),
+        return $this->conSala()->state(fn (array $atributos): array => [
             'estado' => EstadoPreparacion::Preparado,
             'preparado_por' => User::factory(),
             'preparado_at' => now(),

@@ -22,6 +22,9 @@ final class SalaOcupada extends DomainException
      */
     public ?Preparacion $conflicto = null;
 
+    /** Cuál de las salas elegidas está ocupada: pueden ser hasta tres (P16). */
+    public ?Sala $sala = null;
+
     public static function por(Sala $sala, Preparacion $conflicto): self
     {
         $solicitud = $conflicto->solicitud;
@@ -36,6 +39,7 @@ final class SalaOcupada extends DomainException
         ));
 
         $excepcion->conflicto = $conflicto;
+        $excepcion->sala = $sala;
 
         return $excepcion;
     }

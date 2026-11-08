@@ -126,7 +126,7 @@ it('separa en la preparación lo que requiere al ingeniero', function (): void {
     $alta = ItemInventario::factory()->simulador(NivelFidelidad::Alta)->create(['nombre' => 'Simulador neonatal']);
     $gasas = ItemInventario::factory()->equipoBasico()->create(['nombre' => 'Gasas estériles']);
     $solicitud = Solicitud::factory()->create(['estado' => EstadoSolicitud::Aprobada, 'fecha' => '2026-10-20']);
-    $preparacion = Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => null, 'estado' => EstadoPreparacion::Pendiente]);
+    $preparacion = Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'estado' => EstadoPreparacion::Pendiente]);
     $preparacion->items()->attach([$alta->id => ['cantidad' => 1, 'alistado' => false], $gasas->id => ['cantidad' => 10, 'alistado' => false]]);
 
     $html = Livewire::actingAs($this->administrativo)

@@ -34,10 +34,10 @@ function reservaAprobada(string $fecha, ?Sala $sala = null): Solicitud
         'estado' => EstadoSolicitud::Aprobada,
         'fecha' => $fecha,
     ]);
-    Preparacion::factory()->create([
-        'solicitud_id' => $solicitud->id,
-        'sala_id' => $sala?->id,
-    ]);
+    $preparacion = Preparacion::factory()->create(['solicitud_id' => $solicitud->id]);
+    if ($sala !== null) {
+        $preparacion->salas()->attach($sala);
+    }
 
     return $solicitud;
 }
@@ -65,8 +65,8 @@ it('incluye el tipo de sesión y la sala cuando ya fue asignada', function (): v
     $sinSala = $reservas->firstWhere('fecha.day', 11);
 
     expect($conSala->tipo)->not->toBeNull()
-        ->and($conSala->preparacion->sala->nombre)->toBe('Sala de partos')
-        ->and($sinSala->preparacion->sala)->toBeNull();
+        ->and($conSala->preparacion->nombresDeLasSalas())->toBe('Sala de partos')
+        ->and($sinSala->preparacion->salas)->toBeEmpty();
 });
 
 it('ordena las reservas por fecha y hora', function (): void {
@@ -98,7 +98,7 @@ it('no genera consultas N+1 al recorrer el calendario', function (): void {
         $reserva->docente->nombre;
         $reserva->materia->nombre;
         $reserva->casoClinico->nombre;
-        $reserva->preparacion?->sala?->nombre;
+        $reserva->preparacion?->nombresDeLasSalas();
     }
     $consultas = count(DB::getQueryLog());
     DB::disableQueryLog();
@@ -119,7 +119,7 @@ it('mantiene constante el número de consultas al crecer el calendario', functio
             $reserva->docente->nombre;
             $reserva->materia->nombre;
             $reserva->casoClinico->nombre;
-            $reserva->preparacion?->sala?->nombre;
+            $reserva->preparacion?->nombresDeLasSalas();
         }
         $total = count(DB::getQueryLog());
         DB::disableQueryLog();
@@ -145,14 +145,13 @@ it('no rechaza tres sesiones a la misma hora en salas distintas', function (): v
         $solicitud = Solicitud::factory()->aprobada()->create([
             'fecha' => '2026-03-10', 'hora_inicio' => '07:00:00', 'hora_fin' => '09:00:00',
         ]);
-        Preparacion::factory()->create([
-            'solicitud_id' => $solicitud->id,
-            'sala_id' => Sala::factory()->create(['nombre' => $nombre])->id,
-        ]);
+        Preparacion::factory()
+            ->conSala(Sala::factory()->create(['nombre' => $nombre]))
+            ->create(['solicitud_id' => $solicitud->id]);
     }
 
     $reservas = $this->servicio->paraCalendario('2026-03-01', '2026-03-31', $this->administrativo);
 
     expect($reservas)->toHaveCount(3)
-        ->and($reservas->pluck('preparacion.sala.nombre')->all())->toBe(['Sala 1', 'Sala 2', 'Sala 3']);
+        ->and($reservas->map(fn ($reserva) => $reserva->preparacion?->nombresDeLasSalas())->all())->toBe(['Sala 1', 'Sala 2', 'Sala 3']);
 });

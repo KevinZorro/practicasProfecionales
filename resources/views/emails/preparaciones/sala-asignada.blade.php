@@ -9,13 +9,24 @@
 <body style="font-family: sans-serif; color: #1f2937; line-height: 1.5;">
     <p>Buen día, {{ $dicta->nombre }}:</p>
 
-    @if ($esCambio)
+    @php($unidas = $preparacion->salas->count() > 1)
+
+    @if ($esCambio && $unidas)
+        <p>Las salas de su sesión <strong>cambiaron</strong>. Ahora son:</p>
+    @elseif ($esCambio)
         <p>La sala de su sesión <strong>cambió</strong>. La nueva es:</p>
     @else
-        <p>Su sesión ya tiene sala:</p>
+        <p>Su sesión ya tiene {{ $unidas ? 'salas' : 'sala' }}:</p>
     @endif
 
-    <p style="font-size: 1.25em;"><strong>{{ $preparacion->sala->nombreCompleto() }}</strong></p>
+    @foreach ($preparacion->salas as $sala)
+        <p style="font-size: 1.25em; margin: 0.25em 0;"><strong>{{ $sala->nombreCompleto() }}</strong></p>
+    @endforeach
+
+    @if ($unidas)
+        {{-- P16: unidas abriendo las cortinas, son un solo salón. --}}
+        <p>Las salas se unen abriendo la cortina que las separa.</p>
+    @endif
 
     <table cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
         <tr>

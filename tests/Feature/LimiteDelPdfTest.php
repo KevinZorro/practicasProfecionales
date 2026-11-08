@@ -38,7 +38,7 @@ function sesionesAprobadasEn(string $fecha, int $cantidad): void
             'caso_clinico_id' => $caso->id,
             'fecha' => $fecha,
         ]);
-        Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => $sala->id]);
+        Preparacion::factory()->conSala($sala)->create(['solicitud_id' => $solicitud->id]);
     }
 }
 
