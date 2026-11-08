@@ -313,9 +313,9 @@ privados (el formato de confidencialidad firmado). Cada copia es una carpeta
 con fecha dentro de `DIRECTORIO_COPIAS`, con sus sumas SHA-256, y se borran
 las de más de `COPIAS_RETENCION_DIAS` días.
 
-Las copias están en el mismo servidor: protegen de un error, no de que se
-dañe el disco. **Hay que llevarlas fuera** con el sistema de copias de la
-universidad. Tienen datos personales.
+Las copias están en el mismo servidor, por decisión del laboratorio
+(`docs/decisions/0007-las-copias-se-quedan-en-el-servidor.md`): protegen de
+un error, no de que se dañe el disco. Tienen datos personales.
 
 **`APP_KEY` no va en esas copias y es tan importante como ellas.** El documento
 de identidad de cada cuenta (`users.documento`) está cifrado con esa clave:

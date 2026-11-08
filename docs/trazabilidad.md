@@ -281,6 +281,9 @@ Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos)
 | P10 | ¿Aprobar debe exigir que haya inventario disponible? | No: se puede aprobar aunque falten unidades en la franja, pero entonces las observaciones de la aprobación son obligatorias, para que el docente sepa qué falta. Le llegan en el correo (2026-11-07) | RF31, RF33 |
 | P11 | ¿La sala tiene que respetar su capacidad frente al grupo? | Sí: el tablero solo ofrece salas en las que cabe el grupo (capacidad de la sala ≥ estudiantes de la sesión), y asignar una más chica a mano se rechaza (2026-11-07) | RF36 |
 | P12 | ¿El docente necesita ver el correo de los estudiantes al armar la lista? | No: la búsqueda sigue encontrando por correo, pero solo enseña nombre y código (minimización, Ley 1581; 2026-11-07) | RF28 |
+| P13 | ¿Cuánto se conservan los formatos firmados, las evaluaciones y la bitácora? | Dos semestres: el periodo vigente y el anterior. Lo más viejo lo depura el ADMIN en `/panel/depuracion`, después de descargar en un ZIP los formatos que se van; «Hoy» le avisa. Del formato se borra el PDF y la fila queda; de la evaluación se va todo, y el intento vuelve a 1 para quien repita después de dos semestres, que es raro. Nada se borra solo (2026-11-08) | RF51, RF62, Ley 1581 |
+| P14 | ¿Las copias de seguridad salen del servidor? | No: se quedan en el disco del servidor, sin cifrar aparte, y el riesgo de perder el disco queda aceptado (ADR 0007, 2026-11-08) | RNF02 |
+| P15 | ¿Hace falta un comando que saque todos los datos de una persona (consultas de la Ley 1581)? | No (2026-11-08) | Ley 1581 |
 | D1 | ¿Quién rechaza? | Los dos, en dos fases: el administrativo acepta o rechaza, y después coordinación aprueba o rechaza. El ADMIN, cuando actúa por coordinación, también puede rechazar (decisión por defecto, no corregida) | RF30, RF31 |
 
 ### Decisiones por defecto (se aplican si no se corrigen)
