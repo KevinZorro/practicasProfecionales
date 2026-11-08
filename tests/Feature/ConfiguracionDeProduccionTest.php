@@ -251,3 +251,28 @@ it('corre el script al arrancar nginx y le pasa la misma variable que a Laravel'
         ->and(is_executable(base_path('docker/produccion/ip-real.sh')))->toBeTrue()
         ->and(archivoDeProduccion('docker-compose.produccion.yml'))->toContain('PROXIES_DE_CONFIANZA: ${PROXIES_DE_CONFIANZA:-}');
 });
+
+// ---------------------------------------------------------------------
+// La aplicación entra a la base sin superusuario (S.1)
+// ---------------------------------------------------------------------
+
+it('separa en el ejemplo el usuario de la aplicación del dueño de la base', function (): void {
+    $variables = variablesDelEjemplo();
+
+    expect($variables)->toHaveKeys(['DB_DUENO_USUARIO', 'DB_DUENO_CONTRASENA'])
+        ->and($variables['DB_USERNAME'])->not->toBe($variables['DB_DUENO_USUARIO'])
+        ->and($variables['DB_DUENO_CONTRASENA'])->toStartWith('<');
+});
+
+it('crea la base con el dueño y deja a la aplicación entrar con su propio usuario', function (): void {
+    $compose = archivoDeProduccion('docker-compose.produccion.yml');
+
+    expect($compose)->toContain('POSTGRES_USER: ${DB_DUENO_USUARIO:?')
+        ->toContain('POSTGRES_PASSWORD: ${DB_DUENO_CONTRASENA:?')
+        // Las copias y la restauración necesitan al dueño: leen y recrean todo.
+        ->toContain('PGUSER: ${DB_DUENO_USUARIO}')
+        ->toContain('PGPASSWORD: ${DB_DUENO_CONTRASENA}')
+        // Las migraciones, con el dueño, y después el usuario de la aplicación.
+        ->toMatch('/migraciones:\n(?:.*\n)*?\s+DB_USERNAME: \$\{DB_DUENO_USUARIO:\?/')
+        ->toContain('base:usuario-de-la-aplicacion');
+});
