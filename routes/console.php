@@ -1,6 +1,8 @@
 <?php
 
+use App\Exceptions\UsuarioDeLaBaseInvalido;
 use App\Services\RegistroPrevioService;
+use App\Services\UsuarioDeLaAplicacionService;
 use App\Services\UsuarioSyncService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -44,6 +46,28 @@ Artisan::command('usuarios:sincronizar', function (UsuarioSyncService $sincroniz
 
     return 0;
 })->purpose('Sincroniza las cuentas con la base institucional (RF20)');
+
+/*
+ * El usuario de PostgreSQL de la aplicación, sin superusuario (S.1). Lo
+ * corre el servicio "migraciones" del compose de producción, con el dueño de
+ * la base, en cada despliegue: la primera vez lo crea y después le renueva
+ * la contraseña y los permisos.
+ */
+Artisan::command('base:usuario-de-la-aplicacion', function (UsuarioDeLaAplicacionService $usuarios): int {
+    $usuario = (string) config('database.usuario_de_la_aplicacion.usuario');
+
+    try {
+        $usuarios->crearOActualizar($usuario, (string) config('database.usuario_de_la_aplicacion.contrasena'));
+    } catch (UsuarioDeLaBaseInvalido $invalido) {
+        $this->error($invalido->getMessage());
+
+        return 1;
+    }
+
+    $this->info(sprintf('La aplicación entra a la base como «%s», sin superusuario: solo lee y escribe filas.', $usuario));
+
+    return 0;
+})->purpose('Crea o actualiza el usuario de PostgreSQL de la aplicación, sin superusuario (S.1)');
 
 Schedule::command('usuarios:sincronizar')
     ->cron((string) config('laboratorio.sincronizacion.frecuencia'))

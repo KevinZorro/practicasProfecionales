@@ -125,6 +125,19 @@ return [
     |
     */
 
+    /*
+    | El usuario de PostgreSQL con el que entra la aplicación en producción
+    | (S.1): sin superusuario, solo filas. Lo crea el comando
+    | base:usuario-de-la-aplicacion, que corre el dueño de la base en el
+    | servicio "migraciones" del compose de producción. Ahí la conexión entra
+    | con el dueño, y estas dos variables traen el DB_USERNAME y el
+    | DB_PASSWORD de la aplicación.
+    */
+    'usuario_de_la_aplicacion' => [
+        'usuario' => (string) env('DB_APLICACION_USUARIO', ''),
+        'contrasena' => (string) env('DB_APLICACION_CONTRASENA', ''),
+    ],
+
     'migrations' => [
         'table' => 'migrations',
         'update_date_on_publish' => true,

@@ -110,8 +110,9 @@ Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:
 
 Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Google y la comprobación del `state` usan el proveedor real.
 
-**Producción (`docker-compose.produccion.yml`).** El código va dentro de las imágenes (etapas `produccion` y `web` de `docker/php/Dockerfile`); la sección "Producción" del README tiene la instalación, el despliegue y la restauración. Cuatro cosas que no se pueden perder:
+**Producción (`docker-compose.produccion.yml`).** El código va dentro de las imágenes (etapas `produccion` y `web` de `docker/php/Dockerfile`); la sección "Producción" del README tiene la instalación, el despliegue y la restauración. Lo que no se puede perder:
 
+- **La aplicación entra a PostgreSQL sin superusuario** (S.1): `DB_USERNAME` solo lee y escribe filas. Las tablas las crea el dueño (`DB_DUENO_USUARIO`) en el servicio `migraciones`, que después corre `base:usuario-de-la-aplicacion` y renueva sus permisos; las copias y la restauración también usan al dueño. Una migración nueva no necesita nada más: los permisos por defecto alcanzan a las tablas que cree.
 - **Los documentos privados son un volumen**, `archivos_privados` (`storage/app/private`), montado en `app`, `queue`, `copias` y `restauracion`. Sin él, el formato de confidencialidad firmado se perdería en cada despliegue.
 - **Nada de lo que suben los usuarios entra en una imagen:** `.dockerignore` excluye `storage/app/public` y `storage/app/private`. Una imagen construida en un equipo de desarrollo se llevaría dentro los documentos de prueba.
 - **Las cabeceras de seguridad las pone `CabecerasDeSeguridad`**, en Laravel y no en nginx, para que se prueben. La Content-Security-Policy lleva `'unsafe-inline'` y `'unsafe-eval'` porque Alpine y Filament los necesitan; lo que cierra son los orígenes externos. Cualquier recurso de otro sitio que se añada (una fuente, un script, una imagen) hay que declararlo en ella, o el navegador lo bloquea. Por eso el avatar de Filament se dibuja en local (`App\Filament\AvatarConIniciales`) y no se pide a ui-avatars.com.
@@ -402,8 +403,9 @@ docker compose exec node npm run dev
 docker compose logs -f app
 
 # Producción (en el servidor; ver la sección "Producción" del README)
-docker compose -f docker-compose.produccion.yml up -d --build
-docker compose -f docker-compose.produccion.yml exec app php artisan migrate --force
+docker compose -f docker-compose.produccion.yml build
+docker compose -f docker-compose.produccion.yml run --rm migraciones    # migra con el dueño y crea el usuario de la aplicación
+docker compose -f docker-compose.produccion.yml up -d
 docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia.sh
 ```
 

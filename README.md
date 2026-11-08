@@ -231,18 +231,34 @@ docker compose -f docker-compose.produccion.yml run --rm --entrypoint php app ar
 # 4. La carpeta de las copias, solo para root
 sudo install -d -m 700 /srv/laboratorio/copias
 
-# 5. Levantar y crear las tablas
+# 5. Crear las tablas y el usuario de la aplicación, y levantar
+docker compose -f docker-compose.produccion.yml run --rm migraciones
 docker compose -f docker-compose.produccion.yml up -d
-docker compose -f docker-compose.produccion.yml exec app php artisan migrate --force
 ```
+
+La aplicación entra a PostgreSQL con `DB_USERNAME`, que **no es superusuario**:
+solo lee y escribe filas. Las tablas las crea el dueño de la base
+(`DB_DUENO_USUARIO`, el superusuario que crea la imagen de PostgreSQL), en el
+servicio `migraciones`, que después crea o actualiza el usuario de la
+aplicación con el comando `base:usuario-de-la-aplicacion`. Así, una inyección
+de SQL o alguien que entre al contenedor `app` no puede borrar la base ni
+ejecutar comandos en el servidor de la base. Las copias y la restauración
+usan al dueño.
+
+**Si ya había una instalación con un solo usuario** (antes de este cambio, el
+`.env` tenía `DB_USERNAME` y `DB_PASSWORD` del superusuario): pasa esos dos
+valores a `DB_DUENO_USUARIO` y `DB_DUENO_CONTRASENA`, pon en `DB_USERNAME` el
+usuario nuevo (`laboratorio_app`) y en `DB_PASSWORD` otra contraseña, y corre
+`migraciones` antes de recrear los contenedores. El dueño sigue siendo el
+mismo; solo cambia con quién entra la aplicación.
 
 ### Desplegar una versión nueva
 
 ```bash
 git pull
 docker compose -f docker-compose.produccion.yml build
+docker compose -f docker-compose.produccion.yml run --rm migraciones
 docker compose -f docker-compose.produccion.yml up -d
-docker compose -f docker-compose.produccion.yml exec app php artisan migrate --force
 ```
 
 Después de cambiar el `.env`, los contenedores tienen que volver a leerlo:
@@ -319,6 +335,9 @@ docker compose -f docker-compose.produccion.yml stop app queue programador web
 docker compose -f docker-compose.produccion.yml run --rm restauracion 2026-10-01_0230
 docker compose -f docker-compose.produccion.yml start app queue programador web
 ```
+
+En un servidor nuevo, corre `migraciones` antes de restaurar: la copia trae
+los permisos del usuario de la aplicación, y ese usuario tiene que existir.
 
 La restauración comprueba las sumas antes de borrar nada: una copia dañada no
 se restaura. La CI hace una copia, daña los datos y la restaura en cada PR.
