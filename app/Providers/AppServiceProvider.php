@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(SalaAsignada::class, EnviarCorreoSalaAsignada::class);
 
         $this->registrarPermisoDeReportes();
+        $this->registrarPermisoDeDepuracion();
         $this->registrarAccesoAlPanelDelAdmin();
         $this->registrarLimiteDeDescargas();
 
@@ -107,6 +108,16 @@ class AppServiceProvider extends ServiceProvider
      * entran: su historial propio lo cubren el RF35, el RF49 y el RF50, que
      * son otra cosa.
      */
+    /**
+     * Depurar lo que tiene más de dos semestres (retención de datos,
+     * decisión del 2026-11-08) es solo del ADMIN, sin herencia: borra
+     * evaluaciones, bitácora y formatos firmados, y no se deshace.
+     */
+    private function registrarPermisoDeDepuracion(): void
+    {
+        Gate::define('depurarDatos', static fn (User $usuario): bool => $usuario->hasRole(Rol::Admin->value));
+    }
+
     private function registrarPermisoDeReportes(): void
     {
         Gate::define('generarReportes', static fn (User $usuario): bool => $usuario->hasAnyRole([

@@ -40,6 +40,7 @@ final class ResumenDelDiaService
         private readonly ConfidencialidadService $confidencialidad,
         private readonly EvaluacionService $evaluaciones,
         private readonly SupervisionService $supervision,
+        private readonly RetencionDeDatosService $retencion,
     ) {}
 
     public function para(User $persona, CarbonInterface $hoy): ResumenDelDia
@@ -59,7 +60,16 @@ final class ResumenDelDiaService
             formatosPorVerificar: $persona->can('viewAny', FormatoConfidencialidad::class) ? $this->formatosPorVerificar() : null,
             miFormato: $persona->can('create', FormatoConfidencialidad::class) ? $this->miFormato($persona) : null,
             supervision: $persona->can('supervisar', Evaluacion::class) ? $this->deSupervision($persona) : null,
+            porDepurar: $persona->can('depurarDatos') ? $this->porDepurar() : null,
         );
+    }
+
+    /** Lo de más de dos semestres, solo si hay algo que depurar. */
+    private function porDepurar(): ?DatosPorDepurar
+    {
+        $pendiente = $this->retencion->porDepurar();
+
+        return $pendiente->hayAlgo() ? $pendiente : null;
     }
 
     /**

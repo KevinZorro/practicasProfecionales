@@ -211,6 +211,7 @@ return [
         'motivoDeAcceso' => 'motivo',
         'motivoRechazo' => 'motivo del rechazo',
         'observacionesAprobacion' => 'observaciones de la aprobación',
+        'descargoLosFormatos' => 'confirmación de que descargaste los formatos',
         'motivoLevantamiento' => 'motivo',
         'simuladorId' => 'simulador',
         'motivoRetiro' => 'motivo del retiro',

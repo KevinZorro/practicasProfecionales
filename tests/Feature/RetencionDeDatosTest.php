@@ -34,10 +34,12 @@ beforeEach(function (): void {
     $this->admin = User::factory()->admin()->create();
 });
 
-/** Un periodo abierto hace tantos meses. */
-function periodoAbiertoHace(string $nombre, int $meses): PeriodoAcademico
+/** Un periodo abierto hace tantos meses; solo el último sigue abierto. */
+function periodoAbiertoHace(string $nombre, int $meses, bool $sigueAbierto = false): PeriodoAcademico
 {
-    return PeriodoAcademico::factory()->create(['nombre' => $nombre, 'abierto_at' => now()->subMonths($meses)]);
+    $periodo = $sigueAbierto ? PeriodoAcademico::factory() : PeriodoAcademico::factory()->cerrado();
+
+    return $periodo->create(['nombre' => $nombre, 'abierto_at' => now()->subMonths($meses)]);
 }
 
 /** Tres semestres: el vigente, el anterior y uno más viejo que se puede depurar. */
@@ -45,7 +47,7 @@ function tresSemestres(): Carbon
 {
     periodoAbiertoHace('2025-2', 13);
     $anterior = periodoAbiertoHace('2026-1', 7);
-    periodoAbiertoHace('2026-2', 1);
+    periodoAbiertoHace('2026-2', 1, sigueAbierto: true);
 
     return $anterior->abierto_at;
 }
@@ -131,7 +133,7 @@ it('depura lo de más de dos semestres y deja todo lo reciente', function (): vo
 });
 
 it('no depura nada mientras haya un solo periodo', function (): void {
-    periodoAbiertoHace('2026-2', 1);
+    periodoAbiertoHace('2026-2', 1, sigueAbierto: true);
     entradaDeBitacoraDel(now()->subYears(2));
 
     expect($this->servicio->porDepurar()->hayAlgo())->toBeFalse()
