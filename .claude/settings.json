@@ -9,6 +9,7 @@
       "Read(.env)",
       "Read(.env.*)",
       "Read(!.env.example)",
+      "Read(!.env.produccion.example)",
       "Read(*.pem)",
       "Read(*.key)"
     ]
