@@ -10,6 +10,7 @@ use App\Http\Controllers\Panel\BitacoraController;
 use App\Http\Controllers\Panel\BloqueoController;
 use App\Http\Controllers\Panel\CalendarioController;
 use App\Http\Controllers\Panel\ConfidencialidadController;
+use App\Http\Controllers\Panel\DepuracionController;
 use App\Http\Controllers\Panel\DescargaConfidencialidadController;
 use App\Http\Controllers\Panel\EvaluacionController;
 use App\Http\Controllers\Panel\InicioDelPanelController;
@@ -115,6 +116,10 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
 
     /* Bitácora de auditoría (RF62). Coordinación y ADMIN. */
     Route::get('bitacora', BitacoraController::class)->name('bitacora');
+
+    // Retención de dos semestres: lo más viejo lo depura el ADMIN.
+    Route::get('depuracion', [DepuracionController::class, 'index'])->name('depuracion');
+    Route::get('depuracion/formatos', [DepuracionController::class, 'formatos'])->middleware('throttle:descargas')->name('depuracion.formatos');
 
     /* Bloqueos de acceso al laboratorio (RF68). Coordinación y ADMIN. */
     Route::get('bloqueos', BloqueoController::class)->name('bloqueos');

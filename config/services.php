@@ -42,6 +42,15 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', '/acceso/google/volver'),
         'dominio' => env('GOOGLE_DOMINIO_INSTITUCIONAL'),
+
+        // Tiempo máximo, en segundos, de la llamada a Google al volver
+        // (B3.1). Sin él, Guzzle espera sin límite: cada entrada lenta
+        // retendría un worker de PHP-FPM hasta su tope de 150 s, y con los
+        // 20 workers ocupados se quedaría sin atender todo el panel.
+        'guzzle' => [
+            'timeout' => 5,
+            'connect_timeout' => 3,
+        ],
     ],
 
     'slack' => [

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Enums\EstadoSolicitud;
+use App\Exceptions\SesionQueSeCruza;
 use App\Livewire\Evaluacion\Evaluaciones;
 use App\Livewire\Solicitud\NovedadesDeLaSesion;
 use App\Models\Evaluacion;
@@ -73,7 +75,7 @@ function sesionConReemplazoPosible(): array
     return [$sesion, $reemplazo];
 }
 
-it('avisa si el reemplazo está bloqueado o ya dicta otra sesión a esa hora, sin impedir la sustitución', function (): void {
+it('avisa si el reemplazo está bloqueado o ya dicta otra sesión a esa hora; el bloqueo no impide la sustitución y el cruce sí', function (): void {
     [$sesion, $reemplazo] = sesionConReemplazoPosible();
     $coordinadora = User::factory()->coordinador()->create();
     $servicio = app(NovedadesDeSesionService::class);
@@ -81,7 +83,7 @@ it('avisa si el reemplazo está bloqueado o ya dicta otra sesión a esa hora, si
     expect($servicio->avisosDeSustitucion($sesion, $reemplazo))->toBe([]);
 
     app(BloqueoService::class)->bloquear($reemplazo, 'Reglamento', $coordinadora);
-    Solicitud::factory()->aprobada()->create([
+    $otraSuya = Solicitud::factory()->aprobada()->create([
         'docente_id' => $reemplazo->id,
         'fecha' => $sesion->fecha->format('Y-m-d'),
         'hora_inicio' => '09:00:00',
@@ -93,7 +95,12 @@ it('avisa si el reemplazo está bloqueado o ya dicta otra sesión a esa hora, si
     expect($avisos)->toHaveCount(2)
         ->and(implode(' ', $avisos))->toContain('bloqueado')->toContain('Reglamento')->toContain('otra sesión');
 
-    // Es un aviso, no un impedimento: la sustitución se registra igual.
+    // El cruce impide: un docente no puede estar en dos salones a la vez
+    // (decisión del 2026-11-07).
+    expect(fn () => $servicio->sustituir($sesion->fresh(), $reemplazo, 'Incapacidad', $coordinadora))->toThrow(SesionQueSeCruza::class);
+
+    // El bloqueo solo avisa: sin el cruce, la sustitución se registra igual.
+    $otraSuya->update(['estado' => EstadoSolicitud::Rechazada]);
     $servicio->sustituir($sesion->fresh(), $reemplazo, 'Incapacidad', $coordinadora);
     expect($sesion->fresh()->docente_que_dicta_id)->toBe($reemplazo->id);
 });

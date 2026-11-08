@@ -126,7 +126,7 @@ it('encadena solicitud, preparación y evaluación sobre el mismo escenario', fu
     $solicitud = $solicitud->fresh();
 
     expect($solicitud->tipo)->toBe(TipoSesion::Evaluacion)
-        ->and($solicitud->preparacion->sala)->not->toBeNull()
+        ->and($solicitud->preparacion->salas)->not->toBeEmpty()
         ->and($solicitud->evaluacion->id)->toBe($evaluacion->id)
         ->and($evaluacion->solicitud->id)->toBe($solicitud->id);
 });

@@ -11,6 +11,8 @@ Aplicación web monolítica en Laravel, con renderizado del lado del servidor y 
 
 Se eligió monolito y no arquitectura de servicios separados porque el sistema tiene un único dominio de negocio, un solo equipo de desarrollo y un volumen de tráfico moderado. Separar backend y frontend agregaría complejidad de despliegue y mantenimiento sin beneficio real a esta escala.
 
+Las decisiones de arquitectura, con su contexto, sus alternativas y lo que cuestan, están en `docs/decisions/`. Los escenarios de calidad con su medida, en `docs/escenarios-de-calidad.md`.
+
 ### Stack
 
 **Instalado** — lo que está en `composer.json` y `package.json` y se usa hoy:
@@ -647,11 +649,81 @@ Dos compose sobre un mismo `docker/php/Dockerfile` de varias etapas:
 
 Tres volúmenes: `datos_postgres`, `archivos_publicos` (`storage/app/public`) y `archivos_privados` (`storage/app/private`, el formato de confidencialidad firmado). Nada de lo que suben los usuarios entra en una imagen (`.dockerignore`). Variables sensibles en `.env`, a partir de `.env.produccion.example`, fuera del control de versiones.
 
-El HTTPS lo termina quien esté delante del nginx del compose; su IP va en `PROXIES_DE_CONFIANZA` (`config/trustedproxy.php`). Las cabeceras de seguridad las pone el middleware `CabecerasDeSeguridad` (`config/seguridad.php`), y la CI levanta el compose de producción y comprueba cabeceras, assets, que los errores no enseñen trazas y una copia restaurada de punta a punta.
+El HTTPS lo termina el proxy de la universidad (ADR 0006). Su IP va en `PROXIES_DE_CONFIANZA`. Con ella, Laravel confía en sus cabeceras (`config/trustedproxy.php`) y nginx toma la IP real de cada visitante (`docker/produccion/ip-real.sh`). Las cabeceras de seguridad las pone el middleware `CabecerasDeSeguridad` (`config/seguridad.php`), y la CI levanta el compose de producción y comprueba cabeceras, assets, que los errores no enseñen trazas y una copia restaurada de punta a punta.
 
 La sincronización de usuarios es el comando `usuarios:sincronizar`, que el servicio `programador` corre con la frecuencia de `SINCRONIZACION_FRECUENCIA` solo si `SINCRONIZACION_PROGRAMADA=true`. Está apagada por defecto mientras la fuente sea la simulada.
 
 Las métricas del sitio público (Plausible o Matomo) siguen sin decidir.
+
+### Contexto y contenedores
+
+Reconstruidos del código en la auditoría de arquitectura (2026-11). **Nivel 1, contexto.** Sin tecnologías; las flechas dicen qué fluye:
+
+```mermaid
+flowchart LR
+  est(["Estudiante"])
+  doc(["Docente"])
+  sup(["Docente supervisor"])
+  adm(["Personal administrativo"])
+  coo(["Coordinación"])
+  admin(["Administrador de la plataforma"])
+  vis(["Visitante"])
+  ope(["Operador del servidor"])
+  sis["Plataforma del Laboratorio de Simulación Clínica"]
+  idp[["Identidad institucional (Google Workspace de la UFPS)"]]
+  mail[["Correo institucional del laboratorio"]]
+  fuente[["Vista de la base institucional (Divisist)"]]
+
+  est -->|"formato firmado, resultados y calendario"| sis
+  doc -->|"solicitudes, listas de estudiantes, evaluaciones, formato"| sis
+  sup -->|"consulta los resultados de sus docentes"| sis
+  adm -->|"revisión, preparación, inventario, verificación de formatos"| sis
+  coo -->|"aprobación, bloqueos, reportes"| sis
+  admin -->|"contenido público, estructura académica, cuentas y roles"| sis
+  vis -->|"consulta la oferta pública"| sis
+  sis -->|"pide confirmar identidad y dominio"| idp
+  idp -->|"identidad verificada"| sis
+  sis -->|"avisos: aprobación, sala, reprogramación, sustitución"| mail
+  mail -->|"avisos"| doc
+  ope -->|"despliega, restaura copias, corre la sincronización"| sis
+  fuente -->|"personas vigentes y su vinculación (ADR 0002)"| sis
+```
+
+**Nivel 2, contenedores.** Lo que se despliega por separado, con su protocolo y si espera respuesta:
+
+```mermaid
+flowchart LR
+  nav["Navegador: Blade, Livewire, Alpine, FullCalendar"]
+  proxy["Proxy de la universidad: termina el HTTPS (ADR 0006)"]
+  web["web: nginx"]
+  app["app: PHP-FPM, Laravel 12 (panel, /admin, portada)"]
+  queue["queue: queue:work"]
+  prog["programador: schedule:work"]
+  db[("db: PostgreSQL 16 (datos, sesiones, caché, cola)")]
+  vol[("volúmenes: archivos_publicos y archivos_privados")]
+  cop["copias: pg_dump y tar diarios"]
+  dir[("directorio de copias, en el mismo servidor")]
+  google[["Google OAuth"]]
+  smtp[["smtp.gmail.com"]]
+  vista[["Vista de Divisist (hoy simulada con un archivo JSON)"]]
+
+  nav -->|"HTTPS, síncrono"| proxy
+  proxy -->|"HTTP, síncrono"| web
+  web -->|"FastCGI, síncrono"| app
+  web -->|"lee /storage"| vol
+  app -->|"SQL, síncrono"| db
+  app -->|"E/S local, síncrono"| vol
+  app -->|"HTTPS, síncrono, 5 s como máximo"| google
+  nav -.->|"redirección HTTPS"| google
+  app -.->|"encola trabajos (tabla jobs)"| db
+  queue -->|"lee trabajos, SQL"| db
+  queue -->|"SMTP con STARTTLS, asíncrono para el usuario"| smtp
+  prog -->|"comandos programados, SQL"| db
+  prog -->|"lectura por red, solo lectura (hoy, un archivo)"| vista
+  cop -->|"pg_dump"| db
+  cop -->|"tar, solo lectura"| vol
+  cop -->|"escribe"| dir
+```
 
 ---
 

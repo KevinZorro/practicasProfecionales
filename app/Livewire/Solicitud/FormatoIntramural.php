@@ -70,7 +70,8 @@ final class FormatoIntramural extends Component
     {
         $solicitud = Solicitud::findOrFail($this->solicitudId);
         $this->authorize('registrarFormatoIntramural', $solicitud);
-        $this->validate(['items' => 'array', 'items.*' => 'integer|min:1|max:1000']);
+        // El mismo tope de cordura que la solicitud: no es de inventario.
+        $this->validate(['items' => 'array', 'items.*' => 'integer|min:1|max:'.SolicitudService::CANTIDAD_MAXIMA_POR_EQUIPO]);
         $this->errorDeRegla = null;
 
         try {

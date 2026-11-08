@@ -29,7 +29,7 @@
         ],
     ];
     $quienDicta = $solicitud->docenteQueDicta ?? $solicitud->docente;
-    $sala = $solicitud->preparacion?->sala;
+    $salas = $solicitud->preparacion?->salas ?? collect();
 @endphp
 
 <div class="space-y-5">
@@ -65,8 +65,8 @@
                 <x-dato etiqueta="Fecha">{{ \Illuminate\Support\Str::ucfirst($solicitud->fecha->translatedFormat('l j \d\e F')) }}</x-dato>
                 <x-dato etiqueta="Hora">{{ substr($solicitud->hora_inicio, 0, 5) }}–{{ substr($solicitud->hora_fin, 0, 5) }}</x-dato>
                 <x-dato etiqueta="Sala">
-                    @if ($sala)
-                        {{ $sala->nombreCompleto() }}
+                    @if ($salas->isNotEmpty())
+                        {{ $salas->map->nombreCompleto()->implode(' + ') }}
                     @else
                         <span class="text-gray-500">Se asigna al preparar</span>
                     @endif

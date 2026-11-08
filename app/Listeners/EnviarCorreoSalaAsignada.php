@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Events\SalaAsignada;
 use App\Mail\SalaAsignadaMail;
+use App\Support\EsperaEntreReintentos;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Mail;
@@ -16,11 +17,12 @@ use Illuminate\Support\Facades\Mail;
  */
 final class EnviarCorreoSalaAsignada implements ShouldQueue
 {
+    use EsperaEntreReintentos;
     use InteractsWithQueue;
 
     public function handle(SalaAsignada $evento): void
     {
-        $preparacion = $evento->preparacion->loadMissing(['sala', 'solicitud.docente', 'solicitud.docenteQueDicta', 'solicitud.casoClinico', 'solicitud.materia']);
+        $preparacion = $evento->preparacion->loadMissing(['salas', 'solicitud.docente', 'solicitud.docenteQueDicta', 'solicitud.casoClinico', 'solicitud.materia']);
 
         // Quien dicta, que con una sustitución (RF73) no es el titular.
         $destinatario = $preparacion->solicitud->docenteQueDicta ?? $preparacion->solicitud->docente;

@@ -41,7 +41,6 @@ function preparacionDe(CasoClinico $caso, string $inicio = '07:00:00', string $f
 
     return Preparacion::factory()->create([
         'solicitud_id' => $solicitud->id,
-        'sala_id' => null,
         'estado' => EstadoPreparacion::Pendiente,
     ]);
 }
@@ -165,7 +164,7 @@ it('no ofrece una sala ocupada en la misma franja, aunque esté vinculada', func
     $sala = Sala::factory()->create();
     $sala->casosClinicos()->attach($caso);
     $servicio = app(PreparacionService::class);
-    $servicio->asignarSala(preparacionDe($caso), $sala);
+    $servicio->asignarSalas(preparacionDe($caso), [$sala->id]);
 
     expect($servicio->salasLibresPara(preparacionDe($caso, '08:00:00', '10:00:00'))->pluck('id'))
         ->not->toContain($sala->id);
@@ -180,7 +179,7 @@ it('avisa al docente por correo cuando se le asigna la sala', function (): void 
     $preparacion = preparacionDe(CasoClinico::factory()->create());
     $sala = Sala::factory()->create(['nombre' => 'Sala de partos', 'bloque' => 'B', 'piso' => '2', 'numero' => '4']);
 
-    app(PreparacionService::class)->asignarSala($preparacion, $sala);
+    app(PreparacionService::class)->asignarSalas($preparacion, [$sala->id]);
 
     Mail::assertSent(SalaAsignadaMail::class, 1);
     Mail::assertSent(SalaAsignadaMail::class, function (SalaAsignadaMail $correo) use ($preparacion): bool {
@@ -198,9 +197,9 @@ it('avisa otra vez si la sala cambia, y no si se vuelve a elegir la misma', func
     $servicio = app(PreparacionService::class);
     $primera = Sala::factory()->create();
 
-    $servicio->asignarSala($preparacion, $primera);
-    $servicio->asignarSala($preparacion->fresh(), $primera);
-    $servicio->asignarSala($preparacion->fresh(), Sala::factory()->create());
+    $servicio->asignarSalas($preparacion, [$primera->id]);
+    $servicio->asignarSalas($preparacion->fresh(), [$primera->id]);
+    $servicio->asignarSalas($preparacion->fresh(), [Sala::factory()->create()->id]);
 
     Mail::assertSent(SalaAsignadaMail::class, 2);
     Mail::assertSent(SalaAsignadaMail::class, static fn (SalaAsignadaMail $correo): bool => $correo->esCambio);
@@ -213,7 +212,7 @@ it('avisa de la sala a quien dicta la sesión, no al titular sustituido (QA-03)'
     $reemplazo = User::factory()->docente()->create(['nombre' => 'Diana Mejía']);
     $preparacion->solicitud->update(['docente_que_dicta_id' => $reemplazo->id]);
 
-    app(PreparacionService::class)->asignarSala($preparacion->fresh(), Sala::factory()->create());
+    app(PreparacionService::class)->asignarSalas($preparacion->fresh(), [Sala::factory()->create()->id]);
 
     Mail::assertSent(SalaAsignadaMail::class, 1);
     Mail::assertSent(SalaAsignadaMail::class, static fn (SalaAsignadaMail $correo): bool => $correo->hasTo($reemplazo->email)

@@ -136,7 +136,7 @@ it('avisa de cruces en la franja, del docente ocupado y de que no quedaría sala
     $avisos = $this->servicio->advertencias($fecha, '08:00', '10:00', $this->docente->id);
 
     expect($avisos)->toHaveCount(3)
-        ->and($avisos[0])->toBe('El docente ya tiene otra sesión en esa franja.')
+        ->and($avisos[0])->toBe('El docente ya tiene otra sesión en esa franja: no se puede registrar otra.')
         ->and($avisos[1])->toContain('Docente Titular')
         ->and($avisos[2])->toContain('No quedaría ninguna sala libre');
 });
@@ -150,26 +150,47 @@ it('no avisa nada en una franja libre ni en una contigua', function (): void {
 
 it('registra desde la pantalla y enseña los cruces mientras se llena', function (): void {
     $existente = $this->servicio->registrar(apartada($this->docente), $this->administrativo);
+    $otroDocente = User::factory()->docente()->create();
     $materia = Materia::factory()->create();
     $caso = CasoClinico::factory()->create(['nombre' => 'Atención de parto']);
     $caso->materias()->attach($materia->id);
 
     Livewire::actingAs($this->administrativo)
         ->test(SesionesApartadas::class)
-        ->set('docenteId', $this->docente->id)
+        ->set('docenteId', $otroDocente->id)
         ->set('materiaId', $materia->id)
         ->set('casoClinicoId', $caso->id)
         ->set('cantidadEstudiantes', 8)
         ->set('fecha', $existente->fecha->format('Y-m-d'))
         ->set('horaInicio', '08:00')
         ->set('horaFin', '10:00')
-        ->assertSee('El docente ya tiene otra sesión en esa franja.')
+        ->assertSee('En esa franja ya hay 1 sesión')
         ->call('registrar')
         ->assertHasNoErrors()
         ->assertSee('Atención de parto')
         ->assertSee('Sin formato intramural');
 
     expect(Solicitud::query()->apartadas()->count())->toBe(2);
+});
+
+it('no registra desde la pantalla otra sesión de un docente que ya tiene una en esa franja', function (): void {
+    $existente = $this->servicio->registrar(apartada($this->docente), $this->administrativo);
+    $par = materiaYCaso();
+
+    Livewire::actingAs($this->administrativo)
+        ->test(SesionesApartadas::class)
+        ->set('docenteId', $this->docente->id)
+        ->set('materiaId', $par['materiaId'])
+        ->set('casoClinicoId', $par['casoClinicoId'])
+        ->set('cantidadEstudiantes', 8)
+        ->set('fecha', $existente->fecha->format('Y-m-d'))
+        ->set('horaInicio', '08:00')
+        ->set('horaFin', '10:00')
+        ->assertSee('El docente ya tiene otra sesión en esa franja: no se puede registrar otra.')
+        ->call('registrar')
+        ->assertSee('Un docente no puede estar en dos salones a la vez');
+
+    expect(Solicitud::query()->apartadas()->count())->toBe(1);
 });
 
 it('no deja entrar a un docente a la pantalla de sesiones apartadas', function (): void {

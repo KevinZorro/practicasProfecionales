@@ -33,10 +33,10 @@ function montajeDelDia(string $fecha, string $inicio, ?Sala $sala = null, int $i
         'hora_fin' => '23:00:00',
     ]);
 
-    $preparacion = Preparacion::factory()->create([
-        'solicitud_id' => $solicitud->id,
-        'sala_id' => $sala?->id,
-    ]);
+    $preparacion = Preparacion::factory()->create(['solicitud_id' => $solicitud->id]);
+    if ($sala !== null) {
+        $preparacion->salas()->attach($sala);
+    }
 
     ItemInventario::factory()->count($items)->create()->each(
         fn (ItemInventario $item) => $preparacion->items()->attach($item->id, [
@@ -62,7 +62,7 @@ it('trae todo lo que el administrativo necesita para montar', function (): void 
 
     $montaje = $this->servicio->tableroDelDia('2026-04-10')->first();
 
-    expect($montaje->sala->nombre)->toBe('Sala de partos')
+    expect($montaje->nombresDeLasSalas())->toBe('Sala de partos')
         ->and($montaje->solicitud->docente)->not->toBeNull()
         ->and($montaje->solicitud->materia)->not->toBeNull()
         ->and($montaje->solicitud->casoClinico)->not->toBeNull()
@@ -88,7 +88,7 @@ it('muestra los montajes sin sala, que son los que faltan por asignar', function
 
     $montaje = $this->servicio->tableroDelDia('2026-04-10')->first();
 
-    expect($montaje->sala)->toBeNull();
+    expect($montaje->salas)->toBeEmpty();
 });
 
 it('no genera consultas N+1 al recorrer el tablero', function (): void {
@@ -147,7 +147,7 @@ function recorrerTablero(iterable $tablero): void
         $montaje->solicitud->cantidad_estudiantes;
         $montaje->solicitud->estudiantesPresentes->count();
         $montaje->solicitud->docenteQueDicta?->nombre;
-        $montaje->sala?->nombre;
+        $montaje->nombresDeLasSalas();
         foreach ($montaje->items as $item) {
             $item->nombre;
             $item->pivot->alistado;

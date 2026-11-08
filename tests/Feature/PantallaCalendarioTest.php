@@ -88,13 +88,12 @@ it('lleva en cada evento la hora, el caso clínico y el docente', function (): v
 
 it('muestra la sala solo cuando ya está asignada', function (): void {
     $sinSala = Solicitud::factory()->aprobada()->create(['fecha' => '2026-10-05']);
-    Preparacion::factory()->create(['solicitud_id' => $sinSala->id, 'sala_id' => null]);
+    Preparacion::factory()->create(['solicitud_id' => $sinSala->id]);
 
     $conSala = Solicitud::factory()->aprobada()->create(['fecha' => '2026-10-06']);
-    Preparacion::factory()->create([
-        'solicitud_id' => $conSala->id,
-        'sala_id' => Sala::factory()->create(['nombre' => 'Sala 1'])->id,
-    ]);
+    Preparacion::factory()
+        ->conSala(Sala::factory()->create(['nombre' => 'Sala 1']))
+        ->create(['solicitud_id' => $conSala->id]);
 
     $eventos = collect($this->actingAs(conRolParaCalendario(Rol::Administrativo))
         ->getJson(route('panel.calendario.eventos', ['desde' => '2026-10-01', 'hasta' => '2026-10-31']))

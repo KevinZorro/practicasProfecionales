@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 class Solicitud extends Model
 {
@@ -41,6 +42,7 @@ class Solicitud extends Model
         'resuelta_por',
         'resuelta_at',
         'motivo_rechazo',
+        'observaciones_aprobacion',
         'observaciones',
         'grupo',
         'origen',
@@ -233,6 +235,37 @@ class Solicitud extends Model
     public function scopePendientesDeAprobacion(Builder $consulta): void
     {
         $consulta->where('estado', EstadoSolicitud::Revisada);
+    }
+
+    /**
+     * Pendientes o revisadas cuya fecha ya pasó: nadie las resolvió a tiempo
+     * y solo queda rechazarlas. No es un estado: se deduce de la fecha, en la
+     * zona de la aplicación, y hoy todavía no vence.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeVencidas(Builder $consulta): void
+    {
+        $consulta->whereIn($consulta->qualifyColumn('estado'), self::estadosQueVencen())
+            ->whereDate($consulta->qualifyColumn('fecha'), '<', Carbon::today()->toDateString());
+    }
+
+    /** @param Builder<$this> $consulta */
+    public function scopeNoVencidas(Builder $consulta): void
+    {
+        $consulta->where(static fn (Builder $o) => $o
+            ->whereNotIn($consulta->qualifyColumn('estado'), self::estadosQueVencen())
+            ->orWhereDate($consulta->qualifyColumn('fecha'), '>=', Carbon::today()->toDateString()));
+    }
+
+    /**
+     * Los estados de una solicitud que todavía espera una decisión.
+     *
+     * @return list<EstadoSolicitud>
+     */
+    public static function estadosQueVencen(): array
+    {
+        return [EstadoSolicitud::Pendiente, EstadoSolicitud::Revisada];
     }
 
     /** @param Builder<$this> $consulta */

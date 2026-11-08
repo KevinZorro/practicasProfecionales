@@ -149,4 +149,7 @@ CMD ["php-fpm"]
 FROM nginx:1.27-alpine AS web
 
 COPY docker/produccion/nginx.conf /etc/nginx/conf.d/default.conf
+# La IP real del visitante detrás del proxy (ADR 0006): la imagen corre los
+# scripts de /docker-entrypoint.d antes de arrancar nginx.
+COPY docker/produccion/ip-real.sh /docker-entrypoint.d/40-ip-real.sh
 COPY --from=produccion /var/www/html/public /var/www/html/public

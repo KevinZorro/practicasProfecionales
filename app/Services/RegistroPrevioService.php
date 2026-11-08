@@ -10,7 +10,6 @@ use App\Enums\OrigenSolicitud;
 use App\Enums\Rol;
 use App\Exceptions\SolicitudInvalida;
 use App\Mail\AvisoFormatoIntramuralMail;
-use App\Models\ItemInventario;
 use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -41,6 +40,7 @@ final class RegistroPrevioService
         private readonly InventarioService $inventario,
         private readonly AjustesService $ajustes,
         private readonly BitacoraService $bitacora,
+        private readonly CrucesDeSesionService $cruces,
     ) {}
 
     /**
@@ -61,6 +61,13 @@ final class RegistroPrevioService
         $grupo = $this->normalizarGrupo($datos->grupo);
 
         return DB::transaction(function () use ($datos, $actor, $grupo): Solicitud {
+            // Un docente solo puede estar en un salón a la vez (CrucesDeSesionService).
+            $this->cruces->bloquearPersonas([$datos->docenteId]);
+            $this->cruces->garantizarDocenteLibre(
+                User::findOrFail($datos->docenteId),
+                new Franja($datos->fecha, $datos->horaInicio, $datos->horaFin),
+            );
+
             $solicitud = Solicitud::create([
                 'docente_id' => $datos->docenteId,
                 'materia_id' => $datos->materiaId,
@@ -112,7 +119,7 @@ final class RegistroPrevioService
         $avisos = [];
 
         if ($docenteId !== null && $cruces->contains('docente_id', $docenteId)) {
-            $avisos[] = 'El docente ya tiene otra sesión en esa franja.';
+            $avisos[] = 'El docente ya tiene otra sesión en esa franja: no se puede registrar otra.';
         }
 
         if ($cruces->isNotEmpty()) {
@@ -254,28 +261,7 @@ final class RegistroPrevioService
      */
     private function faltantes(Solicitud $solicitud, array $items): array
     {
-        $catalogo = ItemInventario::query()->whereIn('id', array_keys($items))->get();
-        $libres = $this->inventario->disponibilidadDeVarios(
-            $catalogo,
-            $solicitud->fecha->format('Y-m-d'),
-            $solicitud->hora_inicio,
-            $solicitud->hora_fin,
-        );
-
-        // La sesión ya está aprobada: lo que tenía pedido cuenta como
-        // comprometido contra ella misma, así que se le devuelve.
-        $propios = $solicitud->items()->pluck('solicitud_item.cantidad', 'items_inventario.id')->all();
-        $faltantes = [];
-
-        foreach ($items as $id => $cantidad) {
-            $disponible = ($libres[$id] ?? 0) + (int) ($propios[$id] ?? 0);
-
-            if ($disponible < $cantidad) {
-                $faltantes[$id] = $disponible;
-            }
-        }
-
-        return $faltantes;
+        return $this->inventario->faltantesPara($solicitud, $items);
     }
 
     private function garantizarDocente(int $docenteId): void

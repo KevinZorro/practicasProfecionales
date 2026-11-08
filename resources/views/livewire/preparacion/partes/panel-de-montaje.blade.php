@@ -11,33 +11,39 @@
         </x-aviso>
     @endif
 
-    {{-- Sala --}}
-    <div>
-        <h3 class="mb-2 text-[15px] font-semibold text-gray-900">Sala</h3>
+    {{-- Salas: de una a tres, que se unen abriendo las cortinas (P16) --}}
+    <fieldset>
+        <legend class="mb-1 text-[15px] font-semibold text-gray-900">Sala</legend>
+        <p class="mb-2 text-[14px] text-gray-600">
+            El grupo es de {{ $montaje->solicitud->cantidad_estudiantes }} estudiantes. Si no cabe en una
+            sala, une hasta {{ \App\Services\PreparacionService::MAXIMO_DE_SALAS }} abriendo la cortina:
+            la capacidad se suma.
+        </p>
 
         @if ($salasLibres->isEmpty())
-            <x-aviso tono="atencion">
-                No queda ninguna sala libre en esta franja.
-            </x-aviso>
+            <x-aviso tono="atencion">No queda ninguna sala libre en esta franja.</x-aviso>
         @else
-            <div class="flex flex-wrap items-end gap-2">
-                <div class="min-w-0 flex-1 basis-56">
-                    <label for="sala-{{ $montaje->id }}" class="sr-only">Sala</label>
-                    <select wire:model="salaElegida" id="sala-{{ $montaje->id }}"
-                            class="campo">
-                        <option value="">Elige una sala libre</option>
-                        @foreach ($salasLibres as $sala)
-                            <option value="{{ $sala->id }}">{{ $sala->nombreCompleto() }}{{ $sala->del_escenario ? ' · recomendada para este escenario' : '' }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <x-boton type="button" wire:click="asignarSala({{ $montaje->id }})">
-                    {{ $montaje->sala ? 'Cambiar' : 'Asignar' }}
-                </x-boton>
+            <div class="space-y-1.5">
+                @foreach ($salasLibres as $sala)
+                    <label class="flex items-start gap-2 text-[14px] text-gray-800" wire:key="sala-{{ $montaje->id }}-{{ $sala->id }}">
+                        <input type="checkbox" value="{{ $sala->id }}" wire:model="salasElegidas" class="mt-0.5 rounded border border-gray-300">
+                        <span>
+                            {{ $sala->nombreCompleto() }}
+                            <span class="text-gray-500">· caben {{ $sala->capacidad }}</span>
+                            @if ($sala->del_escenario)
+                                <span class="text-gray-500">· recomendada para este escenario</span>
+                            @endif
+                        </span>
+                    </label>
+                @endforeach
             </div>
-            @error('salaElegida') <p class="campo-error">{{ $message }}</p> @enderror
+            <x-boton type="button" wire:click="asignarSalas({{ $montaje->id }})" class="mt-3">
+                {{ $montaje->salas->isNotEmpty() ? 'Cambiar' : 'Asignar' }}
+            </x-boton>
+            @error('salasElegidas') <p class="campo-error">{{ $message }}</p> @enderror
+            @error('salasElegidas.*') <p class="campo-error">{{ $message }}</p> @enderror
         @endif
-    </div>
+    </fieldset>
 
     {{-- Alistamiento --}}
     <div>
@@ -95,7 +101,7 @@
                 Empezar el montaje
             </x-boton>
         @elseif ($montaje->estado === \App\Enums\EstadoPreparacion::EnPreparacion)
-            @if ($montaje->sala_id === null)
+            @if ($montaje->salas->isEmpty())
                 <x-aviso tono="atencion">
                     Asigna una sala antes de dar el escenario por preparado.
                 </x-aviso>

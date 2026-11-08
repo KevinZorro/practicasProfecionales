@@ -43,11 +43,15 @@ function montajeParaPantalla(
         'tipo' => $tipo,
     ]);
 
-    return Preparacion::factory()->create([
+    $preparacion = Preparacion::factory()->create([
         'solicitud_id' => $solicitud->id,
-        'sala_id' => $sala?->id,
         'estado' => $estado,
     ]);
+    if ($sala !== null) {
+        $preparacion->salas()->attach($sala);
+    }
+
+    return $preparacion;
 }
 
 // ---------------------------------------------------------------------
@@ -111,10 +115,9 @@ it('enseña lo importante sin abrir el escenario', function (): void {
         'hora_fin' => '09:00:00',
         'cantidad_estudiantes' => 12,
     ]);
-    Preparacion::factory()->create([
-        'solicitud_id' => $solicitud->id,
-        'sala_id' => Sala::factory()->create(['nombre' => 'Sala 1'])->id,
-    ]);
+    Preparacion::factory()
+        ->conSala(Sala::factory()->create(['nombre' => 'Sala 1']))
+        ->create(['solicitud_id' => $solicitud->id]);
 
     Livewire::actingAs($this->administrativo)
         ->test(TableroDiario::class)
@@ -157,10 +160,10 @@ it('asigna una sala libre', function (): void {
         ->test(TableroDiario::class)
         ->set('fecha', '2026-10-05')
         ->call('abrir', $montaje->id)
-        ->set('salaElegida', $sala->id)
-        ->call('asignarSala', $montaje->id);
+        ->set('salasElegidas', [$sala->id])
+        ->call('asignarSalas', $montaje->id);
 
-    expect($montaje->fresh()->sala_id)->toBe($sala->id);
+    expect($montaje->fresh()->salas->pluck('id')->all())->toBe([$sala->id]);
 });
 
 it('solo ofrece las salas libres de esa franja', function (): void {
@@ -200,7 +203,7 @@ it('muestra el choque cuando la sala se ocupó entre medias', function (): void 
         'docente_id' => $docente->id, 'caso_clinico_id' => $caso->id,
         'fecha' => '2026-10-05', 'hora_inicio' => '07:00:00', 'hora_fin' => '09:00:00',
     ]);
-    Preparacion::factory()->create(['solicitud_id' => $ocupante->id, 'sala_id' => $sala->id]);
+    Preparacion::factory()->conSala($sala)->create(['solicitud_id' => $ocupante->id]);
 
     $nuevo = montajeParaPantalla('2026-10-05', '08:00:00', '10:00:00');
 
@@ -208,13 +211,13 @@ it('muestra el choque cuando la sala se ocupó entre medias', function (): void 
         ->test(TableroDiario::class)
         ->set('fecha', '2026-10-05')
         ->call('abrir', $nuevo->id)
-        ->set('salaElegida', $sala->id)
-        ->call('asignarSala', $nuevo->id)
+        ->set('salasElegidas', [$sala->id])
+        ->call('asignarSalas', $nuevo->id)
         ->assertSee('ya está ocupada de 07:00 a 09:00')
         ->assertSee('Herida por arma')
         ->assertSee('Ana Gómez');
 
-    expect($nuevo->fresh()->sala_id)->toBeNull();
+    expect($nuevo->fresh()->salas)->toBeEmpty();
 });
 
 // ---------------------------------------------------------------------

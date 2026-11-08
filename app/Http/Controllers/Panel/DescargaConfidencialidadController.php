@@ -40,15 +40,21 @@ final class DescargaConfidencialidadController extends Controller
     }
 
     /** El documento firmado: lleva datos personales de quien lo firmó. */
-    public function firmado(Request $peticion, FormatoConfidencialidad $entrega): StreamedResponse
+    public function firmado(Request $peticion, FormatoConfidencialidad $entrega, ConfidencialidadService $confidencialidad): StreamedResponse
     {
         abort_unless($peticion->user()->can('descargar', $entrega), 403);
         abort_if($entrega->archivo_firmado_path === null, 404);
 
-        return $this->entregar(
+        $descarga = $this->entregar(
             $entrega->archivo_firmado_path,
             sprintf('formato-confidencialidad-%s-%s.pdf', $entrega->firmante_id, $entrega->periodo_academico),
         );
+
+        // Solo cuando la descarga va a ocurrir: la Policy dijo que sí y el
+        // archivo existe (entregar() responde 404 si no).
+        $confidencialidad->registrarDescarga($entrega, $peticion->user());
+
+        return $descarga;
     }
 
     /** Una versión concreta de la plantilla, desde el historial del ADMIN. */

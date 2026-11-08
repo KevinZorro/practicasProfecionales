@@ -35,11 +35,15 @@ function preparacionEn(string $fecha, string $inicio, string $fin, ?Sala $sala =
         'hora_fin' => $fin,
     ]);
 
-    return Preparacion::factory()->create([
+    $preparacion = Preparacion::factory()->create([
         'solicitud_id' => $solicitud->id,
-        'sala_id' => $sala?->id,
         'estado' => EstadoPreparacion::Pendiente,
     ]);
+    if ($sala !== null) {
+        $preparacion->salas()->attach($sala);
+    }
+
+    return $preparacion;
 }
 
 it('copia a la preparación los items pedidos, sin alistar, al aprobar', function (): void {
@@ -75,9 +79,9 @@ it('asigna una sala libre', function (): void {
     $sala = Sala::factory()->create();
     $preparacion = preparacionEn('2026-04-10', '07:00:00', '09:00:00');
 
-    $this->servicio->asignarSala($preparacion, $sala);
+    $this->servicio->asignarSalas($preparacion, [$sala->id]);
 
-    expect($preparacion->fresh()->sala_id)->toBe($sala->id);
+    expect($preparacion->fresh()->salas->pluck('id')->all())->toBe([$sala->id]);
 });
 
 it('deja usar la misma sala el mismo día en franjas que no se pisan', function (): void {
@@ -85,9 +89,9 @@ it('deja usar la misma sala el mismo día en franjas que no se pisan', function 
     preparacionEn('2026-04-10', '07:00:00', '09:00:00', $sala);
     $siguiente = preparacionEn('2026-04-10', '09:00:00', '11:00:00');
 
-    $this->servicio->asignarSala($siguiente, $sala);
+    $this->servicio->asignarSalas($siguiente, [$sala->id]);
 
-    expect($siguiente->fresh()->sala_id)->toBe($sala->id);
+    expect($siguiente->fresh()->salas->pluck('id')->all())->toBe([$sala->id]);
 });
 
 it('deja usar la misma sala a la misma hora en días distintos', function (): void {
@@ -95,9 +99,9 @@ it('deja usar la misma sala a la misma hora en días distintos', function (): vo
     preparacionEn('2026-04-10', '07:00:00', '09:00:00', $sala);
     $otroDia = preparacionEn('2026-04-11', '07:00:00', '09:00:00');
 
-    $this->servicio->asignarSala($otroDia, $sala);
+    $this->servicio->asignarSalas($otroDia, [$sala->id]);
 
-    expect($otroDia->fresh()->sala_id)->toBe($sala->id);
+    expect($otroDia->fresh()->salas->pluck('id')->all())->toBe([$sala->id]);
 });
 
 dataset('franjas que se solapan', [
@@ -113,7 +117,7 @@ it('no asigna una sala ocupada en una franja que se solapa', function (string $i
     preparacionEn('2026-04-10', '07:00:00', '09:00:00', $sala);
     $nueva = preparacionEn('2026-04-10', $inicio, $fin);
 
-    $this->servicio->asignarSala($nueva, $sala);
+    $this->servicio->asignarSalas($nueva, [$sala->id]);
 })->with('franjas que se solapan')->throws(SalaOcupada::class);
 
 it('cuenta en el mensaje del conflicto con qué solicitud choca', function (): void {
@@ -121,7 +125,7 @@ it('cuenta en el mensaje del conflicto con qué solicitud choca', function (): v
     $ocupante = preparacionEn('2026-04-10', '07:00:00', '09:00:00', $sala);
     $nueva = preparacionEn('2026-04-10', '08:00:00', '10:00:00');
 
-    expect(fn () => $this->servicio->asignarSala($nueva, $sala))
+    expect(fn () => $this->servicio->asignarSalas($nueva, [$sala->id]))
         ->toThrow(
             SalaOcupada::class,
             "La sala Sala de urgencias ya está ocupada el 10/04/2026 de 07:00:00 a 09:00:00 por la solicitud #{$ocupante->solicitud_id}.",
@@ -133,9 +137,9 @@ it('deja reasignar la misma sala a la misma preparación', function (): void {
     $sala = Sala::factory()->create();
     $preparacion = preparacionEn('2026-04-10', '07:00:00', '09:00:00', $sala);
 
-    $this->servicio->asignarSala($preparacion, $sala);
+    $this->servicio->asignarSalas($preparacion, [$sala->id]);
 
-    expect($preparacion->fresh()->sala_id)->toBe($sala->id);
+    expect($preparacion->fresh()->salas->pluck('id')->all())->toBe([$sala->id]);
 });
 
 it('avanza el montaje de pendiente a en preparación y a preparado', function (): void {

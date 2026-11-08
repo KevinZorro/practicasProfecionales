@@ -41,6 +41,34 @@ final class BitacoraService
     }
 
     /**
+     * Lo que no apunta a un registro: una acción de Livewire negada, de la
+     * que solo se sabe qué se pidió, o la exportación de un reporte, que es
+     * una consulta con filtros (B4.2, B4.5).
+     */
+    public function registrarSinSujeto(AccionAuditada $accion, User $actor, string $descripcion): RegistroDeBitacora
+    {
+        return RegistroDeBitacora::create([
+            'accion' => $accion,
+            'user_id' => $actor->id,
+            'descripcion' => $descripcion,
+        ]);
+    }
+
+    /**
+     * Un 403 a alguien con sesión (B4.5): quién, qué pidió y, si la ruta lo
+     * resolvió, sobre qué registro. Lo escribe el middleware
+     * RegistrarAccesosNegados, después de que la acción ya se negó.
+     */
+    public function registrarAccesoNegado(User $actor, ?Model $sujeto, string $descripcion): RegistroDeBitacora
+    {
+        if ($sujeto instanceof Model) {
+            return $this->registrar(AccionAuditada::AccesoNegado, $actor, $sujeto, $descripcion);
+        }
+
+        return $this->registrarSinSujeto(AccionAuditada::AccesoNegado, $actor, $descripcion);
+    }
+
+    /**
      * La más reciente primero, con filtros por acción, por quien la hizo y
      * por rango de fechas (días completos, en la zona de la aplicación).
      *

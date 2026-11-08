@@ -10,6 +10,8 @@ Plataforma web de gestión del Laboratorio de Simulación Clínica de la Faculta
 
 **Los enunciados de los requerimientos están en `docs/requerimientos.md`**, y el estado de cada uno contra el código, con las preguntas abiertas, en `docs/trazabilidad.md`. Si este archivo y el enunciado no coinciden, manda el enunciado: dilo y anótalo en la matriz.
 
+Las decisiones de arquitectura, con su porqué, están en `docs/decisions/` (ADR), y los escenarios de calidad con su medida, en `docs/escenarios-de-calidad.md`. Una decisión que cambia no se edita: se escribe otra que la reemplaza.
+
 **Usuarios:** ~700 estudiantes y ~150 docentes, más personal administrativo, coordinación y un administrador de la plataforma (RNF01, cifra confirmada con el cliente).
 
 **Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago.
@@ -36,7 +38,7 @@ Un usuario puede tener varios roles a la vez (una coordinadora puede además ser
 Usa estos términos exactos en código, base de datos e interfaz. No los traduzcas ni los inventes.
 
 - **Escenario clínico / caso clínico** — la situación que se practica (atención de parto, herida por arma de fuego, incubadora). No es la sala.
-- **Sala** — el espacio físico donde se monta el escenario.
+- **Sala** — el espacio físico donde se monta el escenario. Las separan cortinas de hospital: abriéndolas, dos o tres salas son un solo salón, así que una sesión usa de una a tres (P16).
 - **Simulador** — maniquí de baja, media o alta fidelidad.
 - **Equipo clínico / equipo básico** — insumos y equipos que acompañan la práctica.
 - **Solicitud** — pedido de un docente para usar un escenario. Es de tipo `practica` o `evaluacion`.
@@ -46,7 +48,7 @@ Usa estos términos exactos en código, base de datos e interfaz. No los traduzc
 - **Intento** — número de vez que un estudiante presenta la misma evaluación.
 - **Formato de confidencialidad** — el documento que se firma para entrar a las prácticas; incluye la autorización de captación de imágenes. Es como lo llama el laboratorio, y así está rotulada su carpeta en el Drive. **No lo llames "consentimiento informado"**: fue nuestro nombre, no el suyo, y se retiró del código. Lo firma todo el que entra a la práctica —estudiantes y docentes—, por eso la columna es `firmante_id` y no `estudiante_id`.
 
-**Cuidado con "capacidad": en este dominio significa tres cosas distintas.** `capacidades` son las capacidades clínicas del simulador (sangrado, llanto, signos vitales); `salas.capacidad` es cuánta gente cabe en el espacio físico; `casos_clinicos.capacidad_maxima_estudiantes` es cuántos estudiantes admite el escenario (RF74). Escribe siempre el nombre largo del tercero: "capacidad" a secas ya está ocupado. Por eso las frases del equipamiento destacado de la portada se llaman `caracteristicas` (`equipos_destacados`), no capacidades.
+**Cuidado con "capacidad": en este dominio significa tres cosas distintas.** `capacidades` son las capacidades clínicas del simulador (sangrado, llanto, signos vitales); `salas.capacidad` es cuánta gente cabe en el espacio físico (con salas unidas, se suma); `casos_clinicos.capacidad_maxima_estudiantes` es cuántos estudiantes admite el escenario (RF74). Escribe siempre el nombre largo del tercero: "capacidad" a secas ya está ocupado. Por eso las frases del equipamiento destacado de la portada se llaman `caracteristicas` (`equipos_destacados`), no capacidades.
 
 ---
 
@@ -96,7 +98,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 
 Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:link`), con caché de un mes y `nosniff`: sus nombres se generan al subirlos y nunca se reescriben. `storage/app/public` vive en el volumen `archivos_publicos` del compose, montado en `app`, `queue` y `nginx`; el Dockerfile crea esa carpeta con dueño `www-data` porque Docker inicializa un volumen vacío con el dueño de la imagen, y sin eso la aplicación no podría escribir. El job de Docker de la CI comprueba que GD guarda WebP y que nginx sirve un archivo escrito por la aplicación.
 
-**Entrada con Google (RF18).** `AccesoConGoogleController` habla con Google por Socialite; quién entra lo decide `AccesoService::cuentaDeGoogle()`, que no conoce Socialite y recibe una `IdentidadDeGoogle`. Cinco decisiones que no son las del ejemplo de Socialite:
+**Entrada con Google (RF18).** `AccesoConGoogleController` habla con Google por Socialite; quién entra lo decide `AccesoService::cuentaDeGoogle()`, que no conoce Socialite y recibe una `IdentidadDeGoogle`. Lo que no es como en el ejemplo de Socialite:
 
 - **No crea cuentas.** Solo entra quien ya tiene cuenta en `users` (la crea la sincronización institucional o el laboratorio): un correo institucional no autoriza el ingreso (regla 8).
 - **Vincula `google_id` la primera vez**, encontrando la cuenta por el correo sin distinguir mayúsculas; desde entonces la encuentra por `google_id`, que no cambia aunque cambie el correo. Una cuenta ya vinculada a otro `google_id` no se entrega a quien coincida en el correo.
@@ -104,11 +106,13 @@ Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:
 - **Sin dominio configurado, en producción no se entra:** con `GOOGLE_DOMINIO_INSTITUCIONAL` vacío la restricción del RF18 no existiría, así que `AccesoService` niega la entrada y deja el error en el registro. En local y en pruebas se permite.
 - **Sin `GOOGLE_CLIENT_ID`, la entrada no existe:** las tres rutas dan 404 y el invitado va a la portada, o en `local` al acceso de desarrollo, que sigue ahí hasta probar la entrada con las credenciales reales.
 - **Sin límite de peticiones por IP:** en la universidad cientos de personas salen por la misma dirección y entran a la vez.
+- **La llamada a Google tiene tiempo máximo:** 5 s, y 3 s para conectar (`services.google.guzzle`). Sin él, una tanda de entradas lentas retiene los 20 workers de PHP-FPM y deja sin atender todo el panel (B3.1). Si Google no responde, rechaza el código o falla por dentro, la persona vuelve a la entrada con un mensaje y queda un aviso en el registro, nunca un 500.
 
 Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Google y la comprobación del `state` usan el proveedor real.
 
-**Producción (`docker-compose.produccion.yml`).** El código va dentro de las imágenes (etapas `produccion` y `web` de `docker/php/Dockerfile`); la sección "Producción" del README tiene la instalación, el despliegue y la restauración. Cuatro cosas que no se pueden perder:
+**Producción (`docker-compose.produccion.yml`).** El código va dentro de las imágenes (etapas `produccion` y `web` de `docker/php/Dockerfile`); la sección "Producción" del README tiene la instalación, el despliegue y la restauración. Lo que no se puede perder:
 
+- **La aplicación entra a PostgreSQL sin superusuario** (S.1): `DB_USERNAME` solo lee y escribe filas. Las tablas las crea el dueño (`DB_DUENO_USUARIO`) en el servicio `migraciones`, que después corre `base:usuario-de-la-aplicacion` y renueva sus permisos; las copias y la restauración también usan al dueño. Una migración nueva no necesita nada más: los permisos por defecto alcanzan a las tablas que cree.
 - **Los documentos privados son un volumen**, `archivos_privados` (`storage/app/private`), montado en `app`, `queue`, `copias` y `restauracion`. Sin él, el formato de confidencialidad firmado se perdería en cada despliegue.
 - **Nada de lo que suben los usuarios entra en una imagen:** `.dockerignore` excluye `storage/app/public` y `storage/app/private`. Una imagen construida en un equipo de desarrollo se llevaría dentro los documentos de prueba.
 - **Las cabeceras de seguridad las pone `CabecerasDeSeguridad`**, en Laravel y no en nginx, para que se prueben. La Content-Security-Policy lleva `'unsafe-inline'` y `'unsafe-eval'` porque Alpine y Filament los necesitan; lo que cierra son los orígenes externos. Cualquier recurso de otro sitio que se añada (una fuente, un script, una imagen) hay que declararlo en ella, o el navegador lo bloquea. Por eso el avatar de Filament se dibuja en local (`App\Filament\AvatarConIniciales`) y no se pide a ui-avatars.com.
@@ -122,7 +126,7 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 - **Fuente y logos se sirven desde el propio servidor** (`public/fonts`, `public/marca`). Un recurso de otro sitio rompería la CSP.
 - **Todavía no hay fotos reales:** cada bloque tiene un estado sin foto que tiene que seguir viéndose terminado.
 
-**Correo: la cuenta institucional del laboratorio, por SMTP de Google, sin paquete.** Los correos salen de la cuenta de Google Workspace que el laboratorio ya tiene, por `smtp.gmail.com` con una contraseña de aplicación y el transporte SMTP que ya trae Laravel; todo se configura con las variables `MAIL_*`. No instales paquetes de proveedores de correo: cambiar de proveedor tiene que ser cambiar el `.env`. La cuenta tiene un tope diario (unos 2.000), así que un aviso que pueda repetirse por sesión se agrupa en un correo por persona. Si alguien cambia la contraseña de esa cuenta, la de aplicación se anula y los correos dejan de salir hasta generar otra.
+**Correo: la cuenta institucional del laboratorio, por SMTP de Google, sin paquete.** Los correos salen de la cuenta de Google Workspace que el laboratorio ya tiene, por `smtp.gmail.com` con una contraseña de aplicación y el transporte SMTP que ya trae Laravel; todo se configura con las variables `MAIL_*`. No instales paquetes de proveedores de correo: cambiar de proveedor tiene que ser cambiar el `.env`. La cuenta tiene un tope diario (unos 2.000), así que un aviso que pueda repetirse por sesión se agrupa en un correo por persona. Si alguien cambia la contraseña de esa cuenta, la de aplicación se anula y los correos dejan de salir hasta generar otra. Todo listener de la cola y todo correo usan el trait `EsperaEntreReintentos` (1 y 5 minutos entre intentos, B3.2), y `retry_after` de la cola queda por encima del `--timeout` del worker; `ReintentosDeLaColaTest` falla si uno nuevo no lo usa.
 
 **No agregues dependencias sin justificarlo primero.** Cada paquete nuevo es algo que el mantenedor futuro tendrá que aprender. Si algo se resuelve con Laravel puro, hazlo con Laravel puro.
 
@@ -167,9 +171,9 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | Service | Responsabilidad |
 |---|---|
 | `SolicitudService` | Crear solicitud con su grupo y estudiantes, completar o retirar estudiantes de la sesión (RF28, RF69), precargar inventario del caso clínico, transiciones de estado, disparar notificaciones |
-| `PreparacionService` | Crear preparación al aprobar, asignar sala entre las libres (las vinculadas al escenario primero) y avisar al docente por correo, marcar ítems alistados |
+| `PreparacionService` | Crear preparación al aprobar, asignar de una a tres salas libres en las que, juntas, cabe el grupo (P11, P16) (las vinculadas al escenario primero, con las salas bloqueadas mientras comprueba el cruce) y avisar al docente por correo después de confirmar, marcar ítems alistados |
 | `SalaService` | Rastro de la ubicación de las salas (bloque, piso y número, RF65): una fila en `ubicaciones_sala` cada vez que cambia. Lo llaman las páginas de alta y edición de Filament |
-| `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento |
+| `EvaluacionService` | Validar solicitud aprobada de tipo evaluación, copiar checklist, calcular número de intento. `finalizar` bloquea la evaluación y su tipo: dos finalizaciones a la vez no repiten intento ni duplican la entrada de la bitácora (B3.11, B3.3) |
 | `InventarioService` | Altas, bajas, disponibilidad por fecha y franja horaria |
 | `PeriodoAcademicoService` | Abrir, cerrar y reabrir el periodo académico (RF75). Es la única fuente del periodo vigente: el abierto, o entre semestres el último cerrado. Nunca se deriva del calendario |
 | `ConfidencialidadService` | Estado del formato de confidencialidad en el periodo vigente; solo recibe entregas con un periodo abierto |
@@ -179,8 +183,10 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
 | `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): las registra un administrativo y nacen aprobadas; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
 | `AjustesService` | Valores que el ADMIN cambia sin desplegar (`ajustes_laboratorio`, claves fijas en `AjusteDelLaboratorio`), como la antelación del aviso del RF60 |
+| `CrucesDeSesionService` | Nadie en dos sesiones a la vez (P9): ni un estudiante en dos que se cruzan ni un docente con dos solicitudes que se cruzan. Cuentan pendientes, revisadas y aprobadas; no las rechazadas ni los retirados (RF69). Lo llaman solicitar, completar la lista, registrar una sesión apartada, reprogramar y sustituir, dentro de su transacción y después de `bloquearPersonas()`, que bloquea a esas personas en orden de id |
 | `NovedadesDeSesionService` | Reprogramar una sesión aprobada (RF61) y sustituir a su docente (RF73), con rastro de solo añadir y correo. `solicitudes.docente_que_dicta_id` es el reemplazo vigente: quien dicta es quien evalúa, gestiona la lista y suma las horas del reporte |
-| `BitacoraService` | Bitácora de auditoría (RF62). La escriben los Services que aprueban, rechazan, reprograman, sustituyen, retiran, bloquean, cambian roles, verifican o rechazan formatos, reciben su entrega en físico, abren o cierran el periodo y finalizan evaluaciones, **dentro de su propia transacción**; nunca un componente. Una acción auditada nueva lleva su caso en `AccionAuditada` |
+| `BitacoraService` | Bitácora de auditoría (RF62). La escriben los Services que aprueban, rechazan, reprograman, sustituyen, retiran, bloquean, cambian roles, verifican o rechazan formatos, reciben su entrega en físico, abren o cierran el periodo y finalizan evaluaciones, **dentro de su propia transacción**, y cada descarga de un formato firmado; nunca un componente. Cada 403 a alguien con sesión lo escribe el middleware global `RegistrarAccesosNegados` (B4.5): quién, qué pidió y sobre qué registro, también en las acciones de Livewire; una entrada sin registro concreto va con `registrarSinSujeto()`. Toda exportación de un reporte (PDF o Excel, también la del supervisor y la lista de reposición) la registra `GeneradorDeReportes`, que por eso pide quién exporta (B4.2). Una acción auditada nueva lleva su caso en `AccionAuditada` |
+| `RetencionDeDatosService` | Retención de dos semestres (P13): formatos firmados, evaluaciones y bitácora se conservan dos periodos académicos, el vigente y el anterior. Lo más viejo lo depura el ADMIN desde `/panel/depuracion`, después de descargar en un ZIP los formatos que se van; nada se borra solo. Del formato se borra el PDF y la fila se queda. Es el único camino que borra entradas de la bitácora |
 | `ReporteService` | Agregaciones y generación de PDF y Excel. **El PDF tiene tope** (`laboratorio.reportes`: 31 días y 500 filas) porque dompdf gasta medio megabyte por fila; el Excel no (QA-01). Los textos del Excel pasan por `ValorSeguro`: nunca se guardan como fórmula |
 | `ConfiguracionLandingService` | Textos del hero, video y contacto de la landing (RF11): claves fijas en `ClaveConfiguracionLanding`, guardadas todas o ninguna; borra el video reemplazado al confirmar |
 | `ImagenPublicaService` | Imágenes del contenido público: validar, enderezar, reducir, guardar en WebP y borrar la reemplazada al confirmar la transacción |
@@ -213,13 +219,13 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 3. **Los ítems del checklist se copian, no se referencian.** Al crear una evaluación, los ítems de la plantilla se duplican en `evaluacion_items`. Si el ADMIN edita la plantilla después, las evaluaciones históricas conservan los ítems originales. Esta duplicación es intencional.
 
-4. **La sala no se elige al solicitar.** El docente no la elige y el coordinador tampoco. La asigna el administrativo durante la preparación, minutos antes de la clase. `sala_id` vive en `preparaciones`, no en `solicitudes`.
+4. **La sala no se elige al solicitar.** El docente no la elige y el coordinador tampoco. La asigna el administrativo durante la preparación, minutos antes de la clase. Las salas de una sesión viven en `preparacion_sala`, no en `solicitudes`, y son **de una a tres** (`PreparacionService::MAXIMO_DE_SALAS`): las separan cortinas de hospital y, abriéndolas, dos o tres salas son un solo salón (P16). El grupo tiene que caber en la capacidad sumada (P11). El sistema no sabe qué salas son vecinas: eso lo sabe quien abre la cortina, así que no lo comprueba.
 
 5. **Los docentes no ven disponibilidad de inventario.** Restringido a administrativo, coordinador y admin.
 
 6. **El nivel de fidelidad del simulador solo lo edita el ADMIN.** Es el único campo del inventario con esa restricción; el resto lo editan administrativos y coordinadores. Restricción a nivel de campo, no de recurso.
 
-7. **El formato de confidencialidad se renueva cada periodo académico**, el que abre el laboratorio (RF75). Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee.
+7. **El formato de confidencialidad se renueva cada periodo académico**, el que abre el laboratorio (RF75). Índice único sobre (`firmante_id`, `periodo_academico`). Lo verifica el **administrativo**, que es quien recibe las entregas a diario; coordinación y ADMIN conservan el permiso por herencia y supervisan. Quien verifica también descarga el documento firmado: no se aprueba lo que no se lee. **Cada descarga queda en la bitácora** con quién, cuál y cuándo, también la del propio firmante (B4.2). **Se conserva dos semestres (P13):** el PDF de un formato de un periodo más viejo que el anterior al vigente lo depura el ADMIN con `RetencionDeDatosService`; la fila se queda: es lo que permite responder quién vio el formato de una persona (Ley 1581). Se registra solo la descarga que ocurre, no la negada.
 
    **Un formato verificado no se reemplaza** (QA-06): es la prueba de la autorización de captación de imágenes (Ley 1581). `registrarEntrega` lo rechaza y la Policy `update` lo niega; el archivo anterior de un formato cargado se borra al confirmar la transacción, nunca antes.
 
@@ -237,11 +243,11 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
    **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 
-9. **El flujo de una solicitud es:** docente solicita → administrativo acepta (revisa) o rechaza (RF30) → coordinador (o el ADMIN, si coordinación no está) aprueba o rechaza (RF31) → administrativo elige una sala libre, se avisa al docente por correo (RF36) y prepara. Son dos fases y en las dos se puede rechazar, cada una lo suyo (`SolicitudPolicy::rechazar()`): la pendiente la rechaza quien revisa; la revisada, coordinación o el ADMIN. El administrativo no rechaza lo que ya aceptó. Una solicitud rechazada en la primera fase queda con `revisada_por` nulo.
+9. **El flujo de una solicitud es:** docente solicita → administrativo acepta (revisa) o rechaza (RF30) → coordinador (o el ADMIN, si coordinación no está) aprueba o rechaza (RF31) → administrativo elige de una a tres salas libres, se avisa al docente por correo (RF36) y prepara. Son dos fases y en las dos se puede rechazar, cada una lo suyo (`SolicitudPolicy::rechazar()`): la pendiente la rechaza quien revisa; la revisada, coordinación o el ADMIN. El administrativo no rechaza lo que ya aceptó. Una solicitud rechazada en la primera fase queda con `revisada_por` nulo.
 
-   **La única excepción son las sesiones apartadas antes del semestre (RF57):** las registra un administrativo desde el formato que le entrega coordinación, así que nacen aprobadas, sin pasar por las dos fases. Queda registrado quién las cargó. Fuera de ese registro no hay otro camino a `aprobada`. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. No inventes atajos entre estados. **Toda transición relee la fila con `lockForUpdate()` dentro de la transacción** (`bloquearYGarantizarTransicion`): dos personas con la misma bandeja abierta tienen dos copias con el estado que leyó cada una, y comparar contra la copia en memoria deja aprobar y rechazar a la vez (QA-02). Vale igual para verificar y rechazar formatos.
+   **La única excepción son las sesiones apartadas antes del semestre (RF57):** las registra un administrativo desde el formato que le entrega coordinación, así que nacen aprobadas, sin pasar por las dos fases. Queda registrado quién las cargó. Fuera de ese registro no hay otro camino a `aprobada`. **Sin revisión previa no aprueba nadie:** aprobar exige estado `revisada`. **Se puede aprobar con faltantes de inventario, pero diciendo qué falta (P10):** si `InventarioService::faltantesPara()` encuentra alguno, las observaciones de la aprobación son obligatorias y llegan al docente en el correo. No inventes atajos entre estados. **Una pendiente o revisada cuya fecha ya pasó está vencida:** no se revisa ni se aprueba, solo se rechaza para cerrarla (P6). No es un estado: lo deducen `SolicitudService::estaVencida()` y el scope `vencidas()`, y la bandeja la enseña aparte. **Toda transición relee la fila con `lockForUpdate()` dentro de la transacción** (`bloquearYGarantizarTransicion`): dos personas con la misma bandeja abierta tienen dos copias con el estado que leyó cada una, y comparar contra la copia en memoria deja aprobar y rechazar a la vez (QA-02). Vale igual para verificar y rechazar formatos, y para asignar salas: `asignarSalas` bloquea las filas de las salas, en orden de id, y vuelve a comprobar el cruce dentro de la transacción, o dos administrativos con el tablero abierto la reservan dos veces para franjas que se cruzan (B3.11).
 
-10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`. Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
+10. **Ningún escenario admite más estudiantes de los que el ADMIN le registró.** `casos_clinicos.capacidad_maxima_estudiantes` (RF74). Es un dato, no una constante: el ADMIN lo edita, y la comprobación vive en `SolicitudService`, con la solicitud bloqueada mientras cuenta: si no, dos personas que completan la lista a la vez cuentan los mismos estudiantes y juntas pasan del tope (B3.11). Un escenario con la capacidad en `null` está **sin definir** y no limita: bloquear una clase real por un campo que nadie llenó es peor que no tener tope.
 
 11. **El estado funcional es de las unidades, no del ítem (RF66).** De ocho sondas, dos pueden estar en revisión y seis seguir disponibles. Lo llevan tres contadores en `items_inventario` —`cantidad_operativa`, `cantidad_en_revision`, `cantidad_defectuosa`—, y la invariante es:
 
@@ -339,7 +345,9 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 - **Código comentado o muerto.** Bórralo, para eso está Git.
 - **Migraciones editadas después de aplicadas.**
 - **`env()` fuera de los archivos de configuración.** Usa `config()`.
+- **Una ruta del panel con un ID que no está en `AccesosNegadosTest`.** Su prueba de cobertura falla: añade la ruta al dataset, con cómo pedir algo que no le corresponde a quien la pide.
 - **Un parámetro de ruta que resuelve un modelo sin patrón numérico.** `routes/web.php` declara `Route::pattern` para los nombres que usamos (`solicitud`, `evaluacion`, `item`…); uno nuevo se añade a esa lista, o `/panel/…/abc` llega a PostgreSQL y responde 500 (QA-17). Los filtros que vienen de la URL pasan por `FiltroDeUrl`.
+- **`Enum::from()` sobre lo que llega del cliente.** Un valor que la pantalla no ofrece revienta con `ValueError`, un 500. Valídalo con `Rule::enum` o usa `tryFrom` e ignóralo (QA-15, B4.3), también en la vista que pinta esa propiedad: Livewire la vuelve a pintar con el valor manipulado antes de llamar a la acción.
 - **Un segundo toque que revienta.** Las acciones de los componentes son idempotentes o capturan la excepción de dominio; `x-boton` se deshabilita mientras Livewire procesa. Cualquier `DomainException` que llegue al manejador responde 422 con su mensaje (QA-04).
 - **Archivos del formato de confidencialidad en almacenamiento público.** Contienen datos personales: se sirven por ruta protegida con Policy.
 - **Comprobar un efecto secundario con "al menos uno".** Los tests de correos, eventos, jobs y notificaciones exigen la cantidad exacta: `Mail::assertSent(X::class, 1)`, `Event::assertDispatched(X::class, 1)`, `Queue::assertPushed(X::class, 1)`. `assertSent` con una función y sin número pasa con uno o con cinco, y así se nos escapó que cada aprobación mandaba dos correos al docente: el listener estaba registrado dos veces.
@@ -356,6 +364,7 @@ Cada tarea termina con tests que la prueben. **Una funcionalidad sin test no est
 - Prueba también los caminos negativos: crear una evaluación sin solicitud aprobada debe fallar; un docente no debe poder aprobar su propia solicitud si esa regla se activa; quien verifica no debe poder entregar un formato de confidencialidad por otro.
 - Usa factories, nunca datos escritos a mano dentro del test.
 - Los tests describen comportamiento del dominio, no implementación: `un docente no puede evaluar sin escenario aprobado`.
+- **Las carreras se prueban con dos sesiones de verdad**, en `tests/Concurrencia`. Ahí no hay `RefreshDatabase`, porque su transacción le esconde los datos a la otra sesión: se usa `DatabaseTruncation`, y la segunda conexión entra justo antes de que la primera escriba. Llamar dos veces seguidas no detecta una carrera: pasaría igual sin el bloqueo. `AsignacionDeSalaConcurrenteTest` tiene el patrón.
 
 Antes de dar una tarea por terminada: `php artisan test` y `vendor/bin/phpstan analyse` en verde.
 
@@ -395,8 +404,9 @@ docker compose exec node npm run dev
 docker compose logs -f app
 
 # Producción (en el servidor; ver la sección "Producción" del README)
-docker compose -f docker-compose.produccion.yml up -d --build
-docker compose -f docker-compose.produccion.yml exec app php artisan migrate --force
+docker compose -f docker-compose.produccion.yml build
+docker compose -f docker-compose.produccion.yml run --rm migraciones    # migra con el dueño y crea el usuario de la aplicación
+docker compose -f docker-compose.produccion.yml up -d
 docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia.sh
 ```
 

@@ -6,6 +6,7 @@ namespace App\Mail;
 
 use App\Models\Solicitud;
 use App\Models\User;
+use App\Support\EsperaEntreReintentos;
 use Illuminate\Bus\Queueable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Mail\Mailable;
@@ -19,6 +20,7 @@ use Illuminate\Queue\SerializesModels;
  */
 final class AvisoFormatoIntramuralMail extends Mailable
 {
+    use EsperaEntreReintentos;
     use Queueable, SerializesModels;
 
     /**

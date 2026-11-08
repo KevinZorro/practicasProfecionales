@@ -22,7 +22,10 @@ class SalaFactory extends Factory
         return [
             'nombre' => 'Sala de simulación '.$this->faker->unique()->numberBetween(1, 99),
             'codigo' => strtoupper($this->faker->unique()->bothify('SIM-##')),
-            'capacidad' => $this->faker->numberBetween(6, 30),
+            // Cabe cualquier grupo de SolicitudFactory (hasta 25): el tablero
+            // no ofrece salas en las que no cabe el grupo. Quien necesite una
+            // sala chica la fija.
+            'capacidad' => $this->faker->numberBetween(25, 40),
             'activo' => true,
             'bloque' => 'A',
             'piso' => '1',

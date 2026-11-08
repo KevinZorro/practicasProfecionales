@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mail;
 
+use App\Support\EsperaEntreReintentos;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -13,6 +14,7 @@ use Illuminate\Queue\SerializesModels;
 /** Aviso al ADMIN de que la sincronización se frenó para no desactivar de más (RF20). */
 final class SincronizacionDetenidaMail extends Mailable
 {
+    use EsperaEntreReintentos;
     use Queueable, SerializesModels;
 
     public function __construct(

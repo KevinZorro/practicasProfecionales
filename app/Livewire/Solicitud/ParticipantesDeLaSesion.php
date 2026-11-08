@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Solicitud;
 
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
+use App\Exceptions\SesionQueSeCruza;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Concerns\AutorizaEnCadaPeticion;
 use App\Livewire\Concerns\AvisaDelResultado;
@@ -117,7 +118,7 @@ final class ParticipantesDeLaSesion extends Component
 
         try {
             $accion();
-        } catch (SolicitudInvalida|CapacidadDeEstudiantesExcedida $invalida) {
+        } catch (SolicitudInvalida|CapacidadDeEstudiantesExcedida|SesionQueSeCruza $invalida) {
             $this->errorDeRegla = $invalida->getMessage();
 
             return false;

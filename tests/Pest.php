@@ -8,7 +8,9 @@ use App\Models\Materia;
 use App\Models\PeriodoAcademico;
 use App\Models\User;
 use App\Services\DatosNuevaSolicitud;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
@@ -34,6 +36,48 @@ pest()->extend(TestCase::class)
 
 pest()->extend(TestCase::class)
     ->in('Unit');
+
+/*
+| Las pruebas de concurrencia abren una segunda sesión de PostgreSQL, como
+| dos personas en dos peticiones. Esa sesión no ve lo que queda dentro de la
+| transacción de RefreshDatabase, así que aquí los datos se confirman de
+| verdad y la base se vacía antes de cada prueba.
+*/
+pest()->extend(TestCase::class)
+    ->use(DatabaseTruncation::class)
+    ->beforeEach(function (): void {
+        config(['database.connections.segunda_sesion' => config('database.connections.'.config('database.default'))]);
+
+        // La prueba corre en un solo proceso: si la segunda sesión espera un
+        // candado que tiene la primera, la primera nunca lo soltaría. Con
+        // este tope la espera termina en error en vez de colgar la suite.
+        DB::connection('segunda_sesion')->statement("SET lock_timeout = '1s'");
+    })
+    ->afterEach(function (): void {
+        DB::disconnect('segunda_sesion');
+
+        // DatabaseTruncation vacía la base antes de cada prueba, no después:
+        // sin esto, lo confirmado aquí lo verían las pruebas con
+        // RefreshDatabase que corran después en el mismo proceso.
+        $this->truncateTablesForAllConnections();
+    })
+    ->in('Concurrencia');
+
+/**
+ * Corre la acción como otra persona que actúa a la vez: con su propia
+ * sesión de PostgreSQL, como otra petición en otro proceso de PHP-FPM.
+ */
+function enOtraSesion(callable $accion): mixed
+{
+    $principal = DB::getDefaultConnection();
+    DB::setDefaultConnection('segunda_sesion');
+
+    try {
+        return $accion();
+    } finally {
+        DB::setDefaultConnection($principal);
+    }
+}
 
 /*
 |--------------------------------------------------------------------------

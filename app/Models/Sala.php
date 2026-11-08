@@ -40,10 +40,14 @@ class Sala extends Model
         ];
     }
 
-    /** @return HasMany<Preparacion, $this> */
-    public function preparaciones(): HasMany
+    /**
+     * Las sesiones que la ocupan, sola o unida a otras (P16).
+     *
+     * @return BelongsToMany<Preparacion, $this, SalaDeLaPreparacion>
+     */
+    public function preparaciones(): BelongsToMany
     {
-        return $this->hasMany(Preparacion::class);
+        return $this->belongsToMany(Preparacion::class, 'preparacion_sala')->using(SalaDeLaPreparacion::class);
     }
 
     /**

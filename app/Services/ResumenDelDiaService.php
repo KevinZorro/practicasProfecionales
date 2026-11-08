@@ -40,6 +40,7 @@ final class ResumenDelDiaService
         private readonly ConfidencialidadService $confidencialidad,
         private readonly EvaluacionService $evaluaciones,
         private readonly SupervisionService $supervision,
+        private readonly RetencionDeDatosService $retencion,
     ) {}
 
     public function para(User $persona, CarbonInterface $hoy): ResumenDelDia
@@ -59,7 +60,16 @@ final class ResumenDelDiaService
             formatosPorVerificar: $persona->can('viewAny', FormatoConfidencialidad::class) ? $this->formatosPorVerificar() : null,
             miFormato: $persona->can('create', FormatoConfidencialidad::class) ? $this->miFormato($persona) : null,
             supervision: $persona->can('supervisar', Evaluacion::class) ? $this->deSupervision($persona) : null,
+            porDepurar: $persona->can('depurarDatos') ? $this->porDepurar() : null,
         );
+    }
+
+    /** Lo de más de dos semestres, solo si hay algo que depurar. */
+    private function porDepurar(): ?DatosPorDepurar
+    {
+        $pendiente = $this->retencion->porDepurar();
+
+        return $pendiente->hayAlgo() ? $pendiente : null;
     }
 
     /**
@@ -70,7 +80,8 @@ final class ResumenDelDiaService
      */
     private function solicitudesEn(EstadoSolicitud $estado): LengthAwarePaginator
     {
-        return $this->conLoDeLaFila(Solicitud::query()->enEstado($estado))
+        // Las vencidas no esperan revisión ni aprobación: solo rechazo, desde la bandeja.
+        return $this->conLoDeLaFila(Solicitud::query()->enEstado($estado)->noVencidas())
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
             ->paginate(self::FILAS_POR_BLOQUE, ['*'], 'pagina', 1);
@@ -110,7 +121,7 @@ final class ResumenDelDiaService
     private function porEvaluar(User $docente): Collection
     {
         return $this->evaluaciones->sesionesPorEvaluar($docente)
-            ->load(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'preparacion.sala']);
+            ->load(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'preparacion.salas']);
     }
 
     /** Los formatos cargados del periodo vigente que esperan verificación (RF52). */
@@ -156,6 +167,6 @@ final class ResumenDelDiaService
      */
     private function conLoDeLaFila(Builder $consulta): Builder
     {
-        return $consulta->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.sala']);
+        return $consulta->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.salas']);
     }
 }

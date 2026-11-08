@@ -39,7 +39,10 @@ return [
             'connection' => env('DB_QUEUE_CONNECTION'),
             'table' => env('DB_QUEUE_TABLE', 'jobs'),
             'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+            // Mayor que el --timeout=90 del worker (docker-compose.produccion.yml):
+            // si no, otro worker toma un trabajo que sigue en marcha y el correo
+            // sale dos veces (B3.2).
+            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 120),
             'after_commit' => false,
         ],
 

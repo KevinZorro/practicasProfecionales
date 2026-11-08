@@ -44,7 +44,7 @@ it('no deja borrar una solicitud con evaluación registrada', function (): void 
 
 it('no deja borrar una sala usada en una preparación', function (): void {
     $sala = Sala::factory()->create();
-    Preparacion::factory()->create(['sala_id' => $sala->id]);
+    Preparacion::factory()->conSala($sala)->create();
 
     expect(fn () => $sala->delete())->toThrow(QueryException::class);
 });

@@ -9,7 +9,6 @@ use App\Models\CasoClinico;
 use App\Models\LineaDeReposicion;
 use App\Models\Materia;
 use App\Models\Preparacion;
-use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\FiltroReporte;
@@ -90,7 +89,7 @@ it('guarda como texto un nombre que empieza por = en el reporte de uso de escena
         'caso_clinico_id' => CasoClinico::factory()->create()->id,
         'fecha' => '2026-04-10',
     ]);
-    Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => Sala::factory()->create()->id]);
+    Preparacion::factory()->conSala()->create(['solicitud_id' => $solicitud->id]);
 
     $exportacion = new UsoDeEscenariosExport(app(ReporteService::class)->usoDeEscenarios(new FiltroReporte(desde: '2026-04-01', hasta: '2026-04-30')));
     $tipos = collect(celdasDeLaHoja($exportacion)[1])->pluck('tipo', 'valor');

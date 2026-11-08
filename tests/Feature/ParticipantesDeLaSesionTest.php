@@ -87,7 +87,7 @@ it('no deja ver la lista de una sesión ajena a otro docente', function (): void
 it('enseña en el tablero del día cuántos no pueden ingresar', function (): void {
     $sesion = sesionDe($this->docente, [User::factory()->estudiante()->create()->id, ...idsDeEstudiantes(1)]);
     $sesion->update(['estado' => EstadoSolicitud::Aprobada]);
-    Preparacion::factory()->create(['solicitud_id' => $sesion->id, 'sala_id' => null]);
+    Preparacion::factory()->create(['solicitud_id' => $sesion->id]);
 
     Livewire::actingAs($this->administrativo)
         ->test(TableroDiario::class)

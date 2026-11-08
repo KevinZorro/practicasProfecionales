@@ -13,6 +13,7 @@ use App\Models\ItemInventario;
 use App\Services\DatosItemInventario;
 use App\Services\InventarioService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -40,7 +41,6 @@ final class FormularioItem extends Component
     #[Validate('required|string|max:150')]
     public string $nombre = '';
 
-    #[Validate('required|string')]
     public string $tipo = '';
 
     #[Validate('required|integer|min:0|max:9999')]
@@ -65,6 +65,19 @@ final class FormularioItem extends Component
      */
     #[Locked]
     public ?string $volverA = null;
+
+    /**
+     * El tipo se valida contra el enum y no como texto libre: un valor que
+     * la pantalla no ofrece es un error de validación, no un 500 (B4.3).
+     *
+     * @return array<string, mixed>
+     */
+    public function rules(): array
+    {
+        return [
+            'tipo' => ['required', Rule::enum(TipoItemInventario::class)],
+        ];
+    }
 
     public function mount(?ItemInventario $item = null): void
     {

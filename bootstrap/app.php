@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\CabecerasDeSeguridad;
 use App\Http\Middleware\EstablecerRolActivo;
+use App\Http\Middleware\RegistrarAccesosNegados;
 use App\Http\Middleware\SoloEnDesarrollo;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Services\AccesoService;
@@ -28,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // En todas las respuestas, también las de error y las de Filament.
         $middleware->append(CabecerasDeSeguridad::class);
+        // Global para ver todos los 403, salgan de donde salgan (B4.5).
+        $middleware->append(RegistrarAccesosNegados::class);
 
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,

@@ -2,18 +2,24 @@
 
 declare(strict_types=1);
 
+use App\Enums\EstadoItemInventario;
 use App\Enums\EstadoPreparacion;
 use App\Enums\TipoSesion;
 use App\Exceptions\NovedadInvalida;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Evaluacion\RegistroDeEvaluacion;
+use App\Livewire\Inventario\FormularioItem;
+use App\Livewire\Inventario\ListadoInventario;
 use App\Livewire\Preparacion\TableroDiario;
+use App\Livewire\Reposicion\ListaDeReposicion;
+use App\Livewire\Solicitud\FormatoIntramural;
 use App\Livewire\Solicitud\FormularioSolicitud;
 use App\Livewire\Solicitud\SesionesApartadas;
 use App\Models\CasoClinico;
 use App\Models\Evaluacion;
 use App\Models\ItemInventario;
 use App\Models\Materia;
+use App\Models\NecesidadDeReposicion;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
 use App\Models\User;
@@ -24,6 +30,8 @@ use App\Services\NovedadesDeSesionService;
 use App\Services\RegistroPrevioService;
 use App\Services\SolicitudService;
 use Database\Seeders\RolSeeder;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 
 /*
@@ -194,4 +202,88 @@ it('ignora un resultado de evaluación o un estado de preparación inventados', 
         ->call('cambiarEstado', $preparacion->id, 'inventado')
         ->assertOk();
     expect($preparacion->fresh()->estado)->toBe(EstadoPreparacion::Pendiente);
+});
+
+// ---------------------------------------------------------------------
+// Valores inventados y cantidades descabelladas (B4.3 de la auditoría)
+// ---------------------------------------------------------------------
+
+it('el formulario de inventario rechaza un tipo de ítem inventado, sin error del servidor', function (): void {
+    Livewire::actingAs($this->administrativo)
+        ->test(FormularioItem::class)
+        ->set('nombre', 'Sonda de prueba')
+        ->set('tipo', 'inventado')
+        ->set('cantidadTotal', 3)
+        ->call('guardar')
+        ->assertHasErrors(['tipo']);
+
+    expect(ItemInventario::query()->where('nombre', 'Sonda de prueba')->exists())->toBeFalse();
+});
+
+it('ignora un cambio de estado del inventario con un origen o un destino inventados', function (): void {
+    $item = ItemInventario::factory()->create();
+    $contadores = ['cantidad_operativa', 'cantidad_en_revision', 'cantidad_defectuosa'];
+    $antes = $item->fresh()->only($contadores);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(ListadoInventario::class)
+        ->call('pedirCambioDeEstado', $item->id, 'inventado', EstadoItemInventario::EnRevision->value)
+        ->assertOk()
+        ->assertSet('cambiandoEstado', null);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(ListadoInventario::class)
+        ->call('pedirCambioDeEstado', $item->id, EstadoItemInventario::Operativo->value, EstadoItemInventario::EnRevision->value)
+        ->set('estadoDestino', 'inventado')
+        ->set('motivo', 'Un destino que la pantalla no ofrece')
+        ->call('confirmarCambioDeEstado')
+        ->assertOk();
+
+    expect($item->fresh()->only($contadores))->toBe($antes);
+});
+
+it('rechaza una necesidad de reposición con una cantidad descabellada, sin error del servidor', function (): void {
+    Livewire::actingAs($this->administrativo)
+        ->test(ListaDeReposicion::class)
+        ->call('abrirFormulario')
+        ->set('descripcion', 'Gasas estériles')
+        ->set('cantidad', 3_000_000_000)
+        ->set('justificacion', 'Una cantidad que desborda la columna')
+        ->call('anotarNecesidad')
+        ->assertHasErrors(['cantidad']);
+
+    expect(NecesidadDeReposicion::query()->count())->toBe(0);
+});
+
+it('no deja en la base un contador de inventario negativo aunque la suma cuadre', function (): void {
+    // El CHECK de RF66 controla la suma; este, que ninguna parte sea
+    // negativa. Es la última defensa: ni tinker ni un seeder lo saltan.
+    $item = ItemInventario::factory()->create(['cantidad_total' => 4]);
+
+    expect(fn () => DB::table('items_inventario')->where('id', $item->id)->update([
+        'cantidad_operativa' => -1,
+        'cantidad_en_revision' => 5,
+    ]))->toThrow(QueryException::class);
+});
+
+it('pone al formato intramural el mismo tope por equipo que a la solicitud', function (): void {
+    $sesion = app(RegistroPrevioService::class)->registrar(new DatosSesionApartada(
+        docenteId: $this->docente->id,
+        materiaId: $this->materia->id,
+        casoClinicoId: $this->caso->id,
+        tipo: TipoSesion::Practica,
+        fecha: now()->addDays(3)->toDateString(),
+        horaInicio: '07:00',
+        horaFin: '09:00',
+        cantidadEstudiantes: 10,
+    ), $this->administrativo);
+    $gasas = ItemInventario::factory()->equipoBasico()->create(['cantidad_total' => 2000]);
+
+    Livewire::actingAs($this->administrativo)
+        ->test(FormatoIntramural::class, ['solicitud' => $sesion])
+        ->set('itemAAgregar', $gasas->id)
+        ->call('agregarItem')
+        ->set("items.{$gasas->id}", SolicitudService::CANTIDAD_MAXIMA_POR_EQUIPO + 1)
+        ->call('guardar')
+        ->assertHasErrors("items.{$gasas->id}");
 });

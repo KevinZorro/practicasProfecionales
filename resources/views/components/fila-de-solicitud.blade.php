@@ -4,18 +4,18 @@
     en pequeño, en una columna de ancho fijo para compararlas de un vistazo. Toda la fila lleva al expediente (el enlace del título se
     estira sobre ella), y lo que haya que advertir va en el slot.
 
-    La solicitud llega con docente, materia, casoClinico y preparacion.sala
+    La solicitud llega con docente, materia, casoClinico y preparacion.salas
     ya cargados: la lista no hace una consulta por fila.
 --}}
 @props(['solicitud', 'conDocente' => true])
 
 @php
-    $sala = $solicitud->preparacion?->sala;
+    $sala = $solicitud->preparacion?->nombresDeLasSalas();
     $detalles = array_filter([
         substr($solicitud->hora_inicio, 0, 5).'–'.substr($solicitud->hora_fin, 0, 5),
         trans_choice(':count estudiante|:count estudiantes', $solicitud->cantidad_estudiantes, ['count' => $solicitud->cantidad_estudiantes]),
         $solicitud->grupo ? 'Grupo '.$solicitud->grupo : null,
-        $sala?->nombre,
+        $sala,
     ]);
 @endphp
 

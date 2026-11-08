@@ -71,8 +71,8 @@
                                                 {{ $solicitud->casoClinico->nombre }}
                                             </a>
                                             <p class="mt-0.5 text-[14px] leading-snug text-gray-500">
-                                                @if ($montaje->sala)
-                                                    {{ $montaje->sala->nombre }}
+                                                @if ($montaje->salas->isNotEmpty())
+                                                    {{ $montaje->nombresDeLasSalas() }}
                                                 @else
                                                     <span class="font-medium text-amber-800">Sin sala</span>
                                                 @endif
@@ -167,8 +167,19 @@
                 @endif
             </div>
 
-            @if ($resumen->formatosPorVerificar !== null || $resumen->miFormato !== null)
+            @if ($resumen->formatosPorVerificar !== null || $resumen->miFormato !== null || $resumen->porDepurar !== null)
                 <div class="space-y-5">
+                    @if ($resumen->porDepurar !== null)
+                        {{-- Retención de dos semestres: avisa al ADMIN; nada se borra solo. --}}
+                        <x-tarjeta titulo="Datos de más de dos semestres">
+                            <p class="text-[15px] text-gray-700">
+                                Ya pasaron dos semestres desde lo más viejo que hay. Descarga los formatos
+                                firmados que se van a depurar y depúralo.
+                            </p>
+                            <x-boton :href="route('panel.depuracion')" tamano="chico" class="mt-4">Revisar la depuración</x-boton>
+                        </x-tarjeta>
+                    @endif
+
                     @if ($resumen->formatosPorVerificar !== null)
                         <x-tarjeta titulo="Formatos por verificar">
                             @if ($resumen->formatosPorVerificar === 0)

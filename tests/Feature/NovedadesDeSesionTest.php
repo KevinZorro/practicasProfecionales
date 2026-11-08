@@ -13,7 +13,6 @@ use App\Mail\SustitucionDocenteMail;
 use App\Models\CasoClinico;
 use App\Models\ItemInventario;
 use App\Models\Preparacion;
-use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\DatosReprogramacion;
@@ -50,7 +49,7 @@ function sesionAprobadaDe(User $docente, array $atributos = []): Solicitud
         'cantidad_estudiantes' => 6,
         ...$atributos,
     ]);
-    Preparacion::factory()->create(['solicitud_id' => $solicitud->id, 'sala_id' => Sala::factory()->create()->id]);
+    Preparacion::factory()->conSala()->create(['solicitud_id' => $solicitud->id]);
 
     return $solicitud;
 }
@@ -82,7 +81,7 @@ it('reprograma la fecha, deja el rastro, libera la sala y avisa al docente', fun
     expect($sesion->estado)->toBe(EstadoSolicitud::Aprobada)
         ->and($sesion->fecha->format('Y-m-d'))->toBe($nueva)
         ->and(substr($sesion->hora_inicio, 0, 5))->toBe('10:00')
-        ->and($sesion->preparacion->sala_id)->toBeNull()
+        ->and($sesion->preparacion->salas)->toBeEmpty()
         ->and($cambio->fecha_anterior->format('Y-m-d'))->toBe(now()->addDays(3)->format('Y-m-d'))
         ->and($cambio->reprogramada_por)->toBe($this->administrativo->id)
         ->and($cambio->constancia_comunicacion)->toBe('Llamada al docente el 9/10, aceptó el cambio');
@@ -103,7 +102,7 @@ it('al cambiar el escenario borra el formato intramural y revalida la capacidad'
     expect($sesion->caso_clinico_id)->toBe($otro->id)
         ->and($sesion->tieneFormatoIntramural())->toBeFalse()
         ->and($sesion->items()->count())->toBe(0)
-        ->and($sesion->preparacion->sala_id)->not->toBeNull();
+        ->and($sesion->preparacion->salas)->not->toBeEmpty();
 
     $pequeno = CasoClinico::factory()->conCapacidad(3)->create();
     $pequeno->materias()->attach($sesion->materia_id);

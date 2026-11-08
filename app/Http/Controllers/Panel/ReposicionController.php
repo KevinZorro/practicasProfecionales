@@ -34,14 +34,14 @@ final class ReposicionController extends Controller
     {
         $this->garantizarDescarga($peticion, $lista);
 
-        return $reportes->excel(Reporte::ListaDeReposicion, $this->filtroDe($lista));
+        return $reportes->excel(Reporte::ListaDeReposicion, $this->filtroDe($lista), $peticion->user());
     }
 
     public function pdf(Request $peticion, ListaDeReposicion $lista, GeneradorDeReportes $reportes): Response
     {
         $this->garantizarDescarga($peticion, $lista);
 
-        return $reportes->pdf(Reporte::ListaDeReposicion, $this->filtroDe($lista));
+        return $reportes->pdf(Reporte::ListaDeReposicion, $this->filtroDe($lista), $peticion->user());
     }
 
     private function garantizarDescarga(Request $peticion, ListaDeReposicion $lista): void

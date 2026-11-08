@@ -8,6 +8,11 @@ use App\Models\User;
 use App\Services\AccesoService;
 use App\Services\IdentidadDeGoogle;
 use Database\Seeders\RolSeeder;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\ServerException;
+use GuzzleHttp\Psr7\Request as PeticionHttp;
+use GuzzleHttp\Psr7\Response as RespuestaHttp;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Testing\TestResponse;
@@ -360,3 +365,55 @@ it('en producción, con el dominio configurado, deja entrar como siempre', funct
 
     expect(Auth::id())->toBe($usuario->id);
 });
+
+// ---------------------------------------------------------------------
+// Google lento o con error (B3.1 de la auditoría)
+// ---------------------------------------------------------------------
+
+/** Que la vuelta de Google falle como falla en la red. */
+function googleFallaCon(Throwable $falla): void
+{
+    $proveedor = Mockery::mock(GoogleProvider::class);
+    $proveedor->shouldReceive('user')->andThrow($falla);
+
+    Socialite::shouldReceive('driver')->with('google')->andReturn($proveedor);
+}
+
+it('no espera a Google sin límite: la llamada tiene un tiempo máximo', function (): void {
+    // Sin tope, cada entrada lenta retiene un worker de PHP-FPM hasta 150 s,
+    // y con 20 workers se queda sin atender todo el panel, no solo la entrada.
+    $cliente = (fn () => $this->getHttpClient())->call(Socialite::driver('google'));
+
+    expect($cliente->getConfig('timeout'))->toBeGreaterThan(0)->toBeLessThanOrEqual(5)
+        ->and($cliente->getConfig('connect_timeout'))->toBeGreaterThan(0)->toBeLessThanOrEqual(3);
+});
+
+dataset('fallas de Google', [
+    'no responde a tiempo' => [fn (): Throwable => new ConnectException(
+        'cURL error 28: Operation timed out after 5001 milliseconds',
+        new PeticionHttp('POST', 'https://www.googleapis.com/oauth2/v4/token'),
+    )],
+    'rechaza el código, como al volver con el botón atrás' => [fn (): Throwable => new ClientException(
+        'invalid_grant',
+        new PeticionHttp('POST', 'https://www.googleapis.com/oauth2/v4/token'),
+        new RespuestaHttp(400),
+    )],
+    'falla por dentro' => [fn (): Throwable => new ServerException(
+        'Bad Gateway',
+        new PeticionHttp('POST', 'https://www.googleapis.com/oauth2/v4/token'),
+        new RespuestaHttp(502),
+    )],
+]);
+
+it('si Google falla, vuelve a la entrada con un mensaje y no con un error del servidor', function (Throwable $falla): void {
+    docenteDeLaUfps();
+    googleFallaCon($falla);
+    Log::spy();
+
+    volverDeGoogle()
+        ->assertRedirect(route('acceso'))
+        ->assertSessionHasErrors(['acceso']);
+
+    expect(Auth::check())->toBeFalse();
+    Log::shouldHaveReceived('warning')->once()->withArgs(static fn (string $mensaje): bool => str_contains($mensaje, 'Google'));
+})->with('fallas de Google');

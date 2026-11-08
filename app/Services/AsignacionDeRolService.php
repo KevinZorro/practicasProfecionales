@@ -253,6 +253,9 @@ final class AsignacionDeRolService
      * Listado para la pantalla del ADMIN: personas con los roles que tienen
      * vigentes hoy.
      *
+     * No busca por documento: la columna está cifrada (S-03) y un LIKE sobre
+     * el texto cifrado no encuentra el número y sí cuentas al azar.
+     *
      * @return LengthAwarePaginator<int, User>
      */
     public function usuariosConSusRoles(?string $busqueda = null, int $porPagina = self::POR_PAGINA): LengthAwarePaginator
@@ -266,8 +269,7 @@ final class AsignacionDeRolService
                     $consulta->where(static function (Builder $o) use ($aguja): void {
                         $o->whereRaw('LOWER(nombre) LIKE ?', [$aguja])
                             ->orWhereRaw('LOWER(email) LIKE ?', [$aguja])
-                            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja])
-                            ->orWhereRaw('LOWER(documento) LIKE ?', [$aguja]);
+                            ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]);
                     });
                 },
             )

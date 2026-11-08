@@ -71,6 +71,24 @@ it('no revela el nombre de quien no es estudiante al rechazar un id ajeno (QA-19
         ->and($mensaje)->toContain('2 personas que no son estudiantes');
 });
 
+it('busca también por correo, pero no le enseña al docente el correo de nadie', function (): void {
+    // Minimización (Ley 1581, decisión del 2026-11-07): para armar la lista
+    // bastan el nombre y el código.
+    $ana = User::factory()->estudiante()->create(['nombre' => 'Ana Ruiz', 'codigo_institucional' => '1151001', 'email' => 'ana.ruiz@ejemplo.edu.co']);
+
+    $encontrada = $this->servicio->buscarEstudiantes('ana.ruiz@')->first();
+
+    expect($encontrada?->id)->toBe($ana->id)
+        ->and($encontrada?->getAttributes())->not->toHaveKey('email');
+
+    Livewire::actingAs($this->docente)
+        ->test(FormularioSolicitud::class)
+        ->set('busquedaEstudiante', 'ana.ruiz@')
+        ->assertSee('Ana Ruiz')
+        ->assertSee('1151001')
+        ->assertDontSee('ana.ruiz@ejemplo.edu.co');
+});
+
 it('busca estudiantes activos por nombre o código, sin los que ya están en la lista', function (): void {
     $ana = User::factory()->estudiante()->create(['nombre' => 'Ana Ruiz', 'codigo_institucional' => '1151001']);
     $andres = User::factory()->estudiante()->create(['nombre' => 'Andrés Ruiz', 'codigo_institucional' => '1151002']);

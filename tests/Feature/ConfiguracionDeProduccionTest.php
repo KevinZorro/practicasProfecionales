@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+use Illuminate\Contracts\Process\ProcessResult;
+use Illuminate\Support\Facades\Process;
 
 /*
  * Los archivos de producción: lo que no se puede perder sin que se note
@@ -196,4 +198,81 @@ it('pone topes de peticiones y de espera en nginx y en PHP-FPM', function (): vo
 
 it('cifra la sesión salvo que se apague a propósito', function (): void {
     expect(archivoDeProduccion('config/session.php'))->toContain("env('SESSION_ENCRYPT', true)");
+});
+
+// ---------------------------------------------------------------------
+// La IP real del visitante detrás del proxy de la universidad (B3.8)
+// ---------------------------------------------------------------------
+
+/** Corre el script de nginx como lo corre la imagen al arrancar, y devuelve lo que escribió. */
+function ipRealCon(string $proxies): ProcessResult
+{
+    $destino = tempnam(sys_get_temp_dir(), 'ip-real');
+
+    $resultado = Process::env([
+        'PROXIES_DE_CONFIANZA' => $proxies,
+        'IP_REAL_DESTINO' => $destino,
+    ])->run(['sh', base_path('docker/produccion/ip-real.sh')]);
+
+    test()->ipRealEscrito = (string) file_get_contents($destino);
+    unlink($destino);
+
+    return $resultado;
+}
+
+it('le dice a nginx que tome la IP real solo de los proxies de confianza', function (): void {
+    expect(ipRealCon('10.20.0.5, 10.30.0.0/24')->successful())->toBeTrue()
+        ->and($this->ipRealEscrito)->toContain("set_real_ip_from 10.20.0.5;\n")
+        ->toContain("set_real_ip_from 10.30.0.0/24;\n")
+        ->toContain("real_ip_header X-Forwarded-For;\n")
+        ->toContain("real_ip_recursive on;\n");
+});
+
+it('confía en cualquiera con «*», como Laravel, y no lo toma por un comodín de archivos', function (): void {
+    expect(ipRealCon('*')->successful())->toBeTrue()
+        ->and($this->ipRealEscrito)->toContain("set_real_ip_from 0.0.0.0/0;\n")
+        ->toContain("set_real_ip_from ::/0;\n");
+});
+
+it('no toca la IP que ve nginx si no hay proxy de confianza', function (): void {
+    expect(ipRealCon('')->successful())->toBeTrue()
+        ->and(trim($this->ipRealEscrito))->toBe('');
+});
+
+it('no arranca nginx con un proxy que no es una IP ni un rango', function (): void {
+    $resultado = ipRealCon('proxy.ufps.edu.co');
+
+    expect($resultado->failed())->toBeTrue()
+        ->and($resultado->errorOutput())->toContain('PROXIES_DE_CONFIANZA');
+});
+
+it('corre el script al arrancar nginx y le pasa la misma variable que a Laravel', function (): void {
+    expect(archivoDeProduccion('docker/php/Dockerfile'))->toContain('COPY docker/produccion/ip-real.sh /docker-entrypoint.d/40-ip-real.sh')
+        ->and(is_executable(base_path('docker/produccion/ip-real.sh')))->toBeTrue()
+        ->and(archivoDeProduccion('docker-compose.produccion.yml'))->toContain('PROXIES_DE_CONFIANZA: ${PROXIES_DE_CONFIANZA:-}');
+});
+
+// ---------------------------------------------------------------------
+// La aplicación entra a la base sin superusuario (S.1)
+// ---------------------------------------------------------------------
+
+it('separa en el ejemplo el usuario de la aplicación del dueño de la base', function (): void {
+    $variables = variablesDelEjemplo();
+
+    expect($variables)->toHaveKeys(['DB_DUENO_USUARIO', 'DB_DUENO_CONTRASENA'])
+        ->and($variables['DB_USERNAME'])->not->toBe($variables['DB_DUENO_USUARIO'])
+        ->and($variables['DB_DUENO_CONTRASENA'])->toStartWith('<');
+});
+
+it('crea la base con el dueño y deja a la aplicación entrar con su propio usuario', function (): void {
+    $compose = archivoDeProduccion('docker-compose.produccion.yml');
+
+    expect($compose)->toContain('POSTGRES_USER: ${DB_DUENO_USUARIO:?')
+        ->toContain('POSTGRES_PASSWORD: ${DB_DUENO_CONTRASENA:?')
+        // Las copias y la restauración necesitan al dueño: leen y recrean todo.
+        ->toContain('PGUSER: ${DB_DUENO_USUARIO}')
+        ->toContain('PGPASSWORD: ${DB_DUENO_CONTRASENA}')
+        // Las migraciones, con el dueño, y después el usuario de la aplicación.
+        ->toMatch('/migraciones:\n(?:.*\n)*?\s+DB_USERNAME: \$\{DB_DUENO_USUARIO:\?/')
+        ->toContain('base:usuario-de-la-aplicacion');
 });

@@ -35,6 +35,13 @@ final class ReposicionService
 {
     public const POR_PAGINA = 25;
 
+    /**
+     * Tope de una necesidad anotada a mano. Es un límite técnico, no una
+     * regla del laboratorio: por encima, la columna integer de PostgreSQL se
+     * desborda y la pantalla respondía 500 (B4.3).
+     */
+    public const CANTIDAD_MAXIMA = 99_999;
+
     /** Identificador del candado de PostgreSQL que serializa los cierres de lista. */
     private const CANDADO_DE_CIERRE = 67_001;
 

@@ -40,6 +40,8 @@ final readonly class ResumenDelDia
         public ?int $formatosPorVerificar = null,
         public ?EstadoDeMiFormato $miFormato = null,
         public ?ResumenDeSupervision $supervision = null,
+        // Solo cuando hay algo: un «nada que depurar» permanente sería ruido.
+        public ?DatosPorDepurar $porDepurar = null,
     ) {}
 
     /** Si no hay ningún bloque que enseñar a esta persona. */
@@ -54,6 +56,7 @@ final readonly class ResumenDelDia
             && $this->ultimosResultados === null
             && $this->formatosPorVerificar === null
             && $this->miFormato === null
-            && $this->supervision === null;
+            && $this->supervision === null
+            && $this->porDepurar === null;
     }
 }

@@ -8,6 +8,8 @@ use App\Enums\EstadoPreparacion;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Events\SalaAsignada;
+use App\Exceptions\AsignacionDeSalasInvalida;
+use App\Exceptions\SalaInsuficiente;
 use App\Exceptions\SalaOcupada;
 use App\Exceptions\TransicionDePreparacionInvalida;
 use App\Models\ItemInventario;
@@ -17,6 +19,7 @@ use App\Models\Solicitud;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Montaje físico de los escenarios aprobados (RF36-RF37).
@@ -27,6 +30,9 @@ use Illuminate\Database\Eloquent\Collection;
  */
 final class PreparacionService
 {
+    /** Las que se pueden unir abriendo las cortinas (P16). */
+    public const MAXIMO_DE_SALAS = 3;
+
     /**
      * Se llama desde SolicitudService al aprobar, dentro de su transacción.
      */
@@ -35,7 +41,6 @@ final class PreparacionService
         // La sala llega nula: la asigna el administrativo el día de la
         // práctica, no el coordinador al aprobar (§4.5 del documento).
         $preparacion = $solicitud->preparacion()->create([
-            'sala_id' => null,
             'estado' => EstadoPreparacion::Pendiente,
         ]);
 
@@ -65,26 +70,74 @@ final class PreparacionService
     }
 
     /**
-     * El administrativo elige la sala (RF36). Si la sala cambia, el docente
-     * recibe un correo con la nueva; si se vuelve a elegir la misma, no.
+     * El administrativo elige las salas (RF36): de una a tres, que abriendo
+     * las cortinas son un solo salón (P16). El grupo tiene que caber en la
+     * capacidad de todas juntas (P11). Si las salas cambian, el docente
+     * recibe un correo con las nuevas; si se vuelven a elegir las mismas, no.
+     *
+     * Comprobar que cada sala está libre y escribir van en una transacción
+     * con dos bloqueos. Primero la sesión: dos administrativos que eligen a
+     * la vez salas para el mismo montaje se turnan, y el segundo reemplaza la
+     * elección del primero en vez de sumarle sus salas; tampoco cambia la
+     * franja a mitad de camino por una reprogramación. Después las salas, en
+     * orden de id: dos administrativos que asignan la misma sala a franjas
+     * que se cruzan se turnan, y el segundo ya ve la reserva del primero
+     * (B3.11). Es el mismo criterio de las transiciones de solicitud (QA-02).
+     *
+     * @param  list<int>  $salaIds
      */
-    public function asignarSala(Preparacion $preparacion, Sala $sala): Preparacion
+    public function asignarSalas(Preparacion $preparacion, array $salaIds): Preparacion
     {
-        $conflicto = $this->preparacionSolapada($preparacion, $sala);
+        $salaIds = array_values(array_unique($salaIds));
+        sort($salaIds);
 
-        if ($conflicto instanceof Preparacion) {
-            throw SalaOcupada::por($sala, $conflicto);
+        if ($salaIds === [] || count($salaIds) > self::MAXIMO_DE_SALAS) {
+            throw AsignacionDeSalasInvalida::cantidad(self::MAXIMO_DE_SALAS);
         }
 
-        $anterior = $preparacion->sala_id;
+        // Las salas que tenía antes, o null si se volvieron a elegir las mismas.
+        $anteriores = DB::transaction(function () use ($preparacion, $salaIds): ?array {
+            $sesion = Solicitud::query()->whereKey($preparacion->solicitud_id)->lockForUpdate()->firstOrFail();
+            $preparacion->setRelation('solicitud', $sesion);
 
-        if ($anterior === $sala->id) {
+            /** @var list<int> $anteriores */
+            $anteriores = $preparacion->salas()->pluck('salas.id')->sort()->values()->all();
+
+            $salas = Sala::query()->whereIn('id', $salaIds)->orderBy('id')->lockForUpdate()->get();
+
+            if ($salas->count() !== count($salaIds)) {
+                throw AsignacionDeSalasInvalida::salaInexistente();
+            }
+
+            if ((int) $salas->sum('capacidad') < $sesion->cantidad_estudiantes) {
+                throw SalaInsuficiente::para($salas, $sesion->cantidad_estudiantes);
+            }
+
+            foreach ($salas as $sala) {
+                $conflicto = $this->preparacionSolapada($preparacion, $sala);
+
+                if ($conflicto instanceof Preparacion) {
+                    throw SalaOcupada::por($sala, $conflicto);
+                }
+            }
+
+            if ($anteriores === $salaIds) {
+                return null;
+            }
+
+            $preparacion->salas()->sync($salaIds);
+
+            return $anteriores;
+        });
+
+        if ($anteriores === null) {
             return $preparacion;
         }
 
-        $preparacion->update(['sala_id' => $sala->id]);
+        $preparacion->load('salas');
 
-        SalaAsignada::dispatch($preparacion, esCambio: $anterior !== null);
+        // Después de confirmar: no sale un correo por una asignación que se deshizo.
+        SalaAsignada::dispatch($preparacion, esCambio: $anteriores !== []);
 
         return $preparacion;
     }
@@ -146,7 +199,7 @@ final class PreparacionService
             // RF36 pide —solo escenarios aprobados— y no dependa de que esa
             // regla siga viviendo en SolicitudService.
             ->whereHas('solicitud', static fn (Builder $consulta) => $consulta->aprobadas())
-            ->with(['solicitud.docente', 'solicitud.docenteQueDicta', 'solicitud.materia', 'solicitud.casoClinico', 'solicitud.estudiantesPresentes:users.id', 'sala', 'items'])
+            ->with(['solicitud.docente', 'solicitud.docenteQueDicta', 'solicitud.materia', 'solicitud.casoClinico', 'solicitud.estudiantesPresentes:users.id', 'salas', 'items'])
             ->orderBy(Solicitud::select('hora_inicio')->whereColumn('solicitudes.id', 'preparaciones.solicitud_id'))
             ->get();
     }
@@ -155,7 +208,7 @@ final class PreparacionService
      * Salas que quedan libres para esta preparación (RF37).
      *
      * El criterio de solapamiento no se repite aquí: es el mismo scope
-     * queSeSolapanCon de Solicitud que usan la validación de asignarSala y
+     * queSeSolapanCon de Solicitud que usan la validación de asignarSalas y
      * el cálculo de disponibilidad de inventario. Si el criterio cambia,
      * cambia en los tres a la vez.
      *
@@ -169,6 +222,8 @@ final class PreparacionService
     {
         $solicitud = $preparacion->solicitud;
 
+        // Todas las libres, también las que solas no alcanzan: se pueden unir
+        // hasta tres (P16), y la capacidad la comprueba asignarSalas.
         return Sala::query()
             ->activas()
             ->withExists(['casosClinicos as del_escenario' => static fn (Builder $caso) => $caso->whereKey($solicitud->caso_clinico_id)])
@@ -193,7 +248,7 @@ final class PreparacionService
     public function ocupacionDeSala(Sala $sala, string $desde, string $hasta): Collection
     {
         return Preparacion::query()
-            ->where('sala_id', $sala->id)
+            ->whereHas('salas', static fn (Builder $salas) => $salas->whereKey($sala->id))
             ->whereHas('solicitud', static fn (Builder $consulta) => $consulta->whereBetween('fecha', [$desde, $hasta]))
             ->with(['solicitud.docente', 'solicitud.materia'])
             ->get();
@@ -209,7 +264,7 @@ final class PreparacionService
         $solicitud = $preparacion->solicitud;
 
         return Preparacion::query()
-            ->where('sala_id', $sala->id)
+            ->whereHas('salas', static fn (Builder $salas) => $salas->whereKey($sala->id))
             ->whereKeyNot($preparacion->getKey())
             ->whereHas('solicitud', static fn (Builder $consulta) => $consulta->queSeSolapanCon(
                 $solicitud->fecha->format('Y-m-d'),
@@ -226,7 +281,7 @@ final class PreparacionService
             throw TransicionDePreparacionInvalida::de($preparacion->estado, $destino);
         }
 
-        if ($destino === EstadoPreparacion::Preparado && $preparacion->sala_id === null) {
+        if ($destino === EstadoPreparacion::Preparado && $preparacion->salas()->doesntExist()) {
             throw TransicionDePreparacionInvalida::sinSalaAsignada();
         }
     }

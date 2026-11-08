@@ -263,6 +263,7 @@ jobs:
             -e "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" \
             -e "s|^APP_URL=.*|APP_URL=http://localhost|" \
             -e "s|^DB_PASSWORD=.*|DB_PASSWORD=ci-$(openssl rand -hex 12)|" \
+            -e "s|^DB_DUENO_CONTRASENA=.*|DB_DUENO_CONTRASENA=ci-$(openssl rand -hex 12)|" \
             -e "s|^MAIL_MAILER=.*|MAIL_MAILER=log|" \
             -e "s|^MAIL_HOST=.*|MAIL_HOST=localhost|" \
             -e "s|^MAIL_USERNAME=.*|MAIL_USERNAME=null|" \
@@ -292,16 +293,27 @@ jobs:
       - name: Construir las imágenes
         run: $COMPOSE build
 
-      - name: Levantar los servicios
-        run: $COMPOSE up -d
-
+      # Con el dueño de la base, que después crea el usuario de la aplicación.
+      # Antes de levantar: app, queue y programador entran con ese usuario.
       - name: Migrar
+        run: $COMPOSE run --rm migraciones
+
+      - name: Levantar los servicios
         run: |
-          for _ in $(seq 1 24); do
-            $COMPOSE exec -T app php artisan migrate --force && break
-            sleep 5
-          done
+          $COMPOSE up -d
           $COMPOSE exec -T app php artisan migrate:status > /dev/null
+
+      # S.1: la aplicación lee y escribe filas, pero no es superusuario ni
+      # puede tocar la estructura de la base.
+      - name: Comprobar que la aplicación entra sin superusuario
+        run: |
+          # tinker no siempre sale con error si la sentencia falla: se lee lo que imprime.
+          $COMPOSE exec -T app php artisan tinker --execute="echo DB::selectOne('select rolsuper from pg_roles where rolname = current_user')->rolsuper ? 'ROL:superusuario' : 'ROL:aplicacion';" | tee rol.txt
+          grep -q 'ROL:aplicacion' rol.txt || { echo "::error::la aplicación entra a la base como superusuario"; exit 1; }
+          $COMPOSE exec -T app php artisan tinker --execute="try { DB::statement('create table intrusa (id int)'); echo 'TABLA:creada'; } catch (Throwable \$e) { echo 'TABLA:negada'; }" | tee tabla.txt
+          grep -q 'TABLA:negada' tabla.txt || { echo "::error::la aplicación puede crear tablas"; exit 1; }
+          echo "La aplicación entra sin superusuario"
+
 
       - name: Comprobar que sirve la portada con las cabeceras de seguridad
         run: |

@@ -12,6 +12,7 @@ use App\Events\SolicitudAprobada;
 use App\Events\SolicitudRechazada;
 use App\Exceptions\CapacidadDeEstudiantesExcedida;
 use App\Exceptions\SolicitudInvalida;
+use App\Exceptions\SolicitudVencida;
 use App\Exceptions\TransicionDeSolicitudInvalida;
 use App\Models\CasoClinico;
 use App\Models\EstudianteDeLaSesion;
@@ -37,6 +38,8 @@ final class SolicitudService
         private readonly PreparacionService $preparaciones,
         private readonly BloqueoService $bloqueos,
         private readonly BitacoraService $bitacora,
+        private readonly CrucesDeSesionService $cruces,
+        private readonly InventarioService $inventario,
     ) {}
 
     /**
@@ -47,6 +50,17 @@ final class SolicitudService
     public function esFechaPasada(string $fecha): bool
     {
         return Carbon::parse($fecha)->startOfDay()->isBefore(Carbon::today());
+    }
+
+    /**
+     * Pendiente o revisada con la fecha pasada: no se revisa ni se aprueba,
+     * solo se rechaza (decisión del 2026-11-07). La misma regla que el
+     * scope vencidas() del modelo, para una solicitud ya cargada.
+     */
+    public function estaVencida(Solicitud $solicitud): bool
+    {
+        return in_array($solicitud->estado, Solicitud::estadosQueVencen(), true)
+            && $this->esFechaPasada($solicitud->fecha->format('Y-m-d'));
     }
 
     /** Cantidad máxima por equipo en una solicitud: un tope de cordura, no de inventario. */
@@ -105,6 +119,12 @@ final class SolicitudService
         $this->garantizarCapacidad($datos->casoClinicoId, count($estudianteIds));
 
         return DB::transaction(function () use ($docente, $datos, $grupo, $estudianteIds): Solicitud {
+            // Nadie en dos sesiones a la vez (CrucesDeSesionService).
+            $franja = new Franja($datos->fecha, $datos->horaInicio, $datos->horaFin);
+            $this->cruces->bloquearPersonas([$docente->id, ...$estudianteIds]);
+            $this->cruces->garantizarDocenteLibre($docente, $franja);
+            $this->cruces->garantizarEstudiantesLibres($estudianteIds, $franja);
+
             // El formato intramural viene con la solicitud del docente (RF59).
             $solicitud = Solicitud::create([
                 ...$this->atributosIniciales($docente, $datos),
@@ -136,6 +156,12 @@ final class SolicitudService
         $estudianteIds = $this->garantizarEstudiantes($estudianteIds);
 
         return DB::transaction(function () use ($solicitud, $estudianteIds): Solicitud {
+            // Con la solicitud bloqueada, dos personas que completan la lista a
+            // la vez se turnan, y la segunda ya cuenta los estudiantes de la
+            // primera: sin esto, cada una cuenta los mismos y juntas pasan del
+            // tope del escenario (B3.11, RF74).
+            $bloqueada = Solicitud::query()->whereKey($solicitud->getKey())->lockForUpdate()->firstOrFail();
+
             $enLista = $solicitud->estudiantes()->get();
             $retirado = $enLista->first(fn (User $e): bool => $this->fueRetirado($e) && in_array($e->id, $estudianteIds, true));
 
@@ -145,6 +171,8 @@ final class SolicitudService
 
             $nuevos = array_values(array_diff($estudianteIds, $enLista->pluck('id')->all()));
             $this->garantizarCapacidad($solicitud->caso_clinico_id, $this->presentes($solicitud) + count($nuevos));
+            $this->cruces->bloquearPersonas($nuevos);
+            $this->cruces->garantizarEstudiantesLibres($nuevos, Franja::deSolicitud($bloqueada), $bloqueada);
 
             $solicitud->estudiantes()->attach($nuevos);
             $this->actualizarCantidad($solicitud);
@@ -199,7 +227,8 @@ final class SolicitudService
     /**
      * Estudiantes que el docente puede poner en una sesión, por nombre,
      * correo o código institucional (RF28). Solo cuentas activas con el rol
-     * de estudiante vigente.
+     * de estudiante vigente. Busca por correo, pero no lo devuelve: para
+     * armar la lista bastan el nombre y el código (minimización, Ley 1581).
      *
      * @param  list<int>  $excluir  los que ya están en la lista
      * @return Collection<int, User>
@@ -220,7 +249,7 @@ final class SolicitudService
                 ->orWhereRaw('LOWER(codigo_institucional) LIKE ?', [$aguja]))
             ->orderBy('nombre')
             ->limit(self::RESULTADOS_DE_BUSQUEDA)
-            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+            ->get(['id', 'nombre', 'codigo_institucional']);
     }
 
     /**
@@ -238,7 +267,7 @@ final class SolicitudService
         $encontrados = $this->estudiantesQuePuedenIr()
             ->whereIn('codigo_institucional', $codigos)
             ->orderBy('nombre')
-            ->get(['id', 'nombre', 'email', 'codigo_institucional']);
+            ->get(['id', 'nombre', 'codigo_institucional']);
 
         return [
             'encontrados' => $encontrados,
@@ -412,7 +441,7 @@ final class SolicitudService
         return Solicitud::query()
             ->where(static fn (Builder $c) => $c->delDocente($docente)->orWhere('docente_que_dicta_id', $docente->id))
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['materia', 'casoClinico', 'preparacion.sala', 'docente:id,nombre', 'docenteQueDicta:id,nombre'])
+            ->with(['materia', 'casoClinico', 'preparacion.salas', 'docente:id,nombre', 'docenteQueDicta:id,nombre'])
             ->orderByDesc('fecha')
             ->orderByDesc('hora_inicio')
             ->paginate($porPagina);
@@ -427,11 +456,35 @@ final class SolicitudService
     public function bandeja(?EstadoSolicitud $estado = null, int $porPagina = 15): LengthAwarePaginator
     {
         return Solicitud::query()
+            ->noVencidas()
             ->when($estado instanceof EstadoSolicitud, fn (Builder $c) => $c->enEstado($estado))
-            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.salas'])
             ->orderBy('fecha')
             ->orderBy('hora_inicio')
+            ->orderBy('id')
             ->paginate($porPagina);
+    }
+
+    /**
+     * Las vencidas, aparte de la bandeja: pendientes o revisadas cuya fecha
+     * pasó sin que nadie las resolviera. Solo queda rechazarlas.
+     *
+     * @return LengthAwarePaginator<int, Solicitud>
+     */
+    public function vencidas(int $porPagina = 15): LengthAwarePaginator
+    {
+        return Solicitud::query()
+            ->vencidas()
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.salas'])
+            ->orderBy('fecha')
+            ->orderBy('hora_inicio')
+            ->orderBy('id')
+            ->paginate($porPagina);
+    }
+
+    public function cuantasVencidas(): int
+    {
+        return Solicitud::query()->vencidas()->count();
     }
 
     /**
@@ -442,7 +495,7 @@ final class SolicitudService
     public function paraElExpediente(Solicitud $solicitud): Solicitud
     {
         return $solicitud->loadMissing([
-            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.sala',
+            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.salas',
         ]);
     }
 
@@ -473,14 +526,30 @@ final class SolicitudService
         return $solicitud;
     }
 
-    public function aprobar(Solicitud $solicitud, User $coordinador): Solicitud
+    /**
+     * Se puede aprobar aunque falten unidades en esa franja, pero entonces
+     * las observaciones son obligatorias: el docente tiene que saber qué no
+     * va a encontrar (decisión del 2026-11-07). Le llegan en el correo.
+     */
+    public function aprobar(Solicitud $solicitud, User $coordinador, ?string $observaciones = null): Solicitud
     {
-        DB::transaction(function () use ($solicitud, $coordinador): void {
+        $observaciones = trim((string) $observaciones) === '' ? null : trim((string) $observaciones);
+
+        DB::transaction(function () use ($solicitud, $coordinador, $observaciones): void {
             $this->bloquearYGarantizarTransicion($solicitud, EstadoSolicitud::Aprobada);
 
-            $solicitud->update($this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador));
+            $pedido = $solicitud->items()->pluck('solicitud_item.cantidad', 'items_inventario.id')->map(static fn (mixed $cantidad): int => (int) $cantidad)->all();
+
+            if ($observaciones === null && $this->inventario->faltantesPara($solicitud, $pedido) !== []) {
+                throw SolicitudInvalida::faltantesSinObservaciones();
+            }
+
+            $solicitud->update([
+                ...$this->atributosDeResolucion(EstadoSolicitud::Aprobada, $coordinador),
+                'observaciones_aprobacion' => $observaciones,
+            ]);
             $this->preparaciones->crearDesdeSolicitud($solicitud);
-            $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.');
+            $this->bitacora->registrar(AccionAuditada::SolicitudAprobada, $coordinador, $solicitud, 'Aprobó '.$this->describir($solicitud).'.', $observaciones);
         });
 
         // Fuera de la transacción: si algo la revierte, no debe salir correo.
@@ -525,9 +594,12 @@ final class SolicitudService
     {
         $consulta = Solicitud::query()
             ->aprobadasEntre($desde, $hasta)
-            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.sala'])
+            ->with(['docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia', 'casoClinico', 'preparacion.salas'])
             ->orderBy('fecha')
-            ->orderBy('hora_inicio');
+            ->orderBy('hora_inicio')
+            // Sin desempate, dos sesiones a la misma hora salen en el orden
+            // que PostgreSQL quiera, y el calendario cambiaría al recargar.
+            ->orderBy('id');
 
         match (true) {
             $actor->can('verTodoElCalendario', Solicitud::class) => null,
@@ -614,6 +686,11 @@ final class SolicitudService
         $solicitud->refresh();
 
         $this->garantizarTransicion($solicitud, $destino);
+
+        // Rechazar sí: es la forma de cerrar una vencida.
+        if ($destino !== EstadoSolicitud::Rechazada && $this->estaVencida($solicitud)) {
+            throw SolicitudVencida::noSePuedeTramitar($solicitud);
+        }
     }
 
     private function garantizarTransicion(Solicitud $solicitud, EstadoSolicitud $destino): void

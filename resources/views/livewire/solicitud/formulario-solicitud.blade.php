@@ -122,7 +122,7 @@
                     <li wire:key="resultado-{{ $estudiante->id }}">
                         <button type="button" wire:click="agregarEstudiante({{ $estudiante->id }})"
                                 class="flex min-h-11 w-full items-center justify-between gap-3 px-3.5 py-2 text-left text-[14px] transition-colors duration-150 hover:bg-gray-100 focus-visible:bg-gray-100 focus-visible:outline-none">
-                            <span class="min-w-0 truncate">{{ $estudiante->nombre }} <span class="text-gray-500">· {{ $estudiante->codigo_institucional ?? $estudiante->email }}</span></span>
+                            <span class="min-w-0 truncate">{{ $estudiante->nombre }} <span class="text-gray-500">· {{ $estudiante->codigo_institucional ?? 'sin código' }}</span></span>
                             <span class="shrink-0 font-semibold text-gray-900">Agregar</span>
                         </button>
                     </li>

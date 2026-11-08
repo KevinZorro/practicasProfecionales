@@ -179,6 +179,46 @@ final class InventarioService
     }
 
     /**
+     * Equipos de los que se piden más unidades de las que quedan libres en la
+     * franja de la solicitud. Una aprobada ya cuenta entre lo comprometido,
+     * así que lo suyo se le devuelve antes de comparar: si no, chocaría
+     * consigo misma. Lo usan la aprobación (que exige decir qué falta), el
+     * expediente y el formato intramural de una sesión apartada.
+     *
+     * @param  array<int, int>  $pedido  id del ítem => unidades pedidas
+     * @return array<int, int> id del ítem que falta => unidades libres
+     */
+    public function faltantesPara(Solicitud $solicitud, array $pedido): array
+    {
+        if ($pedido === []) {
+            return [];
+        }
+
+        $libres = $this->disponibilidadDeVarios(
+            ItemInventario::query()->whereIn('id', array_keys($pedido))->get(),
+            $solicitud->fecha->format('Y-m-d'),
+            $solicitud->hora_inicio,
+            $solicitud->hora_fin,
+        );
+
+        $propios = $solicitud->estado === EstadoSolicitud::Aprobada
+            ? $solicitud->items()->pluck('solicitud_item.cantidad', 'items_inventario.id')->all()
+            : [];
+
+        $faltantes = [];
+
+        foreach ($pedido as $id => $cantidad) {
+            $disponible = ($libres[$id] ?? 0) + (int) ($propios[$id] ?? 0);
+
+            if ($disponible < $cantidad) {
+                $faltantes[$id] = $disponible;
+            }
+        }
+
+        return $faltantes;
+    }
+
+    /**
      * Lo mismo para varios ítems, con una sola consulta de lo comprometido.
      *
      * @param  Collection<int, ItemInventario>  $items

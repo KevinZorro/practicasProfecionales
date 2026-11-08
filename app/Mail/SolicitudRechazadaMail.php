@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Mail;
 
 use App\Models\Solicitud;
+use App\Support\EsperaEntreReintentos;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -13,6 +14,7 @@ use Illuminate\Queue\SerializesModels;
 
 final class SolicitudRechazadaMail extends Mailable
 {
+    use EsperaEntreReintentos;
     use Queueable, SerializesModels;
 
     public function __construct(public readonly Solicitud $solicitud) {}

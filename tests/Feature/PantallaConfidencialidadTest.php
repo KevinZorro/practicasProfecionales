@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoFormatoConfidencialidad;
 use App\Livewire\Confidencialidad\BandejaVerificacion;
 use App\Livewire\Confidencialidad\EstadoDeFirmantes;
@@ -10,6 +11,7 @@ use App\Livewire\Confidencialidad\MiFormato;
 use App\Models\FormatoConfidencialidad;
 use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
+use App\Models\RegistroDeBitacora;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
 use Illuminate\Database\Eloquent\Model;
@@ -499,6 +501,69 @@ it('no deja a un invitado tocar ninguna descarga', function (): void {
 
     $this->get(route('panel.formatos-confidencialidad.firmado', $entrega))->assertRedirect('/');
     $this->get(route('panel.formatos-confidencialidad.plantilla'))->assertRedirect('/');
+});
+
+/*
+ * B4.2 de la auditoría: el formato firmado es el documento con más datos
+ * personales de la plataforma (firma y autorización de captación de
+ * imágenes, Ley 1581). Cada descarga deja en la bitácora quién, cuál y
+ * cuándo, para poder responder quién vio el de una persona.
+ */
+
+/** Un formato cargado de ese firmante, con su archivo en el disco. */
+function formatoFirmadoDe(User $firmante): FormatoConfidencialidad
+{
+    Storage::disk('local')->put('confidencialidad/firmados/descargable.pdf', '%PDF-1.4');
+
+    return FormatoConfidencialidad::factory()->cargado()->delPeriodo('2026-2')->create([
+        'firmante_id' => $firmante->id,
+        'archivo_firmado_path' => 'confidencialidad/firmados/descargable.pdf',
+    ]);
+}
+
+it('deja en la bitácora quién descarga el formato firmado de otra persona, cuál y cuándo', function (): void {
+    $entrega = formatoFirmadoDe($this->estudiante);
+
+    $this->actingAs($this->administrativo)
+        ->get(route('panel.formatos-confidencialidad.firmado', $entrega))
+        ->assertOk();
+
+    $descargas = RegistroDeBitacora::query()->where('accion', AccionAuditada::FormatoDescargado)->get();
+
+    expect($descargas)->toHaveCount(1)
+        ->and($descargas->first()->user_id)->toBe($this->administrativo->id)
+        ->and($descargas->first()->auditable_id)->toBe($entrega->id)
+        ->and($descargas->first()->created_at)->not->toBeNull();
+});
+
+it('también deja rastro cuando el firmante descarga el suyo', function (): void {
+    $entrega = formatoFirmadoDe($this->estudiante);
+
+    $this->actingAs($this->estudiante)
+        ->get(route('panel.formatos-confidencialidad.firmado', $entrega))
+        ->assertOk();
+
+    expect(RegistroDeBitacora::query()
+        ->where('accion', AccionAuditada::FormatoDescargado)
+        ->where('user_id', $this->estudiante->id)
+        ->count())->toBe(1);
+});
+
+it('no registra una descarga que no ocurrió: negada o sin archivo', function (): void {
+    $ajena = formatoFirmadoDe(User::factory()->estudiante()->create());
+    $sinArchivo = FormatoConfidencialidad::factory()->delPeriodo('2026-2')->create([
+        'firmante_id' => $this->estudiante->id,
+        'archivo_firmado_path' => null,
+    ]);
+
+    $this->actingAs($this->estudiante)
+        ->get(route('panel.formatos-confidencialidad.firmado', $ajena))
+        ->assertForbidden();
+    $this->actingAs($this->estudiante)
+        ->get(route('panel.formatos-confidencialidad.firmado', $sinArchivo))
+        ->assertNotFound();
+
+    expect(RegistroDeBitacora::query()->where('accion', AccionAuditada::FormatoDescargado)->count())->toBe(0);
 });
 
 it('no ofrece verificar ni devolver un formato que no está cargado', function (EstadoFormatoConfidencialidad $estado): void {
