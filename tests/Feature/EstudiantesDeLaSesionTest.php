@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\EstadoUsuario;
+use App\Enums\TipoSesion;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Solicitud\BandejaRevision;
 use App\Livewire\Solicitud\ExpedienteDeSolicitud;
@@ -139,6 +140,7 @@ it('crea la sesión con los estudiantes elegidos en el formulario', function ():
 
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
+        ->set('tipo', TipoSesion::Practica->value)
         ->set('materiaId', $par['materiaId'])
         ->set('casoClinicoId', $par['casoClinicoId'])
         ->set('fecha', now()->addWeek()->format('Y-m-d'))

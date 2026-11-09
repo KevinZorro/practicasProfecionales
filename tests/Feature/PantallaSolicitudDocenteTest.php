@@ -120,7 +120,22 @@ it('exige los campos obligatorios', function (): void {
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
         ->call('guardar')
-        ->assertHasErrors(['materiaId', 'casoClinicoId', 'fecha', 'horaInicio', 'horaFin', 'grupo', 'estudianteIds']);
+        ->assertHasErrors(['tipo', 'materiaId', 'casoClinicoId', 'fecha', 'horaInicio', 'horaFin', 'grupo', 'estudianteIds']);
+});
+
+it('no trae el tipo de sesión elegido: práctica o evaluación se elige a propósito', function (): void {
+    // Con la práctica marcada de antemano, quien pedía una evaluación y no
+    // lo notaba se quedaba sin poder evaluar en esa sesión (regla 1).
+    $this->actingAs($this->docente)->get(route('panel.solicitudes.nueva'))
+        ->assertOk()
+        ->assertSeeInOrder(['Tipo de sesión', 'Práctica', 'En la sesión no se registran evaluaciones.', 'Evaluación', 'registra la evaluación de cada estudiante']);
+
+    Livewire::actingAs($this->docente)
+        ->test(FormularioSolicitud::class)
+        ->assertSet('tipo', '')
+        ->call('guardar')
+        ->assertHasErrors(['tipo' => 'required'])
+        ->assertSee('El campo tipo de sesión es obligatorio.');
 });
 
 it('no acepta una franja que termina antes de empezar', function (): void {

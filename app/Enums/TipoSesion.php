@@ -18,6 +18,19 @@ enum TipoSesion: string
     }
 
     /**
+     * Qué cambia en la sesión, dicho al elegirla: solo en una evaluación se
+     * registran evaluaciones (CLAUDE.md, regla 1), y venir marcada la
+     * práctica dejaba al docente sin poder evaluar si no lo notaba.
+     */
+    public function queSignifica(): string
+    {
+        return match ($this) {
+            self::Practica => 'Los estudiantes practican. En la sesión no se registran evaluaciones.',
+            self::Evaluacion => 'El docente registra la evaluación de cada estudiante con su checklist.',
+        };
+    }
+
+    /**
      * Cómo se pinta la sesión en el calendario, sin otro color que los de la
      * marca: la práctica rellena de tinta y la evaluación en contorno, como
      * su etiqueta en el panel (x-tipo-de-sesion). En la vista de mes, donde

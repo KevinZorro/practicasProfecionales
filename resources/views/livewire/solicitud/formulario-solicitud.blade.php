@@ -11,17 +11,9 @@
     {{-- 1 · Escenario y horario --}}
     <x-tarjeta titulo="1 · Escenario y horario">
         <div class="grid gap-4 sm:grid-cols-2">
-            <div>
-                <label for="tipo" class="campo-etiqueta">Tipo de sesión</label>
-                <select wire:model="tipo" id="tipo" class="campo">
-                    @foreach ($tiposDeSesion as $unTipo)
-                        <option value="{{ $unTipo->value }}">{{ $unTipo->etiqueta() }}</option>
-                    @endforeach
-                </select>
-                @error('tipo') <p class="campo-error">{{ $message }}</p> @enderror
-            </div>
+            <x-campo-tipo-de-sesion wire:model="tipo" class="sm:col-span-2" />
 
-            <div>
+            <div class="sm:col-span-2">
                 <label for="materiaId" class="campo-etiqueta">Materia</label>
                 <select wire:model.live="materiaId" id="materiaId" class="campo">
                     <option value="">Elige una materia</option>

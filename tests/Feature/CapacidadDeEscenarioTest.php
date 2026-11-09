@@ -101,6 +101,7 @@ it('enseña el error junto a la lista de estudiantes y no registra nada', functi
 
     Livewire::actingAs($this->docente)
         ->test(FormularioSolicitud::class)
+        ->set('tipo', TipoSesion::Practica->value)
         ->set('materiaId', $this->materia->id)
         ->set('casoClinicoId', $caso->id)
         ->set('fecha', now()->addWeek()->format('Y-m-d'))

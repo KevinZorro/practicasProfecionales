@@ -39,14 +39,7 @@
                 @error('casoClinicoId') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
 
-            <div>
-                <label for="tipo" class="campo-etiqueta">Tipo de sesión</label>
-                <select wire:model="tipo" id="tipo" class="campo">
-                    @foreach ($tiposDeSesion as $unTipo)
-                        <option value="{{ $unTipo->value }}">{{ $unTipo->etiqueta() }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <x-campo-tipo-de-sesion wire:model="tipo" class="sm:col-span-2" />
 
             <div class="grid grid-cols-2 gap-3">
                 <div>

@@ -37,7 +37,8 @@ final class FormularioSolicitud extends Component
     use AutorizaEnCadaPeticion;
     use AvisaDelResultado;
 
-    public string $tipo = TipoSesion::Practica->value;
+    /** Sin valor de entrada: práctica o evaluación se elige a propósito. */
+    public string $tipo = '';
 
     public ?int $materiaId = null;
 
@@ -150,6 +151,16 @@ final class FormularioSolicitud extends Component
     }
 
     /**
+     * «Tipo» a secas es el del ítem de inventario (validation.php).
+     *
+     * @return array<string, string>
+     */
+    public function validationAttributes(): array
+    {
+        return ['tipo' => 'tipo de sesión'];
+    }
+
+    /**
      * Materia, escenario y tipo se validan contra la base y los enums, no solo
      * por formato: la petición puede traer lo que la pantalla no ofrece
      * (materias o escenarios inactivos, un tipo inventado) (QA-15).
@@ -220,7 +231,6 @@ final class FormularioSolicitud extends Component
             'resultados' => $solicitudes->buscarEstudiantes($this->busquedaEstudiante, $this->estudianteIds),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre', 'semestre']),
             'casosClinicos' => CasoClinico::activos()->deLaMateria($this->materiaId)->orderBy('nombre')->get(['id', 'nombre']),
-            'tiposDeSesion' => TipoSesion::cases(),
             'seleccionadosPorTipo' => $this->seleccionadosPorTipo(),
             'catalogo' => $this->catalogoParaAgregar(),
         ]);

@@ -852,6 +852,7 @@ La firma del panel: dónde está la solicitud y qué le falta, de un vistazo. La
 - **Etiqueta, ayuda y error:** la etiqueta encima (`panel-etiqueta-campo`, a 6 px); debajo, a 6 px, la ayuda (13 px, gris) o el error (500, 13 px, rojo hondo).
 - **Archivo:** el mismo marco, con el botón del navegador en una pastilla de niebla honda (600, 14 px).
 - **Casillas:** nativas, en tinta (`accent-color`): 18 px, y 24 px en el montaje, donde la fila entera (56 px, sobre niebla, verde claro al marcarla) es el objetivo del pulgar.
+- **Elección que cambia lo que viene** (el tipo de sesión, `x-campo-tipo-de-sesion`): una tarjeta por opción, blanca con contorno de filete y esquina de campo, con el radio nativo en tinta, el nombre en 600 a 15 px y debajo, en 13 px y gris, qué cambia al elegirla. La elegida, contorno de tinta de 2 px. No viene marcada ninguna: con una elegida de antemano, quien no la miraba se quedaba con la que no era. Las opciones sin consecuencias van en un desplegable o en pastillas.
 - **Ítem cerrado del checklist:** un cuadro de 18 px con 4 px de esquina, en tinta con la marca blanca si se cumplió y hueco con borde de filete firme si no, en vez de la casilla deshabilitada del navegador, que no se lee.
 
 ### Barras de decisión

@@ -41,7 +41,8 @@ final class SesionesApartadas extends Component
 
     public ?int $casoClinicoId = null;
 
-    public string $tipo = TipoSesion::Practica->value;
+    /** Sin valor de entrada: práctica o evaluación se elige a propósito. */
+    public string $tipo = '';
 
     #[Validate('required|date|after_or_equal:today')]
     public string $fecha = '';
@@ -62,6 +63,16 @@ final class SesionesApartadas extends Component
     public bool $soloSinFormato = false;
 
     public ?string $errorDeRegla = null;
+
+    /**
+     * «Tipo» a secas es el del ítem de inventario (validation.php).
+     *
+     * @return array<string, string>
+     */
+    public function validationAttributes(): array
+    {
+        return ['tipo' => 'tipo de sesión'];
+    }
 
     /**
      * Materia, escenario y tipo se validan contra la base y los enums, no solo
@@ -137,7 +148,6 @@ final class SesionesApartadas extends Component
             'docentes' => $registroPrevio->docentes(),
             'materias' => Materia::activas()->orderBy('nombre')->get(['id', 'nombre', 'semestre']),
             'casosClinicos' => CasoClinico::activos()->deLaMateria($this->materiaId)->orderBy('nombre')->get(['id', 'nombre']),
-            'tiposDeSesion' => TipoSesion::cases(),
             'advertencias' => $franjaCompleta
                 ? $registroPrevio->advertencias($this->fecha, $this->horaInicio, $this->horaFin, $this->docenteId)
                 : [],

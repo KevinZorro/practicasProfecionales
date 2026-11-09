@@ -157,6 +157,7 @@ it('registra desde la pantalla y enseña los cruces mientras se llena', function
 
     Livewire::actingAs($this->administrativo)
         ->test(SesionesApartadas::class)
+        ->set('tipo', TipoSesion::Practica->value)
         ->set('docenteId', $otroDocente->id)
         ->set('materiaId', $materia->id)
         ->set('casoClinicoId', $caso->id)
@@ -179,6 +180,7 @@ it('no registra desde la pantalla otra sesión de un docente que ya tiene una en
 
     Livewire::actingAs($this->administrativo)
         ->test(SesionesApartadas::class)
+        ->set('tipo', TipoSesion::Practica->value)
         ->set('docenteId', $this->docente->id)
         ->set('materiaId', $par['materiaId'])
         ->set('casoClinicoId', $par['casoClinicoId'])
@@ -329,4 +331,14 @@ it('avisa del formato intramural a quien dicta, no al titular sustituido (QA-03)
     Mail::assertQueued(AvisoFormatoIntramuralMail::class, fn (AvisoFormatoIntramuralMail $correo): bool => $correo->hasTo($reemplazo->email) && $correo->sesiones->count() === 1);
     Mail::assertNotQueued(AvisoFormatoIntramuralMail::class, fn (AvisoFormatoIntramuralMail $correo): bool => $correo->hasTo($this->docente->email));
     Mail::assertQueued(AvisoFormatoIntramuralMail::class, fn (AvisoFormatoIntramuralMail $correo): bool => $correo->hasTo($this->administrativo->email) && str_contains($correo->render(), 'Diana Mejía'));
+});
+
+it('tampoco trae el tipo elegido al registrar una sesión apartada', function (): void {
+    Livewire::actingAs($this->administrativo)
+        ->test(SesionesApartadas::class)
+        ->assertSet('tipo', '')
+        ->assertSee('En la sesión no se registran evaluaciones.')
+        ->call('registrar')
+        ->assertHasErrors(['tipo' => 'required'])
+        ->assertSee('El campo tipo de sesión es obligatorio.');
 });
