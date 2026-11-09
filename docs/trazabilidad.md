@@ -263,6 +263,33 @@ Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos)
 
 ---
 
+## Revisión de usabilidad
+
+Revisión de navegación y comprensión del 9 de noviembre de 2026, con la app corriendo a 390 px y 1440 px, por rol (ISO 9241-110, heurísticas de Nielsen, WCAG 2.2 AA). Estado de cada hallazgo en esta rama:
+
+| ID | Sev. | Qué | Estado |
+|---|---|---|---|
+| U-01 | Grave | «Mi formato» decía «Pendiente» a quien «Hoy» le decía que ya podía entrar (entrega en papel, RF53) | Corregido: las dos leen de `EstadoDeMiFormato` |
+| U-02 | Grave | El rol activo no se veía en el celular; el RF21 lo pide arriba a la derecha | Corregido: `x-selector-de-rol` |
+| U-03 | Grave | El tipo de sesión venía puesto en «Práctica»: quien pedía una evaluación sin notarlo no podía evaluar | Corregido: se elige, con lo que cambia dicho en cada opción |
+| U-04 | Menor | Los correos no enlazaban a la plataforma; horas con segundos; «Caso clínico» donde el formulario dice «Escenario clínico» | Corregido |
+| U-05 | Menor | Páginas de error de Laravel sin salida; la sesión caducada de Livewire, en inglés | Corregido |
+| U-06 | Menor | El foco del teclado quedaba debajo de la barra fija (WCAG 2.4.11) | Corregido: `scroll-padding` en el panel |
+| U-07 | Menor | «Comunícate con el laboratorio» sin decir cómo | Corregido: pie del panel, entrada, 403 y firma de los correos |
+| U-08 | Menor | `/admin` abría vacío, con el menú en Title Case y las salas en «Estructura académica» | Corregido |
+| U-09 | Cosmético | «el ADMIN» en pantalla | Corregido: «el administrador de la plataforma» |
+| U-10 | Menor | El menú del ADMIN tiene 15 secciones, y el de coordinación 13, sin agrupar | **Pendiente: pregunta U-Q2** |
+
+### Preguntas de producto abiertas por la revisión
+
+| # | Pregunta | Por defecto mientras tanto |
+|---|---|---|
+| U-Q1 | ¿Los correos tratan de «usted» y el panel de «tú», o se unifica? | Se deja así: los correos, más formales, en «usted»; el panel en «tú» |
+| U-Q2 | ¿Cómo se agrupa el menú del panel? | Sin agrupar. Agruparlo sin datos sería adivinar: se propone una clasificación de tarjetas con 5 a 8 personas por rol |
+| U-Q3 | ¿Qué cifras hacen medible el RNF05 (p. ej., «un docente nuevo pide un escenario en menos de 3 minutos, sin ayuda»)? | Sin cifra: se revisa a 390 px y 1440 px, sin desbordes |
+
+---
+
 ## Preguntas abiertas
 
 ### Respondidas el 9 de octubre
