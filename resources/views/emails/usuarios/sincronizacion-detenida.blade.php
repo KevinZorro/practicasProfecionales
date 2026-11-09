@@ -14,6 +14,6 @@
        completa; la siguiente pasada lo intentará de nuevo. Si las desactivaciones son reales (por ejemplo, al cierre
        del semestre), suba el umbral en la variable <code>SINCRONIZACION_UMBRAL_DESACTIVACION</code> para esa pasada.</p>
 
-    <p>{{ config('app.name') }}</p>
+    @include('emails.partes.firma')
 </body>
 </html>

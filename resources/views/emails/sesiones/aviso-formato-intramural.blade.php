@@ -41,6 +41,6 @@
         @include('emails.partes.enlace', ['url' => route('panel.sesiones-apartadas'), 'texto' => 'Ver las sesiones apartadas'])
     @endunless
 
-    <p>{{ config('app.name') }}</p>
+    @include('emails.partes.firma')
 </body>
 </html>

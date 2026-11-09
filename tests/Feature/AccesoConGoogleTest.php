@@ -6,6 +6,7 @@ use App\Enums\EstadoUsuario;
 use App\Enums\Rol;
 use App\Models\User;
 use App\Services\AccesoService;
+use App\Services\ConfiguracionLandingService;
 use App\Services\IdentidadDeGoogle;
 use Database\Seeders\RolSeeder;
 use GuzzleHttp\Exception\ClientException;
@@ -329,6 +330,18 @@ it('enseña en la pantalla de entrada por qué no se pudo entrar', function (): 
         ->get(route('acceso.google.volver', ['code' => 'codigo', 'state' => 'estado']))
         ->assertOk()
         ->assertSee('No hay una cuenta de la plataforma para ese correo.');
+});
+
+it('dice cómo comunicarse con el laboratorio junto al rechazo', function (): void {
+    // El rechazo dice «comunícate con el laboratorio»: tiene que decir cómo.
+    app(ConfiguracionLandingService::class)->guardar(['contacto_email' => 'simulacion@ufps.edu.co', 'contacto_telefono' => '607 577 6655']);
+    googleDevuelve(['email' => 'desconocido@ufps.edu.co']);
+
+    $this->followingRedirects()
+        ->get(route('acceso.google.volver', ['code' => 'codigo', 'state' => 'estado']))
+        ->assertSeeInOrder(['comunícate con el laboratorio', 'Escribe al laboratorio a', 'simulacion@ufps.edu.co', '607 577 6655'])
+        ->assertSee('href="mailto:simulacion@ufps.edu.co"', false)
+        ->assertSee('href="tel:6075776655"', false);
 });
 
 it('da por no verificado el correo si Socialite no trae los datos crudos de Google', function (): void {

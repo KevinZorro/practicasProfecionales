@@ -7,8 +7,10 @@
         Entra con tu cuenta institucional de Google{{ $dominio ? ", la que termina en @{$dominio}" : '' }}.
     </p>
 
+    {{-- Los rechazos dicen «comunícate con el laboratorio»: aquí, cómo. --}}
     @error('acceso')
         <x-aviso tono="peligro" role="alert" class="mt-5">{{ $message }}</x-aviso>
+        <p class="mt-3 text-[14px] leading-snug text-gray-600"><x-contacto-del-laboratorio /></p>
     @enderror
 
     {{-- El botón de Google con su «G»: es como se reconoce esta entrada (sus

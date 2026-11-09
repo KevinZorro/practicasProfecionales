@@ -47,6 +47,6 @@
 
     @include('emails.partes.enlace', ['url' => route('panel.solicitudes.ver', $solicitud), 'texto' => 'Ver la solicitud'])
 
-    <p>{{ config('app.name') }}</p>
+    @include('emails.partes.firma')
 </body>
 </html>

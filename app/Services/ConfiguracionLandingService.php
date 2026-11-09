@@ -41,6 +41,17 @@ final class ConfiguracionLandingService
         return $valores;
     }
 
+    /** El correo y el teléfono del laboratorio, para decir cómo comunicarse con él fuera de la portada. */
+    public function contacto(): ContactoDelLaboratorio
+    {
+        $valores = $this->valores();
+
+        return new ContactoDelLaboratorio(
+            correo: $valores[ClaveConfiguracionLanding::ContactoEmail->value],
+            telefono: $valores[ClaveConfiguracionLanding::ContactoTelefono->value],
+        );
+    }
+
     /**
      * Guarda las claves conocidas, todas o ninguna. Si el video del hero
      * cambió, el anterior se borra cuando la transacción se confirma.

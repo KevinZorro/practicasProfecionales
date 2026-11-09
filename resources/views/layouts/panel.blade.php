@@ -177,9 +177,13 @@
 
         @yield('contenido')
 
-        <p class="mt-10 text-[13px] text-gray-600">
-            <x-politica-de-datos class="underline underline-offset-4 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo" />
-        </p>
+        {{-- La ayuda, siempre en el mismo sitio (WCAG 3.2.6): cómo escribir o llamar al laboratorio. --}}
+        <div class="mt-10 space-y-1.5 text-[13px] leading-snug text-gray-600">
+            <p><x-contacto-del-laboratorio>¿Dudas?</x-contacto-del-laboratorio></p>
+            <p>
+                <x-politica-de-datos class="underline underline-offset-4 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo" />
+            </p>
+        </div>
     </main>
 </div>
 
