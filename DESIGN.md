@@ -487,7 +487,7 @@ Alcance: una marca y tres superficies. Las páginas públicas, la portada (`/`) 
 - La línea de estados: completa en el expediente y compacta en cada fila, en una columna fija.
 - Solo proyecta sombra lo que flota: las barras de decisión y el aviso de la acción.
 - Móvil primero: 44 px para el pulgar, campos de 16 px y un menú que abre sin JavaScript.
-- Ninguna animación propia: cambios de color de 150 ms y la llegada del aviso.
+- Se mueve solo para explicar un cambio: la cortina que se recoge al unir salas y la llegada del aviso. Lo demás, cambios de color de 150 ms.
 
 ## Colors
 
@@ -858,6 +858,15 @@ La firma del panel: dónde está la solicitud y qué le falta, de un vistazo. La
 ### Aviso de la acción
 Lo que acaba de pasar: una pieza de tinta de hasta 448 px, arriba y centrada sobre el contenido (bajo la barra, en el celular), con el texto blanco en 500 a 14 px, una marca verde a la izquierda y el botón de cerrar de 32 px. Va arriba y no abajo porque abajo van las barras de decisión. Se va solo a los 7 s; es `role="status"` con `aria-live="polite"`.
 
+### Salas unidas
+El salón de una sesión mientras se eligen sus salas (P16), en el panel de montaje: `resources/js/salon.js` decide qué se ve y `.salon` en `app.css`, cómo se mueve.
+- **Filas:** una por sala libre, como las del material: 56 px sobre niebla, con la fila entera como casilla de 24 px. El nombre en 600 a 15 px, la ubicación en 13 px y gris, «Recomendada para este escenario» en una pastilla neutra de 20 px y, a la derecha, «caben 12» con la cifra en 700. Elegida, blanca con un contorno de tinta de 1,5 px por dentro. Con tres elegidas, las demás se desactivan y una línea dice que es el máximo.
+- **Así queda:** el salón, de 88 px de alto fijo. Cada sala elegida es una columna sobre niebla con su nombre (600, 13 px; 12 px con tres) y lo que cabe, y las unidas pierden las esquinas que se tocan. En el borde, la cortina cerrada: pliegues de grafito colgados de su riel. Con dos o más salas, la pastilla «Unidas».
+- **Medidor:** el grupo frente a lo que cabe, en una barra de 8 px: tinta lo que cabe mientras falta, ámbar lo que falta y verde hondo cuando el grupo cabe. Debajo, en vivo y con `aria-live`: «Faltan 6 lugares: une otra sala.», «Cabe el grupo y sobran 2 lugares.» y, si con una sola sala ya bastaba, también lo dice.
+- **El botón dice lo que hace:** «Asignar la sala», «Asignar 2 salas unidas», «Cambiar a 3 salas unidas». Si son las mismas que ya tiene la sesión, el botón se va y una línea dice que ya están asignadas.
+- **Después de asignar:** la tarjeta pone cada sala en su línea, a todo el ancho y con «Unidas abriendo la cortina · caben 20» debajo, y se tiñe de verde claro un momento, porque en el celular el aviso queda lejos de la tarjeta. El aviso nombra las salas.
+- Solo enseña. Si el grupo cabe y si las salas siguen libres lo decide `PreparacionService::asignarSalas`, que avisa igual si algo no cuadra.
+
 ### Calendario
 FullCalendar, vestido con la marca por sus variables (CSS propio en `app.css`, porque trae su marcado): botones en pastilla blanca con contorno de filete (600, 14 px) y la vista elegida en tinta; el título en 800 a 1.25rem, con mayúscula solo en la primera letra («Octubre de 2026»); los días en 13 px; hoy, un círculo de tinta de 24 px con el número en 700 y blanco, sobre la celda en niebla. La práctica es un evento relleno de grafito con texto blanco; la evaluación, un evento blanco con contorno de grafito; en la vista de mes, el punto de la evaluación va hueco. En el celular la barra se apila y la rejilla se desplaza en horizontal (36rem como mínimo). El foco de sus botones es el contorno rojo.
 
@@ -865,13 +874,14 @@ FullCalendar, vestido con la marca por sus variables (CSS propio en `app.css`, p
 Sobre niebla y sin riel: la marca centrada (símbolo de 44 px y nombre), una pieza blanca de 16 px con el título en 800 a 1.625rem y, para entrar, una pastilla secundaria de 48 px con la «G» de Google en sus cuatro colores.
 
 ### Movimiento del panel
-- Ninguna animación propia: las seis animaciones son de la portada.
+- Un solo movimiento propio, el de las salas unidas. Al sumar una sala, su columna crece en 260 ms con la curva de llegada y, 160 ms después, la cortina que la separaba se recoge hacia un lado en 260 ms con la curva de recorrido. Al quitarla, la cortina vuelve en 150 ms. Con movimiento reducido, el salón cambia de una vez y la cortina solo se desvanece.
+- Lo que acaba de cambiar se tiñe de verde claro y se apaga en 1,5 s. Es solo color, así que se queda con movimiento reducido.
 - Los cambios de color duran 150 ms con la curva estándar de Tailwind (cubic-bezier(0.4, 0, 0.2, 1)): botones, filas, pestañas, pastillas y campos. No mueven nada.
 - Lo único que se desplaza es la llegada del aviso de la acción: sube 8 px y aparece en 200 ms con la curva de llegada, y se va por opacidad en 150 ms. Con movimiento reducido llega y se va sin transición.
 - El hover solo existe donde hay cursor: `future.hoverOnlyWhenSupported` lo compila dentro de `(hover: hover) and (pointer: fine)`, en toda la plataforma. En el celular, la fila tocada no se queda teñida.
 - El cajón del menú y la confirmación del rechazo aparecen sin animación.
 
-**La regla del panel quieto.** El panel no suma animaciones a las seis de la portada. Un cambio de estado se dice con color en 150 ms, y lo único que se desplaza, 8 px, es el aviso de la acción, que `motion-reduce` deja quieto.
+**La regla del panel que explica.** El panel se mueve solo para explicar un cambio que la persona acaba de provocar: hoy, la unión de salas y la llegada del aviso. Ninguno corre al abrir una pantalla, ninguno pasa de 0,6 s, cada uno tiene su versión de movimiento reducido y lo que muestra también lo dice el texto. Un movimiento nuevo se consulta antes con el usuario, como las seis animaciones de la portada. Reemplaza a «la regla del panel quieto» desde el 2026-11-09.
 
 ### `/admin`
 Filament conserva su disposición, sus componentes y sus tablas; solo toma la marca. Onest servida desde el propio servidor; la escala de tinta como color primario (botones en tinta), la escala del rojo como peligro, los grises fríos del panel, y el verde y el ámbar de Tailwind para éxito y aviso. En la cabecera, el símbolo de la UFPS (32 px) con «Administración del laboratorio» (600, 15 px, tinta). El ícono de la sección activa va en rojo, como en el riel, con una regla en línea por el gancho de estilos para no compilar un tema propio. Sin modo oscuro (`darkMode(false)`).
@@ -914,7 +924,7 @@ Filament conserva su disposición, sus componentes y sus tablas; solo toma la ma
 - **Usa** en el panel las cifras proporcionales de Onest; las tabulares son solo para las cifras de monitor de la portada.
 - **Apila** en el panel niebla, blanco y niebla: el fondo, la pieza de 16 px y lo que va dentro de ella, con esquina de 12 px.
 - **Muestra** en el panel dónde está cada solicitud con la línea de estados: completa en el expediente, compacta y en su columna fija de 12.5rem en las listas.
-- **Mide** los controles del panel para el pulgar: 44 px en el celular (40 desde 640), campos en 16 px y la fila del montaje entera como casilla.
+- **Mide** los controles del panel para el pulgar: 44 px en el celular (40 desde 640), campos en 16 px y, en el montaje, la fila entera como casilla, tanto en el material como en las salas.
 - **Deja** pegada al pie la barra de decisión del panel y saca el aviso de la acción arriba.
 - **Da** en el panel foco visible en rojo a todo lo que se pulsa (contorno de 2 px separado 2 px; por dentro en pestañas y filas) y foco en tinta a los campos.
 - **Escribe** el panel en mayúscula inicial y deja las mayúsculas espaciadas (11 px, 0,08 em) solo para la etiqueta de un dato.
@@ -924,7 +934,7 @@ Filament conserva su disposición, sus componentes y sus tablas; solo toma la ma
 - **No** agregues al panel otro tono (azul, violeta, naranja) ni un color por tipo de sesión o de ítem.
 - **No** actives `tabular-nums` en el panel: el 1 tabular de Onest parte «15» en «1 5».
 - **No** pongas sombra a una pieza del panel, al riel ni al cajón del menú: solo flotan las barras de decisión y el aviso de la acción.
-- **No** sumes animaciones al panel: cambios de color de 150 ms y la llegada del aviso, nada más.
+- **No** sumes animaciones al panel fuera de la regla del panel que explica: cambios de color de 150 ms, la llegada del aviso y la unión de salas, nada más.
 - **No** uses en el panel el rojo relleno como primer paso de una acción que no se deshace, ni pongas botones sueltos en las filas de solicitud: la fila entera abre el expediente y la decisión se toma ahí.
 - **No** escribas en el panel texto gris (#6e6e73) sobre niebla honda (#ededf0): baja a 4,3:1; ahí va el grafito.
 - **No** digas un estado del panel solo con color.
