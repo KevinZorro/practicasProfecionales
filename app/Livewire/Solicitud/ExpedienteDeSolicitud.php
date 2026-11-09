@@ -16,6 +16,7 @@ use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\InventarioService;
 use App\Services\SolicitudService;
+use App\Support\LineaDeEstados;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -181,6 +182,8 @@ final class ExpedienteDeSolicitud extends Component
             return;
         }
 
+        // La cabecera del expediente dibuja una vez el paso que se acaba de dar.
+        session()->flash(LineaDeEstados::RECIEN_MOVIDA, $this->solicitudId);
         $this->terminar($mensajeDeExito);
     }
 

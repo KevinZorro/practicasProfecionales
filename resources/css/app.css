@@ -210,6 +210,91 @@
     }
 }
 
+/*
+ * La línea avanza: después de revisar, aprobar o rechazar, la cabecera del
+ * expediente dibuja una vez el paso que se acaba de dar
+ * (components/linea-de-estados.blade.php, «recién movida»). El trazo va en
+ * dos mitades, una que acelera y otra que frena, para que se lea como un
+ * solo recorrido de punto a punto; después llega el punto rojo. Un rechazo
+ * hace aparecer la cruz. Se anima la propiedad scale, no transform, porque
+ * los tramos ya usan transform para centrarse.
+ */
+@layer components {
+    .linea-trazo-salida,
+    .linea-trazo-llegada {
+        transform-origin: left center;
+    }
+
+    .linea-trazo-salida {
+        animation: linea-trazo 170ms cubic-bezier(0.55, 0, 1, 0.45) both;
+    }
+
+    .linea-trazo-llegada {
+        animation: linea-trazo 170ms cubic-bezier(0, 0.55, 0.45, 1) 170ms both;
+    }
+
+    .linea-nodo-cierra {
+        animation: linea-nodo-cierra 160ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    }
+
+    .linea-nodo-llega {
+        animation: linea-nodo-llega 200ms cubic-bezier(0.23, 1, 0.32, 1) 340ms both;
+    }
+
+    .linea-corte {
+        animation: linea-corte 180ms cubic-bezier(0.23, 1, 0.32, 1) both;
+    }
+}
+
+@keyframes linea-trazo {
+    from {
+        scale: 0 1;
+    }
+
+    to {
+        scale: 1 1;
+    }
+}
+
+@keyframes linea-nodo-cierra {
+    from {
+        scale: 1.34;
+        background-color: theme('colors.rojo.DEFAULT');
+    }
+}
+
+@keyframes linea-nodo-llega {
+    from {
+        scale: 0.6;
+        box-shadow: 0 0 0 0 rgb(211 15 35 / 0.15);
+    }
+
+    to {
+        scale: 1;
+        box-shadow: 0 0 0 5px rgb(211 15 35 / 0.15);
+    }
+}
+
+@keyframes linea-corte {
+    from {
+        scale: 0.6;
+        opacity: 0;
+    }
+}
+
+/* Con movimiento reducido: sin trazo ni desplazamiento; el punto nuevo cambia de color y la cruz aparece. */
+@keyframes linea-solo-color {
+    from {
+        background-color: theme('colors.gray.300');
+    }
+}
+
+@keyframes linea-solo-aparece {
+    from {
+        opacity: 0;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .salon,
     .salon-sala,
@@ -229,6 +314,20 @@
 
     .salon-medidor {
         transition: background-color 150ms linear;
+    }
+
+    .linea-trazo-salida,
+    .linea-trazo-llegada,
+    .linea-nodo-cierra {
+        animation: none;
+    }
+
+    .linea-nodo-llega {
+        animation: linea-solo-color 150ms linear both;
+    }
+
+    .linea-corte {
+        animation: linea-solo-aparece 150ms linear both;
     }
 }
 

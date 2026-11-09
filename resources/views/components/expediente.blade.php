@@ -77,7 +77,7 @@
         </div>
 
         <div class="mt-6 border-t border-gray-100 px-2 pb-5 pt-5 sm:px-7">
-            <x-linea-de-estados :solicitud="$solicitud" />
+            <x-linea-de-estados :solicitud="$solicitud" :recien="session(\App\Support\LineaDeEstados::RECIEN_MOVIDA) === $solicitud->id" />
         </div>
     </header>
 

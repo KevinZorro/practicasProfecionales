@@ -28,6 +28,14 @@ use App\Models\Solicitud;
  */
 final class LineaDeEstados
 {
+    /**
+     * Clave de sesión, de un solo uso, con la solicitud cuya línea acaba de
+     * moverse por una decisión en el expediente. La cabecera la dibuja
+     * avanzando una vez (DESIGN.md, «La línea avanza»); al volver a abrirla,
+     * ya está quieta en su sitio.
+     */
+    public const RECIEN_MOVIDA = 'linea_recien_movida';
+
     /** @return list<PasoDeLaLinea> */
     public static function deSolicitud(Solicitud $solicitud): array
     {

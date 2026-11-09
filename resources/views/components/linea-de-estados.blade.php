@@ -14,8 +14,14 @@
     misma columna aunque la solicitud tenga menos fases.
 
     Las fases las calcula App\Support\LineaDeEstados.
+
+    Recién movida (solo la completa, una vez, después de decidir en el
+    expediente): el trazo se dibuja desde la fase que se acaba de cerrar
+    hasta la nueva y el punto rojo llega a ella; un rechazo hace aparecer la
+    cruz. Los movimientos están en app.css (.linea-*), con su versión de
+    movimiento reducido.
 --}}
-@props(['solicitud', 'compacta' => false])
+@props(['solicitud', 'compacta' => false, 'recien' => false])
 
 @php
     $pasos = \App\Support\LineaDeEstados::deSolicitud($solicitud);
@@ -30,6 +36,13 @@
         'pendiente' => 'pendiente',
         'cortado' => 'rechazada',
     ];
+
+    // Qué se mueve si la línea es recién movida: el tramo que llega a la
+    // fase actual (desde la anterior) o la cruz del corte.
+    $indiceActual = collect($pasos)->search(fn ($paso) => $paso->estado === $actual);
+    $indiceCortado = collect($pasos)->search(fn ($paso) => $paso->estado === $cortado);
+    $avanza = $recien && $indiceActual !== false && $indiceActual > 0;
+    $corta = $recien && $indiceCortado !== false;
 @endphp
 
 @if ($compacta)
@@ -66,9 +79,13 @@
     </div>
 @else
     <ol {{ $attributes->class('grid') }} style="grid-template-columns: repeat({{ count($pasos) }}, minmax(0, 1fr));"
-        aria-label="Fases de la solicitud">
+        aria-label="Fases de la solicitud" @if ($avanza || $corta) data-recien="{{ $corta ? 'corte' : 'avance' }}" @endif>
         @foreach ($pasos as $paso)
-            @php($siguiente = $pasos[$loop->index + 1] ?? null)
+            @php
+                $siguiente = $pasos[$loop->index + 1] ?? null;
+                $llega = $avanza && $loop->index === $indiceActual;
+                $sale = $avanza && $loop->index === $indiceActual - 1;
+            @endphp
             <li class="flex min-w-0 flex-col items-center text-center" @if ($paso->estado === $actual) aria-current="step" @endif>
                 <div class="relative flex h-6 w-full items-center justify-center" aria-hidden="true">
                     {{-- Medio tramo que llega desde la fase anterior. --}}
@@ -77,6 +94,7 @@
                             'absolute left-0 right-1/2 top-1/2',
                             'h-0.5 -translate-y-1/2 bg-gray-900' => $paso->estado !== $pendiente,
                             'border-t-2 border-dashed border-gray-300' => $paso->estado === $pendiente,
+                            'linea-trazo-llegada' => $llega,
                         ])></span>
                     @endunless
                     {{-- Medio tramo que sale hacia la siguiente. --}}
@@ -85,11 +103,12 @@
                             'absolute left-1/2 right-0 top-1/2',
                             'h-0.5 -translate-y-1/2 bg-gray-900' => $siguiente->estado !== $pendiente,
                             'border-t-2 border-dashed border-gray-300' => $siguiente->estado === $pendiente,
+                            'linea-trazo-salida' => $sale,
                         ])></span>
                     @endif
 
                     @if ($paso->estado === $cortado)
-                        <span class="relative flex size-5 items-center justify-center rounded-full bg-rojo text-white">
+                        <span @class(['relative flex size-5 items-center justify-center rounded-full bg-rojo text-white', 'linea-corte' => $corta])>
                             <svg class="size-3" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
@@ -100,6 +119,8 @@
                             'size-3 bg-gray-900 ring-4 ring-white' => $paso->estado === $hecho,
                             'size-4 bg-rojo ring-[5px] ring-rojo/15' => $paso->estado === $actual,
                             'size-3 border-2 border-gray-300 bg-white ring-4 ring-white' => $paso->estado === $pendiente,
+                            'linea-nodo-llega' => $llega,
+                            'linea-nodo-cierra' => $sale,
                         ])></span>
                     @endif
                 </div>

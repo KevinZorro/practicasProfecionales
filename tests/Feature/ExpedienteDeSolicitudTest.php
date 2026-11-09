@@ -9,6 +9,7 @@ use App\Models\ItemInventario;
 use App\Models\Preparacion;
 use App\Models\Solicitud;
 use App\Models\User;
+use App\Support\LineaDeEstados;
 use Database\Seeders\RolSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Features\SupportTesting\Testable;
@@ -367,6 +368,75 @@ it('no deja a un docente ni a un estudiante abrir el detalle de una solicitud aj
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Pendiente);
 })->with([Rol::Docente, Rol::Estudiante]);
+
+// ---------------------------------------------------------------------
+// La línea avanza: la cabecera dibuja una vez el paso que se acaba de dar
+// ---------------------------------------------------------------------
+
+it('marca la línea como recién movida después de cada decisión', function (string $quien, string $estado, string $metodo): void {
+    $solicitud = Solicitud::factory()->create(['estado' => EstadoSolicitud::from($estado)]);
+
+    expedienteDe($this->{$quien}, $solicitud)->call($metodo);
+
+    expect(session(LineaDeEstados::RECIEN_MOVIDA))->toBe($solicitud->id);
+})->with([
+    'revisar' => ['administrativo', 'pendiente', 'revisar'],
+    'aprobar' => ['coordinadora', 'revisada', 'aprobar'],
+    'rechazar' => ['administrativo', 'pendiente', 'rechazar'],
+]);
+
+it('no la marca si la decisión no se pudo tomar', function (): void {
+    // Vencida: la fecha pasó sin resolverla y ya no se revisa.
+    $solicitud = Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente, 'fecha' => now()->subDay()->toDateString()]);
+
+    expedienteDe($this->administrativo, $solicitud)->call('revisar');
+
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Pendiente)
+        ->and(session()->has(LineaDeEstados::RECIEN_MOVIDA))->toBeFalse();
+});
+
+it('dibuja el tramo que llega a la fase actual solo con la marca de esa solicitud', function (): void {
+    $solicitud = Solicitud::factory()->revisada()->create();
+    $otra = Solicitud::factory()->revisada()->create();
+
+    $html = $this->actingAs($this->coordinadora)
+        ->withSession([LineaDeEstados::RECIEN_MOVIDA => $solicitud->id])
+        ->get(route('panel.solicitudes.ver', $solicitud))
+        ->assertOk()
+        ->getContent();
+
+    // Un solo tramo que sale, uno que llega y el punto rojo que llega a «Aprobación».
+    expect($html)->toContain('data-recien="avance"')
+        ->and(substr_count($html, 'linea-trazo-salida'))->toBe(1)
+        ->and(substr_count($html, 'linea-trazo-llegada'))->toBe(1)
+        ->and(substr_count($html, 'linea-nodo-llega'))->toBe(1);
+
+    $this->actingAs($this->coordinadora)
+        ->withSession([LineaDeEstados::RECIEN_MOVIDA => $solicitud->id])
+        ->get(route('panel.solicitudes.ver', $otra))
+        ->assertDontSee('data-recien', false);
+});
+
+it('queda quieta al abrir el expediente sin una decisión recién tomada', function (): void {
+    $solicitud = Solicitud::factory()->revisada()->create();
+
+    $this->actingAs($this->coordinadora)
+        ->get(route('panel.solicitudes.ver', $solicitud))
+        ->assertDontSee('data-recien', false)
+        ->assertDontSee('linea-trazo', false);
+});
+
+it('hace aparecer la cruz cuando la decisión fue rechazar', function (): void {
+    $solicitud = Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]);
+    expedienteDe($this->administrativo, $solicitud)->call('rechazar');
+
+    $this->actingAs($this->administrativo)
+        ->withSession([LineaDeEstados::RECIEN_MOVIDA => $solicitud->id])
+        ->get(route('panel.solicitudes.ver', $solicitud))
+        ->assertSee('data-recien="corte"', false)
+        ->assertSee('linea-corte', false)
+        ->assertDontSee('linea-trazo', false);
+});
 
 it('le dice a quien decide qué está haciendo mientras espera al servidor', function (): void {
     expedienteDe($this->administrativo, Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]))

@@ -92,3 +92,12 @@ it('quita el movimiento de la unión de salas a quien pide reducirlo', function 
     expect($css)->toMatch('/@media \(prefers-reduced-motion: reduce\) \{\s*\.salon,\s*\.salon-sala,\s*\.salon-cortina \{\s*transition: none;/')
         ->toMatch('/\.salon-cortina\.recogida svg \{\s*transform: none;\s*transition: opacity 150ms linear;/');
 });
+
+it('quita el trazo de la línea que avanza a quien pide reducir el movimiento', function (): void {
+    $css = (string) file_get_contents(base_path('resources/css/app.css'));
+
+    // Sin trazo ni desplazamiento: el punto nuevo solo cambia de color y la cruz aparece.
+    expect($css)->toMatch('/\.linea-trazo-salida,\s*\.linea-trazo-llegada,\s*\.linea-nodo-cierra \{\s*animation: none;/')
+        ->toMatch('/\.linea-nodo-llega \{\s*animation: linea-solo-color 150ms linear both;/')
+        ->toMatch('/\.linea-corte \{\s*animation: linea-solo-aparece 150ms linear both;/');
+});
