@@ -30,7 +30,7 @@
 
     <table cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
         <tr>
-            <td><strong>Caso clínico</strong></td>
+            <td><strong>Escenario clínico</strong></td>
             <td>{{ $solicitud->casoClinico->nombre }}</td>
         </tr>
         <tr>
@@ -43,9 +43,11 @@
         </tr>
         <tr>
             <td><strong>Hora</strong></td>
-            <td>{{ $solicitud->hora_inicio }} a {{ $solicitud->hora_fin }}</td>
+            <td>{{ substr($solicitud->hora_inicio, 0, 5) }} a {{ substr($solicitud->hora_fin, 0, 5) }}</td>
         </tr>
     </table>
+
+    @include('emails.partes.enlace', ['url' => route('panel.solicitudes.ver', $solicitud), 'texto' => 'Ver la sesión'])
 
     <p>{{ config('app.name') }}</p>
 </body>

@@ -11,7 +11,7 @@
 
     <table cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
         <tr>
-            <td><strong>Caso clínico</strong></td>
+            <td><strong>Escenario clínico</strong></td>
             <td>{{ $solicitud->casoClinico->nombre }}</td>
         </tr>
         <tr>
@@ -28,7 +28,7 @@
         </tr>
         <tr>
             <td><strong>Hora</strong></td>
-            <td>{{ $solicitud->hora_inicio }} a {{ $solicitud->hora_fin }}</td>
+            <td>{{ substr($solicitud->hora_inicio, 0, 5) }} a {{ substr($solicitud->hora_fin, 0, 5) }}</td>
         </tr>
         <tr>
             <td><strong>Estudiantes</strong></td>
@@ -44,6 +44,8 @@
     {{-- La sala se asigna durante la preparación (RF36), y llega en otro correo. --}}
     <p>La sala la elige el laboratorio al preparar el escenario. Le llegará
        otro correo en cuanto la asigne.</p>
+
+    @include('emails.partes.enlace', ['url' => route('panel.solicitudes.ver', $solicitud), 'texto' => 'Ver la solicitud'])
 
     <p>{{ config('app.name') }}</p>
 </body>

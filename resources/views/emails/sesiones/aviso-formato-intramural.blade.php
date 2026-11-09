@@ -18,7 +18,7 @@
         <tr>
             <th align="left">Fecha</th>
             <th align="left">Hora</th>
-            <th align="left">Caso clínico</th>
+            <th align="left">Escenario clínico</th>
             <th align="left">Materia</th>
             @unless ($paraDocente)
                 <th align="left">Docente</th>
@@ -28,7 +28,7 @@
             <tr>
                 <td>{{ $sesion->fecha->format('d/m/Y') }}</td>
                 <td>{{ substr($sesion->hora_inicio, 0, 5) }}</td>
-                <td>{{ $sesion->casoClinico->nombre }}</td>
+                <td><a href="{{ route('panel.solicitudes.ver', $sesion) }}" style="color: #1d1d1f;">{{ $sesion->casoClinico->nombre }}</a></td>
                 <td>{{ $sesion->materia->nombre }}</td>
                 @unless ($paraDocente)
                     <td>{{ ($sesion->docenteQueDicta ?? $sesion->docente)->nombre }}</td>
@@ -36,6 +36,10 @@
             </tr>
         @endforeach
     </table>
+
+    @unless ($paraDocente)
+        @include('emails.partes.enlace', ['url' => route('panel.sesiones-apartadas'), 'texto' => 'Ver las sesiones apartadas'])
+    @endunless
 
     <p>{{ config('app.name') }}</p>
 </body>

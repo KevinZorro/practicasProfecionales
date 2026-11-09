@@ -27,7 +27,7 @@
             <td>{{ substr($reprogramacion->hora_inicio_nueva, 0, 5) }} a {{ substr($reprogramacion->hora_fin_nueva, 0, 5) }}</td>
         </tr>
         <tr>
-            <td><strong>Caso clínico</strong></td>
+            <td><strong>Escenario clínico</strong></td>
             <td>{{ $reprogramacion->casoClinicoAnterior->nombre }}</td>
             <td>{{ $reprogramacion->casoClinicoNuevo->nombre }}</td>
         </tr>
@@ -36,6 +36,8 @@
     <p><strong>Motivo:</strong> {{ $reprogramacion->motivo }}</p>
 
     <p>La sala se le confirmará en otro correo cuando el laboratorio la asigne.</p>
+
+    @include('emails.partes.enlace', ['url' => route('panel.solicitudes.ver', $solicitud), 'texto' => 'Ver la sesión'])
 
     <p>{{ config('app.name') }}</p>
 </body>

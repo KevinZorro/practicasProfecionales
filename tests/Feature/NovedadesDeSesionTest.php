@@ -87,7 +87,9 @@ it('reprograma la fecha, deja el rastro, libera la sala y avisa al docente', fun
         ->and($cambio->constancia_comunicacion)->toBe('Llamada al docente el 9/10, aceptó el cambio');
 
     Mail::assertQueued(SesionReprogramadaMail::class, 1);
-    Mail::assertQueued(SesionReprogramadaMail::class, fn (SesionReprogramadaMail $correo): bool => $correo->hasTo($this->titular->email));
+    Mail::assertQueued(SesionReprogramadaMail::class, fn (SesionReprogramadaMail $correo): bool => $correo->hasTo($this->titular->email)
+        && str_contains($correo->render(), 'href="'.route('panel.solicitudes.ver', $sesion).'"')
+        && str_contains($correo->render(), 'Escenario clínico'));
 });
 
 it('al cambiar el escenario borra el formato intramural y revalida la capacidad', function (): void {
@@ -183,7 +185,8 @@ it('sustituye al docente, deja el rastro y avisa al reemplazo', function (): voi
         ->and($sustitucion->registrada_por)->toBe($this->administrativo->id);
 
     Mail::assertQueued(SustitucionDocenteMail::class, 1);
-    Mail::assertQueued(SustitucionDocenteMail::class, fn (SustitucionDocenteMail $correo): bool => $correo->hasTo($this->reemplazo->email));
+    Mail::assertQueued(SustitucionDocenteMail::class, fn (SustitucionDocenteMail $correo): bool => $correo->hasTo($this->reemplazo->email)
+        && str_contains($correo->render(), 'href="'.route('panel.solicitudes.ver', $sesion).'"'));
 });
 
 it('devuelve la sesión al titular al elegirlo, y no acepta al mismo que ya dicta', function (): void {

@@ -11,13 +11,15 @@
     <p>Usted dictará esta sesión en reemplazo de {{ $sustitucion->docenteAnterior->nombre }}.</p>
 
     <table cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
-        <tr><td><strong>Caso clínico</strong></td><td>{{ $solicitud->casoClinico->nombre }}</td></tr>
+        <tr><td><strong>Escenario clínico</strong></td><td>{{ $solicitud->casoClinico->nombre }}</td></tr>
         <tr><td><strong>Materia</strong></td><td>{{ $solicitud->materia->nombre }}</td></tr>
         <tr><td><strong>Fecha</strong></td><td>{{ $solicitud->fecha->format('d/m/Y') }}</td></tr>
         <tr><td><strong>Hora</strong></td><td>{{ substr($solicitud->hora_inicio, 0, 5) }} a {{ substr($solicitud->hora_fin, 0, 5) }}</td></tr>
     </table>
 
     <p><strong>Novedad:</strong> {{ $sustitucion->motivo }}</p>
+
+    @include('emails.partes.enlace', ['url' => route('panel.solicitudes.ver', $solicitud), 'texto' => 'Ver la sesión'])
 
     <p>{{ config('app.name') }}</p>
 </body>
