@@ -169,12 +169,13 @@
         </x-boton>
     </div>
 
-    {{-- Estado del montaje --}}
+    {{-- Estado del montaje. Con el material recién completo, el botón que sigue se señala una vez. --}}
+    @php($siguePaso = ($materialRecienCompleto ?? null) === $montaje->id ? 'senalar' : '')
     <div class="border-t border-gray-100 pt-5">
         <h3 class="mb-2 text-[15px] font-semibold text-gray-900">Estado del montaje</h3>
 
         @if ($montaje->estado === \App\Enums\EstadoPreparacion::Pendiente)
-            <x-boton cargando="Guardando…" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
+            <x-boton cargando="Guardando…" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto {{ $siguePaso }}">
                 Empezar el montaje
             </x-boton>
         @elseif ($montaje->estado === \App\Enums\EstadoPreparacion::EnPreparacion)
@@ -183,7 +184,7 @@
                     Asigna una sala antes de dar el escenario por preparado.
                 </x-aviso>
             @else
-                <x-boton cargando="Guardando…" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'preparado')" class="w-full sm:w-auto">
+                <x-boton cargando="Guardando…" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'preparado')" class="w-full sm:w-auto {{ $siguePaso }}">
                     Marcar como preparado
                 </x-boton>
             @endif

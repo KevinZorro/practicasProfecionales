@@ -15,6 +15,7 @@ use App\Models\Solicitud;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Blade;
 use Livewire\Livewire;
 
 beforeEach(function (): void {
@@ -374,4 +375,79 @@ it('no genera consultas N+1 al recorrer el tablero', function (): void {
         ->test(TableroDiario::class)
         ->set('fecha', '2026-10-05')
         ->assertOk();
+});
+
+// ---------------------------------------------------------------------
+// Progreso del montaje: avanza, se completa y señala lo que sigue
+// ---------------------------------------------------------------------
+
+/** El tablero con un montaje en preparación, con sala y con dos elementos por alistar. */
+function tableroConMaterial(User $administrativo): array
+{
+    $montaje = montajeParaPantalla('2026-10-05', estado: EstadoPreparacion::EnPreparacion, sala: Sala::factory()->create());
+    [$uno, $otro] = ItemInventario::factory()->count(2)->create()->all();
+    $montaje->items()->attach([$uno->id => ['cantidad' => 1, 'alistado' => false], $otro->id => ['cantidad' => 1, 'alistado' => false]]);
+
+    $tablero = Livewire::actingAs($administrativo)
+        ->test(TableroDiario::class)
+        ->set('fecha', '2026-10-05')
+        ->call('abrir', $montaje->id);
+
+    return [$tablero, $montaje, $uno, $otro];
+}
+
+it('escala la barra según lo alistado, en vez de cambiar su ancho', function (): void {
+    $html = Blade::render('<x-progreso-alistamiento :alistados="1" :total="4" />');
+
+    expect($html)->toContain('transform: scaleX(0.25)')
+        ->toContain('motion-reduce:transition-colors')
+        ->not->toContain('width:')
+        ->not->toContain('Todo alistado');
+});
+
+it('dice «Todo alistado» y se pone verde al completar', function (): void {
+    $html = Blade::render('<x-progreso-alistamiento :alistados="4" :total="4" />');
+
+    expect($html)->toContain('transform: scaleX(1)')
+        ->toContain('Todo alistado')
+        ->toContain('bg-emerald-500');
+});
+
+it('no divide por cero en un escenario sin equipos', function (): void {
+    expect(Blade::render('<x-progreso-alistamiento :alistados="0" :total="0" />'))->toContain('transform: scaleX(0)')
+        ->not->toContain('Todo alistado');
+});
+
+it('señala una sola vez el botón que sigue cuando el material queda completo', function (): void {
+    [$tablero, $montaje, $uno, $otro] = tableroConMaterial($this->administrativo);
+
+    $tablero->call('alternarItem', $montaje->id, $uno->id);
+    expect($tablero->html())->not->toContain('senalar');
+
+    $tablero->call('alternarItem', $montaje->id, $otro->id);
+    expect($tablero->html())->toMatch('/<button[^>]*class="[^"]*\bsenalar\b[^"]*"[^>]*>.*?Marcar como preparado/s');
+
+    $tablero->set('observaciones', 'Listo para las 7.');
+    expect($tablero->html())->not->toContain('senalar');
+});
+
+it('no señala nada al desmarcar', function (): void {
+    [$tablero, $montaje, $uno, $otro] = tableroConMaterial($this->administrativo);
+    $tablero->call('alternarItem', $montaje->id, $uno->id)->call('alternarItem', $montaje->id, $otro->id);
+
+    $tablero->call('alternarItem', $montaje->id, $otro->id);
+
+    expect($tablero->html())->not->toContain('senalar');
+});
+
+it('tiñe una sola vez la etiqueta del montaje cuando cambia su estado', function (): void {
+    [$tablero, $montaje] = tableroConMaterial($this->administrativo);
+    $recien = '/class="[^"]*\brecien\b[^"]*"/';
+
+    $tablero->call('cambiarEstado', $montaje->id, 'preparado');
+    expect($montaje->fresh()->estado)->toBe(EstadoPreparacion::Preparado)
+        ->and($tablero->html())->toMatch($recien);
+
+    $tablero->set('observaciones', 'Revisado por el ingeniero.');
+    expect($tablero->html())->not->toMatch($recien);
 });

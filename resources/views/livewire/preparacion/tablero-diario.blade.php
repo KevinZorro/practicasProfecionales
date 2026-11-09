@@ -46,7 +46,10 @@
                             </div>
                             <div class="flex shrink-0 flex-col items-end gap-1.5">
                                 <x-tipo-de-sesion :tipo="$solicitud->tipo" />
-                                <x-etiqueta-estado :estado="$montaje->estado" />
+                                {{-- Recién cambiado, se tiñe un momento: en el celular el aviso queda lejos. --}}
+                                <span class="{{ \Illuminate\Support\Arr::toCssClasses(['-mx-1.5 -my-1 rounded-full px-1.5 py-1', 'recien' => $estadoRecienCambiado === $montaje->id]) }}">
+                                    <x-etiqueta-estado :estado="$montaje->estado" />
+                                </span>
                             </div>
                         </div>
 

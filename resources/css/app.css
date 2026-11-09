@@ -197,6 +197,26 @@
     .recien {
         animation: recien 1500ms ease-out;
     }
+
+    /* El paso que sigue (el material quedó completo): un anillo verde que se apaga. También solo color. */
+    .senalar {
+        animation: senalar 1400ms ease-out;
+    }
+}
+
+@keyframes senalar {
+    0%,
+    30% {
+        box-shadow:
+            0 0 0 4px theme('colors.emerald.50'),
+            0 0 0 6px theme('colors.emerald.500');
+    }
+
+    100% {
+        box-shadow:
+            0 0 0 4px rgb(236 253 245 / 0),
+            0 0 0 6px rgb(16 185 129 / 0);
+    }
 }
 
 @keyframes recien {

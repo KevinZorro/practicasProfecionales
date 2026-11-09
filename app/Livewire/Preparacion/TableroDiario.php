@@ -52,11 +52,19 @@ final class TableroDiario extends Component
 
     public string $observaciones = '';
 
-    /**
-     * Montaje cuyas salas se acaban de asignar: su tarjeta se tiñe una vez.
-     * Es protegida para que no pase a la petición siguiente.
+    /*
+     * Lo que acaba de pasar en un montaje, para enseñarlo una sola vez. Son
+     * protegidas para que no pasen a la petición siguiente.
      */
+
+    /** Montaje cuyas salas se acaban de asignar: su tarjeta se tiñe. */
     protected ?int $recienAsignada = null;
+
+    /** Montaje cuyo material se acaba de completar: se señala el botón que sigue. */
+    protected ?int $materialRecienCompleto = null;
+
+    /** Montaje cuyo estado acaba de cambiar: su etiqueta se tiñe. */
+    protected ?int $estadoRecienCambiado = null;
 
     public function mount(): void
     {
@@ -145,9 +153,17 @@ final class TableroDiario extends Component
             return;
         }
 
-        $item->pivot->alistado
-            ? $preparaciones->desmarcarItemAlistado($preparacion, $item)
-            : $preparaciones->marcarItemAlistado($preparacion, $item);
+        if ($item->pivot->alistado) {
+            $preparaciones->desmarcarItemAlistado($preparacion, $item);
+
+            return;
+        }
+
+        $preparaciones->marcarItemAlistado($preparacion, $item);
+
+        if ($preparacion->items()->wherePivot('alistado', false)->doesntExist()) {
+            $this->materialRecienCompleto = $preparacionId;
+        }
     }
 
     public function cambiarEstado(int $preparacionId, string $destino, PreparacionService $preparaciones): void
@@ -165,7 +181,11 @@ final class TableroDiario extends Component
             $preparaciones->cambiarEstado($preparacion, $nuevoEstado, Auth::user());
         } catch (TransicionDePreparacionInvalida $invalida) {
             $this->conflictos[$preparacionId] = $invalida->getMessage();
+
+            return;
         }
+
+        $this->estadoRecienCambiado = $preparacionId;
     }
 
     public function guardarObservaciones(int $preparacionId, PreparacionService $preparaciones): void
@@ -194,6 +214,8 @@ final class TableroDiario extends Component
             'noPuedenIngresar' => $this->noPuedenIngresar($montajes, $participacion),
             'detalle' => $preparacion,
             'recienAsignada' => $this->recienAsignada,
+            'materialRecienCompleto' => $this->materialRecienCompleto,
+            'estadoRecienCambiado' => $this->estadoRecienCambiado,
             'salasLibres' => $preparacion === null ? collect() : $preparaciones->salasLibresPara($preparacion),
             // Por montaje, cuántos elementos esperan al ingeniero (RF72).
             'delIngeniero' => $montajes->mapWithKeys(static fn (Preparacion $m): array => [
