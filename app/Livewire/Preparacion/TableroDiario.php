@@ -17,6 +17,7 @@ use App\Services\ParticipacionService;
 use App\Services\PreparacionService;
 use App\Support\FiltroDeUrl;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -50,6 +51,12 @@ final class TableroDiario extends Component
     public array $salasElegidas = [];
 
     public string $observaciones = '';
+
+    /**
+     * Montaje cuyas salas se acaban de asignar: su tarjeta se tiñe una vez.
+     * Es protegida para que no pase a la petición siguiente.
+     */
+    protected ?int $recienAsignada = null;
 
     public function mount(): void
     {
@@ -107,13 +114,24 @@ final class TableroDiario extends Component
         unset($this->conflictos[$preparacionId]);
 
         try {
-            $preparaciones->asignarSalas($preparacion, array_map('intval', $this->salasElegidas));
-            $this->avisar(count($this->salasElegidas) === 1 ? 'Sala asignada.' : 'Salas asignadas: se unen abriendo la cortina.');
+            $salas = $preparaciones->asignarSalas($preparacion, array_map('intval', $this->salasElegidas))->salas;
         } catch (SalaOcupada $choque) {
             $this->conflictos[$preparacionId] = $this->describir($choque);
+
+            return;
         } catch (SalaInsuficiente|AsignacionDeSalasInvalida $invalida) {
             $this->conflictos[$preparacionId] = $invalida->getMessage();
+
+            return;
         }
+
+        $nombres = $salas->pluck('nombre')->all();
+        $this->recienAsignada = $preparacionId;
+        // El salón de la pantalla (resources/js/salon.js) toma estas como las asignadas.
+        $this->dispatch('salas-asignadas', preparacion: $preparacionId, salas: $salas->pluck('id')->all());
+        $this->avisar(count($nombres) === 1
+            ? 'Sala asignada: '.$nombres[0].'.'
+            : 'Salas unidas abriendo la cortina: '.Arr::join($nombres, ', ', ' y ').'.');
     }
 
     public function alternarItem(int $preparacionId, int $itemId, PreparacionService $preparaciones): void
@@ -175,6 +193,7 @@ final class TableroDiario extends Component
             'montajes' => $montajes,
             'noPuedenIngresar' => $this->noPuedenIngresar($montajes, $participacion),
             'detalle' => $preparacion,
+            'recienAsignada' => $this->recienAsignada,
             'salasLibres' => $preparacion === null ? collect() : $preparaciones->salasLibresPara($preparacion),
             // Por montaje, cuántos elementos esperan al ingeniero (RF72).
             'delIngeniero' => $montajes->mapWithKeys(static fn (Preparacion $m): array => [

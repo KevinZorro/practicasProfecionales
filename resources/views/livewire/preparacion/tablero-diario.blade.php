@@ -52,9 +52,25 @@
 
                         <dl class="mt-4 grid grid-cols-2 gap-3">
                             <x-dato etiqueta="Estudiantes">{{ $solicitud->cantidad_estudiantes }}{{ $solicitud->grupo ? ' · grupo '.$solicitud->grupo : '' }}</x-dato>
-                            <x-dato etiqueta="Sala">
-                                @if ($montaje->salas->isNotEmpty())
-                                    <span class="font-semibold">{{ $montaje->salas->map->nombreCompleto()->implode(' + ') }}</span>
+                            {{-- Unidas, cada sala en su línea y a todo el ancho: un «+» dentro
+                                 de un texto largo no se leía como un solo salón. Recién
+                                 asignadas, se tiñen un momento: en el celular el aviso
+                                 queda lejos de la tarjeta. --}}
+                            @php($unidas = $montaje->salas->count() > 1)
+                            <x-dato etiqueta="Sala" class="{{ \Illuminate\Support\Arr::toCssClasses(['-mx-2 -my-1 rounded-[10px] px-2 py-1', 'col-span-2' => $unidas, 'recien' => $recienAsignada === $montaje->id]) }}">
+                                @if ($unidas)
+                                    @foreach ($montaje->salas as $sala)
+                                        <span class="block font-semibold">{{ $sala->nombreCompleto() }}</span>
+                                    @endforeach
+                                    <span class="mt-1 flex items-center gap-1.5 text-[13px] text-gray-600">
+                                        <svg class="h-3 w-[1.375rem] shrink-0" viewBox="0 0 22 12" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+                                            <rect x="1" y="1" width="20" height="10" rx="3"/>
+                                            <path d="M11 1v10" stroke-dasharray="1.6 1.6"/>
+                                        </svg>
+                                        Unidas abriendo la cortina · caben {{ $montaje->salas->sum('capacidad') }}
+                                    </span>
+                                @elseif ($montaje->salas->isNotEmpty())
+                                    <span class="font-semibold">{{ $montaje->salas->first()->nombreCompleto() }}</span>
                                 @else
                                     <span class="font-medium text-amber-800">Sin asignar</span>
                                 @endif

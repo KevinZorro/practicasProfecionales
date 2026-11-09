@@ -23,6 +23,7 @@ use App\Services\PreparacionService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 
 /*
@@ -171,4 +172,100 @@ it('enseña en el calendario las salas unidas', function (): void {
         ->json())->keyBy('id');
 
     expect($eventos[(string) $montaje->solicitud_id]['extendedProps']['sala'])->toBe('SIM-01 + SIM-02');
+});
+
+// ---------------------------------------------------------------------
+// La pantalla: que se vea que quedaron unidas
+// ---------------------------------------------------------------------
+
+/** El HTML del tablero con el montaje abierto y, si se dan, las salas ya elegidas y asignadas. */
+function tableroConSalas(Preparacion $montaje, array $salaIds = []): Testable
+{
+    $tablero = Livewire::actingAs(test()->administrativo)
+        ->test(TableroDiario::class, ['fecha' => test()->fecha])
+        ->call('abrir', $montaje->id);
+
+    if ($salaIds === []) {
+        return $tablero;
+    }
+
+    return $tablero->set('salasElegidas', $salaIds)->call('asignarSalas', $montaje->id);
+}
+
+it('confirma la unión nombrando las salas, no con un aviso genérico', function (): void {
+    $una = Sala::factory()->create(['nombre' => 'SIM-01', 'capacidad' => 10]);
+    $otra = Sala::factory()->create(['nombre' => 'SIM-02', 'capacidad' => 8]);
+    $montaje = montajeParaUnGrupoDe(15);
+
+    tableroConSalas($montaje, [$una->id, $otra->id])
+        ->assertDispatched('aviso-de-la-accion', mensaje: 'Salas unidas abriendo la cortina: SIM-01 y SIM-02.')
+        ->assertDispatched('salas-asignadas', preparacion: $montaje->id, salas: [$una->id, $otra->id]);
+});
+
+it('nombra la sala cuando es una sola', function (): void {
+    $sala = Sala::factory()->create(['nombre' => 'SIM-01', 'capacidad' => 20]);
+    $montaje = montajeParaUnGrupoDe(15);
+
+    tableroConSalas($montaje, [$sala->id])
+        ->assertDispatched('aviso-de-la-accion', mensaje: 'Sala asignada: SIM-01.')
+        ->assertDontSee('Unidas abriendo la cortina');
+});
+
+it('enseña en la tarjeta cada sala unida en su línea, con la capacidad sumada', function (): void {
+    $una = Sala::factory()->create(['nombre' => 'SIM-01', 'capacidad' => 10]);
+    $otra = Sala::factory()->create(['nombre' => 'SIM-02', 'capacidad' => 8]);
+    $montaje = montajeParaUnGrupoDe(15);
+
+    $html = tableroConSalas($montaje, [$una->id, $otra->id])->html();
+
+    // Cada una con su ubicación; entre una y otra, Livewire deja sus marcas de bloque.
+    expect($html)->toMatch('/<span class="block font-semibold">SIM-01[^<]*<\/span>.{0,200}?<span class="block font-semibold">SIM-02[^<]*<\/span>/s')
+        ->toContain('Unidas abriendo la cortina · caben 18')
+        ->not->toContain('SIM-01 + SIM-02');
+});
+
+it('tiñe la tarjeta una sola vez, en la respuesta que asigna las salas', function (): void {
+    $una = Sala::factory()->create(['nombre' => 'SIM-01', 'capacidad' => 10]);
+    $otra = Sala::factory()->create(['nombre' => 'SIM-02', 'capacidad' => 8]);
+    $montaje = montajeParaUnGrupoDe(15);
+    $recien = '/class="[^"]*\brecien\b[^"]*"/';
+
+    $tablero = tableroConSalas($montaje, [$una->id, $otra->id]);
+    expect($tablero->html())->toMatch($recien);
+
+    $tablero->set('observaciones', 'Llega el ingeniero a las 7.');
+    expect($tablero->html())->not->toMatch($recien);
+});
+
+it('no tiñe nada si la sala no se pudo asignar', function (): void {
+    $chica = Sala::factory()->create(['nombre' => 'SIM-01', 'capacidad' => 6]);
+    $montaje = montajeParaUnGrupoDe(15);
+
+    tableroConSalas($montaje, [$chica->id])
+        ->assertNotDispatched('salas-asignadas')
+        ->assertNotDispatched('aviso-de-la-accion');
+
+    expect($montaje->fresh()->salas)->toBeEmpty();
+});
+
+it('le da al salón de la pantalla el grupo, el tope de salas y las que ya tiene la sesión', function (): void {
+    [$una, $otra] = Sala::factory()->count(2)->create(['capacidad' => 10])->all();
+    $montaje = montajeParaUnGrupoDe(15);
+    $this->servicio->asignarSalas($montaje, [$una->id, $otra->id]);
+
+    $html = tableroConSalas($montaje)->html();
+
+    expect($html)->toContain('salonDeLaSesion(')
+        ->toContain('grupo: 15')
+        ->toContain('maximo: '.PreparacionService::MAXIMO_DE_SALAS)
+        ->toContain('x-on:salas-asignadas.window')
+        ->toContain('aria-live="polite"')
+        ->toContain('Así queda');
+});
+
+it('carga el salón solo en la pantalla de preparación', function (): void {
+    // Sin el script, el salón queda vacío sin dar ningún error en el servidor.
+    expect(file_get_contents(resource_path('views/panel/preparaciones/index.blade.php')))->toContain("@vite('resources/js/salon.js')")
+        ->and(file_get_contents(base_path('vite.config.js')))->toContain("'resources/js/salon.js'")
+        ->and(file_get_contents(resource_path('views/layouts/panel.blade.php')))->not->toContain('salon.js');
 });

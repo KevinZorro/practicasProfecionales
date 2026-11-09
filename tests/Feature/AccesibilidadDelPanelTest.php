@@ -83,3 +83,12 @@ it('las casillas miden al menos 24 por 24 píxeles', function (): void {
 
     expect($css)->toMatch('/\.casilla\s*\{[^}]*size-6/');
 });
+
+it('quita el movimiento de la unión de salas a quien pide reducirlo', function (): void {
+    $css = (string) file_get_contents(base_path('resources/css/app.css'));
+
+    // El salón cambia de una vez y la cortina solo se desvanece: lo que dice
+    // la unión sigue en el texto («Unidas», la suma y el aviso).
+    expect($css)->toMatch('/@media \(prefers-reduced-motion: reduce\) \{\s*\.salon,\s*\.salon-sala,\s*\.salon-cortina \{\s*transition: none;/')
+        ->toMatch('/\.salon-cortina\.recogida svg \{\s*transform: none;\s*transition: opacity 150ms linear;/');
+});

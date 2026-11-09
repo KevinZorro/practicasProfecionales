@@ -5,4 +5,8 @@
 
 @section('contenido')
     <livewire:preparacion.tablero-diario />
+
+    {{-- El salón que se ve al unir salas (P16). Va antes de que arranque
+         Alpine, que lo hace Livewire al terminar de cargar la página. --}}
+    @vite('resources/js/salon.js')
 @endsection
