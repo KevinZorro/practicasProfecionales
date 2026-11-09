@@ -114,7 +114,7 @@
     </x-tarjeta>
 
     <div class="flex flex-wrap items-center gap-2">
-        <x-boton type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar">Guardar</x-boton>
+        <x-boton cargando="Guardando…" type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar">Guardar</x-boton>
         <x-boton variante="texto" href="{{ route('panel.inventario') }}">Cancelar</x-boton>
     </div>
 </div>

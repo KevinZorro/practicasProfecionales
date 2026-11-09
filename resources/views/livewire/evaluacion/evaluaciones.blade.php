@@ -37,7 +37,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <x-boton type="button" wire:click="registrar({{ $sesion->id }})">Registrar evaluación</x-boton>
+                                    <x-boton cargando="Registrando…" type="button" wire:click="registrar({{ $sesion->id }})">Registrar evaluación</x-boton>
                                 </div>
                                 @error('tipoElegido.'.$sesion->id) <p class="campo-error">{{ $message }}</p> @enderror
                             @endif

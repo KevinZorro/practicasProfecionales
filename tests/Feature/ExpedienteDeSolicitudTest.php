@@ -367,3 +367,11 @@ it('no deja a un docente ni a un estudiante abrir el detalle de una solicitud aj
 
     expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Pendiente);
 })->with([Rol::Docente, Rol::Estudiante]);
+
+it('le dice a quien decide qué está haciendo mientras espera al servidor', function (): void {
+    expedienteDe($this->administrativo, Solicitud::factory()->create(['estado' => EstadoSolicitud::Pendiente]))
+        ->assertSee('Marcando…');
+
+    expedienteDe($this->coordinadora, Solicitud::factory()->revisada()->create())
+        ->assertSee('Aprobando…');
+});

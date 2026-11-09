@@ -50,7 +50,7 @@
 
             <x-slot:pie>
                 <x-aviso tono="peligro">Depurar no se deshace: lo borrado no vuelve.</x-aviso>
-                <x-boton variante="peligro" type="button" wire:click="depurar" wire:loading.attr="disabled" class="mt-3">
+                <x-boton cargando="Depurando…" variante="peligro" type="button" wire:click="depurar" wire:loading.attr="disabled" class="mt-3">
                     Depurar lo de más de dos semestres
                 </x-boton>
             </x-slot:pie>

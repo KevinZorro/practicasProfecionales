@@ -102,7 +102,7 @@
                               class="campo"></textarea>
                 </div>
                 <div class="mt-3">
-                    <x-boton variante="peligro" type="button" wire:click="cerrar" wire:loading.attr="disabled" wire:target="cerrar"
+                    <x-boton cargando="Cerrando…" variante="peligro" type="button" wire:click="cerrar" wire:loading.attr="disabled" wire:target="cerrar"
                              wire:confirm="¿Cerrar la lista? Sus cifras quedan congeladas y no se puede volver a abrir.">Cerrar la lista</x-boton>
                 </div>
             </x-tarjeta>
@@ -160,7 +160,7 @@
                     </div>
 
                     <div class="flex flex-wrap gap-2">
-                        <x-boton type="button" wire:click="anotarNecesidad" wire:loading.attr="disabled">Anotar</x-boton>
+                        <x-boton cargando="Anotando…" type="button" wire:click="anotarNecesidad" wire:loading.attr="disabled">Anotar</x-boton>
                         <x-boton variante="secundario" type="button" wire:click="cancelarFormulario">Cancelar</x-boton>
                     </div>
                 </div>
@@ -217,7 +217,7 @@
                                     </p>
 
                                     <div class="flex flex-wrap gap-2">
-                                        <x-boton type="button" wire:click="atender" wire:loading.attr="disabled" tamano="chico">Confirmar</x-boton>
+                                        <x-boton cargando="Guardando…" type="button" wire:click="atender" wire:loading.attr="disabled" tamano="chico">Confirmar</x-boton>
                                         <x-boton variante="secundario" type="button" wire:click="cancelarAtencion" tamano="chico">Cancelar</x-boton>
                                     </div>
                                 </div>

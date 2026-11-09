@@ -48,7 +48,7 @@
                     </div>
                 </form>
                 <x-slot:pie>
-                    <x-boton form="form-sustituir" wire:loading.attr="disabled" wire:target="sustituir">Cambiar el docente</x-boton>
+                    <x-boton cargando="Guardando…" form="form-sustituir" wire:loading.attr="disabled" wire:target="sustituir">Cambiar el docente</x-boton>
                 </x-slot:pie>
             </x-tarjeta>
 
@@ -105,7 +105,7 @@
                 @endif
 
                 <x-slot:pie>
-                    <x-boton form="form-reprogramar" wire:loading.attr="disabled" wire:target="reprogramar">Guardar el cambio</x-boton>
+                    <x-boton cargando="Guardando…" form="form-reprogramar" wire:loading.attr="disabled" wire:target="reprogramar">Guardar el cambio</x-boton>
                 </x-slot:pie>
             </x-tarjeta>
         </div>

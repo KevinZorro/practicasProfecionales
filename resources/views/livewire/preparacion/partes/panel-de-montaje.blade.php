@@ -110,7 +110,7 @@
                 </p>
             </div>
 
-            <x-boton type="button" wire:click="asignarSalas({{ $montaje->id }})" x-show="! sinCambios" x-cloak class="mt-4 w-full sm:w-auto">
+            <x-boton cargando="Asignando…" type="button" wire:click="asignarSalas({{ $montaje->id }})" x-show="! sinCambios" x-cloak class="mt-4 w-full sm:w-auto">
                 <span x-text="etiqueta()">{{ $montaje->salas->isNotEmpty() ? 'Cambiar' : 'Asignar' }}</span>
             </x-boton>
             <p x-show="sinCambios" x-cloak class="mt-4 flex items-center gap-2 text-[14px] text-gray-600">
@@ -163,7 +163,7 @@
                   class="campo"
                   placeholder="Algo que el docente deba saber al llegar."></textarea>
         @error('observaciones') <p class="campo-error">{{ $message }}</p> @enderror
-        <x-boton variante="secundario" tamano="chico" type="button" wire:click="guardarObservaciones({{ $montaje->id }})"
+        <x-boton cargando="Guardando…" variante="secundario" tamano="chico" type="button" wire:click="guardarObservaciones({{ $montaje->id }})"
                  class="mt-2">
             Guardar observaciones
         </x-boton>
@@ -174,7 +174,7 @@
         <h3 class="mb-2 text-[15px] font-semibold text-gray-900">Estado del montaje</h3>
 
         @if ($montaje->estado === \App\Enums\EstadoPreparacion::Pendiente)
-            <x-boton type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
+            <x-boton cargando="Guardando…" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
                 Empezar el montaje
             </x-boton>
         @elseif ($montaje->estado === \App\Enums\EstadoPreparacion::EnPreparacion)
@@ -183,13 +183,13 @@
                     Asigna una sala antes de dar el escenario por preparado.
                 </x-aviso>
             @else
-                <x-boton type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'preparado')" class="w-full sm:w-auto">
+                <x-boton cargando="Guardando…" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'preparado')" class="w-full sm:w-auto">
                     Marcar como preparado
                 </x-boton>
             @endif
         @else
             <p class="mb-2 text-[14px] text-gray-600">Este escenario ya está preparado.</p>
-            <x-boton variante="secundario" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
+            <x-boton cargando="Guardando…" variante="secundario" type="button" wire:click="cambiarEstado({{ $montaje->id }}, 'en_preparacion')" class="w-full sm:w-auto">
                 Volver a en preparación
             </x-boton>
         @endif

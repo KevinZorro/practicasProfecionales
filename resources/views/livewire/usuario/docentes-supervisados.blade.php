@@ -44,7 +44,7 @@
                             <p class="text-[15px] font-semibold leading-snug text-gray-900">{{ $candidato->nombre }}</p>
                             <p class="truncate text-[13px] text-gray-500">{{ $candidato->email }}</p>
                         </div>
-                        <x-boton variante="secundario" tamano="chico" type="button" wire:click="asignar({{ $candidato->id }})" wire:loading.attr="disabled">Asignar</x-boton>
+                        <x-boton cargando="Asignando…" variante="secundario" tamano="chico" type="button" wire:click="asignar({{ $candidato->id }})" wire:loading.attr="disabled">Asignar</x-boton>
                     </li>
                 @endforeach
             </ul>

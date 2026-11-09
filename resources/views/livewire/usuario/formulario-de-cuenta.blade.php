@@ -59,7 +59,7 @@
         </x-tarjeta>
 
         <div class="flex flex-wrap items-center gap-2">
-            <x-boton wire:loading.attr="disabled" wire:target="guardar">Guardar</x-boton>
+            <x-boton cargando="Guardando…" wire:loading.attr="disabled" wire:target="guardar">Guardar</x-boton>
             <x-boton variante="texto" href="{{ route('panel.usuarios') }}">Cancelar</x-boton>
         </div>
     </form>

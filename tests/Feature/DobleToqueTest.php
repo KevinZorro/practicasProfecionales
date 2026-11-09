@@ -41,6 +41,42 @@ it('el enlace con aspecto de botón no lleva el atributo de carga', function ():
     expect($html)->not->toContain('wire:loading');
 });
 
+// ---------------------------------------------------------------------
+// Respuesta al tocar: el botón dice qué hace mientras espera su acción
+// ---------------------------------------------------------------------
+
+it('con «cargando», el botón dice qué hace y gira un aro mientras espera su acción', function (): void {
+    $html = Blade::render('<x-boton wire:click="aprobar" cargando="Aprobando…">Aprobar</x-boton>');
+
+    expect($html)->toMatch('/<span wire:loading wire:target="aprobar">\s*Aprobando…\s*<\/span>/')
+        ->toMatch('/<span wire:loading\.remove wire:target="aprobar">\s*Aprobar\s*<\/span>/')
+        ->toMatch('/<span wire:loading\.inline-block wire:target="aprobar"[^>]*motion-safe:animate-spin/s')
+        // El que trabaja se ve entero, no apagado como los deshabilitados.
+        ->toContain('wire:loading.class="cursor-progress !opacity-100"');
+});
+
+it('en un formulario, el botón espera la acción de su wire:target', function (): void {
+    $html = Blade::render('<x-boton wire:target="rechazar" cargando="Rechazando…">Confirmar rechazo</x-boton>');
+
+    expect($html)->toMatch('/<span wire:loading wire:target="rechazar">\s*Rechazando…\s*<\/span>/');
+});
+
+it('sin una acción que esperar, el botón no inventa el aviso', function (): void {
+    $html = Blade::render('<x-boton cargando="Guardando…">Guardar</x-boton>');
+
+    expect($html)->not->toContain('Guardando…')
+        ->not->toContain('wire:target');
+});
+
+it('se encoge al presionarlo, salvo con movimiento reducido', function (): void {
+    expect(Blade::render('<x-boton wire:click="algo">Guardar</x-boton>'))->toContain('motion-safe:active:scale-[0.97]');
+});
+
+it('no depende de data-loading, que Livewire 3 no pone', function (): void {
+    // Las clases data-[loading]:… nunca se activaban: el estado de espera lo dan los wire:loading.
+    expect(Blade::render('<x-boton wire:click="algo" cargando="Guardando…">Guardar</x-boton>'))->not->toContain('data-[loading]');
+});
+
 it('un segundo toque en «Marcar como revisada» no falla ni repite la revisión', function (): void {
     $administrativo = User::factory()->administrativo()->create();
     $solicitud = Solicitud::factory()->create();

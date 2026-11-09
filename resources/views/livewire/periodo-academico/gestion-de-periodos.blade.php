@@ -19,7 +19,7 @@
             </p>
 
             <x-slot:pie>
-                <x-boton variante="secundario" type="button" wire:click="cerrar({{ $abierto->id }})"
+                <x-boton cargando="Cerrando…" variante="secundario" type="button" wire:click="cerrar({{ $abierto->id }})"
                          wire:confirm="¿Cerrar el periodo {{ $abierto->nombre }}? Mientras no se abra otro, no se reciben formatos.">
                     Cerrar el periodo
                 </x-boton>
@@ -46,7 +46,7 @@
             </form>
 
             <x-slot:pie>
-                <x-boton type="button" wire:click="abrir" wire:loading.attr="disabled" wire:target="abrir">
+                <x-boton cargando="Abriendo…" type="button" wire:click="abrir" wire:loading.attr="disabled" wire:target="abrir">
                     Abrir el periodo
                 </x-boton>
                 <span class="min-w-0 flex-1 basis-64">Al abrirlo, todos deben entregar de nuevo el formato de confidencialidad.</span>
@@ -75,7 +75,7 @@
                             <x-insignia tono="exito">Abierto</x-insignia>
                         @elseif (! $abierto && $vigente?->is($periodo))
                             {{-- Para deshacer un cierre por error: solo el último y sin otro abierto. --}}
-                            <x-boton variante="secundario" tamano="chico" type="button" wire:click="reabrir({{ $periodo->id }})"
+                            <x-boton cargando="Reabriendo…" variante="secundario" tamano="chico" type="button" wire:click="reabrir({{ $periodo->id }})"
                                      wire:confirm="¿Reabrir el periodo {{ $periodo->nombre }}?">
                                 Reabrir
                             </x-boton>

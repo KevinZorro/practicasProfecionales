@@ -22,7 +22,7 @@
                       placeholder="Qué norma del reglamento incumplió, o la causal."></textarea>
             @error('motivo') <p class="campo-error">{{ $message }}</p> @enderror
 
-            <x-boton variante="peligro" type="button" wire:click="bloquear" wire:loading.attr="disabled" wire:target="bloquear" class="mt-4">Bloquear</x-boton>
+            <x-boton cargando="Bloqueando…" variante="peligro" type="button" wire:click="bloquear" wire:loading.attr="disabled" wire:target="bloquear" class="mt-4">Bloquear</x-boton>
         @else
             <label for="busquedaPersona" class="campo-etiqueta">Buscar por nombre, correo o código</label>
             <div class="relative">
@@ -102,7 +102,7 @@
                                     @error('motivoLevantamiento') <p class="campo-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div class="flex flex-wrap gap-2">
-                                    <x-boton tamano="chico" type="button" wire:click="levantar({{ $bloqueo->id }})">Levantar el bloqueo</x-boton>
+                                    <x-boton cargando="Levantando…" tamano="chico" type="button" wire:click="levantar({{ $bloqueo->id }})">Levantar el bloqueo</x-boton>
                                     <x-boton variante="secundario" tamano="chico" type="button" wire:click="$set('levantando', null)">Cancelar</x-boton>
                                 </div>
                             </div>

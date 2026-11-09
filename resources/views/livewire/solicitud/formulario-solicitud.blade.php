@@ -200,7 +200,7 @@
 
     <div class="flex flex-wrap items-center gap-2">
         @unless ($bloqueo)
-            <x-boton type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar">Enviar solicitud</x-boton>
+            <x-boton cargando="Enviando…" type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar">Enviar solicitud</x-boton>
         @endunless
         <x-boton variante="texto" href="{{ route('panel.mis-solicitudes') }}">Cancelar</x-boton>
         @if ($errors->isNotEmpty())

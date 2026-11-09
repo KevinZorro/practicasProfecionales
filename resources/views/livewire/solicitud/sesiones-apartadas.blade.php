@@ -95,7 +95,7 @@
         @endif
 
         <x-slot:pie>
-            <x-boton type="button" wire:click="registrar" wire:loading.attr="disabled" wire:target="registrar">Registrar sesión</x-boton>
+            <x-boton cargando="Registrando…" type="button" wire:click="registrar" wire:loading.attr="disabled" wire:target="registrar">Registrar sesión</x-boton>
             <span class="min-w-0 flex-1 basis-64">Queda aprobada: la aprobó coordinación al entregar el formato. La sala se asigna al preparar.</span>
         </x-slot:pie>
     </x-tarjeta>

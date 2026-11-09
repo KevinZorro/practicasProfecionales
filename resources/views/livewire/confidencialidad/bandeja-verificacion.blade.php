@@ -63,7 +63,7 @@
                                 </p>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <x-boton variante="peligro" tamano="chico" type="button" wire:click="rechazar({{ $entrega->id }})">Devolver el formato</x-boton>
+                                <x-boton cargando="Devolviendo…" variante="peligro" tamano="chico" type="button" wire:click="rechazar({{ $entrega->id }})">Devolver el formato</x-boton>
                                 <x-boton variante="secundario" tamano="chico" type="button" wire:click="cancelar">Cancelar</x-boton>
                             </div>
                         </div>
@@ -79,7 +79,7 @@
 
                             @can('verificar', $entrega)
                                 @if ($entrega->estado === \App\Enums\EstadoFormatoConfidencialidad::Cargado)
-                                    <x-boton tamano="chico" type="button" wire:click="verificar({{ $entrega->id }})">Verificar</x-boton>
+                                    <x-boton cargando="Verificando…" tamano="chico" type="button" wire:click="verificar({{ $entrega->id }})">Verificar</x-boton>
                                 @endif
                             @endcan
 

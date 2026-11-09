@@ -170,7 +170,7 @@
                     </div>
                     <div class="flex flex-wrap justify-end gap-2">
                         <x-boton variante="secundario" type="button" wire:click="cancelarRechazo">Cancelar</x-boton>
-                        <x-boton variante="peligro">Confirmar rechazo</x-boton>
+                        <x-boton variante="peligro" wire:target="rechazar" cargando="Rechazando…">Confirmar rechazo</x-boton>
                     </div>
                 </form>
             @else
@@ -204,10 +204,10 @@
                             <x-boton variante="peligro-suave" type="button" wire:click="pedirMotivo" class="flex-1 sm:flex-none">Rechazar</x-boton>
                         @endif
                         @if ($puedeRevisar)
-                            <x-boton type="button" wire:click="revisar" class="flex-1 sm:flex-none">Marcar como revisada</x-boton>
+                            <x-boton cargando="Marcando…" type="button" wire:click="revisar" class="flex-1 sm:flex-none">Marcar como revisada</x-boton>
                         @endif
                         @if ($puedeAprobar)
-                            <x-boton type="button" wire:click="aprobar" class="flex-1 sm:flex-none">Aprobar</x-boton>
+                            <x-boton cargando="Aprobando…" type="button" wire:click="aprobar" class="flex-1 sm:flex-none">Aprobar</x-boton>
                         @endif
                     </div>
                 </div>

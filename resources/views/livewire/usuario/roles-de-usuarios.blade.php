@@ -138,9 +138,9 @@
                             </div>
                             <div class="flex flex-wrap gap-2">
                                 @if ($usuario->estaDeshabilitado())
-                                    <x-boton tamano="chico" type="button" wire:click="habilitar" wire:loading.attr="disabled">Habilitar</x-boton>
+                                    <x-boton cargando="Habilitando…" tamano="chico" type="button" wire:click="habilitar" wire:loading.attr="disabled">Habilitar</x-boton>
                                 @else
-                                    <x-boton variante="peligro" tamano="chico" type="button" wire:click="deshabilitar" wire:loading.attr="disabled">Deshabilitar</x-boton>
+                                    <x-boton cargando="Deshabilitando…" variante="peligro" tamano="chico" type="button" wire:click="deshabilitar" wire:loading.attr="disabled">Deshabilitar</x-boton>
                                 @endif
                                 <x-boton variante="secundario" tamano="chico" type="button" wire:click="abrirAcceso({{ $usuario->id }})">Cancelar</x-boton>
                             </div>
@@ -181,7 +181,7 @@
                                 @endif
 
                                 <div class="flex flex-wrap gap-2">
-                                    <x-boton tamano="chico" type="button" wire:click="asignar" wire:loading.attr="disabled">Asignar</x-boton>
+                                    <x-boton cargando="Asignando…" tamano="chico" type="button" wire:click="asignar" wire:loading.attr="disabled">Asignar</x-boton>
                                     <x-boton variante="secundario" tamano="chico" type="button" wire:click="cerrar">Cancelar</x-boton>
                                 </div>
                             </div>

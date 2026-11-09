@@ -73,7 +73,7 @@
         @endif
 
         <div class="flex flex-wrap gap-2">
-            <x-boton :variante="$destino->esDefinitivo() ? 'peligro' : 'primario'" tamano="chico" type="button" wire:click="confirmarCambioDeEstado" wire:loading.attr="disabled">
+            <x-boton cargando="Guardando…" :variante="$destino->esDefinitivo() ? 'peligro' : 'primario'" tamano="chico" type="button" wire:click="confirmarCambioDeEstado" wire:loading.attr="disabled">
                 {{ $destino->esDefinitivo() ? 'Dar de baja' : 'Mover las unidades' }}
             </x-boton>
             <x-boton variante="secundario" tamano="chico" type="button" wire:click="cancelarCambioDeEstado">

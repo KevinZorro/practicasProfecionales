@@ -61,7 +61,7 @@
         </div>
 
         <x-slot:pie>
-            <x-boton type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar">Guardar formato intramural</x-boton>
+            <x-boton cargando="Guardando…" type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar">Guardar formato intramural</x-boton>
         </x-slot:pie>
     </x-tarjeta>
 </div>

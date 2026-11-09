@@ -105,7 +105,7 @@
                                     <p class="campo-ayuda">Sigue en la lista, tachado, con este motivo.</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
-                                    <x-boton variante="peligro" tamano="chico">Confirmar retiro</x-boton>
+                                    <x-boton variante="peligro" tamano="chico" wire:target="retirar" cargando="Retirando…">Confirmar retiro</x-boton>
                                     <x-boton variante="secundario" tamano="chico" type="button" wire:click="$set('retirando', null)">Cancelar</x-boton>
                                 </div>
                             </form>

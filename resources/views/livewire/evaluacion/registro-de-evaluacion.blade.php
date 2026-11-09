@@ -143,7 +143,7 @@
                     Todos deben tener resultado antes de finalizar.
                 @endif
             </p>
-            <x-boton type="button" wire:click="finalizar"
+            <x-boton cargando="Finalizando…" type="button" wire:click="finalizar"
                      wire:confirm="Al finalizar, la evaluación ya no se puede modificar y los estudiantes verán sus resultados. ¿Continuar?">
                 Finalizar evaluación
             </x-boton>

@@ -38,7 +38,7 @@
         </div>
 
         <x-slot:pie>
-            <x-boton type="button" wire:click="consultar" wire:loading.attr="disabled" wire:target="consultar">Consultar</x-boton>
+            <x-boton cargando="Consultando…" type="button" wire:click="consultar" wire:loading.attr="disabled" wire:target="consultar">Consultar</x-boton>
         </x-slot:pie>
     </x-tarjeta>
 

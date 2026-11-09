@@ -8,19 +8,27 @@
     - peligro-suave: texto rojo con filete; abre la confirmación.
     - texto: sin fondo; lo de menos peso en una fila.
 
-    Mientras Livewire procesa el clic, el botón queda atenuado
-    (data-loading lo pone Livewire en el elemento que lanzó la petición) y
-    deshabilitado (wire:loading.attr), así un segundo toque no repite la acción.
+    Mientras Livewire procesa su acción, el botón queda deshabilitado
+    (wire:loading.attr), así un segundo toque no la repite (QA-04). Livewire
+    acota ese estado a la acción del propio botón: la de su wire:click, o la
+    que diga su wire:target en un formulario.
+
+    Con «cargando» («Aprobando…»), mientras espera dice qué está haciendo,
+    con un aro que gira, y se ve entero en vez de apagado: con mala señal es
+    lo que evita la duda de si el toque llegó (DESIGN.md, «Respuesta al
+    tocar»). Al presionarlo se encoge un poco, salvo con movimiento reducido,
+    que además deja quieto el aro.
 --}}
 @props([
     'variante' => 'primario',
     'tipo' => 'submit',
     'tamano' => 'normal',
     'href' => null,
+    'cargando' => null,
 ])
 
 @php
-    $base = 'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo disabled:cursor-not-allowed disabled:opacity-45 data-[loading]:cursor-wait data-[loading]:opacity-60';
+    $base = 'inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-full font-semibold transition-[color,background-color,box-shadow,opacity,transform] duration-150 motion-safe:active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo disabled:cursor-not-allowed disabled:opacity-45';
 
     $tamanos = [
         'normal' => 'min-h-11 px-5 text-[15px] sm:min-h-10',
@@ -40,13 +48,26 @@
     // Se acepta también type="button": era la forma de llamarlo en las
     // pantallas, y repetir el atributo dejaba el primero, el de enviar.
     $tipoDelBoton = $attributes->get('type', $tipo);
+
+    // La acción que espera: la de su wire:click o, si envía un formulario, la de su wire:target.
+    $accion = $attributes->get('wire:click') ?? $attributes->get('wire:target');
+    $diceQueTrabaja = $cargando !== null && $accion !== null;
 @endphp
 
 @if ($href)
     <a href="{{ $href }}" {{ $attributes->except('type')->class($clases) }}>{{ $slot }}</a>
 @else
-    {{-- wire:loading.attr: deshabilitado mientras Livewire procesa, para que
-         un doble toque en el celular no lance la acción dos veces (QA-04).
-         Fuera de Livewire no hace nada. --}}
-    <button type="{{ $tipoDelBoton }}" wire:loading.attr="disabled" {{ $attributes->except('type')->class($clases) }}>{{ $slot }}</button>
+    {{-- Fuera de Livewire, los wire:loading no hacen nada. --}}
+    <button type="{{ $tipoDelBoton }}" wire:loading.attr="disabled"
+            @if ($diceQueTrabaja) wire:loading.class="cursor-progress !opacity-100" @endif
+            {{ $attributes->except('type')->class($clases) }}>
+        @if ($diceQueTrabaja)
+            <span wire:loading.inline-block wire:target="{{ $accion }}" aria-hidden="true"
+                  class="size-4 shrink-0 rounded-full border-2 border-current border-r-transparent motion-safe:animate-spin"></span>
+            <span wire:loading.remove wire:target="{{ $accion }}">{{ $slot }}</span>
+            <span wire:loading wire:target="{{ $accion }}">{{ $cargando }}</span>
+        @else
+            {{ $slot }}
+        @endif
+    </button>
 @endif
