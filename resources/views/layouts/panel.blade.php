@@ -10,10 +10,14 @@
     Tailwind, sin una línea de JavaScript: el administrativo lo abre desde el
     celular mientras monta el escenario, a veces con mala señal (RNF10).
 
+    El rol activo va arriba a la derecha (RF21, x-selector-de-rol): en la
+    barra del celular y sobre el contenido en escritorio.
+
     Cada pantalla da su título; puede añadir una descripción, sus acciones y
     un enlace de vuelta. El expediente de una solicitud pinta su propia
     cabecera y pide «sin-cabecera».
 --}}
+@php($rolArriba = count($rolesDisponibles) > 1 || $vigenciaDelRolActivo !== null)
 <!DOCTYPE html>
 <html lang="es" class="bg-niebla">
 <head>
@@ -64,10 +68,12 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
         </svg>
     </button>
-    <a href="{{ route('panel.inicio') }}" class="flex min-w-0 items-center gap-2.5 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo">
+    <a href="{{ route('panel.inicio') }}" class="flex min-w-0 shrink-0 items-center gap-2.5 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo">
         <img src="{{ asset('marca/ufps-simbolo.webp') }}" alt="" class="size-7 shrink-0 rounded-[6px]" width="28" height="28">
-        <span class="truncate text-[15px] font-semibold">Laboratorio de Simulación</span>
+        {{-- Con el rol al lado no caben los dos en un celular: queda el símbolo. --}}
+        <span @class(['truncate text-[15px] font-semibold', 'max-sm:sr-only' => $rolArriba])>Laboratorio de Simulación</span>
     </a>
+    <x-selector-de-rol tono="oscuro" class="ml-auto" />
 </header>
 
 {{-- Velo detrás del riel abierto en el celular: tocarlo lo cierra. --}}
@@ -127,33 +133,6 @@
             </div>
         </div>
 
-        {{-- Rol prestado: que no se descubra al fallar un permiso (RF63). --}}
-        @if ($vigenciaDelRolActivo)
-            <p class="mx-2 mt-1.5 rounded-lg bg-amber-300/15 px-2.5 py-1.5 text-[12px] font-medium text-amber-200">
-                Rol temporal · hasta el {{ $vigenciaDelRolActivo->format('d/m/Y') }}
-            </p>
-        @endif
-
-        @if (count($rolesDisponibles) > 1)
-            <form method="POST" action="{{ route('panel.rol-activo') }}" class="mt-2 flex items-center gap-2 px-2">
-                @csrf
-                <label for="rol" class="sr-only">Cambiar de rol</label>
-                <select name="rol" id="rol"
-                        class="min-w-0 flex-1 appearance-none rounded-[10px] border border-white/15 bg-white/[0.06] px-3 py-2 text-[13px] text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/40 [&>option]:text-gray-900">
-                    @foreach ($rolesDisponibles as $rol)
-                        @php($vigencia = $vigenciaDeLosRoles[$rol->value] ?? null)
-                        <option value="{{ $rol->value }}" @selected($rol === $rolActivo)>
-                            {{ $rol->etiqueta() }}@if ($vigencia) · temporal hasta {{ $vigencia->format('d/m/Y') }}@endif
-                        </option>
-                    @endforeach
-                </select>
-                <button type="submit"
-                        class="shrink-0 rounded-full bg-white px-3 py-2 text-[13px] font-semibold text-gray-900 hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rojo">
-                    Cambiar
-                </button>
-            </form>
-        @endif
-
         <form method="POST" action="{{ route('salir') }}" class="mt-1">
             @csrf
             <button type="submit"
@@ -168,7 +147,12 @@
 </aside>
 
 <div class="lg:pl-[15.5rem]">
-    <main id="contenido" class="mx-auto w-full max-w-[76rem] px-4 pb-24 pt-5 sm:px-6 sm:pt-8 lg:px-10 lg:pt-10">
+    @if ($rolArriba)
+        <div class="mx-auto hidden w-full max-w-[76rem] justify-end px-10 pt-5 lg:flex">
+            <x-selector-de-rol />
+        </div>
+    @endif
+    <main id="contenido" @class(['mx-auto w-full max-w-[76rem] px-4 pb-24 pt-5 sm:px-6 sm:pt-8 lg:px-10', 'lg:pt-10' => ! $rolArriba, 'lg:pt-3' => $rolArriba])>
         @if (View::hasSection('titulo') && ! View::hasSection('sin-cabecera'))
             <header class="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-4 sm:mb-8">
                 <div class="min-w-0">

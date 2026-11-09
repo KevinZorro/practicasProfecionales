@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Enums\Rol;
 use App\Models\User;
+use App\Services\AsignacionDeRolService;
 use App\Support\RolActivo;
 use Database\Seeders\RolSeeder;
+use Illuminate\Support\Str;
 
 beforeEach(function (): void {
     $this->seed(RolSeeder::class);
@@ -171,4 +173,58 @@ it('al cambiar de rol lleva a «Hoy», no a una pantalla que el rol nuevo no pue
     $this->get(route('panel.inicio'))
         ->assertOk()
         ->assertSee('Ahora estás viendo el sistema como Docente.');
+});
+
+// ---------------------------------------------------------------------
+// Dónde está: arriba a la derecha (RF21)
+// ---------------------------------------------------------------------
+
+/** La barra de tinta del celular, sin el riel ni el contenido. */
+function barraDelCelular(string $html): string
+{
+    return Str::betweenFirst($html, '<header class="sticky', '</header>');
+}
+
+it('pone el rol activo arriba a la derecha, también en el celular, y no al pie del menú', function (): void {
+    // Al pie del riel no se veía en el celular sin abrir el menú, y quien
+    // tiene dos roles no sabía con cuál estaba mirando.
+    $html = $this->actingAs(usuarioConRoles(Rol::Coordinador, Rol::Docente))
+        ->get(route('panel.calendario'))
+        ->assertOk()
+        ->getContent();
+
+    expect(barraDelCelular($html))->toContain('Rol activo:')->toContain(route('panel.rol-activo'))
+        ->and(Str::betweenFirst($html, '<aside id="menu-del-panel"', '</aside>'))->not->toContain(route('panel.rol-activo'))
+        // Una vez en la barra del celular y otra sobre el contenido en escritorio.
+        ->and(substr_count($html, 'Rol activo:'))->toBe(2);
+});
+
+it('cambia de rol con un solo toque: cada rol es un botón y el actual no se ofrece', function (): void {
+    $this->actingAs(usuarioConRoles(Rol::Coordinador, Rol::Docente))
+        ->get(route('panel.calendario'))
+        ->assertSee('name="rol" value="docente"', false)
+        ->assertDontSee('name="rol" value="coordinador"', false)
+        ->assertSee('Con este estás viendo el sistema');
+});
+
+it('dice en la cabecera, con la fecha, el rol prestado aunque sea el único', function (): void {
+    // RF63: quien usa un rol prestado no lo descubre al fallar un permiso.
+    $hasta = now()->addWeek();
+    $pasante = User::factory()->create();
+    app(AsignacionDeRolService::class)->asignar(User::factory()->admin()->create(), $pasante, Rol::Administrativo, $hasta->toDateString());
+
+    $html = $this->actingAs($pasante->fresh())->get(route('panel.inicio'))->assertOk()->getContent();
+
+    expect(barraDelCelular($html))
+        ->toContain(Rol::Administrativo->etiqueta())
+        ->toContain('hasta '.$hasta->format('d/m'))
+        // Con un solo rol no hay nada que elegir.
+        ->not->toContain(route('panel.rol-activo'));
+});
+
+it('no ocupa la barra de quien tiene un solo rol permanente', function (): void {
+    $html = $this->actingAs(usuarioConRoles(Rol::Estudiante))->get(route('panel.inicio'))->assertOk()->getContent();
+
+    expect($html)->not->toContain('Rol activo:')
+        ->and(barraDelCelular($html))->toContain('Laboratorio de Simulación');
 });
