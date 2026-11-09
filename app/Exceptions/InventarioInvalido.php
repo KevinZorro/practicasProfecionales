@@ -17,7 +17,7 @@ final class InventarioInvalido extends DomainException
 
     public static function nivelDeFidelidadReservadoAlAdmin(): self
     {
-        return new self('El nivel de fidelidad de un simulador solo lo registra el ADMIN.');
+        return new self('El nivel de fidelidad de un simulador solo lo registra el administrador de la plataforma.');
     }
 
     public static function transicionDeEstadoInvalida(EstadoItemInventario $desde, EstadoItemInventario $hasta): self

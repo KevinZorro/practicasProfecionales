@@ -11,7 +11,7 @@ final class FormatoConfidencialidadInvalido extends DomainException
 {
     public static function sinPlantillaActiva(): self
     {
-        return new self('No hay plantilla de confidencialidad activa: el ADMIN debe cargar una antes de que alguien entregue.');
+        return new self('No hay plantilla de confidencialidad activa: el administrador de la plataforma debe cargar una antes de que alguien entregue.');
     }
 
     public static function sinPeriodoAbierto(): self

@@ -190,7 +190,7 @@ return [
         'grupo' => 'grupo',
         'estudianteIds' => 'estudiantes',
         'cantidadTotal' => 'cantidad total',
-        'casoClinicoId' => 'caso clínico',
+        'casoClinicoId' => 'escenario clínico',
         'codigoInstitucional' => 'código institucional',
         'correo' => 'correo',
         'desde' => 'fecha inicial',

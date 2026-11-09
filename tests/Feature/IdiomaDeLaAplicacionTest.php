@@ -35,7 +35,7 @@ it('traduce todas las reglas de validación que trae Laravel', function (): void
 it('dice en español qué campo falla, con su nombre legible', function (): void {
     $errores = Validator::make(['casoClinicoId' => null], ['casoClinicoId' => 'required'])->errors();
 
-    expect($errores->first('casoClinicoId'))->toBe('El campo caso clínico es obligatorio.');
+    expect($errores->first('casoClinicoId'))->toBe('El campo escenario clínico es obligatorio.');
 });
 
 it('pagina en español', function (): void {

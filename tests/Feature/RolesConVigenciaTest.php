@@ -406,7 +406,7 @@ it('deja la preparación a medias del pasante para que otro la continúe', funct
 
 it('no deja que el único ADMIN se quite su propio rol', function (): void {
     expect(fn () => $this->servicio->revocar($this->admin, $this->admin, Rol::Admin))
-        ->toThrow(AsignacionDeRolInvalida::class, 'ADMIN');
+        ->toThrow(AsignacionDeRolInvalida::class, 'administrador de la plataforma');
 
     expect(tieneElRol($this->admin, Rol::Admin))->toBeTrue()
         ->and(AsignacionDeRol::query()->whereNotNull('revocada_at')->count())->toBe(0);
@@ -437,7 +437,7 @@ it('la pantalla no ofrece revocar el propio rol de ADMIN y rechaza la acción a 
         ->assertDontSeeHtml("revocar({$this->admin->id}, 'admin')")
         ->assertSeeHtml("revocar({$otro->id}, 'admin')")
         ->call('revocar', $this->admin->id, Rol::Admin->value)
-        ->assertSet('errorDeRegla', fn (?string $mensaje): bool => str_contains((string) $mensaje, 'ADMIN'));
+        ->assertSet('errorDeRegla', fn (?string $mensaje): bool => str_contains((string) $mensaje, 'Nadie se quita a sí mismo el rol'));
 
     expect(tieneElRol($this->admin, Rol::Admin))->toBeTrue();
 });

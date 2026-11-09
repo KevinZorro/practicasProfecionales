@@ -30,7 +30,7 @@ final class AsignacionDeRolInvalida extends DomainException
     {
         // Solo un ADMIN revoca, así que el único ADMIN que se quita el rol
         // dejaría la plataforma sin nadie que pueda devolvérselo.
-        return new self('Nadie se quita a sí mismo el rol de ADMIN: la plataforma podría quedarse sin administrador. Que otro ADMIN lo haga.');
+        return new self('Nadie se quita a sí mismo el rol de administrador de la plataforma: podría quedarse sin administrador. Que lo haga otro administrador.');
     }
 
     public static function laElevacionExigeMotivo(): self

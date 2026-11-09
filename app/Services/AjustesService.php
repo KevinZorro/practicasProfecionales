@@ -34,7 +34,7 @@ final class AjustesService
     public function guardar(array $valores, User $admin): void
     {
         if ($admin->cannot('update', AjusteLaboratorio::class)) {
-            throw new AuthorizationException('Solo el ADMIN cambia los ajustes del laboratorio.');
+            throw new AuthorizationException('Solo el administrador de la plataforma cambia los ajustes del laboratorio.');
         }
 
         DB::transaction(static function () use ($valores): void {

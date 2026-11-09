@@ -58,7 +58,7 @@ it('no deja a un administrativo ni a un coordinador fijar el nivel de fidelidad'
     $actor = $rol === 'administrativo' ? $this->administrativo : $this->coordinadora;
 
     expect(fn () => $this->servicio->crear($actor, datosDeSimulador(NivelFidelidad::Alta)))
-        ->toThrow(InventarioInvalido::class, 'solo lo registra el ADMIN');
+        ->toThrow(InventarioInvalido::class, 'solo lo registra el administrador de la plataforma');
 })->with(['administrativo', 'coordinador']);
 
 it('deja a un administrativo editar el resto de campos del mismo ítem', function (): void {
@@ -104,7 +104,7 @@ it('no deja a un administrativo cambiar el nivel de fidelidad al actualizar', fu
         tipo: TipoItemInventario::Simulador,
         cantidadTotal: 3,
         nivelFidelidad: NivelFidelidad::Alta,
-    )))->toThrow(InventarioInvalido::class, 'solo lo registra el ADMIN');
+    )))->toThrow(InventarioInvalido::class, 'solo lo registra el administrador de la plataforma');
 
     expect($item->fresh()->nivel_fidelidad)->toBe(NivelFidelidad::Baja);
 });
@@ -113,7 +113,7 @@ it('no deja a un administrativo borrar el nivel de fidelidad poniéndolo a nulo'
     $item = $this->servicio->crear($this->admin, datosDeSimulador(NivelFidelidad::Alta));
 
     expect(fn () => $this->servicio->actualizar($this->administrativo, $item, datosDeSimulador(null)))
-        ->toThrow(InventarioInvalido::class, 'solo lo registra el ADMIN');
+        ->toThrow(InventarioInvalido::class, 'solo lo registra el administrador de la plataforma');
 });
 
 it('ignora el nivel de fidelidad en cualquier asignación masiva', function (): void {

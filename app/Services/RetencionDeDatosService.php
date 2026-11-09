@@ -208,7 +208,7 @@ final class RetencionDeDatosService
     private function garantizarPermiso(User $admin): void
     {
         if (Gate::forUser($admin)->denies('depurarDatos')) {
-            throw new AuthorizationException('Solo el ADMIN depura lo que tiene más de dos semestres.');
+            throw new AuthorizationException('Solo el administrador de la plataforma depura lo que tiene más de dos semestres.');
         }
     }
 }

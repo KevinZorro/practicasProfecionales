@@ -23,7 +23,7 @@
 
                             @if ($tiposPorSesion[$sesion->id]->isEmpty())
                                 <p class="mt-2 text-[14px] font-medium text-amber-800">
-                                    La materia no tiene tipos de evaluación activos. El ADMIN los define en Administración.
+                                    La materia no tiene tipos de evaluación activos. Los define el administrador de la plataforma en Administración.
                                 </p>
                             @else
                                 <div class="mt-3 flex flex-wrap items-end gap-2">
