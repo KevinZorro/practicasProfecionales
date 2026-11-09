@@ -30,7 +30,7 @@ final class AjustesDelLaboratorio extends Page implements HasForms
 
     protected static ?string $title = 'Ajustes del laboratorio';
 
-    protected static ?string $navigationGroup = 'Estructura académica';
+    protected static ?string $navigationGroup = 'Laboratorio';
 
     protected static ?string $navigationIcon = 'heroicon-o-adjustments-horizontal';
 

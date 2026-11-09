@@ -8,6 +8,7 @@ use App\Services\ImagenPublicaService;
 use App\Services\VideoPublicoService;
 use Filament\Resources\Resource;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * Base de todas las pantallas del ADMIN en Filament.
@@ -26,6 +27,22 @@ use Illuminate\Database\Eloquent\Model;
 abstract class RecursoDelAdmin extends Resource
 {
     protected static bool $shouldCheckPolicyExistence = false;
+
+    /**
+     * En español va en mayúscula solo la primera letra: «Tipos de
+     * evaluación», no «Tipos De Evaluación», como lo escribía Filament en el
+     * menú, las migas y el título de cada lista. El singular va dentro de una
+     * frase («Crear caso clínico»), así que se queda como se escribió.
+     */
+    public static function getTitleCasePluralModelLabel(): string
+    {
+        return Str::ucfirst(static::getPluralModelLabel());
+    }
+
+    public static function getTitleCaseModelLabel(): string
+    {
+        return static::getModelLabel();
+    }
 
     /**
      * Columnas que guardan una imagen del disco público. Las usa

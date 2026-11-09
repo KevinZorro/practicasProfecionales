@@ -896,6 +896,9 @@ Cuatro movimientos propios, cada uno para explicar un cambio que la persona acab
 
 ### `/admin`
 Filament conserva su disposición, sus componentes y sus tablas; solo toma la marca. Onest servida desde el propio servidor; la escala de tinta como color primario (botones en tinta), la escala del rojo como peligro, los grises fríos del panel, y el verde y el ámbar de Tailwind para éxito y aviso. En la cabecera, el símbolo de la UFPS (32 px) con «Administración del laboratorio» (600, 15 px, tinta). El ícono de la sección activa va en rojo, como en el riel, con una regla en línea por el gancho de estilos para no compilar un tema propio. Sin modo oscuro (`darkMode(false)`).
+- **La entrada** («Inicio», `App\Filament\Pages\Dashboard`): una sección por grupo del menú, con una línea que dice para qué es y sus pantallas como enlaces, sacados de la navegación de Filament para que un recurso nuevo aparezca sin tocarla; debajo, «Cuentas y roles», que lleva a Usuarios en el panel, porque las cuentas tienen reglas y no son un recurso de aquí. Solo componentes de Filament: su CSS viene compilado.
+- **Los grupos**, en este orden: «Estructura académica» (lo que el docente elige al pedir un escenario), «Laboratorio» (salas y ajustes) y «Contenido público» (la portada). Un grupo nuevo lleva su línea en `Dashboard::GRUPOS`, que fija también el orden.
+- **Mayúscula solo al principio:** `RecursoDelAdmin` da el plural con mayúscula inicial para el menú, las migas y el título de la lista, y el singular tal como se escribió, porque va dentro de una frase («Crear caso clínico»). «Landing» no se dice: la página es «Portada y contacto».
 
 ## Do's and Don'ts
 

@@ -39,7 +39,7 @@ it('abre la página al ADMIN', function (): void {
     $this->actingAs($this->admin)
         ->get(ConfiguracionDeLaLanding::getUrl())
         ->assertOk()
-        ->assertSee('Configuración de la landing');
+        ->assertSee('Portada y contacto');
 });
 
 it('solo deja editar la configuración al ADMIN', function (Rol $rol, bool $puede): void {

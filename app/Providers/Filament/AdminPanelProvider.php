@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\AvatarConIniciales;
+use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use Filament\FontProviders\LocalFontProvider;
@@ -14,7 +15,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationItem;
-use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -132,10 +132,9 @@ final class AdminPanelProvider extends PanelProvider
             // materias, su inventario): todo o nada.
             ->databaseTransactions()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            // La entrada (App\Filament\Pages\Dashboard) la descubre esta misma línea.
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
-            ->pages([
-                Pages\Dashboard::class,
-            ])
+            ->navigationGroups(array_keys(Dashboard::GRUPOS))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

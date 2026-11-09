@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 use App\Enums\EstadoUsuario;
 use App\Enums\Rol;
+use App\Filament\Pages\AjustesDelLaboratorio;
+use App\Filament\Pages\Dashboard;
+use App\Filament\Resources\CasoClinicoResource;
+use App\Filament\Resources\MateriaResource;
+use App\Filament\Resources\SalaResource;
 use App\Models\User;
 use App\Services\AsignacionDeRolService;
 use Database\Seeders\RolSeeder;
@@ -138,4 +143,35 @@ it('ofrece volver al panel desde la administración', function (): void {
         ->assertOk()
         ->assertSee('Volver al panel')
         ->assertSee('href="'.route('panel.inicio').'"', escape: false);
+});
+
+// ---------------------------------------------------------------------
+// La entrada y el menú (usabilidad)
+// ---------------------------------------------------------------------
+
+it('abre /admin con lo que se puede cambiar, por grupo, y para qué es cada uno', function (): void {
+    // El escritorio de Filament llegaba vacío: un título y nada más.
+    $this->actingAs(User::factory()->admin()->create())->get('/admin')
+        ->assertOk()
+        ->assertSeeInOrder(['Estructura académica', Dashboard::GRUPOS['Estructura académica'], 'Laboratorio', 'Contenido público'])
+        ->assertSee('href="'.MateriaResource::getUrl().'"', false)
+        ->assertSee('href="'.SalaResource::getUrl().'"', false)
+        // Las cuentas no son de aquí (RF22): se dice dónde están.
+        ->assertSee('href="'.route('panel.usuarios').'"', false);
+});
+
+it('escribe el menú en español: mayúscula solo al principio', function (): void {
+    $this->actingAs(User::factory()->admin()->create())->get('/admin')
+        ->assertSee('Tipos de evaluación')
+        ->assertSee('Casos clínicos')
+        ->assertDontSee('Tipos De Evaluación')
+        ->assertDontSee('Casos Clínicos');
+
+    // El singular va dentro de una frase: «Crear caso clínico».
+    expect(CasoClinicoResource::getTitleCaseModelLabel())->toBe('caso clínico');
+});
+
+it('pone las salas y los ajustes en su propio grupo, no en la estructura académica', function (): void {
+    expect(SalaResource::getNavigationGroup())->toBe('Laboratorio')
+        ->and(AjustesDelLaboratorio::getNavigationGroup())->toBe('Laboratorio');
 });

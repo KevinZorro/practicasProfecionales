@@ -46,7 +46,7 @@ final class SalaResource extends RecursoDelAdmin
 
     protected static ?string $pluralModelLabel = 'salas';
 
-    protected static ?string $navigationGroup = 'Estructura académica';
+    protected static ?string $navigationGroup = 'Laboratorio';
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office';
 

@@ -33,7 +33,7 @@ final class ConfiguracionDeLaLanding extends Page implements HasForms
 
     protected static ?string $slug = 'configuracion-de-la-landing';
 
-    protected static ?string $title = 'Configuración de la landing';
+    protected static ?string $title = 'Portada y contacto';
 
     protected static ?string $navigationGroup = 'Contenido público';
 
