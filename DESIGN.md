@@ -487,7 +487,7 @@ Alcance: una marca y tres superficies. Las páginas públicas, la portada (`/`) 
 - La línea de estados: completa en el expediente y compacta en cada fila, en una columna fija.
 - Solo proyecta sombra lo que flota: las barras de decisión y el aviso de la acción.
 - Móvil primero: 44 px para el pulgar, campos de 16 px y un menú que abre sin JavaScript.
-- Se mueve solo para explicar un cambio: la cortina que se recoge al unir salas y la llegada del aviso. Lo demás, cambios de color de 150 ms.
+- Se mueve solo para explicar un cambio: la línea que avanza, la cortina de las salas unidas, el botón que trabaja, la barra del material y la llegada del aviso. Lo demás, cambios de color de 150 ms.
 
 ## Colors
 
@@ -793,7 +793,8 @@ Pastillas compactas que cambian de color y nunca de forma: la tinta avanza, el r
 - **Peligro suave:** blanco, texto rojo hondo y contorno rojo filete; rojo claro con el cursor. Abre lo que no se deshace: «Rechazar», «Devolver».
 - **Peligro:** rojo con texto blanco, rojo hondo con el cursor. Solo confirma: «Confirmar rechazo», «Devolver el formato», «Bloquear», «Cerrar la lista».
 - **Texto:** sin fondo, en grafito; con el cursor, tinta al 6 % y texto tinta. Lo de menos peso en una fila; en rojo hondo cuando quita algo («Quitar de la evaluación», «Deshabilitar»).
-- **Estados:** el color cambia en 150 ms. Foco visible: contorno rojo de 2 px separado 2 px. Deshabilitado, al 45 %; mientras Livewire procesa el clic, al 60 % y con cursor de espera.
+- **Estados:** el color cambia en 150 ms. Foco visible: contorno rojo de 2 px separado 2 px. Deshabilitado, al 45 %, también mientras Livewire procesa su acción. Al presionarlo se encoge al 97 %.
+- **Trabajando:** el botón de una acción principal lleva `cargando`. Mientras espera al servidor dice qué hace («Aprobando…», «Guardando…»), con un aro de 16 px que gira, y se ve entero en vez de apagado. Livewire 3 no marca con `data-loading` el elemento que espera: el estado se pinta con `wire:loading` y el `wire:target` de su acción.
 - En el celular, los botones de una barra de decisión se reparten el ancho.
 
 **La regla de la doble llave.** El rojo relleno confirma lo que no se deshace y nunca va suelto en una fila: llega al final de su motivo o de su confirmación. Lo abre un botón de peligro suave o un botón de texto en rojo hondo; cerrar una lista de reposición, que no lleva motivo, lo confirma el diálogo del navegador.
@@ -816,6 +817,7 @@ La firma del panel: dónde está la solicitud y qué le falta, de un vistazo. La
 - **Rechazada:** la línea termina en la fase donde se rechazó, con un disco rojo de 20 px y una cruz blanca; la fase en rojo y «Rechazada» debajo. Lo que habría seguido no se dibuja.
 - **Compacta**, en cada fila: solo el trazo y la situación. Ocupa siempre 76 px (cuatro nodos de 10 px y tres tramos de 12 px), alineada a la izquierda. Lo hecho, un punto de tinta de 6 px; lo actual, rojo de 10 px con halo de 3 px; lo que falta, un punto hueco de 6 px con borde de filete; los tramos, sólidos en tinta o de puntos en filete; un rechazo, una cruz roja de 10 px. Al lado, la situación en 600 a 13 px y tinta («En revisión», «Por montar», «Escenario listo»).
 - **Accesible:** una lista ordenada con `aria-current="step"`, y cada fase dice en texto si está hecha, en curso, pendiente o rechazada.
+- **Recién movida:** después de una decisión en el expediente, la completa dibuja una vez el paso que se acaba de dar (ver «Movimiento del panel»). La compacta de las filas nunca se mueve.
 
 ### Fila de solicitud
 - La fecha a la izquierda, para recorrer la lista por día (el mes en 600 a 12 px y gris; el día en 700 a 22 px); el escenario (600, 15 px) con su tipo; quién dicta y la materia (14 px, gris); hora, estudiantes, grupo y sala (13 px, gris); a la derecha, la línea compacta.
@@ -874,14 +876,18 @@ FullCalendar, vestido con la marca por sus variables (CSS propio en `app.css`, p
 Sobre niebla y sin riel: la marca centrada (símbolo de 44 px y nombre), una pieza blanca de 16 px con el título en 800 a 1.625rem y, para entrar, una pastilla secundaria de 48 px con la «G» de Google en sus cuatro colores.
 
 ### Movimiento del panel
-- Un solo movimiento propio, el de las salas unidas. Al sumar una sala, su columna crece en 260 ms con la curva de llegada y, 160 ms después, la cortina que la separaba se recoge hacia un lado en 260 ms con la curva de recorrido. Al quitarla, la cortina vuelve en 150 ms. Con movimiento reducido, el salón cambia de una vez y la cortina solo se desvanece.
-- Lo que acaba de cambiar se tiñe de verde claro y se apaga en 1,5 s. Es solo color, así que se queda con movimiento reducido.
+Cuatro movimientos propios, cada uno para explicar un cambio que la persona acaba de provocar, más la llegada del aviso.
+- **La línea avanza.** Después de revisar, aprobar o rechazar en el expediente, la cabecera dibuja una vez el paso que se acaba de dar: el trazo sale de la fase cerrada acelerando (170 ms), llega a la nueva frenando (170 ms) y el punto rojo llega en 200 ms con la curva de llegada. Un rechazo hace aparecer la cruz en 180 ms. La marca es de un solo uso (`LineaDeEstados::RECIEN_MOVIDA`): al volver a abrir el expediente, la línea ya está quieta. Con movimiento reducido no hay trazo: el punto nuevo cambia de color en 150 ms y la cruz solo aparece.
+- **Las salas unidas.** Al sumar una sala, su columna crece en 260 ms con la curva de llegada y, 160 ms después, la cortina que la separaba se recoge hacia un lado en 260 ms con la curva de recorrido. Al quitarla, la cortina vuelve en 150 ms. Con movimiento reducido, el salón cambia de una vez y la cortina solo se desvanece.
+- **El botón que trabaja.** Al presionarlo se encoge al 97 % en 150 ms. Mientras su acción espera al servidor, el de una acción principal dice qué hace, con un aro que da una vuelta por segundo mientras dure la espera. Con movimiento reducido no se encoge y el aro queda quieto; el verbo sigue.
+- **El progreso del montaje.** La barra del material se escala hasta lo alistado en 240 ms con la curva de llegada (se escala, no cambia de ancho). Completa, se pone verde, dice «Todo alistado» y señala una vez el botón que sigue con un anillo verde que se apaga en 1,4 s. Con movimiento reducido la barra salta de una vez; el color, el texto y la señal se quedan.
+- **Lo que acaba de cambiar**, la sala recién asignada o el estado del montaje que cambió, se tiñe de verde claro y se apaga en 1,5 s. Es solo color, así que se queda con movimiento reducido.
+- **La llegada del aviso de la acción:** sube 8 px y aparece en 200 ms con la curva de llegada, y se va por opacidad en 150 ms. Con movimiento reducido llega y se va sin transición.
 - Los cambios de color duran 150 ms con la curva estándar de Tailwind (cubic-bezier(0.4, 0, 0.2, 1)): botones, filas, pestañas, pastillas y campos. No mueven nada.
-- Lo único que se desplaza es la llegada del aviso de la acción: sube 8 px y aparece en 200 ms con la curva de llegada, y se va por opacidad en 150 ms. Con movimiento reducido llega y se va sin transición.
 - El hover solo existe donde hay cursor: `future.hoverOnlyWhenSupported` lo compila dentro de `(hover: hover) and (pointer: fine)`, en toda la plataforma. En el celular, la fila tocada no se queda teñida.
 - El cajón del menú y la confirmación del rechazo aparecen sin animación.
 
-**La regla del panel que explica.** El panel se mueve solo para explicar un cambio que la persona acaba de provocar: hoy, la unión de salas y la llegada del aviso. Ninguno corre al abrir una pantalla, ninguno pasa de 0,6 s, cada uno tiene su versión de movimiento reducido y lo que muestra también lo dice el texto. Un movimiento nuevo se consulta antes con el usuario, como las seis animaciones de la portada. Reemplaza a «la regla del panel quieto» desde el 2026-11-09.
+**La regla del panel que explica.** El panel se mueve solo para explicar un cambio que la persona acaba de provocar: la línea que avanza, las salas unidas, el botón que trabaja, el progreso del montaje y la llegada del aviso. Ninguno corre solo por abrir una pantalla y ningún desplazamiento pasa de 0,6 s; el aro del botón gira solo mientras el servidor trabaja. Cada uno tiene su versión de movimiento reducido y lo que muestra también lo dice el texto. Un movimiento nuevo se consulta antes con el usuario, como las seis animaciones de la portada. Reemplaza a «la regla del panel quieto» desde el 2026-11-09.
 
 ### `/admin`
 Filament conserva su disposición, sus componentes y sus tablas; solo toma la marca. Onest servida desde el propio servidor; la escala de tinta como color primario (botones en tinta), la escala del rojo como peligro, los grises fríos del panel, y el verde y el ámbar de Tailwind para éxito y aviso. En la cabecera, el símbolo de la UFPS (32 px) con «Administración del laboratorio» (600, 15 px, tinta). El ícono de la sección activa va en rojo, como en el riel, con una regla en línea por el gancho de estilos para no compilar un tema propio. Sin modo oscuro (`darkMode(false)`).
@@ -934,7 +940,7 @@ Filament conserva su disposición, sus componentes y sus tablas; solo toma la ma
 - **No** agregues al panel otro tono (azul, violeta, naranja) ni un color por tipo de sesión o de ítem.
 - **No** actives `tabular-nums` en el panel: el 1 tabular de Onest parte «15» en «1 5».
 - **No** pongas sombra a una pieza del panel, al riel ni al cajón del menú: solo flotan las barras de decisión y el aviso de la acción.
-- **No** sumes animaciones al panel fuera de la regla del panel que explica: cambios de color de 150 ms, la llegada del aviso y la unión de salas, nada más.
+- **No** sumes animaciones al panel fuera de la regla del panel que explica: cambios de color de 150 ms y los movimientos de su lista, nada más.
 - **No** uses en el panel el rojo relleno como primer paso de una acción que no se deshace, ni pongas botones sueltos en las filas de solicitud: la fila entera abre el expediente y la decisión se toma ahí.
 - **No** escribas en el panel texto gris (#6e6e73) sobre niebla honda (#ededf0): baja a 4,3:1; ahí va el grafito.
 - **No** digas un estado del panel solo con color.
