@@ -202,29 +202,9 @@
                         <x-tarjeta titulo="Tu formato de confidencialidad">
                             <div class="flex items-center justify-between gap-3">
                                 <p class="text-[14px] text-gray-500">{{ $formato->periodo ? 'Periodo '.$formato->periodo : 'Sin periodo abierto' }}</p>
-                                @if ($formato->alDia())
-                                    <x-insignia tono="exito">Al día</x-insignia>
-                                @elseif ($formato->estado() === \App\Enums\EstadoFormatoConfidencialidad::Cargado)
-                                    <x-insignia tono="atencion">En revisión</x-insignia>
-                                @elseif ($formato->entregadoEnFisico())
-                                    <x-insignia tono="atencion">Entregado en papel</x-insignia>
-                                @else
-                                    <x-insignia tono="neutro">Pendiente</x-insignia>
-                                @endif
+                                <x-etiqueta-estado :estado="$formato->situacion()" />
                             </div>
-                            <p class="mt-3 text-[14px] leading-snug text-gray-700">
-                                @if ($formato->alDia())
-                                    Está verificado: puedes entrar a las prácticas de este periodo.
-                                @elseif ($formato->devuelto())
-                                    Te lo devolvieron para corregirlo. Vuelve a subirlo.
-                                @elseif ($formato->estado() === \App\Enums\EstadoFormatoConfidencialidad::Cargado)
-                                    Ya lo subiste. El laboratorio lo está revisando.
-                                @elseif ($formato->entregadoEnFisico())
-                                    Lo entregaste en papel y ya puedes entrar; falta subir el escaneo.
-                                @else
-                                    Sin él no puedes entrar a las prácticas. Se renueva cada periodo.
-                                @endif
-                            </p>
+                            <p class="mt-3 text-[14px] leading-snug text-gray-700">{{ $formato->queSignifica() }}</p>
                             @unless ($formato->alDia())
                                 <x-boton :href="route('panel.mi-formato')" tamano="chico" class="mt-4">Ir a mi formato</x-boton>
                             @endunless

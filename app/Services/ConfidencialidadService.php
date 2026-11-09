@@ -457,6 +457,14 @@ final class ConfidencialidadService
             ->first();
     }
 
+    /** El formato propio en el periodo vigente, como lo leen «Hoy» y «Mi formato». */
+    public function estadoDeMiFormato(User $firmante): EstadoDeMiFormato
+    {
+        $periodo = $this->periodoVigente();
+
+        return new EstadoDeMiFormato($periodo, $this->entregaDelPeriodo($firmante, $periodo));
+    }
+
     /** Si hoy se reciben entregas: solo con un periodo abierto. */
     public function recibeEntregas(): bool
     {

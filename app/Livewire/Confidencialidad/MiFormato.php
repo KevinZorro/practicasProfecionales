@@ -83,11 +83,12 @@ final class MiFormato extends Component
 
     public function render(ConfidencialidadService $confidencialidad): mixed
     {
-        $periodo = $confidencialidad->periodoVigente();
+        $miFormato = $confidencialidad->estadoDeMiFormato(Auth::user());
 
         return view('livewire.confidencialidad.mi-formato', [
-            'periodo' => $periodo,
-            'entrega' => $confidencialidad->entregaDelPeriodo(Auth::user(), $periodo),
+            'miFormato' => $miFormato,
+            'periodo' => $miFormato->periodo,
+            'entrega' => $miFormato->entrega,
             'hayPlantilla' => $this->hayPlantilla($confidencialidad),
             'recibeEntregas' => $confidencialidad->recibeEntregas(),
             'estados' => EstadoFormatoConfidencialidad::cases(),

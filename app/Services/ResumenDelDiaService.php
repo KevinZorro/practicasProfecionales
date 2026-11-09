@@ -58,7 +58,7 @@ final class ResumenDelDiaService
                 ? $this->evaluaciones->historialDelEstudiante($persona)->take(self::ULTIMOS_RESULTADOS)
                 : null,
             formatosPorVerificar: $persona->can('viewAny', FormatoConfidencialidad::class) ? $this->formatosPorVerificar() : null,
-            miFormato: $persona->can('create', FormatoConfidencialidad::class) ? $this->miFormato($persona) : null,
+            miFormato: $persona->can('create', FormatoConfidencialidad::class) ? $this->confidencialidad->estadoDeMiFormato($persona) : null,
             supervision: $persona->can('supervisar', Evaluacion::class) ? $this->deSupervision($persona) : null,
             porDepurar: $persona->can('depurarDatos') ? $this->porDepurar() : null,
         );
@@ -149,13 +149,6 @@ final class ResumenDelDiaService
             evaluaciones: $this->supervision->cuantasEvaluaciones($supervisor, $periodo),
             periodo: $periodo?->nombre,
         );
-    }
-
-    private function miFormato(User $firmante): EstadoDeMiFormato
-    {
-        $periodo = $this->confidencialidad->periodoVigente();
-
-        return new EstadoDeMiFormato($periodo, $this->confidencialidad->entregaDelPeriodo($firmante, $periodo));
     }
 
     /**

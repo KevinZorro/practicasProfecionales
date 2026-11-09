@@ -13,6 +13,7 @@ use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\RegistroDeBitacora;
 use App\Models\User;
+use App\Services\ConfidencialidadService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
@@ -140,7 +141,7 @@ it('no da por vigente el formato verificado del periodo anterior', function (): 
     Livewire::actingAs($this->estudiante)
         ->test(MiFormato::class)
         ->assertViewHas('entrega', fn ($entrega): bool => $entrega === null)
-        ->assertSee('Todavía no has entregado el formato de este periodo')
+        ->assertSee('Todavía no lo has entregado en este periodo')
         ->assertSee('Sube el documento firmado');
 });
 
@@ -162,6 +163,37 @@ it('enseña al estudiante el motivo del rechazo y le deja volver a subirlo', fun
         ->assertHasNoErrors();
 
     expect(FormatoConfidencialidad::firstOrFail()->estado)->toBe(EstadoFormatoConfidencialidad::Cargado);
+});
+
+it('dice en «Mi formato» lo mismo que en «Hoy»', function (Closure $entregar): void {
+    // Cada pantalla decidía su insignia: a quien entregó en papel, «Hoy» le
+    // decía que ya podía entrar y «Mi formato», que estaba pendiente.
+    plantillaVigente();
+    $entregar($this->estudiante, $this->administrativo);
+    $miFormato = app(ConfidencialidadService::class)->estadoDeMiFormato($this->estudiante);
+
+    $this->actingAs($this->estudiante)->get(route('panel.inicio'))
+        ->assertSeeInOrder([$miFormato->situacion()->etiqueta(), $miFormato->queSignifica()]);
+
+    Livewire::actingAs($this->estudiante)->test(MiFormato::class)
+        ->assertSeeInOrder([$miFormato->situacion()->etiqueta(), $miFormato->queSignifica()]);
+})->with([
+    'sin entregar' => [fn () => fn (User $estudiante): null => null],
+    'en papel' => [fn () => fn (User $estudiante, User $administrativo): FormatoConfidencialidad => app(ConfidencialidadService::class)->registrarEntregaFisica($estudiante, $administrativo)],
+    'subido' => [fn () => fn (User $estudiante): FormatoConfidencialidad => app(ConfidencialidadService::class)->registrarEntrega($estudiante, pdfFirmado())],
+    'devuelto' => [fn () => fn (User $estudiante): FormatoConfidencialidad => FormatoConfidencialidad::factory()->create(['firmante_id' => $estudiante->id, 'motivo_rechazo' => 'Falta la firma.'])],
+]);
+
+it('le dice a quien entregó en papel que ya puede entrar, también en «Mi formato»', function (): void {
+    plantillaVigente();
+    app(ConfidencialidadService::class)->registrarEntregaFisica($this->estudiante, $this->administrativo);
+
+    Livewire::actingAs($this->estudiante)->test(MiFormato::class)
+        ->assertSee('Entregado en papel')
+        ->assertSee('Lo entregaste en papel y ya puedes entrar; falta subir el escaneo.')
+        ->assertSee('Lo recibieron en papel el '.now()->format('d/m/Y'))
+        ->assertDontSee('Todavía no lo has entregado')
+        ->assertSee('Sube el documento firmado');
 });
 
 // ---------------------------------------------------------------------

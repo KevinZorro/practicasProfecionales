@@ -7,9 +7,9 @@
 
 @php
     $tono = match ($estado->value) {
-        'aprobada', 'aprobado', 'verificado', 'finalizada', 'preparado', 'operativo' => 'exito',
-        'rechazada', 'no_aprobado', 'defectuoso', 'dado_de_baja' => 'peligro',
-        'en_preparacion', 'revisada', 'cargado', 'en_revision' => 'atencion',
+        'aprobada', 'aprobado', 'verificado', 'finalizada', 'preparado', 'operativo', 'al_dia' => 'exito',
+        'rechazada', 'no_aprobado', 'defectuoso', 'dado_de_baja', 'devuelto' => 'peligro',
+        'en_preparacion', 'revisada', 'cargado', 'en_revision', 'entregado_en_papel' => 'atencion',
         default => 'neutro',
     };
 @endphp

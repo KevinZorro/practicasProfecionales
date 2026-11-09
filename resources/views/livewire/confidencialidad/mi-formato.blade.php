@@ -10,21 +10,15 @@
                     <span class="text-[1.375rem] font-bold leading-tight tracking-[-0.02em]">{{ $periodo ?? 'Sin periodo abierto' }}</span>
                 </x-dato>
             </dl>
-            <x-etiqueta-estado :estado="$estadoActual" />
+            <x-etiqueta-estado :estado="$miFormato->situacion()" />
         </div>
 
-        <p class="mt-3 text-[15px] leading-snug text-gray-700">
-            @switch($estadoActual)
-                @case(\App\Enums\EstadoFormatoConfidencialidad::Verificado)
-                    Tu formato de este periodo está verificado. No tienes nada pendiente.
-                    @break
-                @case(\App\Enums\EstadoFormatoConfidencialidad::Cargado)
-                    Ya subiste tu documento. El laboratorio lo revisará; mientras tanto no tienes que hacer nada.
-                    @break
-                @default
-                    Todavía no has entregado el formato de este periodo.
-            @endswitch
-        </p>
+        {{-- La misma insignia y la misma frase que en «Hoy» (EstadoDeMiFormato). --}}
+        <p class="mt-3 text-[15px] leading-snug text-gray-700">{{ $miFormato->queSignifica() }}</p>
+
+        @if ($entrega?->recibido_fisico_at)
+            <p class="mt-1 text-[14px] text-gray-500">Lo recibieron en papel el {{ $entrega->recibido_fisico_at->format('d/m/Y') }}.</p>
+        @endif
 
         {{--
             Por qué se lo piden otra vez: quien entregó el semestre pasado no
