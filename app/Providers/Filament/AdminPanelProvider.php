@@ -110,6 +110,8 @@ final class AdminPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->renderHook(PanelsRenderHook::STYLES_AFTER, static fn (): View => view('filament.estilos'))
+            // La sesión caducada se pregunta en español, como en el panel.
+            ->renderHook(PanelsRenderHook::SCRIPTS_AFTER, static fn (): View => view('partes.sesion-caducada'))
             // Volver a las pantallas operativas sin escribir la dirección.
             ->navigationItems([
                 NavigationItem::make('Volver al panel')

@@ -19,7 +19,12 @@
 --}}
 @php($rolArriba = count($rolesDisponibles) > 1 || $vigenciaDelRolActivo !== null)
 <!DOCTYPE html>
-<html lang="es" class="bg-niebla">
+{{--
+    El foco del teclado no queda debajo de lo fijo (WCAG 2.4.11): al
+    desplazarse hacia lo enfocado, el navegador deja libre la barra del
+    celular arriba y la barra de decisión abajo.
+--}}
+<html lang="es" class="bg-niebla scroll-pb-40 scroll-pt-[4.5rem] lg:scroll-pb-28 lg:scroll-pt-6">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -221,5 +226,6 @@
 </div>
 
 @livewireScripts
+@include('partes.sesion-caducada')
 </body>
 </html>

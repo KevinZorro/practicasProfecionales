@@ -52,6 +52,7 @@ it('responde en español cuando no hay permiso', function (): void {
     $this->actingAs($docente->fresh())
         ->get(route('panel.reportes'))
         ->assertForbidden()
-        ->assertSee('Prohibido')
-        ->assertDontSee('Forbidden');
+        ->assertSee('No tienes permiso para hacer esto.')
+        ->assertDontSee('Forbidden')
+        ->assertDontSee('This action is unauthorized.');
 });
