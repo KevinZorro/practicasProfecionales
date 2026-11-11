@@ -80,9 +80,9 @@ const TTFB_BUENO_MS = 800;
 const PAGINAS = [
   { id: 'portada', ruta: () => '/', rol: null, panel: false, controles: ['a[href^="#"]', 'main'] },
   { id: 'escenario', ruta: (d) => (d.escenarioId ? `/escenarios/${d.escenarioId}` : null), rol: null, panel: false, controles: ['a[href^="#"]', 'main'] },
-  { id: 'hoy-estudiante', ruta: () => '/panel', rol: 'estudiante', panel: true, controles: ['button[aria-label="Abrir el menú"]', 'main'] },
-  { id: 'hoy-docente', ruta: () => '/panel', rol: 'docente', panel: true, controles: ['button[aria-label="Abrir el menú"]', 'main'] },
-  { id: 'hoy-administrativo', ruta: () => '/panel', rol: 'administrativo', panel: true, controles: ['button[aria-label="Abrir el menú"]', 'main'] },
+  { id: 'hoy-estudiante', ruta: () => '/panel', rol: 'estudiante', panel: true, controles: ['button[aria-label="Abrir el menú"]', 'h1', 'main'] },
+  { id: 'hoy-docente', ruta: () => '/panel', rol: 'docente', panel: true, controles: ['button[aria-label="Abrir el menú"]', 'h1', 'main'] },
+  { id: 'hoy-administrativo', ruta: () => '/panel', rol: 'administrativo', panel: true, controles: ['button[aria-label="Abrir el menú"]', 'h1', 'main'] },
   { id: 'calendario', ruta: () => '/panel/calendario', rol: 'administrativo', panel: true, controles: ['.fc-next-button'] },
   { id: 'bandeja', ruta: () => '/panel/solicitudes', rol: 'administrativo', panel: true, controles: ['label:has(input[name="estado"][value="pendiente"]) span'] },
   { id: 'tablero', ruta: () => `/panel/preparaciones?fecha=${fechaDelTablero()}`, rol: 'administrativo', panel: true, controles: ['//button[normalize-space(.)="Hoy"]'] },

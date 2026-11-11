@@ -9,6 +9,8 @@
 #   producción) con --network host, para no depender de lo instalado en el
 #   equipo. USAR_LOCAL=si usa los psql y pgbench del PATH.
 #   PG_IMAGEN cambia la imagen.
+#   PG_DOCKER_OPCIONES añade opciones a `docker run` (p. ej. "--cpuset-cpus 3" para
+#   fijar el generador de carga a su propia CPU; lo usa rendimiento/campana.sh).
 
 set -euo pipefail
 
@@ -35,7 +37,9 @@ herramienta() {
         "$@"
         return
     fi
-    docker run --rm --network host \
+    local extra=()
+    read -ra extra <<<"${PG_DOCKER_OPCIONES:-}"
+    docker run --rm --network host ${extra[@]+"${extra[@]}"} \
         --user "$(id -u):$(id -g)" \
         -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE \
         -v "$RENDIMIENTO:/rendimiento" \

@@ -24,6 +24,7 @@
 #   CONSULTAS     carpeta con los .sql (consultas/, capturada sobre el volumen x1; para x5 usa consultas-x5/)
 #   ESCENARIOS    nombres (sin .sql) separados por espacios; todos por defecto
 #   MEZCLA        "si" corre además la mezcla ponderada (si)
+#   SOLO_MEZCLA   "si" omite las corridas de cada escenario y mide solo la mezcla (no)
 #   ESTADISTICAS  "si" reinicia pg_stat_statements antes y guarda su lectura al final (necesita el dueño)
 #   CONSERVAR_REGISTROS  "si" no borra los registros por transacción (pesan decenas de MB)
 #
@@ -36,6 +37,7 @@ CLIENTES="${CLIENTES:-1 10 20}"
 DURACION="${DURACION:-30}"
 HILOS="${HILOS:-4}"
 MEZCLA="${MEZCLA:-si}"
+SOLO_MEZCLA="${SOLO_MEZCLA:-no}"
 ESTADISTICAS="${ESTADISTICAS:-no}"
 CONSERVAR_REGISTROS="${CONSERVAR_REGISTROS:-no}"
 CARPETA_CONSULTAS="${CONSULTAS:-$BASE_DE_DATOS/consultas}"
@@ -116,11 +118,13 @@ correr() {
 echo "Escenarios: $ESCENARIOS" >&2
 echo "Clientes: $CLIENTES, ${DURACION}s por corrida" >&2
 
-for c in $CLIENTES; do
-    for nombre in $ESCENARIOS; do
-        correr "$nombre" "$c" -f "$(ruta_para_herramienta "$CARPETA_CONSULTAS/$nombre.sql")"
+if [[ "$SOLO_MEZCLA" != "si" ]]; then
+    for c in $CLIENTES; do
+        for nombre in $ESCENARIOS; do
+            correr "$nombre" "$c" -f "$(ruta_para_herramienta "$CARPETA_CONSULTAS/$nombre.sql")"
+        done
     done
-done
+fi
 
 if [[ "$MEZCLA" == "si" ]]; then
     argumentos=()
