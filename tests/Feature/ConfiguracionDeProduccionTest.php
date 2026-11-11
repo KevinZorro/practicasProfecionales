@@ -43,6 +43,21 @@ it('no dice qué versión de nginx corre ni deja que PHP lo diga', function (): 
         ->not->toContain('autoindex on');
 });
 
+it('registra en el log de nginx cuánto tardó cada petición (RNF01)', function (): void {
+    $configuracion = archivoDeProduccion('docker/produccion/nginx.conf');
+
+    // El formato conserva los campos de "combined" y suma los tiempos, y el
+    // log de acceso lo usa: sin el nombre al lado, nginx escribiría el
+    // formato por defecto y el RNF01 no se podría medir.
+    expect($configuracion)
+        ->toContain('log_format con_tiempos')
+        ->toContain('rt=$request_time urt=$upstream_response_time')
+        ->toContain('"$request" ')
+        ->toContain('$status $body_bytes_sent "$http_referer"')
+        ->toContain('"$http_user_agent" rt=')
+        ->toMatch('/^\s*access_log \/dev\/stdout con_tiempos;$/m');
+});
+
 it('trae en el ejemplo de producción los valores seguros', function (): void {
     $variables = variablesDelEjemplo();
 
