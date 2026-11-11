@@ -1,0 +1,53 @@
+# Ajustes SOLO para las corridas de rendimiento sobre el SUT de producción.
+# En producción real NO se usa este archivo.
+#
+#   docker compose -f docker-compose.produccion.yml -f rendimiento/docker-compose.rendimiento.yml up -d
+#
+# Las rutas relativas de un override se resuelven desde la carpeta del primer
+# -f (la raíz del proyecto), no desde rendimiento/; este archivo no declara
+# ninguna, pero quien añada una debe contarla desde la raíz.
+#
+# Los servicios de aplicación y la imagen son los mismos de producción: lo
+# único que cambia es observabilidad de la base y una cookie.
+
+services:
+  # PostgreSQL con lo necesario para saber *por qué* tarda una consulta, no
+  # solo cuánto: pg_stat_statements acumula tiempo y filas por consulta, y
+  # track_io_timing separa lo que se fue en leer disco. Cuestan un poco de
+  # CPU, así que las cifras de latencia de esta corrida salen algo por
+  # encima de las de producción; se reporta junto a ellas.
+  db:
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - pg_stat_statements.track=all
+      - -c
+      - track_io_timing=on
+      # Solo lo que pase de 250 ms entra en el registro de PostgreSQL: es
+      # el umbral de "consulta lenta" que se revisa tras cada campaña.
+      - -c
+      - log_min_duration_statement=250
+    # Solo en loopback del servidor: pgbench y estadisticas.sh corren en el
+    # anfitrión, fuera de la red de Docker. En producción la base no publica
+    # puertos; aquí tampoco queda abierta a otras máquinas.
+    ports:
+      - "127.0.0.1:55432:5432"
+
+  # El SUT se sirve por http://localhost, y con SESSION_SECURE_COOKIE=true el
+  # navegador (y el cliente de carga) descartaría la cookie de sesión y nadie
+  # quedaría autenticado. En producción el TLS lo termina el proxy delante de
+  # nginx y la cookie sí es segura (ADR 0006): aquí solo se baja para
+  # medir sin TLS.
+  app:
+    environment:
+      SESSION_SECURE_COOKIE: "false"
+
+  queue:
+    environment:
+      SESSION_SECURE_COOKIE: "false"
+
+  programador:
+    environment:
+      SESSION_SECURE_COOKIE: "false"
