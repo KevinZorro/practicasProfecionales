@@ -276,6 +276,13 @@ escribir_ficha() {
     IFS='|' read -r v_total p95_total n429 n5xx <<<"$total"
     IFS='|' read -r v_pag p95_pag _ _ <<<"$pag"
 
+    # descargas provoca 429 a propósito para comprobar los topes: su «NO CUMPLE» de nginx
+    # no dice nada del RNF01. Las cifras se dejan para quien quiera verlas.
+    if [[ "$NOMBRE" == *descargas ]]; then
+        v_total="NO APLICA (la prueba provoca 429 a propósito)"
+        v_pag="$v_total"
+    fi
+
     local r="$CARPETA/recursos.txt" advertencia=""
     local gen_med gen_p95
     gen_med="$(cpu_de "$r" generador 3)"

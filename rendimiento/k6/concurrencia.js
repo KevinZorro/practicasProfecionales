@@ -369,7 +369,14 @@ export const handleSummary = crearResumen('concurrencia', {
             usuarios_simultaneos: N,
             ganaron: cuenta('escrituras_ganadas', e),
             rechazadas_por_regla_de_negocio: cuenta('escrituras_rechazadas', e),
-            esperado: e === 'aprobacion' ? 'exactamente 1 ganó' : 'a lo sumo 1 ganó',
+            // En salas, «ganaron» cuenta respuestas sin error, y repetir la asignación
+            // sobre la preparación que ya tiene la sala también responde sin error (es
+            // idempotente): lo que se exige es el estado final, no ese conteo.
+            esperado: {
+                aprobacion: 'exactamente 1 ganó',
+                solicitudes: 'a lo sumo 1 ganó',
+                salas: 'a lo sumo 1 preparación con la sala al final (repetir la asignación sobre la misma también cuenta como «ganó»)',
+            }[e],
         }]));
     },
 });
