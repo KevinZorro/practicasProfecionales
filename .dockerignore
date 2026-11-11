@@ -31,3 +31,5 @@ public/fonts/filament
 # Copias de seguridad, si alguien las deja en la carpeta del proyecto.
 copias
 tests
+# El arnés de pruebas de rendimiento corre desde fuera de la imagen.
+rendimiento

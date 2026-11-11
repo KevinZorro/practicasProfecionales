@@ -1,0 +1,4 @@
+# Salidas de las pruebas de rendimiento: se generan en cada corrida y no se versionan.
+# La evidencia que acompaña un informe se copia a docs/rendimiento/.
+*
+!.gitignore
