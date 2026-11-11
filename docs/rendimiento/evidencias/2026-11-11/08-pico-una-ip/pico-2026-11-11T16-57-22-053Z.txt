@@ -1,0 +1,47 @@
+Escenario: pico  (pico (spike); PCa-2-G capacidad de acceso de usuarios; PTb-2-G adecuación del tiempo de respuesta)
+Fecha: 2026-11-11T16:57:22.053Z  Base: http://localhost  Duración: 200.2 s
+IP por usuario: no  (una sola IP: reproduce producción detrás del proxy sin IP real, B3.8)
+Peticiones: 10911  rps: 54.51  error: 37.19 %  429: 4058  5xx: 0  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 0.333
+Latencia global ms: p50 993.8  p90 1412.7  p95 1476.8  p99 1608.9  máx 2232.1
+
+Por pantalla (ms)
+nombre                                n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+activo.css                          376     2.1     9.5    12.9    45.4    79.9      -   20.21     0     0     0
+activo.js                           362     6.7    13.3    20.1    40.1     154      -   31.77     0     0     0
+activo.livewire                     434    36.1  1157.7  1195.6    1258  1273.8      -   30.88     0     0     0
+panel.bitacora                      131  1151.7  1389.1    1436  1543.4  1563.7  0.347   34.35     0     0     0
+panel.calendario                   2065  1115.6  1328.2  1380.2  1463.9  1905.8  0.337   35.59     0     0     0
+panel.calendario.eventos.mes       2065    12.2  1351.6  1401.3  1489.3  1933.4  0.258   51.62     0     0     0
+panel.evaluaciones                  697  1204.6  1440.5  1510.8  1598.3  2232.1  0.344   35.29     0     0     0
+panel.inventario                    158  1279.6  1674.3  1729.6  1845.5  1869.4  0.323   39.24     0     0     0
+panel.inventario.disponibilidad     158  1147.5  1373.6  1433.9  1573.8  1933.7   0.32   38.61     0     0     0
+panel.mi-formato                   1368  1165.6  1375.9  1417.9  1507.4  1755.1  0.346   34.21     0     0     0
+panel.mis-resultados               1368  1229.6  1478.1  1532.5  1634.6  1756.9  0.348   35.67     0     0     0
+panel.mis-solicitudes               697  1244.9  1490.2  1556.4  1639.6  1709.7  0.351   35.15     0     0     0
+panel.preparaciones                 158  1253.2  1510.5    1553  1617.8  1670.1  0.364   34.81     0     0     0
+panel.reportes                      131  1282.5  1505.4  1558.5  1730.5  1885.8  0.374   29.77     0     0     0
+panel.solicitudes                   289  1252.6  1499.8    1543  1634.2  1867.1  0.349   34.26     0     0     0
+panel.usuarios                      296  1245.6  1534.5  1597.1  1700.8  1783.2  0.324   38.18     0     0     0
+sonda.inicio                        158    45.9  1252.5    1350  1424.3  1481.9  0.839    6.96     0     0     0
+
+Por fase (ms)
+nombre         n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+antes         29    47.2    60.3    61.9    69.2    71.9      -       0     0     0     0
+despues       85    43.4    53.5    56.2    60.2    63.2      -       0     0     0     0
+pico       10797  1035.4  1413.4  1477.6  1609.1  2232.1      -   37.58  4058     0     0
+
+Umbrales
+  CUMPLE    respuestas_5xx count==0
+  CUMPLE    recuperacion_segundos value>=0
+
+  (1 de 1 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: PASA
+
+Análisis
+{
+  "usuarios_pico": 300,
+  "origen": "UNA SOLA IP para todos (caso proxy de la universidad, B3.8)",
+  "recuperacion_segundos": 3.380553429000007,
+  "nota": "Los 429 con una sola IP son el hallazgo B3.8 (topes por IP de nginx), no un fallo de la aplicación."
+}

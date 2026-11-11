@@ -1,0 +1,7 @@
+Resumen (medianas de la visita fría; bytes = Resource Timing transferSize)
+
+página              perfil         TTFB    FCP    LCP    CLS   INP   KB fría  peticiones  KB caliente  LCP cal.
+tablero             escritorio       98    252    252  0.000    16     120.2           6         11.7       200
+
+Comprobación cruzada de bytes: k6 browser_data_received = 4044801 B; suma de transferSize de todas las visitas = 405191 B.
+k6 cuenta los cuerpos YA DESCOMPRIMIDOS más las cabeceras, así que su cifra sobrepasa lo que viajó por la red cuando el servidor comprime; la cifra de la prueba es transferSize (ver README).

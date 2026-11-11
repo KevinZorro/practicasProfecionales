@@ -1,0 +1,44 @@
+grupo                                                      n     p50     p90     p95     p99     max  urtp95    2xx   3xx   4xx   429   5xx
+----------------------------------------------------------------------------------------------------------------------------------------------------
+GET /admin                                                 3   0.055   0.111   0.111   0.111   0.111   0.111      3     0     0     0     0
+GET /css/filament/filament/app.css                         1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /css/filament/forms/forms.css                          1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /css/filament/support/support.css                      1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /fonts/onest/onest.css                                 1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /js/filament/filament/app.js                           1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /js/filament/filament/echo.js                          1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /js/filament/notifications/notifications.js            1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /js/filament/support/support.js                        1   0.000   0.000   0.000   0.000   0.000   0.000      1     0     0     0     0
+GET /livewire/livewire.min.js                              1   0.019   0.019   0.019   0.019   0.019   0.019      1     0     0     0     0
+GET /panel                                                18   0.060   0.105   0.118   0.118   0.118   0.118     18     0     0     0     0
+GET /panel/bitacora                                        6   0.050   0.060   0.060   0.060   0.060   0.060      6     0     0     0     0
+GET /panel/bloqueos                                        6   0.043   0.052   0.052   0.052   0.052   0.052      6     0     0     0     0
+GET /panel/calendario                                     15   0.038   0.043   0.046   0.046   0.046   0.046     15     0     0     0     0
+GET /panel/calendario/eventos                             30   0.066   0.229   0.237   0.291   0.291   0.238     30     0     0     0     0
+GET /panel/depuracion                                      3   0.045   0.055   0.055   0.055   0.055   0.055      3     0     0     0     0
+GET /panel/evaluaciones                                    9   0.049   0.072   0.072   0.072   0.072   0.072      9     0     0     0     0
+GET /panel/formatos-confidencialidad                       9   0.066   0.104   0.104   0.104   0.104   0.104      9     0     0     0     0
+GET /panel/formatos-confidencialidad/estado                9   0.063   0.083   0.083   0.083   0.083   0.083      9     0     0     0     0
+GET /panel/inventario                                      9   0.065   0.099   0.099   0.099   0.099   0.099      9     0     0     0     0
+GET /panel/inventario/disponibilidad                       9   0.039   0.059   0.059   0.059   0.059   0.059      9     0     0     0     0
+GET /panel/mi-formato                                      6   0.041   0.043   0.043   0.043   0.043   0.043      6     0     0     0     0
+GET /panel/mis-resultados                                  3   0.056   0.057   0.057   0.057   0.057   0.058      3     0     0     0     0
+GET /panel/mis-solicitudes                                 3   0.060   0.062   0.062   0.062   0.062   0.062      3     0     0     0     0
+GET /panel/periodo-academico                               9   0.045   0.051   0.051   0.051   0.051   0.051      9     0     0     0     0
+GET /panel/plantillas-confidencialidad                     3   0.044   0.052   0.052   0.052   0.052   0.052      3     0     0     0     0
+GET /panel/preparaciones                                   6   0.103   0.127   0.127   0.127   0.127   0.127      6     0     0     0     0
+GET /panel/reportes                                        6   0.239   0.301   0.301   0.301   0.301   0.301      6     0     0     0     0
+GET /panel/reposicion                                      9   0.049   0.059   0.059   0.059   0.059   0.059      9     0     0     0     0
+GET /panel/sesiones-apartadas                              6   0.045   0.058   0.058   0.058   0.058   0.058      6     0     0     0     0
+GET /panel/solicitudes                                    10   0.172   0.231   0.253   0.253   0.253   0.253     10     0     0     0     0
+GET /panel/solicitudes/nueva                               3   0.052   0.052   0.052   0.052   0.052   0.052      3     0     0     0     0
+GET /panel/solicitudes/{id}                                9   0.173   0.209   0.209   0.209   0.209   0.209      9     0     0     0     0
+GET /panel/supervision                                     3   0.078   0.082   0.082   0.082   0.082   0.081      3     0     0     0     0
+GET /panel/usuarios                                        3   0.062   0.066   0.066   0.066   0.066   0.066      3     0     0     0     0
+GET /up                                                    2   0.008   0.010   0.010   0.010   0.010   0.009      2     0     0     0     0
+----------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                                                    216   0.052   0.196   0.229   0.265   0.301   0.230    216     0     0     0     0
+
+Tiempos en segundos (rt = $request_time; urtp95 = p95 de $upstream_response_time, lo que tardó PHP-FPM).
+Líneas leídas: 216; descartadas por no ser de acceso con rt=: 0.
+RNF01 (solo páginas): p95 0.229 s (límite 2.000 s), 429: 0, 5xx: 0 -> CUMPLE

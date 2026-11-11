@@ -1,0 +1,145 @@
+{
+  "pagina": "hoy-administrativo",
+  "perfil": "movil3g",
+  "descripcionDelPerfil": "Celular 3G gama baja (412x823 @1,75; 3G de WebPageTest; CPU 4x)",
+  "baseUrl": "http://localhost",
+  "visitas": {
+    "fria": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "max": 80.6000000005588,
+          "count": 1,
+          "min": 80.6000000005588,
+          "avg": 80.6000000005588,
+          "med": 80.6000000005588,
+          "p(75)": 80.6000000005588,
+          "p(90)": 80.6000000005588,
+          "p(95)": 80.6000000005588
+        },
+        "umbrales": []
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "avg": 1204,
+          "med": 1204,
+          "p(75)": 1204,
+          "p(90)": 1204,
+          "p(95)": 1204,
+          "max": 1204,
+          "count": 1,
+          "min": 1204
+        },
+        "umbrales": []
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "max": 1204,
+          "count": 1,
+          "min": 1204,
+          "avg": 1204,
+          "med": 1204,
+          "p(75)": 1204,
+          "p(90)": 1204,
+          "p(95)": 1204
+        },
+        "umbrales": [
+          "p(75)<=4000: CUMPLE"
+        ]
+      },
+      "wv_cls": {
+        "valores": {
+          "max": 0,
+          "count": 1,
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0
+        },
+        "umbrales": []
+      },
+      "wv_inp_ms": {
+        "valores": {
+          "p(95)": 56,
+          "max": 56,
+          "count": 1,
+          "min": 56,
+          "avg": 56,
+          "med": 56,
+          "p(75)": 56,
+          "p(90)": 56
+        },
+        "umbrales": []
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "min": 119779,
+          "avg": 119779,
+          "med": 119779,
+          "p(75)": 119779,
+          "p(90)": 119779,
+          "p(95)": 119779,
+          "max": 119779,
+          "count": 1
+        },
+        "umbrales": [
+          "max<=307200: CUMPLE"
+        ]
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "p(75)": 117979,
+          "p(90)": 117979,
+          "p(95)": 117979,
+          "max": 117979,
+          "count": 1,
+          "min": 117979,
+          "avg": 117979,
+          "med": 117979
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "p(75)": 417440,
+          "p(90)": 417440,
+          "p(95)": 417440,
+          "max": 417440,
+          "count": 1,
+          "min": 417440,
+          "avg": 417440,
+          "med": 417440
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "p(95)": 6,
+          "max": 6,
+          "count": 1,
+          "min": 6,
+          "avg": 6,
+          "med": 6,
+          "p(75)": 6,
+          "p(90)": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0,
+          "count": 1
+        },
+        "umbrales": []
+      }
+    },
+    "caliente": {}
+  }
+}

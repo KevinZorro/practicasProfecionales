@@ -1,0 +1,48 @@
+Escenario: humo  (humo / línea base; PTb-1-G tiempo medio de respuesta)
+Fecha: 2026-11-11T20:30:37.934Z  Base: http://localhost  Duración: 51.6 s
+IP por usuario: si
+Peticiones: 216  rps: 4.19  error: 0 %  429: 0  5xx: 0  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 1
+Latencia global ms: p50 56.2  p90 196.5  p95 229.5  p99 264.2  máx 302.9
+
+Por pantalla (ms)
+nombre                                       n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+activo.css                                   5     3.4   150.1   151.1   151.9   152.1      -       0     0     0     0
+activo.js                                    5   147.3   150.9     151   151.1   151.1      -       0     0     0     0
+activo.livewire                              1    21.7    21.7    21.7    21.7    21.7      -       0     0     0     0
+admin.dashboard                              3    57.8   101.8   107.3   111.7   112.8      1       0     0     0     0
+panel.bitacora                               6    51.3    56.8    59.1      61    61.4      1       0     0     0     0
+panel.bloqueos                               6      45    51.9    52.7    53.3    53.4      1       0     0     0     0
+panel.calendario                            15      39    44.4    45.5    46.9    47.3      1       0     0     0     0
+panel.calendario.eventos.mes                15   222.9     239   255.1   284.8   292.2      1       0     0     0     0
+panel.calendario.eventos.semana             15      65    86.2    87.9    89.8    90.3      1       0     0     0     0
+panel.depuracion                             3    46.2    53.3    54.2      55    55.1      1       0     0     0     0
+panel.evaluaciones                           9    49.5    60.4      67    72.3    73.6      1       0     0     0     0
+panel.formatos-confidencialidad              9    67.4    82.9    94.4   103.6   105.9      1       0     0     0     0
+panel.formatos-confidencialidad.estado       9    64.8    82.2    83.5    84.5    84.8      1       0     0     0     0
+panel.inicio                                18    62.9   100.7     109   118.1   120.4      1       0     0     0     0
+panel.inventario                             9    66.4    88.3      95   100.4   101.7      1       0     0     0     0
+panel.inventario.disponibilidad              9    40.5    51.2    56.1      60    60.9      1       0     0     0     0
+panel.mi-formato                             6    42.9    43.5    43.5    43.6    43.6      1       0     0     0     0
+panel.mis-resultados                         3    56.4    58.2    58.5    58.7    58.7      1       0     0     0     0
+panel.mis-solicitudes                        3    61.2    63.1    63.3    63.5    63.6      1       0     0     0     0
+panel.periodo-academico                      9      46    50.4    51.4    52.3    52.5      1       0     0     0     0
+panel.plantillas-confidencialidad            3    44.1    51.4    52.4    53.1    53.3      1       0     0     0     0
+panel.preparaciones                          6   107.8   125.1     127   128.6     129      1       0     0     0     0
+panel.reportes                               6   241.9   284.4   293.6   301.1   302.9      1       0     0     0     0
+panel.reposicion                             9    50.6    56.7    59.1    60.9    61.4      1       0     0     0     0
+panel.sesiones-apartadas                     6    51.4    57.9    58.5      59    59.1      1       0     0     0     0
+panel.solicitudes                            9     173   219.2   226.1   231.6   232.9      1       0     0     0     0
+panel.solicitudes.nueva                      3    53.8    54.1    54.1    54.1    54.1      1       0     0     0     0
+panel.solicitudes.ver                        9   173.7   203.3   206.5     209   209.7      1       0     0     0     0
+panel.supervision                            3    78.9    82.2    82.6      83      83      1       0     0     0     0
+panel.usuarios                               3    63.4    66.4    66.8    67.1    67.2      1       0     0     0     0
+
+Umbrales
+  CUMPLE    sesiones_invalidas count==0
+  CUMPLE    respuestas_5xx count==0
+  CUMPLE    respuestas_429 count==0
+  CUMPLE    tasa_error rate==0
+
+  (0 de 0 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: PASA

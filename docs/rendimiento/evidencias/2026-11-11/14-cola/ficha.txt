@@ -1,0 +1,8 @@
+== 14-cola ==
+  inicio 17:35:47, fin 17:35:57
+  modo de IP: no aplica
+  prueba: medido: 81.3 trabajos/s, fallidos 0
+  nginx, todo:    SIN DATOS (p95 0 s, 429: 0, 5xx: 0)
+  nginx, páginas: SIN DATOS (p95 0 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.0/0.0, db 8.7/17.3, web 0.0/0.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/14-cola/

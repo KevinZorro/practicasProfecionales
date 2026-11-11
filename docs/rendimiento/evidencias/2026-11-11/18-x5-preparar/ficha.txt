@@ -1,0 +1,5 @@
+== 18-x5-preparar ==
+  inicio 20:27:54, fin 20:28:44
+  resultado: factor 5; 22500 solicitudes 5761 usuarios 
+  cpuset del SUT: 0-2
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-preparar/ (conteo de filas por tabla en filas-por-tabla.txt)

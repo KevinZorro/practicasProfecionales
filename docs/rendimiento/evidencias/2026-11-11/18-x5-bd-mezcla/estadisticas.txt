@@ -1,0 +1,156 @@
+NOTICE:  extension "pg_stat_statements" already exists, skipping
+# Estadísticas de laboratorio_simulacion en 127.0.0.1:55432, 2026-11-11T20:42:23+00:00
+
+## Top 20 consultas por tiempo total (ms)
+ calls | total_ms | media_ms | max_ms |  rows   | pct  |                                                    consulta                                                    
+-------+----------+----------+--------+---------+------+----------------------------------------------------------------------------------------------------------------
+   806 | 367591.8 |  456.069 |  974.5 |  726206 | 55.1 | select "solicitudes"."id" from "solicitudes" where "estado" = $1 and "solicitudes"."fecha"::date >= CURRENT_DA
+  1734 |  54679.0 |   31.533 |  125.2 |    1734 |  8.2 | select count(*) as aggregate from "bitacora"
+ 14392 |  53192.1 |    3.696 |   57.2 |    9470 |  8.0 | select * from "solicitudes" where COALESCE(docente_que_dicta_id, docente_id) = $1 and "tipo" = $2 and "estado"
+   842 |  49387.0 |   58.654 |  211.9 | 1542189 |  7.4 | select "users"."nombre" as "docente_nombre", "materias"."nombre" as "materia_nombre", "materias"."semestre" as
+   849 |  16617.8 |   19.573 |  119.2 |   20700 |  2.5 | select * from "bitacora" where "accion" = $1 and "created_at"::date >= (CURRENT_DATE + $2) and "created_at"::d
+  2528 |  14555.7 |    5.758 |   70.0 | 2510304 |  2.2 | select "salas".*, "preparacion_sala"."preparacion_id" as "pivot_preparacion_id", "preparacion_sala"."sala_id" 
+  6801 |  11828.3 |    1.739 |   35.8 |  278841 |  1.8 | select * from "preparaciones" where exists (select * from "solicitudes" where "preparaciones"."solicitud_id" =
+   820 |   9726.5 |   11.862 |   98.5 |   20500 |  1.5 | select * from "evaluacion_estudiantes" where exists (select * from "evaluaciones" where "evaluacion_estudiante
+ 10171 |   7156.6 |    0.704 |   22.7 |   50855 |  1.1 | select * from "solicitudes" where "estado" = $1 and ("solicitudes"."estado" not in ($2, $3) or "solicitudes"."
+  2528 |   6465.5 |    2.558 |   37.0 | 2474912 |  1.0 | select * from "preparaciones" where "preparaciones"."solicitud_id" in ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+  6801 |   5930.5 |    0.872 |   35.5 | 2999241 |  0.9 | select "users"."id", "estudiante_solicitud"."solicitud_id" as "pivot_solicitud_id", "estudiante_solicitud"."es
+ 76906 |   5262.2 |    0.068 |   42.7 |   76906 |  0.8 | update "sessions" set "payload" = repeat($1, $2), "last_activity" = extract($3 from now())::int, "user_id" = $
+ 14392 |   4945.1 |    0.344 |   16.4 |   30404 |  0.7 | select * from "solicitudes" where COALESCE(docente_que_dicta_id, docente_id) = $1 and "estado" = $2 and "fecha
+  2528 |   4848.2 |    1.918 |   22.6 | 2399898 |  0.7 | select * from "solicitudes" where "estado" = $1 and "fecha" between (CURRENT_DATE + $2) and (CURRENT_DATE + $3
+  5092 |   4266.4 |    0.838 |   29.7 |   76380 |  0.6 | select * from "solicitudes" where ("solicitudes"."estado" not in ($1, $2) or "solicitudes"."fecha"::date >= CU
+ 10171 |   3895.1 |    0.383 |   17.2 |   10171 |  0.6 | select count(*) as aggregate from "solicitudes" where "estado" = $1 and ("solicitudes"."estado" not in ($2, $3
+  6801 |   3493.9 |    0.514 |   18.4 | 1367001 |  0.5 | select "items_inventario".*, "preparacion_item"."preparacion_id" as "pivot_preparacion_id", "preparacion_item"
+  8472 |   2516.3 |    0.297 |   16.0 |   18067 |  0.4 | select * from "solicitudes" where "estado" = $1 and "fecha" between (CURRENT_DATE + $2) and (CURRENT_DATE + $3
+ 10105 |   2131.8 |    0.211 |   14.1 |  666930 |  0.3 | select "evaluacion_items".*, "evaluacion_estudiante_item"."evaluacion_estudiante_id" as "pivot_evaluacion_estu
+  6801 |   2012.7 |    0.296 |   19.0 |  278841 |  0.3 | select * from "users" where "users"."id" in ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+(20 rows)
+
+
+## Top 20 consultas por tiempo medio (ms), con al menos 5 llamadas
+ calls | media_ms | desv_ms | max_ms |  rows   | bloques_leidos_disco |                                                    consulta                                                    
+-------+----------+---------+--------+---------+----------------------+----------------------------------------------------------------------------------------------------------------
+   806 |  456.069 | 234.867 |  974.5 |  726206 |                    0 | select "solicitudes"."id" from "solicitudes" where "estado" = $1 and "solicitudes"."fecha"::date >= CURRENT_DA
+   842 |   58.654 |  33.367 |  211.9 | 1542189 |                    0 | select "users"."nombre" as "docente_nombre", "materias"."nombre" as "materia_nombre", "materias"."semestre" as
+  1734 |   31.533 |  16.709 |  125.2 |    1734 |                    0 | select count(*) as aggregate from "bitacora"
+   849 |   19.573 |  13.580 |  119.2 |   20700 |                   19 | select * from "bitacora" where "accion" = $1 and "created_at"::date >= (CURRENT_DATE + $2) and "created_at"::d
+   820 |   11.862 |  12.559 |   98.5 |   20500 |                    0 | select * from "evaluacion_estudiantes" where exists (select * from "evaluaciones" where "evaluacion_estudiante
+  2528 |    5.758 |   7.072 |   70.0 | 2510304 |                    0 | select "salas".*, "preparacion_sala"."preparacion_id" as "pivot_preparacion_id", "preparacion_sala"."sala_id" 
+ 14392 |    3.696 |   3.788 |   57.2 |    9470 |                    0 | select * from "solicitudes" where COALESCE(docente_que_dicta_id, docente_id) = $1 and "tipo" = $2 and "estado"
+  2528 |    2.558 |   3.736 |   37.0 | 2474912 |                    0 | select * from "preparaciones" where "preparaciones"."solicitud_id" in ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+   849 |    2.162 |   1.788 |   23.7 |     849 |                    0 | select count(*) as aggregate from "bitacora" where "accion" = $1 and "created_at"::date >= (CURRENT_DATE + $2)
+   820 |    1.972 |   2.397 |   25.4 |     820 |                    4 | select count(*) as aggregate from "evaluacion_estudiantes" where exists (select * from "evaluaciones" where "e
+  2528 |    1.918 |   1.688 |   22.6 | 2399898 |                    0 | select * from "solicitudes" where "estado" = $1 and "fecha" between (CURRENT_DATE + $2) and (CURRENT_DATE + $3
+  6801 |    1.739 |   1.750 |   35.8 |  278841 |                    0 | select * from "preparaciones" where exists (select * from "solicitudes" where "preparaciones"."solicitud_id" =
+   866 |    1.512 |   1.510 |   31.7 |     866 |                    0 | select count(*) as aggregate from "solicitudes" where "solicitudes"."estado" in ($1, $2) and "solicitudes"."fe
+   866 |    1.234 |   1.720 |   13.8 |   12990 |                    0 | select * from "solicitudes" where "solicitudes"."estado" in ($1, $2) and "solicitudes"."fecha"::date < CURRENT
+  1734 |    0.987 |   0.961 |   11.7 |   43350 |                    0 | select * from "bitacora" order by "created_at" desc, "id" desc limit $1 offset $2
+  6801 |    0.872 |   1.118 |   35.5 | 2999241 |                    0 | select "users"."id", "estudiante_solicitud"."solicitud_id" as "pivot_solicitud_id", "estudiante_solicitud"."es
+  5092 |    0.838 |   0.956 |   29.7 |   76380 |                    0 | select * from "solicitudes" where ("solicitudes"."estado" not in ($1, $2) or "solicitudes"."fecha"::date >= CU
+  2528 |    0.708 |   1.344 |   16.6 | 1400512 |                    0 | select "id", "nombre" from "users" where "users"."id" in ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $
+ 10171 |    0.704 |   1.062 |   22.7 |   50855 |                    0 | select * from "solicitudes" where "estado" = $1 and ("solicitudes"."estado" not in ($2, $3) or "solicitudes"."
+  6801 |    0.514 |   0.837 |   18.4 | 1367001 |                    0 | select "items_inventario".*, "preparacion_item"."preparacion_id" as "pivot_preparacion_id", "preparacion_item"
+(20 rows)
+
+
+## Tablas: lecturas secuenciales frente a por índice
+           tabla            | seq_scan | seq_tup_read | idx_scan | filas_vivas | filas_muertas | pct_secuencial |        last_autovacuum        |       last_autoanalyze        
+----------------------------+----------+--------------+----------+-------------+---------------+----------------+-------------------------------+-------------------------------
+ solicitudes                |    14392 |    323820000 |  7350401 |           0 |             0 |            0.2 |                               | 
+ preparaciones              |    10171 |    155799378 |   491587 |           0 |             0 |            2.0 |                               | 
+ preparacion_sala           |     2528 |     42399616 |  2060329 |           0 |             0 |            0.1 |                               | 
+ salas                      |  1591508 |     12202806 |   118446 |           0 |             0 |           93.1 |                               | 
+ users                      |      842 |      4850762 |  4383210 |           0 |             0 |            0.0 |                               | 
+ evaluaciones               |     1033 |      4263191 |   359179 |           0 |             0 |            0.3 |                               | 
+ casos_clinicos             |    91547 |      3661880 |     1684 |           0 |             0 |           98.2 |                               | 
+ items_inventario           |    10115 |      3034500 |    15214 |           0 |             0 |           39.9 |                               | 
+ materias                   |   100669 |      1208028 |     1684 |           0 |             0 |           98.4 |                               | 
+ roles                      |    76906 |       307624 |        0 |           0 |             0 |          100.0 |                               | 
+ periodos_academicos        |    33795 |       101385 |        0 |           0 |             0 |          100.0 |                               | 
+ tipos_evaluacion           |    10925 |        87400 |        0 |           0 |             0 |          100.0 |                               | 
+ bloqueos                   |     1682 |        68962 |        0 |           0 |             0 |          100.0 |                               | 
+ docente_supervisor         |     1630 |        58680 |        0 |           0 |             0 |          100.0 |                               | 
+ sessions                   |        1 |         1615 |   157116 |         598 |         23885 |            0.0 | 2026-11-11 20:41:39.955029+00 | 2026-11-11 20:41:40.06723+00
+ cache                      |      124 |          246 |     2617 |           2 |            60 |            4.5 |                               | 2026-11-11 20:41:40.081161+00
+ configuracion_landing      |        0 |            0 |        0 |           0 |             0 |                |                               | 
+ solicitudes_informacion    |        0 |            0 |        0 |           0 |             0 |                |                               | 
+ evaluacion_estudiante_item |        0 |            0 |   111155 |           0 |             0 |            0.0 |                               | 
+ permissions                |     2528 |            0 |        0 |           0 |             0 |          100.0 |                               | 
+(20 rows)
+
+
+## Índices sin uso (idx_scan = 0) desde el último reinicio de estadísticas, sin contar claves únicas ni primarias
+            tabla            |                         indice                          | tamano  
+-----------------------------+---------------------------------------------------------+---------
+ bitacora                    | bitacora_user_id_created_at_index                       | 6184 kB
+ bitacora                    | bitacora_auditable_type_auditable_id_index              | 3560 kB
+ sessions                    | sessions_user_id_index                                  | 344 kB
+ solicitudes                 | solicitudes_materia_id_index                            | 208 kB
+ solicitudes                 | solicitudes_caso_clinico_id_index                       | 200 kB
+ solicitudes                 | solicitudes_origen_fecha_index                          | 176 kB
+ preparacion_sala            | preparacion_sala_sala_id_index                          | 144 kB
+ users                       | users_programa_index                                    | 80 kB
+ users                       | users_estado_index                                      | 64 kB
+ model_has_roles             | model_has_roles_hasta_index                             | 64 kB
+ evaluaciones                | evaluaciones_tipo_evaluacion_id_index                   | 56 kB
+ evaluaciones                | evaluaciones_estado_index                               | 48 kB
+ items_inventario            | items_inventario_tipo_cantidad_operativa_index          | 40 kB
+ cambios_estado_item         | cambios_estado_item_item_inventario_id_created_at_index | 32 kB
+ items_inventario            | items_inventario_activo_index                           | 16 kB
+ plantillas_confidencialidad | plantillas_confidencialidad_activo_index                | 16 kB
+ casos_clinicos              | casos_clinicos_visible_publico_orden_index              | 16 kB
+ periodos_academicos         | periodos_academicos_cerrado_at_index                    | 16 kB
+ items_checklist             | items_checklist_tipo_evaluacion_id_orden_index          | 16 kB
+ tipos_evaluacion            | tipos_evaluacion_activo_index                           | 16 kB
+(20 rows)
+
+
+## Razón de aciertos de caché (shared_buffers)
+          tipo           | aciertos  | lecturas_disco | pct_aciertos 
+-------------------------+-----------+----------------+--------------
+ tablas                  |  51627278 |            265 |       100.00
+ índices                 | 248668196 |           1451 |       100.00
+ base (pg_stat_database) | 301251409 |           1729 |       100.00
+(3 rows)
+
+
+## Tiempo de E/S de la base (necesita track_io_timing=on), en ms
+ lectura_ms | escritura_ms | confirmadas | deshechas | archivos_temporales | bytes_temporales | deadlocks 
+------------+--------------+-------------+-----------+---------------------+------------------+-----------
+     14.614 |       95.109 |     1078039 |         0 |                   0 | 0 bytes          |         0
+(1 row)
+
+
+## Tamaño de las 20 tablas mayores (tabla, índices, total)
+           tabla            | filas |  tabla_mb  | indices  |  total  
+----------------------------+-------+------------+----------+---------
+ bitacora                   |     0 | 20 MB      | 26 MB    | 45 MB
+ sessions                   |   598 | 32 MB      | 1064 kB  | 33 MB
+ evaluacion_estudiante_item |     0 | 17 MB      | 16 MB    | 33 MB
+ estudiante_solicitud       |     0 | 15 MB      | 10064 kB | 25 MB
+ solicitud_item             |     0 | 6424 kB    | 6704 kB  | 13 MB
+ preparacion_item           |     0 | 4384 kB    | 3920 kB  | 8304 kB
+ evaluacion_estudiantes     |     0 | 3872 kB    | 3496 kB  | 7368 kB
+ solicitudes                |     0 | 4024 kB    | 1712 kB  | 5736 kB
+ evaluacion_items           |     0 | 2472 kB    | 1440 kB  | 3912 kB
+ formatos_confidencialidad  |     0 | 2392 kB    | 1160 kB  | 3552 kB
+ users                      |     0 | 2336 kB    | 936 kB   | 3272 kB
+ preparaciones              |     0 | 1528 kB    | 704 kB   | 2232 kB
+ preparacion_sala           |     0 | 760 kB     | 680 kB   | 1440 kB
+ model_has_roles            |     0 | 376 kB     | 608 kB   | 984 kB
+ evaluaciones               |     0 | 408 kB     | 416 kB   | 824 kB
+ items_inventario           |     0 | 112 kB     | 112 kB   | 224 kB
+ cambios_estado_item        |     0 | 104 kB     | 64 kB    | 168 kB
+ salas                      |     0 | 16 kB      | 64 kB    | 80 kB
+ periodos_academicos        |     0 | 8192 bytes | 64 kB    | 72 kB
+ caso_clinico_item          |     0 | 40 kB      | 32 kB    | 72 kB
+(20 rows)
+
+
+## Conexiones
+ state  | count 
+--------+-------
+ active |     1
+ idle   |     1
+(2 rows)
+

@@ -1,0 +1,81 @@
+2026-11-11 16:01:47 CAMPAÑA campana-20261111-1601: pasos preparar bd-referencia bd-planes bd-consultas humo rnf01 mixta capacidad pico-una-ip pico-ip-real estres-una-ip estres-ip-real concurrencia descargas cola navegador recorridos resistencia x5 (RAPIDO=no, factor 1)
+2026-11-11 16:01:47 INICIO preparar
+2026-11-11 16:02:20 FIN preparar factor 1; 4500 solicitudes 1161 usuarios 
+2026-11-11 16:02:20 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:03:20 INICIO bd-referencia
+2026-11-11 16:07:35 FIN bd-referencia medido (sin umbral: es la línea base del hardware)
+2026-11-11 16:07:35 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:08:35 INICIO bd-planes
+2026-11-11 16:09:02 FIN bd-planes medido (ver problemas.txt)
+2026-11-11 16:09:02 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:10:02 INICIO bd-consultas
+2026-11-11 16:20:08 FIN bd-consultas medido
+2026-11-11 16:20:08 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:21:08 INICIO humo
+2026-11-11 16:21:58 FIN humo CUMPLE los umbrales
+2026-11-11 16:21:58 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:22:58 INICIO rnf01
+2026-11-11 16:28:08 FIN rnf01 CUMPLE los umbrales
+2026-11-11 16:28:08 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:29:08 INICIO mixta
+2026-11-11 16:39:35 FIN mixta CUMPLE los umbrales
+2026-11-11 16:39:35 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:40:35 INICIO capacidad
+2026-11-11 16:52:57 FIN capacidad NO CUMPLE los umbrales
+2026-11-11 16:52:57 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:53:57 INICIO pico-una-ip
+2026-11-11 16:57:24 FIN pico-una-ip CUMPLE los umbrales
+2026-11-11 16:57:24 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 16:58:24 INICIO pico-ip-real
+2026-11-11 17:01:54 FIN pico-ip-real CUMPLE los umbrales
+2026-11-11 17:01:54 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 17:02:54 INICIO estres-una-ip
+2026-11-11 17:14:49 FIN estres-una-ip NO CUMPLE los umbrales
+2026-11-11 17:14:49 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 17:15:49 INICIO estres-ip-real
+2026-11-11 17:25:54 FIN estres-ip-real NO CUMPLE los umbrales
+2026-11-11 17:25:54 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 17:26:54 INICIO concurrencia
+2026-11-11 17:29:40 FIN concurrencia CUMPLE los umbrales
+2026-11-11 17:29:40 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 17:30:40 INICIO descargas
+2026-11-11 17:34:47 FIN descargas CUMPLE los umbrales
+2026-11-11 17:34:47 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 17:35:47 INICIO cola
+2026-11-11 17:35:57 FIN cola medido: 81.3 trabajos/s, fallidos 0
+2026-11-11 17:35:57 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 17:36:57 INICIO navegador
+2026-11-11 19:41:41 CAMPAÑA campana-20261111-1601: pasos navegador recorridos resistencia x5 (RAPIDO=no, factor 1)
+2026-11-11 19:41:45 INICIO navegador
+2026-11-11 19:53:08 FIN navegador CUMPLE los umbrales
+2026-11-11 19:53:08 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 19:54:08 INICIO recorridos
+2026-11-11 19:55:23 FIN recorridos CUMPLE los umbrales
+2026-11-11 19:55:23 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 19:56:23 INICIO resistencia
+2026-11-11 20:26:54 FIN resistencia CUMPLE los umbrales
+2026-11-11 20:26:54 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 20:27:54 INICIO x5 (prepara con factor 5 y repite humo, rnf01, bd-planes, mezcla y web-vitals del panel)
+2026-11-11 20:27:54 INICIO x5-preparar
+2026-11-11 20:28:44 FIN x5-preparar factor 5; 22500 solicitudes 5761 usuarios 
+2026-11-11 20:28:44 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 20:29:44 INICIO x5-humo
+2026-11-11 20:30:41 FIN x5-humo CUMPLE los umbrales
+2026-11-11 20:30:42 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 20:31:42 INICIO x5-rnf01
+2026-11-11 20:36:48 FIN x5-rnf01 CUMPLE los umbrales
+2026-11-11 20:36:48 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 20:37:48 INICIO x5-bd-planes
+2026-11-11 20:38:16 FIN x5-bd-planes medido (ver problemas.txt)
+2026-11-11 20:38:16 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 20:39:16 INICIO x5-bd-mezcla
+2026-11-11 20:42:25 FIN x5-bd-mezcla medido
+2026-11-11 20:42:25 PAUSA 60s (los topes por minuto se vacían)
+2026-11-11 20:43:25 INICIO x5-web-vitals
+2026-11-11 20:56:37 AVISO x5-web-vitals hoy-docente: el navegador no terminó en 10m (intento 1)
+2026-11-11 21:07:09 AVISO x5-web-vitals hoy-docente: el navegador no terminó en 10m (intento 2)
+2026-11-11 21:07:09 ERROR x5-web-vitals hoy-docente: sin resultado tras dos intentos
+2026-11-11 21:17:40 AVISO x5-web-vitals hoy-administrativo: el navegador no terminó en 10m (intento 1)
+2026-11-11 21:18:26 AVISO x5-web-vitals cortado a mano en hoy-administrativo (intento 2): los procesos del perfil movil3g se cuelgan al cerrar la página con el volumen x5; las páginas que faltan se miden aparte solo en escritorio (ver nota-x5-web-vitals.txt)
+2026-11-11 21:19:56 FIN x5-web-vitals completado a mano (ver nota-x5-web-vitals.txt)
+2026-11-11 21:19:56 CAMPAÑA TERMINADA

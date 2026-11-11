@@ -1,0 +1,52 @@
+Base: laboratorio_simulacion, factor 5, semilla 20261111
+  [   0.0s] personas: 5761
+  [   0.1s] roles: 5766 filas en model_has_roles
+  [   0.1s] catálogos: 300 ítems, 40 escenarios, 8 salas
+  [   6.5s] periodo 2025-2: 7500 solicitudes acumuladas
+  [   0.3s] periodo 2025-2: 5750 formatos
+  [   6.8s] periodo 2026-1: 15000 solicitudes acumuladas
+  [   0.3s] periodo 2026-1: 5750 formatos
+  [   5.6s] periodo 2026-2: 22500 solicitudes acumuladas
+  [   0.2s] periodo 2026-2: 4247 formatos
+  [   5.0s] bitácora: 150000
+Si la base no es tuya (usuario de la aplicación), corre ANALYZE con el dueño antes de medir.
+
+Filas por tabla:
+  asignaciones_de_rol                      3
+  bitacora                            150000
+  bloqueos                                41
+  cambios_estado_item                    542
+  capacidades                              8
+  caso_clinico_capacidad                  80
+  caso_clinico_item                      194
+  caso_clinico_materia                    80
+  caso_clinico_sala                       40
+  casos_clinicos                          40
+  docente_supervisor                      36
+  estudiante_solicitud                255469
+  evaluacion_estudiante_item          300842
+  evaluacion_estudiantes               46411
+  evaluacion_items                     26714
+  evaluaciones                          4127
+  formatos_confidencialidad            15747
+  items_checklist                         52
+  items_inventario                       300
+  materia_tipo_evaluacion                 16
+  materias                                12
+  migrations                              70
+  model_has_roles                       5766
+  periodos_academicos                      3
+  plantillas_confidencialidad              1
+  preparacion_item                     73900
+  preparacion_sala                     16772
+  preparaciones                        15318
+  roles                                    6
+  salas                                    8
+  solicitud_item                      108592
+  solicitudes                          22500
+  tipos_evaluacion                         8
+  ubicaciones_sala                         8
+  users                                 5761
+
+Solicitudes sin sala por falta de huecos: 201; descartadas por cruces: 0
+Tiempo total: 25.3 s

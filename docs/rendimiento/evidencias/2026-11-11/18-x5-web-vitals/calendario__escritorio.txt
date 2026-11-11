@@ -1,0 +1,23 @@
+Página calendario · perfil escritorio (Escritorio sin limitar (1366x768)) · http://localhost
+
+  Visita fria
+    TTFB (ms)                      med 37  p75 39  min 28  max 41  n=3   [p(75)<=800: CUMPLE]
+    FCP (ms)                       med 140  p75 148  min 120  max 156  n=3   [p(75)<=1800: CUMPLE]
+    LCP (ms)                       med 140  p75 148  min 120  max 156  n=3   [p(75)<=2500: CUMPLE]
+    CLS                            med 0.082  p75 0.082  min 0.082  max 0.082  n=3   [p(75)<=0.1: CUMPLE]
+    INP (ms)                       med 240  p75 248  min 216  max 256  n=3   [p(75)<=200: NO CUMPLE]
+    Bytes transferidos             med 229310  p75 229311  min 229309  max 229312  n=3   [max<=307200: CUMPLE]
+    Cuerpos comprimidos            med 226910  p75 226911  min 226909  max 226912  n=3
+    Cuerpos descomprimidos         med 1384631  p75 1384631  min 1384631  max 1384631  n=3
+    Peticiones                     med 8  p75 8  min 8  max 8  n=3
+    Peticiones servidas de caché   med 0  p75 0  min 0  max 0  n=3
+  Visita caliente
+    TTFB (ms)                      med 39  p75 40  min 33  max 40  n=3
+    FCP (ms)                       med 168  p75 170  min 100  max 172  n=3
+    LCP (ms)                       med 168  p75 170  min 100  max 172  n=3
+    CLS                            med 0.082  p75 0.082  min 0.082  max 0.082  n=3
+    Bytes transferidos             med 50621  p75 50622  min 50620  max 50623  n=3
+    Cuerpos comprimidos            med 226910  p75 226911  min 226909  max 226912  n=3
+    Cuerpos descomprimidos         med 1384631  p75 1384631  min 1384631  max 1384631  n=3
+    Peticiones                     med 8  p75 8  min 8  max 8  n=3
+    Peticiones servidas de caché   med 6  p75 6  min 6  max 6  n=3

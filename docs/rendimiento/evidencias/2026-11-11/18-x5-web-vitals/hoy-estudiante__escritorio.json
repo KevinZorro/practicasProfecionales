@@ -1,0 +1,271 @@
+{
+  "pagina": "hoy-estudiante",
+  "perfil": "escritorio",
+  "descripcionDelPerfil": "Escritorio sin limitar (1366x768)",
+  "baseUrl": "http://localhost",
+  "visitas": {
+    "fria": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "count": 3,
+          "min": 39.39999999990687,
+          "avg": 43.26666666644936,
+          "med": 42.299999999813735,
+          "p(75)": 45.1999999997206,
+          "p(90)": 46.93999999966472,
+          "p(95)": 47.519999999646096,
+          "max": 48.09999999962747
+        },
+        "umbrales": [
+          "p(75)<=800: CUMPLE"
+        ]
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "min": 124,
+          "avg": 129.33333333333334,
+          "med": 124,
+          "p(75)": 132,
+          "p(90)": 136.8,
+          "p(95)": 138.4,
+          "max": 140,
+          "count": 3
+        },
+        "umbrales": [
+          "p(75)<=1800: CUMPLE"
+        ]
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "med": 124,
+          "p(75)": 132,
+          "p(90)": 136.8,
+          "p(95)": 138.4,
+          "max": 140,
+          "count": 3,
+          "min": 124,
+          "avg": 129.33333333333334
+        },
+        "umbrales": [
+          "p(75)<=2500: CUMPLE"
+        ]
+      },
+      "wv_cls": {
+        "valores": {
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0,
+          "count": 3,
+          "min": 0
+        },
+        "umbrales": [
+          "p(75)<=0.1: CUMPLE"
+        ]
+      },
+      "wv_inp_ms": {
+        "valores": {
+          "p(95)": 16,
+          "max": 16,
+          "count": 3,
+          "min": 16,
+          "avg": 16,
+          "med": 16,
+          "p(75)": 16,
+          "p(90)": 16
+        },
+        "umbrales": [
+          "p(75)<=200: CUMPLE"
+        ]
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "p(90)": 115657.8,
+          "p(95)": 115659.9,
+          "max": 115662,
+          "count": 3,
+          "min": 115640,
+          "avg": 115647.66666666667,
+          "med": 115641,
+          "p(75)": 115651.5
+        },
+        "umbrales": [
+          "max<=307200: CUMPLE"
+        ]
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "p(90)": 113857.8,
+          "p(95)": 113859.9,
+          "max": 113862,
+          "count": 3,
+          "min": 113840,
+          "avg": 113847.66666666667,
+          "med": 113841,
+          "p(75)": 113851.5
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "max": 284838,
+          "count": 3,
+          "min": 284808,
+          "avg": 284827.6666666667,
+          "med": 284837,
+          "p(75)": 284837.5,
+          "p(90)": 284837.8,
+          "p(95)": 284837.9
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "max": 6,
+          "count": 3,
+          "min": 6,
+          "avg": 6,
+          "med": 6,
+          "p(75)": 6,
+          "p(90)": 6,
+          "p(95)": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0,
+          "count": 3
+        },
+        "umbrales": []
+      }
+    },
+    "caliente": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "p(90)": 59.97999999998137,
+          "p(95)": 61.18999999994412,
+          "max": 62.39999999990687,
+          "count": 3,
+          "min": 46.200000000186265,
+          "avg": 52.96666666679084,
+          "med": 50.3000000002794,
+          "p(75)": 56.35000000009313
+        },
+        "umbrales": []
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "p(75)": 110,
+          "p(90)": 113.6,
+          "p(95)": 114.8,
+          "max": 116,
+          "count": 3,
+          "min": 96,
+          "avg": 105.33333333333333,
+          "med": 104
+        },
+        "umbrales": []
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "p(95)": 114.8,
+          "max": 116,
+          "count": 3,
+          "min": 96,
+          "avg": 105.33333333333333,
+          "med": 104,
+          "p(75)": 110,
+          "p(90)": 113.6
+        },
+        "umbrales": []
+      },
+      "wv_cls": {
+        "valores": {
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0,
+          "count": 3
+        },
+        "umbrales": []
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "min": 4557,
+          "avg": 4564.666666666667,
+          "med": 4558,
+          "p(75)": 4568.5,
+          "p(90)": 4574.8,
+          "p(95)": 4576.9,
+          "max": 4579,
+          "count": 3
+        },
+        "umbrales": []
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "min": 113840,
+          "avg": 113847.66666666667,
+          "med": 113841,
+          "p(75)": 113851.5,
+          "p(90)": 113857.8,
+          "p(95)": 113859.9,
+          "max": 113862,
+          "count": 3
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "max": 284838,
+          "count": 3,
+          "min": 284808,
+          "avg": 284827.6666666667,
+          "med": 284837,
+          "p(75)": 284837.5,
+          "p(90)": 284837.8,
+          "p(95)": 284837.9
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "p(75)": 6,
+          "p(90)": 6,
+          "p(95)": 6,
+          "max": 6,
+          "count": 3,
+          "min": 6,
+          "avg": 6,
+          "med": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "med": 5,
+          "p(75)": 5,
+          "p(90)": 5,
+          "p(95)": 5,
+          "max": 5,
+          "count": 3,
+          "min": 5,
+          "avg": 5
+        },
+        "umbrales": []
+      }
+    }
+  }
+}

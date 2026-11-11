@@ -1,0 +1,14 @@
+NOTICE:  database "pgbench_referencia" does not exist, skipping
+Inicializando pgbench (escala 50)...
+== clientes=1 hilos=1 duracion=60s ==
+== clientes=4 hilos=4 duracion=60s ==
+== clientes=8 hilos=4 duracion=60s ==
+== clientes=16 hilos=4 duracion=60s ==
+
+clientes,hilos,duracion_s,tps,latencia_media_ms,latencia_desv_ms,transacciones,fallidas
+1,1,60,799.425071,1.250,0.692,47957,0
+4,4,60,2151.878248,1.858,0.851,129095,0
+8,4,60,3186.920376,2.506,1.247,191179,0
+16,4,60,4267.807074,3.720,1.956,255951,0
+Resumen: rendimiento/resultados/campana-20261111-1601/01-bd-referencia/referencia-tpcb-20261111-160321.csv
+Salida completa: rendimiento/resultados/campana-20261111-1601/01-bd-referencia/referencia-tpcb-20261111-160321.txt

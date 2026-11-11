@@ -1,0 +1,140 @@
+NOTICE:  extension "pg_stat_statements" already exists, skipping
+# Estadísticas de laboratorio_simulacion en 127.0.0.1:55432, 2026-11-11T17:35:55+00:00
+
+## Top 20 consultas por tiempo total (ms)
+ calls | total_ms | media_ms | max_ms | rows | pct  |                                                    consulta                                                    
+-------+----------+----------+--------+------+------+----------------------------------------------------------------------------------------------------------------
+   302 |     43.8 |    0.145 |    1.2 |  300 | 57.5 | select * from "jobs" where "queue" = $1 and (("reserved_at" is null and "available_at" <= $2) or ("reserved_at
+   300 |      7.6 |    0.025 |    0.1 |  300 |  9.9 | select * from "jobs" where "id" = $1 limit $2 for update
+   300 |      7.3 |    0.024 |    0.2 |  300 |  9.6 | insert into "jobs" ("queue", "attempts", "reserved_at", "available_at", "created_at", "payload") values ($1, $
+   300 |      6.9 |    0.023 |    0.1 |  300 |  9.1 | update "jobs" set "reserved_at" = $1, "attempts" = $2 where "id" = $3
+   604 |      4.8 |    0.008 |    0.2 |    0 |  6.3 | select * from "cache" where "key" in ($1)
+   300 |      3.1 |    0.010 |    0.1 |  300 |  4.1 | delete from "jobs" where "id" = $1
+     1 |      0.8 |    0.754 |    0.8 |    1 |  1.0 | SELECT pg_stat_statements_reset()
+     6 |      0.5 |    0.082 |    0.1 |    6 |  0.6 | SELECT count(*) FROM jobs
+   602 |      0.5 |    0.001 |    0.0 |    0 |  0.6 | BEGIN
+   602 |      0.5 |    0.001 |    0.0 |    0 |  0.6 | COMMIT
+     1 |      0.2 |    0.199 |    0.2 |    0 |  0.3 | CREATE EXTENSION IF NOT EXISTS pg_stat_statements
+     1 |      0.1 |    0.110 |    0.1 |    1 |  0.1 | SELECT count(*) FROM pg_stat_statements
+     1 |      0.1 |    0.090 |    0.1 |    1 |  0.1 | SELECT pg_stat_reset()
+     2 |      0.0 |    0.018 |    0.0 |    2 |  0.0 | SELECT count(*) FROM failed_jobs
+     1 |      0.0 |    0.011 |    0.0 |    0 |  0.0 | set search_path to "public"
+(15 rows)
+
+
+## Top 20 consultas por tiempo medio (ms), con al menos 5 llamadas
+ calls | media_ms | desv_ms | max_ms | rows | bloques_leidos_disco |                                                    consulta                                                    
+-------+----------+---------+--------+------+----------------------+----------------------------------------------------------------------------------------------------------------
+   302 |    0.145 |   0.089 |    1.2 |  300 |                    0 | select * from "jobs" where "queue" = $1 and (("reserved_at" is null and "available_at" <= $2) or ("reserved_at
+     6 |    0.082 |   0.023 |    0.1 |    6 |                    0 | SELECT count(*) FROM jobs
+   300 |    0.025 |   0.008 |    0.1 |  300 |                    0 | select * from "jobs" where "id" = $1 limit $2 for update
+   300 |    0.024 |   0.021 |    0.2 |  300 |                    0 | insert into "jobs" ("queue", "attempts", "reserved_at", "available_at", "created_at", "payload") values ($1, $
+   300 |    0.023 |   0.009 |    0.1 |  300 |                    0 | update "jobs" set "reserved_at" = $1, "attempts" = $2 where "id" = $3
+   300 |    0.010 |   0.007 |    0.1 |  300 |                    0 | delete from "jobs" where "id" = $1
+   604 |    0.008 |   0.008 |    0.2 |    0 |                    0 | select * from "cache" where "key" in ($1)
+   602 |    0.001 |   0.001 |    0.0 |    0 |                    0 | BEGIN
+   602 |    0.001 |   0.001 |    0.0 |    0 |                    0 | COMMIT
+(9 rows)
+
+
+## Tablas: lecturas secuenciales frente a por índice
+           tabla            | seq_scan | seq_tup_read | idx_scan | filas_vivas | filas_muertas | pct_secuencial | last_autovacuum | last_autoanalyze 
+----------------------------+----------+--------------+----------+-------------+---------------+----------------+-----------------+------------------
+ cache                      |      604 |         3020 |        0 |           0 |             0 |          100.0 |                 | 
+ jobs                       |        7 |         1112 |     1201 |           0 |           361 |            0.6 |                 | 
+ tipos_evaluacion           |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ sustituciones              |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ evaluacion_estudiante_item |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ configuracion_landing      |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ bloqueos                   |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ talleres                   |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ ubicaciones_sala           |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ permissions                |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ sessions                   |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ solicitudes_informacion    |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ evaluaciones               |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ solicitudes                |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ preparaciones              |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ materias                   |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ caso_clinico_materia       |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ capacidades                |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ cache_locks                |        0 |            0 |        0 |           0 |             0 |                |                 | 
+ reprogramaciones           |        0 |            0 |        0 |           0 |             0 |                |                 | 
+(20 rows)
+
+
+## Índices sin uso (idx_scan = 0) desde el último reinicio de estadísticas, sin contar claves únicas ni primarias
+           tabla           |                          indice                          | tamano  
+---------------------------+----------------------------------------------------------+---------
+ bitacora                  | bitacora_accion_created_at_index                         | 2248 kB
+ sessions                  | sessions_last_activity_index                             | 1624 kB
+ sessions                  | sessions_user_id_index                                   | 1336 kB
+ bitacora                  | bitacora_user_id_created_at_index                        | 1328 kB
+ bitacora                  | bitacora_auditable_type_auditable_id_index               | 880 kB
+ bitacora                  | bitacora_created_at_index                                | 624 kB
+ estudiante_solicitud      | estudiante_solicitud_estudiante_id_index                 | 520 kB
+ evaluacion_items          | evaluacion_items_evaluacion_id_orden_index               | 240 kB
+ solicitud_item            | solicitud_item_item_inventario_id_index                  | 208 kB
+ evaluacion_estudiantes    | evaluacion_estudiantes_estudiante_id_index               | 152 kB
+ evaluacion_estudiantes    | evaluacion_estudiantes_evaluacion_id_index               | 128 kB
+ solicitudes               | solicitudes_fecha_estado_index                           | 72 kB
+ solicitudes               | solicitudes_origen_fecha_index                           | 64 kB
+ model_has_roles           | model_has_roles_model_id_model_type_index                | 64 kB
+ solicitudes               | solicitudes_materia_id_index                             | 56 kB
+ solicitudes               | solicitudes_caso_clinico_id_index                        | 56 kB
+ solicitudes               | solicitudes_docente_id_index                             | 56 kB
+ preparacion_sala          | preparacion_sala_sala_id_index                           | 56 kB
+ solicitudes               | solicitudes_docente_que_dicta_id_index                   | 48 kB
+ formatos_confidencialidad | formatos_confidencialidad_periodo_academico_estado_index | 40 kB
+(20 rows)
+
+
+## Razón de aciertos de caché (shared_buffers)
+          tipo           | aciertos | lecturas_disco | pct_aciertos 
+-------------------------+----------+----------------+--------------
+ tablas                  |    12969 |              0 |       100.00
+ índices                 |     1904 |              2 |        99.90
+ base (pg_stat_database) |    21348 |              2 |        99.99
+(3 rows)
+
+
+## Tiempo de E/S de la base (necesita track_io_timing=on), en ms
+ lectura_ms | escritura_ms | confirmadas | deshechas | archivos_temporales | bytes_temporales | deadlocks 
+------------+--------------+-------------+-----------+---------------------+------------------+-----------
+      4.061 |        0.465 |        3352 |         0 |                   0 | 0 bytes          |         0
+(1 row)
+
+
+## Tamaño de las 20 tablas mayores (tabla, índices, total)
+           tabla            | filas |  tabla_mb  | indices |  total  
+----------------------------+-------+------------+---------+---------
+ bitacora                   |     0 | 4112 kB    | 5752 kB | 9864 kB
+ evaluacion_estudiante_item |     0 | 4944 kB    | 4432 kB | 9376 kB
+ estudiante_solicitud       |     0 | 3104 kB    | 2136 kB | 5240 kB
+ sessions                   |     0 | 384 kB     | 3160 kB | 3544 kB
+ solicitud_item             |     0 | 1312 kB    | 1392 kB | 2704 kB
+ preparacion_item           |     0 | 1136 kB    | 1032 kB | 2168 kB
+ evaluacion_estudiantes     |     0 | 1096 kB    | 992 kB  | 2088 kB
+ solicitudes                |     0 | 832 kB     | 472 kB  | 1304 kB
+ evaluacion_items           |     0 | 696 kB     | 416 kB  | 1112 kB
+ formatos_confidencialidad  |     0 | 504 kB     | 280 kB  | 784 kB
+ users                      |     0 | 496 kB     | 240 kB  | 736 kB
+ preparaciones              |     0 | 416 kB     | 208 kB  | 624 kB
+ preparacion_sala           |     0 | 232 kB     | 216 kB  | 448 kB
+ jobs                       |     0 | 280 kB     | 32 kB   | 312 kB
+ evaluaciones               |     0 | 128 kB     | 152 kB  | 280 kB
+ model_has_roles            |     0 | 96 kB      | 152 kB  | 248 kB
+ items_inventario           |     0 | 112 kB     | 112 kB  | 224 kB
+ cambios_estado_item        |     0 | 104 kB     | 64 kB   | 168 kB
+ salas                      |     0 | 16 kB      | 64 kB   | 80 kB
+ periodos_academicos        |     0 | 8192 bytes | 64 kB   | 72 kB
+(20 rows)
+
+
+## Conexiones
+ state  | count 
+--------+-------
+ active |     1
+ idle   |     1
+(2 rows)
+

@@ -1,0 +1,7 @@
+contenedor                              n  cpu_med%  cpu_p95%  cpu_max% mem_med_MiB mem_max_MiB E/S_lect_MiB E/S_escr_MiB
+laboratorio-app-1                     433      28.1      46.3      90.6      107.4      113.7          0.0          0.0
+laboratorio-db-1                      433      13.4      22.3      34.0       79.4       84.9          0.0          0.0
+laboratorio-generador                 432       4.0       8.4      13.3      123.1      131.8          0.0          0.0
+laboratorio-programador-1             433       0.4       0.1      21.5       66.0      105.7          0.0          0.0
+laboratorio-queue-1                   433       0.0       0.2       0.2       71.8       71.9          0.0          0.0
+laboratorio-web-1                     433       1.1       1.9      28.1        7.2        7.7          0.0          0.0

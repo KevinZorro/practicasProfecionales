@@ -1,0 +1,271 @@
+{
+  "pagina": "hoy-docente",
+  "perfil": "escritorio",
+  "descripcionDelPerfil": "Escritorio sin limitar (1366x768)",
+  "baseUrl": "http://localhost",
+  "visitas": {
+    "fria": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "min": 45.5,
+          "avg": 53.93999999999069,
+          "med": 50.29999999998836,
+          "p(75)": 53.399999999965075,
+          "p(90)": 65.21999999997206,
+          "p(95)": 69.15999999997439,
+          "max": 73.09999999997672,
+          "count": 5
+        },
+        "umbrales": [
+          "p(75)<=800: CUMPLE"
+        ]
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "count": 5,
+          "min": 132,
+          "avg": 175.2,
+          "med": 176,
+          "p(75)": 188,
+          "p(90)": 214.4,
+          "p(95)": 223.2,
+          "max": 232
+        },
+        "umbrales": [
+          "p(75)<=1800: CUMPLE"
+        ]
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "avg": 175.2,
+          "med": 176,
+          "p(75)": 188,
+          "p(90)": 214.4,
+          "p(95)": 223.2,
+          "max": 232,
+          "count": 5,
+          "min": 132
+        },
+        "umbrales": [
+          "p(75)<=2500: CUMPLE"
+        ]
+      },
+      "wv_cls": {
+        "valores": {
+          "p(95)": 0,
+          "max": 0,
+          "count": 5,
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0
+        },
+        "umbrales": [
+          "p(75)<=0.1: CUMPLE"
+        ]
+      },
+      "wv_inp_ms": {
+        "valores": {
+          "avg": 16,
+          "med": 16,
+          "p(75)": 16,
+          "p(90)": 16,
+          "p(95)": 16,
+          "max": 16,
+          "count": 5,
+          "min": 16
+        },
+        "umbrales": [
+          "p(75)<=200: CUMPLE"
+        ]
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "max": 117154,
+          "count": 5,
+          "min": 116685,
+          "avg": 116956.4,
+          "med": 116968,
+          "p(75)": 117128,
+          "p(90)": 117143.6,
+          "p(95)": 117148.8
+        },
+        "umbrales": [
+          "max<=307200: CUMPLE"
+        ]
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "min": 114885,
+          "avg": 115156.4,
+          "med": 115168,
+          "p(75)": 115328,
+          "p(90)": 115343.6,
+          "p(95)": 115348.8,
+          "max": 115354,
+          "count": 5
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "avg": 303214.2,
+          "med": 306086,
+          "p(75)": 307828,
+          "p(90)": 309386.8,
+          "p(95)": 309906.4,
+          "max": 310426,
+          "count": 5,
+          "min": 295115
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "count": 5,
+          "min": 6,
+          "avg": 6,
+          "med": 6,
+          "p(75)": 6,
+          "p(90)": 6,
+          "p(95)": 6,
+          "max": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "count": 5,
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0
+        },
+        "umbrales": []
+      }
+    },
+    "caliente": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "med": 54.20000000001164,
+          "p(75)": 57.5,
+          "p(90)": 59.05999999998603,
+          "p(95)": 59.579999999981375,
+          "max": 60.09999999997672,
+          "count": 5,
+          "min": 45.399999999965075,
+          "avg": 54.27999999999302
+        },
+        "umbrales": []
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "count": 5,
+          "min": 92,
+          "avg": 119.2,
+          "med": 120,
+          "p(75)": 132,
+          "p(90)": 134.4,
+          "p(95)": 135.2,
+          "max": 136
+        },
+        "umbrales": []
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "p(75)": 132,
+          "p(90)": 134.4,
+          "p(95)": 135.2,
+          "max": 136,
+          "count": 5,
+          "min": 92,
+          "avg": 119.2,
+          "med": 120
+        },
+        "umbrales": []
+      },
+      "wv_cls": {
+        "valores": {
+          "count": 5,
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0
+        },
+        "umbrales": []
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "med": 5885,
+          "p(75)": 6045,
+          "p(90)": 6060.6,
+          "p(95)": 6065.8,
+          "max": 6071,
+          "count": 5,
+          "min": 5602,
+          "avg": 5873.4
+        },
+        "umbrales": []
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "min": 114885,
+          "avg": 115156.4,
+          "med": 115168,
+          "p(75)": 115328,
+          "p(90)": 115343.6,
+          "p(95)": 115348.8,
+          "max": 115354,
+          "count": 5
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "p(75)": 307828,
+          "p(90)": 309386.8,
+          "p(95)": 309906.4,
+          "max": 310426,
+          "count": 5,
+          "min": 295115,
+          "avg": 303214.2,
+          "med": 306086
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "med": 6,
+          "p(75)": 6,
+          "p(90)": 6,
+          "p(95)": 6,
+          "max": 6,
+          "count": 5,
+          "min": 6,
+          "avg": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "p(75)": 5,
+          "p(90)": 5,
+          "p(95)": 5,
+          "max": 5,
+          "count": 5,
+          "min": 5,
+          "avg": 5,
+          "med": 5
+        },
+        "umbrales": []
+      }
+    }
+  }
+}

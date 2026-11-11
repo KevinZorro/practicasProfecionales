@@ -1,0 +1,23 @@
+Página escenario · perfil movil3g (Celular 3G gama baja (412x823 @1,75; 3G de WebPageTest; CPU 4x)) · http://localhost
+
+  Visita fria
+    TTFB (ms)                      med 30  p75 34  min 30  max 40  n=5
+    FCP (ms)                       med 1056  p75 1056  min 1040  max 1076  n=5
+    LCP (ms)                       med 1056  p75 1056  min 1040  max 1076  n=5   [p(75)<=4000: CUMPLE]
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5
+    INP (ms)                       med 32  p75 40  min 32  max 40  n=5
+    Bytes transferidos             med 77461  p75 77461  min 77461  max 77461  n=5
+    Cuerpos comprimidos            med 75361  p75 75361  min 75361  max 75361  n=5
+    Cuerpos descomprimidos         med 137753  p75 137753  min 137753  max 137753  n=5
+    Peticiones                     med 7  p75 7  min 7  max 7  n=5
+    Peticiones servidas de caché   med 0  p75 0  min 0  max 0  n=5
+  Visita caliente
+    TTFB (ms)                      med 32  p75 35  min 29  max 35  n=5
+    FCP (ms)                       med 464  p75 464  min 444  max 496  n=5
+    LCP (ms)                       med 464  p75 464  min 444  max 496  n=5
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5
+    Bytes transferidos             med 3866  p75 3866  min 3866  max 3866  n=5
+    Cuerpos comprimidos            med 75361  p75 75361  min 75361  max 75361  n=5
+    Cuerpos descomprimidos         med 137753  p75 137753  min 137753  max 137753  n=5
+    Peticiones                     med 7  p75 7  min 7  max 7  n=5
+    Peticiones servidas de caché   med 6  p75 6  min 6  max 6  n=5

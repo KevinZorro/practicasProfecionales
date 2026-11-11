@@ -1,0 +1,31 @@
+  bandeja-pendientes
+  bandeja-revisadas
+  bandeja-vencidas
+  bitacora-filtrada
+  bitacora-pagina
+  calendario-coordinador
+  calendario-docente
+  calendario-estudiante
+  cruces-docente
+  cruces-estudiantes
+  historial-docente
+  inventario-disponibilidad
+  inventario-sin-cobertura
+  participacion-lista
+  peticion-base
+  reporte-resultados-evaluacion
+  reporte-uso-escenarios
+  resumen-administrativo
+  resumen-coordinador
+  resumen-docente
+  resumen-estudiante
+  resumen-supervisor
+  roles-vigentes
+  sesion-escribir
+  sesion-gc
+  sesion-leer
+  usuario-por-id
+
+Planes: rendimiento/resultados/campana-20261111-1601/18-x5-bd-planes/planes/20261111-203749
+Resumen: rendimiento/resultados/campana-20261111-1601/18-x5-bd-planes/planes/20261111-203749/resumen.csv
+Para revisar: rendimiento/resultados/campana-20261111-1601/18-x5-bd-planes/planes/20261111-203749/problemas.txt (33 sentencias marcadas)

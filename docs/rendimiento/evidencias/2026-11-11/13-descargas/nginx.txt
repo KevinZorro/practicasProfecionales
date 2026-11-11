@@ -1,0 +1,17 @@
+grupo                                                      n     p50     p90     p95     p99     max  urtp95    2xx   3xx   4xx   429   5xx
+----------------------------------------------------------------------------------------------------------------------------------------------------
+GET /panel/formatos-confidencialidad/plantilla            96   0.030   0.079   0.101   0.104   0.104   0.103      0     0    52    44     0
+GET /panel/reportes/evaluaciones_no_registradas/exc…       6   0.038   0.051   0.051   0.051   0.051   0.051      6     0     0     0     0
+GET /panel/reportes/evaluaciones_no_registradas/pdf        6   0.222   0.293   0.293   0.293   0.293   0.293      6     0     0     0     0
+GET /panel/reportes/resultados_de_evaluacion/excel         6   1.406   1.449   1.449   1.449   1.449   1.449      6     0     0     0     0
+GET /panel/reportes/resultados_de_evaluacion/pdf           6   0.095   0.110   0.110   0.110   0.110   0.110      0     0     6     0     0
+GET /panel/reportes/uso_de_escenarios/excel                6   0.436   0.596   0.596   0.596   0.596   0.596      6     0     0     0     0
+GET /panel/reportes/uso_de_escenarios/pdf                  6   1.639   1.777   1.777   1.777   1.777   1.777      6     0     0     0     0
+GET /panel/reposicion                                      1   0.042   0.042   0.042   0.042   0.042   0.042      1     0     0     0     0
+GET /up                                                    8   0.008   0.012   0.012   0.012   0.012   0.012      8     0     0     0     0
+----------------------------------------------------------------------------------------------------------------------------------------------------
+TOTAL                                                    141   0.034   0.446   1.437   1.770   1.777   1.584     39     0    58    44     0
+
+Tiempos en segundos (rt = $request_time; urtp95 = p95 de $upstream_response_time, lo que tardó PHP-FPM).
+Líneas leídas: 180; descartadas por no ser de acceso con rt=: 39.
+RNF01: p95 1.437 s (límite 2.000 s), 429: 44, 5xx: 0 -> NO CUMPLE

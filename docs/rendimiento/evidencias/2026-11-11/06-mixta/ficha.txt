@@ -1,0 +1,8 @@
+== 06-mixta ==
+  inicio 16:29:08, fin 16:39:35
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.216 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.216 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 124.3/200.4, db 58.0/94.0, web 4.9/10.1, generador 18.5/45.3
+  archivos: rendimiento/resultados/campana-20261111-1601/06-mixta/

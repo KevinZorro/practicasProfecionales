@@ -1,0 +1,68 @@
+Escenario: estres  (estrés (stress); PCa-1-G capacidad de procesamiento de transacciones; PTb-5-G rendimiento medio)
+Fecha: 2026-11-11T17:14:45.933Z  Base: http://localhost  Duración: 709.2 s
+IP por usuario: no  (una sola IP: reproduce producción detrás del proxy sin IP real, B3.8)
+Peticiones: 49116  rps: 69.26  error: 20.09 %  429: 9868  5xx: 0  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 0.555
+Latencia global ms: p50 234.5  p90 1339.8  p95 1406.8  p99 1539.4  máx 2028.8
+
+Por pantalla (ms)
+nombre                                n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+panel.bitacora                      650  1014.8  1318.2  1378.3  1482.8  1800.1   0.56   17.38     0     0     0
+panel.calendario                  10561   796.7  1249.9  1309.5  1410.6  1747.6  0.569   17.57     0     0     0
+panel.calendario.eventos.mes       5224    54.6  1288.4  1347.7  1451.8  1764.7  0.512   28.52     0     0     0
+panel.calendario.eventos.semana    5326    46.9  1262.9  1321.2  1434.6  1829.9  0.511   29.27     0     0     0
+panel.evaluaciones                 3624   836.4  1357.8  1422.1  1533.8  1911.5  0.571   17.38     0     0     0
+panel.inventario                    773  1152.5    1563  1624.3  1737.1  2005.8  0.567   16.69     0     0     0
+panel.inventario.disponibilidad     757     203    1294  1343.8  1446.5  1592.6  0.575   17.97     0     0     0
+panel.mi-formato                   7225   889.7  1289.7  1349.9  1450.3  1680.5  0.568   17.58     0     0     0
+panel.mis-resultados               7073   939.9  1397.5    1463  1565.3  2028.8  0.568   17.66     0     0     0
+panel.mis-solicitudes              3651   735.9  1387.7  1455.3  1561.8  1768.1  0.566   18.05     0     0     0
+panel.preparaciones                 753     679  1405.7  1459.4  1605.4  1683.1  0.568   18.19     0     0     0
+panel.reportes                      653   519.6  1413.6  1480.7  1600.1  1895.9   0.56   18.84     0     0     0
+panel.solicitudes                  1361   901.3  1423.7  1482.3    1585  1854.8  0.564   18.07     0     0     0
+panel.usuarios                     1485  1089.1  1458.7    1529  1640.3  1887.1  0.558   18.25     0     0     0
+
+Por escalón (ms)
+nombre         n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+e00          370      39    55.2    60.3    73.6   109.4      -       0     0     0     0
+e01          783    38.9    58.9      66    81.7   110.1      -       0     0     0     0
+e02         1529    36.9    52.8    59.1    79.4      99      -       0     0     0     0
+e03         2289    39.8    63.7    74.2    94.3     130      -       0     0     0     0
+e04         3045    41.7    66.3    77.8     100   146.4      -       0     0     0     0
+e05         3852      50    85.7   102.9   147.8   337.8      -       0     0     0     0
+e06         4579   134.4     956  1143.4  1309.2  1577.4      -    0.09     4     0     0
+e07         5367  1159.4    1335  1388.6  1493.5  1763.5      -    9.15   491     0     0
+e08         6113  1225.8  1442.8  1505.8  1621.1  1887.1      -   24.67  1508     0     0
+e09         6817  1169.1  1391.8  1451.2  1567.2  1911.5      -   30.94  2109     0     0
+e10         7698  1123.9  1328.3  1380.8  1476.5  1673.1      -   36.83  2835     0     0
+e11         6674  1097.6  1378.2    1447  1574.8  2028.8      -   43.77  2921     0     0
+
+Umbrales
+  CUMPLE    http_req_duration p(95)<10000
+  NO CUMPLE tasa_error rate<0.2
+
+  (0 de 0 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: NO PASA
+
+Análisis
+{
+  "escalon_en_que_empezo_a_degradar": "e06",
+  "tasa_pedida_en_ese_escalon_por_s": 65,
+  "primero_que_fallo": "429 de nginx (4)",
+  "iteraciones_descartadas_por_falta_de_usuarios_virtuales": 7,
+  "tasas_pedidas_por_escalon": {
+    "e00": 5,
+    "e01": 15,
+    "e02": 25,
+    "e03": 35,
+    "e04": 45,
+    "e05": 55,
+    "e06": 65,
+    "e07": 75,
+    "e08": 85,
+    "e09": 95,
+    "e10": 105,
+    "e11": 115
+  },
+  "cortada_por_umbral": false
+}

@@ -1,0 +1,8 @@
+== 09-pico-ip-real ==
+  inicio 16:58:24, fin 17:01:54
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 2.812 s, 429: 0, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 2.812 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 78.5/202.6, db 37.2/98.6, web 3.8/24.6, generador 11.1/48.9
+  archivos: rendimiento/resultados/campana-20261111-1601/09-pico-ip-real/

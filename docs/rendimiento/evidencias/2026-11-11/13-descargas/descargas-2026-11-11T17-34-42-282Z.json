@@ -1,0 +1,226 @@
+{
+  "escenario": "descargas",
+  "tipo_de_prueba": "operaciones pesadas y comprobación de topes",
+  "medida_iso_25023": "PTb-3-G tiempo de ida y vuelta de una tarea; PRu-3-G uso medio de E/S",
+  "fecha": "2026-11-11T17:34:42.282Z",
+  "base_url": "http://localhost",
+  "ip_por_usuario": "si",
+  "duracion_s": 240.5,
+  "totales": {
+    "peticiones": 133,
+    "rps": 0.5530251265629388,
+    "tasa_de_error": 0,
+    "respuestas_429": 0,
+    "respuestas_5xx": 0,
+    "respuestas_502_504": 0,
+    "rechazos_422": 6,
+    "sesiones_invalidas": 0,
+    "apdex_t_ms": 500,
+    "apdex": 0.8055555555555556,
+    "latencia_ms": {
+      "n": null,
+      "promedio": 199.79581730075182,
+      "min": 0.108283,
+      "p50": 36.455425,
+      "p90": 497.0066469999998,
+      "p95": 1442.7235764,
+      "p99": 1752.9256459600003,
+      "max": 1779.001394
+    },
+    "tamano_cuerpo_bytes": {
+      "n": null,
+      "promedio": 412772.0833333333,
+      "min": 1017,
+      "p50": 119257.5,
+      "p90": 1270131,
+      "p95": 1270131,
+      "p99": 1270131,
+      "max": 1270131
+    }
+  },
+  "por_pantalla": {
+    "descarga.evaluaciones_no_registradas.excel": {
+      "n": 6,
+      "promedio": 42.95629483333334,
+      "min": 33.948948,
+      "p50": 42.722154,
+      "p90": 50.400324499999996,
+      "p95": 50.91721575,
+      "p99": 51.33072875,
+      "max": 51.434107,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "descarga.resultados_de_evaluacion.excel": {
+      "n": 6,
+      "promedio": 1409.730757,
+      "min": 1335.659731,
+      "p50": 1417.877321,
+      "p90": 1444.0143859999998,
+      "p95": 1447.2414099999999,
+      "p99": 1449.8230291999998,
+      "max": 1450.468434,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 0.5,
+      "tasa_fallos_http": 0
+    },
+    "descarga.uso_de_escenarios.pdf": {
+      "n": 6,
+      "promedio": 1681.0625458333332,
+      "min": 1584.767586,
+      "p50": 1678.1631244999999,
+      "p90": 1775.1560875,
+      "p95": 1777.07874075,
+      "p99": 1778.61686335,
+      "max": 1779.001394,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 0.5,
+      "tasa_fallos_http": 0
+    },
+    "descarga.evaluaciones_no_registradas.pdf": {
+      "n": 6,
+      "promedio": 235.62600399999997,
+      "min": 204.98732,
+      "p50": 226.5777165,
+      "p90": 273.729373,
+      "p95": 288.506671,
+      "p99": 300.32850940000003,
+      "max": 303.283969,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "descarga.resultados_de_evaluacion.pdf": {
+      "n": 6,
+      "promedio": 98.46612366666666,
+      "min": 83.365492,
+      "p50": 96.546884,
+      "p90": 109.801874,
+      "p95": 110.40650149999999,
+      "p99": 110.8902035,
+      "max": 111.011129,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "descarga.uso_de_escenarios.excel": {
+      "n": 6,
+      "promedio": 471.24121749999995,
+      "min": 419.083063,
+      "p50": 441.77928299999996,
+      "p90": 552.7128675,
+      "p95": 574.39627475,
+      "p99": 591.74300055,
+      "max": 596.079682,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 0.8333333333333334,
+      "tasa_fallos_http": 0
+    }
+  },
+  "por_escalon": {},
+  "por_ventana": {},
+  "por_fase": {},
+  "umbrales": [
+          {
+            "metrica": "respuestas_429",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.lista-reposicion.excel}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.resultados_de_evaluacion.pdf}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "topes_nginx_429",
+            "umbral": "count>=1",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.uso_de_escenarios.excel}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "respuestas_5xx",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.evaluaciones_no_registradas.excel}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.resultados_de_evaluacion.excel}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.lista-reposicion.pdf}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.uso_de_escenarios.pdf}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:descarga.evaluaciones_no_registradas.pdf}",
+            "umbral": "p(95)<10000",
+            "cumplido": true
+          },
+          {
+            "metrica": "sesiones_invalidas",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "topes_app_429",
+            "umbral": "count>=1",
+            "cumplido": true
+          },
+          {
+            "metrica": "topes_app_pasaron",
+            "umbral": "count<=30",
+            "cumplido": true
+          }
+        ],
+  "todos_los_umbrales_cumplidos": true,
+  "analisis": {
+          "topes": {
+            "nginx_zona_pesadas": {
+              "rafaga": 60,
+              "pasaron": 22,
+              "cortadas_con_429_de_nginx": 38,
+              "esperado": "unas 21 pasan (1 + ráfaga de 20), el resto 429"
+            },
+            "aplicacion_30_por_minuto": {
+              "peticiones": 36,
+              "pasaron": 30,
+              "cortadas_con_429_de_la_aplicacion": 6,
+              "esperado": "pasan 30, desde la 31 llega 429"
+            }
+          },
+          "bytes_descargados": 14853693
+        }
+}

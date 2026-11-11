@@ -1,0 +1,53 @@
+Recorridos de punta a punta (ms, del gesto a la interfaz actualizada)
+
+Perfil escritorio: Escritorio sin limitar (1366x768)
+  a-solicitar
+    abrir_formulario         med 243  p95 260  min 220  max 262  n=3   [p(95)<=2000: CUMPLE]
+    elegir_materia           med 79  p95 81  min 77  max 81  n=3   [p(95)<=2000: CUMPLE]
+    elegir_caso              med 89  p95 93  min 84  max 93  n=3   [p(95)<=2000: CUMPLE]
+    agregar_estudiante       med 761  p95 795  min 734  max 805  n=6   [p(95)<=2000: CUMPLE]
+    enviar_solicitud         med 420  p95 432  min 396  max 433  n=3   [p(95)<=2000: CUMPLE]
+    total                    med 2349  p95 2419  min 2284  max 2427  n=3
+  b-revisar
+    abrir_expediente         med 228  p95 242  min 189  max 243  n=3   [p(95)<=2000: CUMPLE]
+    marcar_revisada          med 330  p95 361  min 305  max 364  n=3   [p(95)<=2000: CUMPLE]
+    total                    med 558  p95 602  min 494  max 607  n=3
+  c-aprobar
+    abrir_expediente         med 250  p95 266  min 222  max 268  n=3   [p(95)<=2000: CUMPLE]
+    aprobar                  med 368  p95 467  min 345  max 478  n=3   [p(95)<=2000: CUMPLE]
+    total                    med 636  p95 719  min 567  max 728  n=3
+  d-asignar-sala
+    abrir_tablero            med 241  p95 247  min 217  max 248  n=3   [p(95)<=2000: CUMPLE]
+    abrir_panel_de_montaje   med 290  p95 307  min 282  max 309  n=3   [p(95)<=2000: CUMPLE]
+    asignar_sala             med 395  p95 415  min 382  max 417  n=3   [p(95)<=2000: CUMPLE]
+    total                    med 921  p95 938  min 920  max 940  n=3
+  e-resultados
+    abrir_mis_resultados     med 230  p95 232  min 219  max 232  n=3   [p(95)<=2000: CUMPLE]
+    total                    med 230  p95 232  min 219  max 232  n=3
+
+Perfil movil3g: Celular 3G gama baja (412x823 @1,75; 3G de WebPageTest; CPU 4x)
+  a-solicitar
+    abrir_formulario         med 1517  p95 1525  min 1514  max 1526  n=3
+    elegir_materia           med 494  p95 498  min 478  max 498  n=3
+    elegir_caso              med 490  p95 491  min 480  max 491  n=3
+    agregar_estudiante       med 1550  p95 1606  min 1539  max 1607  n=6
+    enviar_solicitud         med 1136  p95 1149  min 1125  max 1150  n=3
+    total                    med 6782  p95 6804  min 6704  max 6806  n=3
+  b-revisar
+    abrir_expediente         med 1438  p95 1467  min 1408  max 1470  n=3
+    marcar_revisada          med 665  p95 687  min 635  max 689  n=3
+    total                    med 2103  p95 2153  min 2043  max 2159  n=3
+  c-aprobar
+    abrir_expediente         med 1485  p95 1486  min 1473  max 1486  n=3
+    aprobar                  med 679  p95 688  min 654  max 689  n=3
+    total                    med 2162  p95 2164  min 2140  max 2164  n=3
+  d-asignar-sala
+    abrir_tablero            med 1530  p95 1537  min 1491  max 1538  n=3
+    abrir_panel_de_montaje   med 644  p95 656  min 639  max 657  n=3
+    asignar_sala             med 701  p95 708  min 687  max 709  n=3
+    total                    med 2856  p95 2899  min 2836  max 2904  n=3
+  e-resultados
+    abrir_mis_resultados     med 1481  p95 1507  min 1479  max 1510  n=3
+    total                    med 1481  p95 1507  min 1479  max 1510  n=3
+
+Recorridos o tramos fallidos: 0

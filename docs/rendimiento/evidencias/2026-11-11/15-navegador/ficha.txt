@@ -1,0 +1,10 @@
+== 15-navegador ==
+  inicio 19:41:45, fin 19:53:08
+  modo de IP: no aplica
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.069 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.07 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.6/6.2, db 1.4/6.2, web 0.1/2.0, generador 62.7/198.1
+  ADVERTENCIA: el generador pasó del 90 % de CPU (p95 123.6 %): este paso puede estar midiendo al generador.
+  nota: navegador sin cpuset (corre donde el sistema lo ponga); un proceso de k6 por página
+  archivos: rendimiento/resultados/campana-20261111-1601/15-navegador/

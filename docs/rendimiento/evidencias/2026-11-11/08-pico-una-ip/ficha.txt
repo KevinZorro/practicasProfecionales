@@ -1,0 +1,8 @@
+== 08-pico-una-ip ==
+  inicio 16:53:57, fin 16:57:24
+  modo de IP: no
+  prueba: CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 1.478 s, 429: 3867, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 1.478 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 78.8/200.2, db 38.1/103.3, web 4.2/24.9, generador 13.8/51.8
+  archivos: rendimiento/resultados/campana-20261111-1601/08-pico-una-ip/

@@ -1,0 +1,8 @@
+== 03-bd-consultas ==
+  inicio 16:10:02, fin 16:20:08
+  modo de IP: no aplica
+  prueba: medido
+  nginx, todo:    CUMPLE (p95 0.026 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.026 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.2/6.2, db 229.5/301.9, web 0.1/2.4, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/03-bd-consultas/

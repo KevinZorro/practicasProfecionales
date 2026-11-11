@@ -1,0 +1,38 @@
+{
+    "escenario": "RNF01",
+    "limite_p95_segundos": 2,
+    "solo_paginas": false,
+    "lineas_leidas": 7,
+    "lineas_descartadas": 0,
+    "veredicto": "CUMPLE",
+    "total": {
+        "cantidad": 7,
+        "p50": 0.009,
+        "p90": 0.191,
+        "p95": 0.191,
+        "p99": 0.191,
+        "max": 0.191,
+        "urt_p95": 0.191,
+        "2xx": 7,
+        "3xx": 0,
+        "4xx": 0,
+        "429": 0,
+        "5xx": 0
+    },
+    "grupos": {
+        "GET /up": {
+            "cantidad": 7,
+            "p50": 0.009,
+            "p90": 0.191,
+            "p95": 0.191,
+            "p99": 0.191,
+            "max": 0.191,
+            "urt_p95": 0.191,
+            "2xx": 7,
+            "3xx": 0,
+            "4xx": 0,
+            "429": 0,
+            "5xx": 0
+        }
+    }
+}

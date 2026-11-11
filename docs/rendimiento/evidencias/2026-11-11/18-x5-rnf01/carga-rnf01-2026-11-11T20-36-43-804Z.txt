@@ -1,0 +1,30 @@
+Escenario: carga-rnf01  (carga (escenario RNF01); PTb-2-G adecuación del tiempo de respuesta; PCa-2-G capacidad de acceso de usuarios)
+Fecha: 2026-11-11T20:36:43.804Z  Base: http://localhost  Duración: 299.2 s
+IP por usuario: no  (una sola IP: reproduce producción detrás del proxy sin IP real, B3.8)
+Peticiones: 1200  rps: 4.01  error: 0 %  429: 0  5xx: 0  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 1
+Latencia global ms: p50 33.4  p90 57.2  p95 71.8  p99 204.4  máx 242.4
+
+Por pantalla (ms)
+nombre                                n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+activo.css                          150     1.7     2.2     2.7     5.3     5.9      -       0     0     0     0
+activo.js                           150     5.9     7.8     8.5    10.5      12      -       0     0     0     0
+activo.livewire                     150    13.8      17    18.8    22.1    27.9      -       0     0     0     0
+panel.calendario                    150    32.8    39.6    41.4    48.1    53.9      1       0     0     0     0
+panel.calendario.eventos.mes        150    38.2   194.3   220.4     237   242.4      1       0     0     0     0
+panel.calendario.eventos.semana     150    38.9    58.6    80.5    92.4    97.6      1       0     0     0     0
+panel.inicio                        150    51.7    79.2    83.5    99.1     158      1       0     0     0     0
+panel.mis-resultados                 90    49.4    60.3      64    67.2    70.8      1       0     0     0     0
+panel.mis-solicitudes                44    48.3      60      65      67    67.3      1       0     0     0     0
+panel.preparaciones                  10   111.2   137.3   142.3   146.3   147.3      1       0     0     0     0
+panel.solicitudes                     4     158   164.3   165.4   166.2   166.4      1       0     0     0     0
+panel.usuarios                        2    47.6    48.5    48.6    48.7    48.7      1       0     0     0     0
+
+Umbrales
+  CUMPLE    sesiones_invalidas count==0
+  CUMPLE    respuestas_429 count==0
+  CUMPLE    respuestas_5xx count==0
+  CUMPLE    tasa_error rate==0
+
+  (26 de 26 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: PASA

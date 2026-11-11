@@ -1,0 +1,561 @@
+{
+  "baseUrl": "http://localhost",
+  "generado": "2026-11-11T19:55:20.348Z",
+  "fallos": 0,
+  "resumen": [
+    {
+      "recorrido": "a-solicitar",
+      "perfil": "escritorio",
+      "pasos": {
+        "abrir_formulario": {
+          "valores": {
+            "avg": 241.66666666666666,
+            "med": 243,
+            "p(75)": 252.5,
+            "p(90)": 258.2,
+            "p(95)": 260.1,
+            "max": 262,
+            "count": 3,
+            "min": 220
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "elegir_materia": {
+          "valores": {
+            "med": 79,
+            "p(75)": 80,
+            "p(90)": 80.6,
+            "p(95)": 80.8,
+            "max": 81,
+            "count": 3,
+            "min": 77,
+            "avg": 79
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "elegir_caso": {
+          "valores": {
+            "p(95)": 92.6,
+            "max": 93,
+            "count": 3,
+            "min": 84,
+            "avg": 88.66666666666667,
+            "med": 89,
+            "p(75)": 91,
+            "p(90)": 92.2
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "agregar_estudiante": {
+          "valores": {
+            "p(95)": 795.25,
+            "max": 805,
+            "count": 6,
+            "min": 734,
+            "avg": 763.8333333333334,
+            "med": 761,
+            "p(75)": 765.75,
+            "p(90)": 785.5
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "enviar_solicitud": {
+          "valores": {
+            "avg": 416.3333333333333,
+            "med": 420,
+            "p(75)": 426.5,
+            "p(90)": 430.4,
+            "p(95)": 431.7,
+            "max": 433,
+            "count": 3,
+            "min": 396
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "total": {
+          "valores": {
+            "count": 3,
+            "min": 2284,
+            "avg": 2353.3333333333335,
+            "med": 2349,
+            "p(75)": 2388,
+            "p(90)": 2411.4,
+            "p(95)": 2419.2,
+            "max": 2427
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "b-revisar",
+      "perfil": "escritorio",
+      "pasos": {
+        "abrir_expediente": {
+          "valores": {
+            "max": 243,
+            "count": 3,
+            "min": 189,
+            "avg": 220,
+            "med": 228,
+            "p(75)": 235.5,
+            "p(90)": 240,
+            "p(95)": 241.5
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "marcar_revisada": {
+          "valores": {
+            "count": 3,
+            "min": 305,
+            "avg": 333,
+            "med": 330,
+            "p(75)": 347,
+            "p(90)": 357.2,
+            "p(95)": 360.6,
+            "max": 364
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "total": {
+          "valores": {
+            "max": 607,
+            "count": 3,
+            "min": 494,
+            "avg": 553,
+            "med": 558,
+            "p(75)": 582.5,
+            "p(90)": 597.2,
+            "p(95)": 602.1
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "c-aprobar",
+      "perfil": "escritorio",
+      "pasos": {
+        "abrir_expediente": {
+          "valores": {
+            "count": 3,
+            "min": 222,
+            "avg": 246.66666666666666,
+            "med": 250,
+            "p(75)": 259,
+            "p(90)": 264.4,
+            "p(95)": 266.2,
+            "max": 268
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "aprobar": {
+          "valores": {
+            "p(90)": 456,
+            "p(95)": 467,
+            "max": 478,
+            "count": 3,
+            "min": 345,
+            "avg": 397,
+            "med": 368,
+            "p(75)": 423
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "total": {
+          "valores": {
+            "p(95)": 718.8,
+            "max": 728,
+            "count": 3,
+            "min": 567,
+            "avg": 643.6666666666666,
+            "med": 636,
+            "p(75)": 682,
+            "p(90)": 709.6
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "d-asignar-sala",
+      "perfil": "escritorio",
+      "pasos": {
+        "abrir_tablero": {
+          "valores": {
+            "p(95)": 247.3,
+            "max": 248,
+            "count": 3,
+            "min": 217,
+            "avg": 235.33333333333334,
+            "med": 241,
+            "p(75)": 244.5,
+            "p(90)": 246.6
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "abrir_panel_de_montaje": {
+          "valores": {
+            "avg": 293.6666666666667,
+            "med": 290,
+            "p(75)": 299.5,
+            "p(90)": 305.2,
+            "p(95)": 307.1,
+            "max": 309,
+            "count": 3,
+            "min": 282
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "asignar_sala": {
+          "valores": {
+            "max": 417,
+            "count": 3,
+            "min": 382,
+            "avg": 398,
+            "med": 395,
+            "p(75)": 406,
+            "p(90)": 412.6,
+            "p(95)": 414.8
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "total": {
+          "valores": {
+            "p(75)": 930.5,
+            "p(90)": 936.2,
+            "p(95)": 938.1,
+            "max": 940,
+            "count": 3,
+            "min": 920,
+            "avg": 927,
+            "med": 921
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "e-resultados",
+      "perfil": "escritorio",
+      "pasos": {
+        "abrir_mis_resultados": {
+          "valores": {
+            "p(95)": 231.8,
+            "max": 232,
+            "count": 3,
+            "min": 219,
+            "avg": 227,
+            "med": 230,
+            "p(75)": 231,
+            "p(90)": 231.6
+          },
+          "umbrales": [
+            "p(95)<=2000: CUMPLE"
+          ]
+        },
+        "total": {
+          "valores": {
+            "avg": 227,
+            "med": 230,
+            "p(75)": 231,
+            "p(90)": 231.6,
+            "p(95)": 231.8,
+            "max": 232,
+            "count": 3,
+            "min": 219
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "a-solicitar",
+      "perfil": "movil3g",
+      "pasos": {
+        "abrir_formulario": {
+          "valores": {
+            "avg": 1519,
+            "med": 1517,
+            "p(75)": 1521.5,
+            "p(90)": 1524.2,
+            "p(95)": 1525.1,
+            "max": 1526,
+            "count": 3,
+            "min": 1514
+          },
+          "umbrales": []
+        },
+        "elegir_materia": {
+          "valores": {
+            "p(75)": 496,
+            "p(90)": 497.2,
+            "p(95)": 497.6,
+            "max": 498,
+            "count": 3,
+            "min": 478,
+            "avg": 490,
+            "med": 494
+          },
+          "umbrales": []
+        },
+        "elegir_caso": {
+          "valores": {
+            "med": 490,
+            "p(75)": 490.5,
+            "p(90)": 490.8,
+            "p(95)": 490.9,
+            "max": 491,
+            "count": 3,
+            "min": 480,
+            "avg": 487
+          },
+          "umbrales": []
+        },
+        "agregar_estudiante": {
+          "valores": {
+            "p(90)": 1605.5,
+            "p(95)": 1606.25,
+            "max": 1607,
+            "count": 6,
+            "min": 1539,
+            "avg": 1565.5,
+            "med": 1550,
+            "p(75)": 1591.75
+          },
+          "umbrales": []
+        },
+        "enviar_solicitud": {
+          "valores": {
+            "p(75)": 1143,
+            "p(90)": 1147.2,
+            "p(95)": 1148.6,
+            "max": 1150,
+            "count": 3,
+            "min": 1125,
+            "avg": 1137,
+            "med": 1136
+          },
+          "umbrales": []
+        },
+        "total": {
+          "valores": {
+            "p(90)": 6801.2,
+            "p(95)": 6803.6,
+            "max": 6806,
+            "count": 3,
+            "min": 6704,
+            "avg": 6764,
+            "med": 6782,
+            "p(75)": 6794
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "b-revisar",
+      "perfil": "movil3g",
+      "pasos": {
+        "abrir_expediente": {
+          "valores": {
+            "min": 1408,
+            "avg": 1438.6666666666667,
+            "med": 1438,
+            "p(75)": 1454,
+            "p(90)": 1463.6,
+            "p(95)": 1466.8,
+            "max": 1470,
+            "count": 3
+          },
+          "umbrales": []
+        },
+        "marcar_revisada": {
+          "valores": {
+            "min": 635,
+            "avg": 663,
+            "med": 665,
+            "p(75)": 677,
+            "p(90)": 684.2,
+            "p(95)": 686.6,
+            "max": 689,
+            "count": 3
+          },
+          "umbrales": []
+        },
+        "total": {
+          "valores": {
+            "med": 2103,
+            "p(75)": 2131,
+            "p(90)": 2147.8,
+            "p(95)": 2153.4,
+            "max": 2159,
+            "count": 3,
+            "min": 2043,
+            "avg": 2101.6666666666665
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "c-aprobar",
+      "perfil": "movil3g",
+      "pasos": {
+        "abrir_expediente": {
+          "valores": {
+            "med": 1485,
+            "p(75)": 1485.5,
+            "p(90)": 1485.8,
+            "p(95)": 1485.9,
+            "max": 1486,
+            "count": 3,
+            "min": 1473,
+            "avg": 1481.3333333333333
+          },
+          "umbrales": []
+        },
+        "aprobar": {
+          "valores": {
+            "p(95)": 688,
+            "max": 689,
+            "count": 3,
+            "min": 654,
+            "avg": 674,
+            "med": 679,
+            "p(75)": 684,
+            "p(90)": 687
+          },
+          "umbrales": []
+        },
+        "total": {
+          "valores": {
+            "max": 2164,
+            "count": 3,
+            "min": 2140,
+            "avg": 2155.3333333333335,
+            "med": 2162,
+            "p(75)": 2163,
+            "p(90)": 2163.6,
+            "p(95)": 2163.8
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "d-asignar-sala",
+      "perfil": "movil3g",
+      "pasos": {
+        "abrir_tablero": {
+          "valores": {
+            "avg": 1519.6666666666667,
+            "med": 1530,
+            "p(75)": 1534,
+            "p(90)": 1536.4,
+            "p(95)": 1537.2,
+            "max": 1538,
+            "count": 3,
+            "min": 1491
+          },
+          "umbrales": []
+        },
+        "abrir_panel_de_montaje": {
+          "valores": {
+            "med": 644,
+            "p(75)": 650.5,
+            "p(90)": 654.4,
+            "p(95)": 655.7,
+            "max": 657,
+            "count": 3,
+            "min": 639,
+            "avg": 646.6666666666666
+          },
+          "umbrales": []
+        },
+        "asignar_sala": {
+          "valores": {
+            "max": 709,
+            "count": 3,
+            "min": 687,
+            "avg": 699,
+            "med": 701,
+            "p(75)": 705,
+            "p(90)": 707.4,
+            "p(95)": 708.2
+          },
+          "umbrales": []
+        },
+        "total": {
+          "valores": {
+            "count": 3,
+            "min": 2836,
+            "avg": 2865.3333333333335,
+            "med": 2856,
+            "p(75)": 2880,
+            "p(90)": 2894.4,
+            "p(95)": 2899.2,
+            "max": 2904
+          },
+          "umbrales": []
+        }
+      }
+    },
+    {
+      "recorrido": "e-resultados",
+      "perfil": "movil3g",
+      "pasos": {
+        "abrir_mis_resultados": {
+          "valores": {
+            "p(90)": 1504.2,
+            "p(95)": 1507.1,
+            "max": 1510,
+            "count": 3,
+            "min": 1479,
+            "avg": 1490,
+            "med": 1481,
+            "p(75)": 1495.5
+          },
+          "umbrales": []
+        },
+        "total": {
+          "valores": {
+            "p(90)": 1504.2,
+            "p(95)": 1507.1,
+            "max": 1510,
+            "count": 3,
+            "min": 1479,
+            "avg": 1490,
+            "med": 1481,
+            "p(75)": 1495.5
+          },
+          "umbrales": []
+        }
+      }
+    }
+  ]
+}
