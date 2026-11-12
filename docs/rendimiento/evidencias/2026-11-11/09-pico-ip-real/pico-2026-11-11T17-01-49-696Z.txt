@@ -1,0 +1,48 @@
+Escenario: pico  (pico (spike); PCa-2-G capacidad de acceso de usuarios; PTb-2-G adecuación del tiempo de respuesta)
+Fecha: 2026-11-11T17:01:49.696Z  Base: http://localhost  Duración: 201 s
+IP por usuario: si
+Peticiones: 6900  rps: 34.32  error: 0 %  429: 0  5xx: 0  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 0.143
+Latencia global ms: p50 2348.9  p90 2716.2  p95 2807  p99 2948.2  máx 3433.6
+
+Por pantalla (ms)
+nombre                                n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+activo.css                          300     2.2     9.9    14.7    24.8      42      -       0     0     0     0
+activo.js                           249     7.2    14.2    18.7      32    62.7      -       0     0     0     0
+activo.livewire                     300   891.5  2391.1  2473.6  2543.3  2565.1      -       0     0     0     0
+panel.bitacora                       89  2348.4  2624.5  2731.9  2888.3  2929.3  0.118       0     0     0     0
+panel.calendario                   1254  2315.2  2646.9  2727.4    2825  2905.6  0.124       0     0     0     0
+panel.calendario.eventos.mes       1254  2376.2  2707.7  2777.6  2901.5  2971.2  0.123       0     0     0     0
+panel.evaluaciones                  428  2407.4  2760.6  2860.4  2945.1  2984.8  0.121       0     0     0     0
+panel.inventario                    108  2603.3  3015.3  3082.5  3172.5  3210.1  0.097       0     0     0     0
+panel.inventario.disponibilidad     108  2378.2    2627  2677.4  2835.8  2890.2  0.144       0     0     0     0
+panel.mi-formato                    826    2356  2645.3  2725.8  2848.2  2932.5  0.125       0     0     0     0
+panel.mis-resultados                826  2494.8  2806.5  2872.9  3000.4  3068.1  0.139       0     0     0     0
+panel.mis-solicitudes               428  2507.9  2813.2  2875.2  2971.2  3057.7  0.141       0     0     0     0
+panel.preparaciones                 108  2482.5  2781.3  2859.9  2972.4  2986.1  0.139       0     0     0     0
+panel.reportes                       89  2474.2    2719  2865.7  3016.1  3028.3  0.101       0     0     0     0
+panel.solicitudes                   197  2521.4    2837    2921    3050  3433.6   0.14       0     0     0     0
+panel.usuarios                      194  2547.4  2861.6  2935.9  3049.7  3124.1  0.072       0     0     0     0
+sonda.inicio                        142    46.9  2386.7  2497.6  2762.1  2798.6  0.852       0     0     0     0
+
+Por fase (ms)
+nombre         n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+antes         29      46      57    58.9    60.4    60.8      -       0     0     0     0
+despues       86    44.3    57.7    60.9   135.2   531.1      -       0     0     0     0
+pico        6785  2354.3  2718.7    2808    2949  3433.6      -       0     0     0     0
+
+Umbrales
+  CUMPLE    respuestas_429 count==0
+  CUMPLE    recuperacion_segundos value>=0
+  CUMPLE    respuestas_5xx count==0
+
+  (1 de 1 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: PASA
+
+Análisis
+{
+  "usuarios_pico": 300,
+  "origen": "una IP por usuario (X-Forwarded-For)",
+  "recuperacion_segundos": 3.094612181000004,
+  "nota": ""
+}

@@ -1,0 +1,8 @@
+NOTICE:  extension "pg_stat_statements" already exists, skipping
+Estadísticas en cero: 2026-11-11T16:17:01+00:00
+Escenarios: bandeja-pendientes bandeja-revisadas bandeja-vencidas bitacora-filtrada bitacora-pagina calendario-coordinador calendario-docente calendario-estudiante cruces-docente cruces-estudiantes historial-docente inventario-disponibilidad inventario-sin-cobertura participacion-lista peticion-base reporte-resultados-evaluacion reporte-uso-escenarios resumen-administrativo resumen-coordinador resumen-docente resumen-estudiante resumen-supervisor roles-vigentes sesion-escribir sesion-gc sesion-leer usuario-por-id 
+Clientes: 1 10 20, 60s por corrida
+  mezcla                             c=1   tps=491.665980 media=2.029    p95=5.124    p99=8.825    ok
+  mezcla                             c=10  tps=2085.302753 media=4.783    p95=12.603   p99=22.091   ok
+  mezcla                             c=20  tps=2196.016303 media=9.078    p95=23.700   p99=41.891   ok
+Resumen: rendimiento/resultados/campana-20261111-1601/03-bd-consultas/mezcla/consultas-calientes-20261111-161700/resumen.csv

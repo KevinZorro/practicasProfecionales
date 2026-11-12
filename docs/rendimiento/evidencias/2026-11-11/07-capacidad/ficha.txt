@@ -1,0 +1,8 @@
+== 07-capacidad ==
+  inicio 16:40:35, fin 16:52:57
+  modo de IP: si
+  prueba: NO CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 7.177 s, 429: 0, 5xx: 4)
+  nginx, páginas: NO CUMPLE (p95 7.177 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 113.6/205.8, db 52.3/100.5, web 3.9/7.9, generador 8.7/69.9
+  archivos: rendimiento/resultados/campana-20261111-1601/07-capacidad/

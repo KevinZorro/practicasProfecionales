@@ -161,6 +161,21 @@ docker compose logs -f node                 # ver el servidor de desarrollo de V
 docker compose exec db psql -U laboratorio -d laboratorio_simulacion
 ```
 
+### Pruebas de rendimiento
+
+Fuera de la suite, en `rendimiento/` (ADR 0008): carga, estrés, pico, capacidad,
+resistencia, base de datos y navegador, contra el compose de producción. Una sola
+orden corre la campaña completa y deja sus resultados en `rendimiento/resultados/`:
+
+```bash
+RENDIMIENTO_BASE_DESECHABLE=si rendimiento/campana.sh
+```
+
+**Borra los volúmenes del compose** para cargar sus propios datos: se corre en el
+servidor antes de que entre en producción, o en una copia, nunca con datos reales.
+Qué mide cada prueba y cómo leerla: `rendimiento/README.md`. El plan y el último
+informe: `docs/rendimiento/`.
+
 ---
 
 ## Base de datos

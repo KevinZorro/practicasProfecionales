@@ -1,0 +1,212 @@
+Índice de la campaña campana-20261111-1601
+(entorno y parámetros en entorno.txt; avance en avance.log)
+
+== 00-preparar ==
+  inicio 16:01:47, fin 16:02:20
+  resultado: factor 1; 4500 solicitudes 1161 usuarios 
+  cpuset del SUT: 0-2
+  archivos: rendimiento/resultados/campana-20261111-1601/00-preparar/ (conteo de filas por tabla en filas-por-tabla.txt)
+
+== 01-bd-referencia ==
+  inicio 16:03:20, fin 16:07:35
+  modo de IP: no aplica
+  prueba: medido (sin umbral: es la línea base del hardware)
+  nginx, todo:    CUMPLE (p95 0.047 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.047 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.3/6.3, db 132.9/216.6, web 0.2/2.6, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/01-bd-referencia/
+
+== 02-bd-planes ==
+  inicio 16:08:35, fin 16:09:02
+  modo de IP: no aplica
+  prueba: medido (ver problemas.txt)
+  nginx, todo:    CUMPLE (p95 0.008 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.008 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.0/0.0, db 10.9/25.6, web 0.0/0.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/02-bd-planes/
+
+== 03-bd-consultas ==
+  inicio 16:10:02, fin 16:20:08
+  modo de IP: no aplica
+  prueba: medido
+  nginx, todo:    CUMPLE (p95 0.026 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.026 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.2/6.2, db 229.5/301.9, web 0.1/2.4, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/03-bd-consultas/
+
+== 04-humo ==
+  inicio 16:21:08, fin 16:21:58
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.08 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.08 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 15.4/22.3, db 7.0/11.5, web 0.7/1.7, generador 2.4/3.1
+  archivos: rendimiento/resultados/campana-20261111-1601/04-humo/
+
+== 05-rnf01 ==
+  inicio 16:22:58, fin 16:28:08
+  modo de IP: no
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.061 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.061 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 8.3/37.3, db 3.9/13.1, web 0.8/3.5, generador 1.5/10.1
+  archivos: rendimiento/resultados/campana-20261111-1601/05-rnf01/
+
+== 06-mixta ==
+  inicio 16:29:08, fin 16:39:35
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.216 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.216 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 124.3/200.4, db 58.0/94.0, web 4.9/10.1, generador 18.5/45.3
+  archivos: rendimiento/resultados/campana-20261111-1601/06-mixta/
+
+== 07-capacidad ==
+  inicio 16:40:35, fin 16:52:57
+  modo de IP: si
+  prueba: NO CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 7.177 s, 429: 0, 5xx: 4)
+  nginx, páginas: NO CUMPLE (p95 7.177 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 113.6/205.8, db 52.3/100.5, web 3.9/7.9, generador 8.7/69.9
+  archivos: rendimiento/resultados/campana-20261111-1601/07-capacidad/
+
+== 08-pico-una-ip ==
+  inicio 16:53:57, fin 16:57:24
+  modo de IP: no
+  prueba: CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 1.478 s, 429: 3867, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 1.478 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 78.8/200.2, db 38.1/103.3, web 4.2/24.9, generador 13.8/51.8
+  archivos: rendimiento/resultados/campana-20261111-1601/08-pico-una-ip/
+
+== 09-pico-ip-real ==
+  inicio 16:58:24, fin 17:01:54
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 2.812 s, 429: 0, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 2.812 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 78.5/202.6, db 37.2/98.6, web 3.8/24.6, generador 11.1/48.9
+  archivos: rendimiento/resultados/campana-20261111-1601/09-pico-ip-real/
+
+== 10-estres-una-ip ==
+  inicio 17:02:54, fin 17:14:49
+  modo de IP: no
+  prueba: NO CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 1.405 s, 429: 9868, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 1.405 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 141.6/208.4, db 64.3/101.6, web 5.0/9.6, generador 10.1/24.9
+  archivos: rendimiento/resultados/campana-20261111-1601/10-estres-una-ip/
+
+== 11-estres-ip-real ==
+  inicio 17:15:49, fin 17:25:54
+  modo de IP: si
+  prueba: NO CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 10.681 s, 429: 0, 5xx: 62)
+  nginx, páginas: NO CUMPLE (p95 10.681 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 133.9/208.4, db 61.5/102.4, web 4.6/9.1, generador 10.9/62.5
+  archivos: rendimiento/resultados/campana-20261111-1601/11-estres-ip-real/
+
+== 12-concurrencia ==
+  inicio 17:26:54, fin 17:29:40
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.193 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.15 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 2.7/61.1, db 2.2/22.1, web 0.2/2.0, generador 0.3/2.2
+  archivos: rendimiento/resultados/campana-20261111-1601/12-concurrencia/
+
+== 13-descargas ==
+  inicio 17:30:40, fin 17:34:47
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 1.437 s, 429: 44, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 1.437 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 13.6/178.4, db 1.8/8.3, web 0.1/2.1, generador 0.3/1.3
+  archivos: rendimiento/resultados/campana-20261111-1601/13-descargas/
+
+== 14-cola ==
+  inicio 17:35:47, fin 17:35:57
+  modo de IP: no aplica
+  prueba: medido: 81.3 trabajos/s, fallidos 0
+  nginx, todo:    SIN DATOS (p95 0 s, 429: 0, 5xx: 0)
+  nginx, páginas: SIN DATOS (p95 0 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.0/0.0, db 8.7/17.3, web 0.0/0.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/14-cola/
+
+== 15-navegador ==
+  inicio 19:41:45, fin 19:53:08
+  modo de IP: no aplica
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.069 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.07 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.6/6.2, db 1.4/6.2, web 0.1/2.0, generador 62.7/198.1
+  ADVERTENCIA: el generador pasó del 90 % de CPU (p95 123.6 %): este paso puede estar midiendo al generador.
+  nota: navegador sin cpuset (corre donde el sistema lo ponga); un proceso de k6 por página
+  archivos: rendimiento/resultados/campana-20261111-1601/15-navegador/
+
+== 16-recorridos ==
+  inicio 19:54:08, fin 19:55:23
+  modo de IP: no aplica
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.068 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.056 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 5.0/11.8, db 4.5/9.8, web 0.5/1.0, generador 118.3/160.7
+  ADVERTENCIA: el generador pasó del 90 % de CPU (p95 160.7 %): este paso puede estar midiendo al generador.
+  nota: navegador sin cpuset (corre donde el sistema lo ponga); un proceso de k6 por página
+  archivos: rendimiento/resultados/campana-20261111-1601/16-recorridos/
+
+== 17-resistencia ==
+  inicio 19:56:23, fin 20:26:54
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.067 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.067 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 28.1/90.6, db 13.4/34.0, web 1.1/28.1, generador 4.0/13.3
+  archivos: rendimiento/resultados/campana-20261111-1601/17-resistencia/
+
+== 18-x5-bd-mezcla ==
+  inicio 20:39:16, fin 20:42:25
+  modo de IP: no aplica
+  prueba: medido
+  nginx, todo:    CUMPLE (p95 0.191 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.191 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.5/5.0, db 214.7/308.5, web 0.2/2.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-bd-mezcla/
+
+== 18-x5-bd-planes ==
+  inicio 20:37:48, fin 20:38:16
+  modo de IP: no aplica
+  prueba: medido (ver problemas.txt)
+  nginx, todo:    CUMPLE (p95 0.015 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.015 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.0/0.0, db 17.2/64.6, web 0.0/0.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-bd-planes/
+
+== 18-x5-humo ==
+  inicio 20:29:44, fin 20:30:41
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.229 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.229 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 15.3/19.0, db 9.1/18.8, web 0.7/1.8, generador 2.8/3.9
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-humo/
+
+== 18-x5-preparar ==
+  inicio 20:27:54, fin 20:28:44
+  resultado: factor 5; 22500 solicitudes 5761 usuarios 
+  cpuset del SUT: 0-2
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-preparar/ (conteo de filas por tabla en filas-por-tabla.txt)
+
+== 18-x5-rnf01 ==
+  inicio 20:31:42, fin 20:36:48
+  modo de IP: no
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.081 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.081 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 8.7/33.2, db 4.9/15.1, web 0.9/3.8, generador 1.2/3.4
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-rnf01/
+
+
+== 18-x5-web-vitals (completado a mano) ==
+  ver 18-x5-web-vitals/nota-x5-web-vitals.txt: cortado en hoy-administrativo; calendario, bandeja y tablero medidos solo en escritorio
+  calendario: NO CUMPLE (INP 240 ms > 200 ms en escritorio); bandeja, tablero, hoy-*: CUMPLEN los umbrales medidos

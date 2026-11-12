@@ -9,3 +9,11 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Resultados de las campañas de rendimiento y consultas capturadas de la
+# aplicación: los escribe el arnés (rendimiento/), nadie los edita a mano.
+# GitHub los muestra colapsados en los PR y no los cuenta en las
+# estadísticas de lenguajes del repositorio.
+/docs/rendimiento/evidencias/** linguist-generated=true
+/rendimiento/base-de-datos/consultas/** linguist-generated=true
+/rendimiento/base-de-datos/consultas-x5/** linguist-generated=true

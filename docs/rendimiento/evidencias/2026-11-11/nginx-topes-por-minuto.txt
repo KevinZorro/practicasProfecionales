@@ -1,0 +1,16 @@
+Rechazos (429) por tope de nginx, por minuto, sacados del registro de errores del servicio web
+(docker logs del contenedor web: líneas "limiting connections by zone" y "limiting requests ... by zone").
+Pasos: pico-una-ip 16:53:57-16:57:24; estres-una-ip 17:02:54-17:14:49; descargas 17:30:40-17:34:47 (hora del registro de nginx, UTC).
+
+minuto  conexiones(limit_conn 100)  general(limit_req 100 r/s + ráfaga 300)  pesadas(limit_req 5 r/s + ráfaga 20)
+16:54      401     1112        0
+16:55     1106     1439        0
+17:09       29        0        0
+17:10      522        0        0
+17:11     1554        0        0
+17:12     1383      756        0
+17:13     1140     1716        0
+17:14      983     1785        0
+17:33        0        0       38
+
+Totales: pico-una-ip 1.507 por conexiones + 2.551 por tasa = 4.058 (igual a los 429 que contó k6); estrés con una IP: primero conexiones (desde 17:09) y la tasa desde 17:12; descargas: 38 en la zona pesadas.

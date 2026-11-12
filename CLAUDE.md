@@ -117,6 +117,7 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 - **Nada de lo que suben los usuarios entra en una imagen:** `.dockerignore` excluye `storage/app/public` y `storage/app/private`. Una imagen construida en un equipo de desarrollo se llevaría dentro los documentos de prueba.
 - **Las cabeceras de seguridad las pone `CabecerasDeSeguridad`**, en Laravel y no en nginx, para que se prueben. La Content-Security-Policy lleva `'unsafe-inline'` y `'unsafe-eval'` porque Alpine y Filament los necesitan; lo que cierra son los orígenes externos. Cualquier recurso de otro sitio que se añada (una fuente, un script, una imagen) hay que declararlo en ella, o el navegador lo bloquea. Por eso el avatar de Filament se dibuja en local (`App\Filament\AvatarConIniciales`) y no se pide a ui-avatars.com.
 - **`users.documento` está cifrado con `APP_KEY`** (cast `encrypted`, S-03 del informe de seguridad). No se puede buscar, ordenar ni indexar por SQL: la sincronización compara en memoria, ya descifrado. Perder o cambiar `APP_KEY` pierde los documentos, así que el `.env` se guarda aparte de las copias de la base. Cifrar otra columna es una decisión con el cliente, y no se cifra una que se filtra con `where` o `LIKE` (`codigo_institucional`, `nombre`, `email`).
+- **El log de acceso de nginx registra cuánto tarda cada petición** (`rt=$request_time`, formato `con_tiempos`): ahí se mide el RNF01, y `rendimiento/herramientas/resumir-nginx.php` saca sus percentiles. No vuelvas al formato por defecto.
 - **Una copia que no se restaura no es una copia.** La CI hace una en cada PR, daña los datos y la restaura. Si cambia dónde guarda algo la aplicación, cambia también `docker/produccion/copias/`.
 
 **Portada pública (`/` y `/escenarios/{id}`, RF01–RF07).** Sin sesión. Todo lo que muestra lo carga el ADMIN en `/admin`; `PortadaService` reúne lo publicado sin N+1, y una imagen cuyo archivo ya no está se trata como sin foto. El diseño (tokens `portada-*` de Tailwind, Onest, rojo `#d30f23` solo como acento, fondos que alternan entre las secciones presentes) está en `DESIGN.md`, y el contexto de producto, en `PRODUCT.md`. Cuatro cosas que no se pueden perder:
@@ -365,6 +366,7 @@ Cada tarea termina con tests que la prueben. **Una funcionalidad sin test no est
 - Usa factories, nunca datos escritos a mano dentro del test.
 - Los tests describen comportamiento del dominio, no implementación: `un docente no puede evaluar sin escenario aprobado`.
 - **Las carreras se prueban con dos sesiones de verdad**, en `tests/Concurrencia`. Ahí no hay `RefreshDatabase`, porque su transacción le esconde los datos a la otra sesión: se usa `DatabaseTruncation`, y la segunda conexión entra justo antes de que la primera escriba. Llamar dos veces seguidas no detecta una carrera: pasaría igual sin el bloqueo. `AsignacionDeSalaConcurrenteTest` tiene el patrón.
+- **Rendimiento: lo determinista en la suite, lo demás fuera (ADR 0008).** `tests/Feature/Rendimiento/PresupuestoDeConsultasTest.php` abre cada pantalla del panel con 4 y con 16 vueltas de datos y exige las mismas consultas: una pantalla nueva entra en su lista con su presupuesto, y un N+1 la hace fallar. La carga, el estrés y el navegador viven en `rendimiento/` y se corren con `rendimiento/campana.sh` contra el compose de producción, nunca contra una base con datos reales; el último informe está en `docs/rendimiento/`.
 
 Antes de dar una tarea por terminada: `php artisan test` y `vendor/bin/phpstan analyse` en verde.
 
@@ -399,6 +401,9 @@ docker compose exec app php artisan test
 docker compose exec app vendor/bin/phpstan analyse       # análisis estático
 docker compose logs -f queue                           # trabajador de la cola (correos)
 docker compose logs -f programador                     # tareas programadas (aviso del RF60)
+
+# Rendimiento (fuera de la suite; rendimiento/README.md). «preparar» BORRA los volúmenes: nunca con datos reales
+RENDIMIENTO_BASE_DESECHABLE=si rendimiento/campana.sh
 docker compose exec app php artisan make:model Nombre -mf
 docker compose exec node npm run dev
 docker compose logs -f app

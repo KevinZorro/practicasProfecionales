@@ -1,0 +1,8 @@
+== 17-resistencia ==
+  inicio 19:56:23, fin 20:26:54
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.067 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.067 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 28.1/90.6, db 13.4/34.0, web 1.1/28.1, generador 4.0/13.3
+  archivos: rendimiento/resultados/campana-20261111-1601/17-resistencia/

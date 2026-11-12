@@ -1,0 +1,108 @@
+Escenario: capacidad  (capacidad (capacity); PCa-1-G capacidad de procesamiento de transacciones; PCa-2-G capacidad de acceso de usuarios)
+Fecha: 2026-11-11T16:52:52.530Z  Base: http://localhost  Duración: 735 s
+IP por usuario: si
+Peticiones: 32168  rps: 43.77  error: 0.01 %  429: 0  5xx: 4  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 0.744
+Latencia global ms: p50 70.4  p90 6387.1  p95 7175.4  p99 11853  máx 38650
+
+Por pantalla (ms)
+nombre                                n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+panel.bitacora                      436    62.8  6689.9  7239.2 13851.1 20221.9  0.743       0     0     0     0
+panel.calendario                   6947      48  6378.2    7076 12021.3 38554.2  0.753       0     0     0     0
+panel.calendario.eventos.mes       3498    65.4  6328.1  7195.4 11428.3 38087.5   0.75       0     0     0     0
+panel.calendario.eventos.semana    3448      62  6399.6  7088.8 11229.9 28416.7  0.746    0.03     0     0     0
+panel.evaluaciones                 2306    74.5  6302.8  7182.9 10595.4 29940.7  0.744       0     0     0     0
+panel.inventario                    511    99.5  6846.4  7941.9 12794.1 35593.6  0.705       0     0     0     0
+panel.inventario.disponibilidad     504    60.9  6367.1  7106.2 11586.4 29464.1  0.738     0.2     0     0     0
+panel.mi-formato                   4700    57.6  6307.2  7145.3   11983 35575.5  0.756    0.04     0     0     0
+panel.mis-resultados               4672    82.4  6564.6  7269.6 11694.4   38650  0.728       0     0     0     0
+panel.mis-solicitudes              2357    72.6  6102.9  7104.1 10872.1 27046.2  0.747       0     0     0     0
+panel.preparaciones                 517    90.7  6059.7  7170.5 10701.2 16074.2  0.729       0     0     0     0
+panel.reportes                      380   119.7  5795.7  7194.9 14456.9 25504.2  0.762       0     0     0     0
+panel.solicitudes                   927    85.6  6508.4    7298 14133.4 26245.2  0.706       0     0     0     0
+panel.usuarios                      965   101.3  6609.1  7279.6 13886.8 23853.4  0.717       0     0     0     0
+
+Por escalón (ms)
+nombre         n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+r0010       1129    39.3    57.2    64.1    77.7      97      -       0     0     0     0
+r0020       2299    40.1    59.3    65.8    84.6   124.8      -       0     0     0     0
+r0030       3458    39.8    60.9    69.9    89.3   136.8      -       0     0     0     0
+r0040       4576    44.7    75.4    88.9   134.6   243.2      -       0     0     0     0
+r0050       5775    52.1    90.1   108.1   155.6   274.4      -       0     0     0     0
+r0060       6881   276.6   664.7   732.6   850.6  1017.9      -       0     0     0     0
+r0080       8050  5275.9  8881.1 11046.2 20285.8   38650      -    0.05     0     4     4
+
+Umbrales
+  NO CUMPLE tasa_error rate==0
+  CUMPLE    sesiones_invalidas count==0
+  NO CUMPLE respuestas_5xx count==0
+  CUMPLE    respuestas_429 count==0
+  NO CUMPLE http_req_duration{escalon:r0080} p(95)<2000
+  (6 de 7 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: NO PASA
+
+Análisis
+{
+  "escalones": [
+    {
+      "tasa_pedida_por_s": 10,
+      "peticiones": 1129,
+      "peticiones_por_s_medidas": 12.5,
+      "p95_ms": 64.08423319999997,
+      "errores": 0,
+      "cumple": true
+    },
+    {
+      "tasa_pedida_por_s": 20,
+      "peticiones": 2299,
+      "peticiones_por_s_medidas": 25.5,
+      "p95_ms": 65.8385285,
+      "errores": 0,
+      "cumple": true
+    },
+    {
+      "tasa_pedida_por_s": 30,
+      "peticiones": 3458,
+      "peticiones_por_s_medidas": 38.4,
+      "p95_ms": 69.8602986,
+      "errores": 0,
+      "cumple": true
+    },
+    {
+      "tasa_pedida_por_s": 40,
+      "peticiones": 4576,
+      "peticiones_por_s_medidas": 50.8,
+      "p95_ms": 88.915018,
+      "errores": 0,
+      "cumple": true
+    },
+    {
+      "tasa_pedida_por_s": 50,
+      "peticiones": 5775,
+      "peticiones_por_s_medidas": 64.2,
+      "p95_ms": 108.13685680000002,
+      "errores": 0,
+      "cumple": true
+    },
+    {
+      "tasa_pedida_por_s": 60,
+      "peticiones": 6881,
+      "peticiones_por_s_medidas": 76.5,
+      "p95_ms": 732.587168,
+      "errores": 0,
+      "cumple": true
+    },
+    {
+      "tasa_pedida_por_s": 80,
+      "peticiones": 8050,
+      "peticiones_por_s_medidas": 89.4,
+      "p95_ms": 11046.214500199998,
+      "errores": 4,
+      "cumple": false
+    }
+  ],
+  "capacidad_pca1_peticiones_por_s": 76.5,
+  "capacidad_escalon_pedido_por_s": 60,
+  "usuarios_equivalentes_pca2_estimados": 497,
+  "criterio": "último escalón consecutivo con p95 <= 2000 ms y 0 errores"
+}

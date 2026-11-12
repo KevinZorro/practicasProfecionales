@@ -1,0 +1,30 @@
+Escenarios: bandeja-pendientes bandeja-revisadas bandeja-vencidas bitacora-filtrada bitacora-pagina calendario-coordinador calendario-docente calendario-estudiante cruces-docente cruces-estudiantes historial-docente inventario-disponibilidad inventario-sin-cobertura participacion-lista peticion-base reporte-resultados-evaluacion reporte-uso-escenarios resumen-administrativo resumen-coordinador resumen-docente resumen-estudiante resumen-supervisor roles-vigentes sesion-escribir sesion-gc sesion-leer usuario-por-id 
+Clientes: 10, 15s por corrida
+  bandeja-pendientes                 c=10  tps=2702.591024 media=3.690    p95=6.835    p99=9.603    ok
+  bandeja-revisadas                  c=10  tps=2966.437782 media=3.364    p95=5.947    p99=8.502    ok
+  bandeja-vencidas                   c=10  tps=1575.317114 media=6.340    p95=10.625   p99=14.660   ok
+  bitacora-filtrada                  c=10  tps=1158.631272 media=8.622    p95=13.603   p99=17.325   ok
+  bitacora-pagina                    c=10  tps=1335.095113 media=7.483    p95=12.621   p99=16.511   ok
+  calendario-coordinador             c=10  tps=773.812297 media=12.900   p95=20.490   p99=26.492   ok
+  calendario-docente                 c=10  tps=3252.680874 media=3.066    p95=5.535    p99=8.309    ok
+  calendario-estudiante              c=10  tps=2126.990586 media=4.694    p95=8.066    p99=11.156   ok
+  cruces-docente                     c=10  tps=18578.976620 media=0.533    p95=1.121    p99=1.916    ok
+  cruces-estudiantes                 c=10  tps=3422.131793 media=2.916    p95=4.974    p99=6.889    ok
+  historial-docente                  c=10  tps=2635.542696 media=3.785    p95=7.060    p99=11.124   ok
+  inventario-disponibilidad          c=10  tps=6542.632819 media=1.524    p95=2.996    p99=5.027    ok
+  inventario-sin-cobertura           c=10  tps=662.867411 media=15.073   p95=27.479   p99=33.965   ok
+  participacion-lista                c=10  tps=6613.957091 media=1.505    p95=2.955    p99=5.075    ok
+  peticion-base                      c=10  tps=3452.921091 media=2.884    p95=5.036    p99=7.349    ok
+  reporte-resultados-evaluacion      c=10  tps=929.293814 media=10.750   p95=18.270   p99=23.930   ok
+  reporte-uso-escenarios             c=10  tps=597.344892 media=16.723   p95=29.676   p99=37.154   ok
+  resumen-administrativo             c=10  tps=876.533650 media=11.396   p95=18.893   p99=25.087   ok
+  resumen-coordinador                c=10  tps=457.882819 media=21.817   p95=34.899   p99=45.705   ok
+  resumen-docente                    c=10  tps=1283.473358 media=7.778    p95=12.952   p99=17.411   ok
+  resumen-estudiante                 c=10  tps=1041.977027 media=9.582    p95=15.544   p99=20.887   ok
+  resumen-supervisor                 c=10  tps=630.989323 media=15.831   p95=24.814   p99=31.615   ok
+  roles-vigentes                     c=10  tps=19261.679707 media=0.515    p95=1.075    p99=1.842    ok
+  sesion-escribir                    c=10  tps=8066.518766 media=1.233    p95=2.065    p99=2.972    ok
+  sesion-gc                          c=10  tps=28537.302169 media=0.346    p95=0.721    p99=1.414    ok
+  sesion-leer                        c=10  tps=25943.774171 media=0.381    p95=0.823    p99=1.531    ok
+  usuario-por-id                     c=10  tps=24600.729196 media=0.401    p95=0.886    p99=1.682    ok
+Resumen: rendimiento/resultados/campana-20261111-1601/03-bd-consultas/escenarios/consultas-calientes-20261111-161003/resumen.csv

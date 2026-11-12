@@ -1,0 +1,8 @@
+== 04-humo ==
+  inicio 16:21:08, fin 16:21:58
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.08 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.08 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 15.4/22.3, db 7.0/11.5, web 0.7/1.7, generador 2.4/3.1
+  archivos: rendimiento/resultados/campana-20261111-1601/04-humo/

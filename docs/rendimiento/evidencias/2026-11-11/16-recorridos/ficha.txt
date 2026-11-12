@@ -1,0 +1,10 @@
+== 16-recorridos ==
+  inicio 19:54:08, fin 19:55:23
+  modo de IP: no aplica
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.068 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.056 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 5.0/11.8, db 4.5/9.8, web 0.5/1.0, generador 118.3/160.7
+  ADVERTENCIA: el generador pasó del 90 % de CPU (p95 160.7 %): este paso puede estar midiendo al generador.
+  nota: navegador sin cpuset (corre donde el sistema lo ponga); un proceso de k6 por página
+  archivos: rendimiento/resultados/campana-20261111-1601/16-recorridos/

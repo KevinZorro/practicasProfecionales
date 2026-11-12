@@ -1,0 +1,23 @@
+{
+    "escenario": "RNF01",
+    "limite_p95_segundos": 2,
+    "solo_paginas": true,
+    "lineas_leidas": 0,
+    "lineas_descartadas": 0,
+    "veredicto": "SIN DATOS",
+    "total": {
+        "cantidad": 0,
+        "p50": 0,
+        "p90": 0,
+        "p95": 0,
+        "p99": 0,
+        "max": 0,
+        "urt_p95": 0,
+        "2xx": 0,
+        "3xx": 0,
+        "4xx": 0,
+        "429": 0,
+        "5xx": 0
+    },
+    "grupos": []
+}

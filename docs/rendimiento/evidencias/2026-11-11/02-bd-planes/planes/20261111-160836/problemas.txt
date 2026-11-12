@@ -1,0 +1,40 @@
+[bitacora-filtrada m1 #1] ejecución 1.151 ms, planificación 0.081 ms
+  - estimación de filas desviada (estimadas->reales): Bitmap Heap Scan on bitacora : 19->260
+  select count(*) as aggregate from "bitacora" where "accion" = 'solicitud_aprobada' and "created_at"::date >= (CURRENT_DATE + -253) and "created_at"::date <= (CURRENT_DATE + -253 + 30);
+
+[bitacora-filtrada m1 #2] ejecución 1.333 ms, planificación 0.084 ms
+  - estimación de filas desviada (estimadas->reales): Sort : 19->250; Bitmap Heap Scan on bitacora : 19->260
+  select * from "bitacora" where "accion" = 'solicitud_aprobada' and "created_at"::date >= (CURRENT_DATE + -253) and "created_at"::date <= (CURRENT_DATE + -253 + 30) order by "created_at" desc, "id" desc limit 25 offset 22
+
+[bitacora-filtrada m3 #1] ejecución 0.944 ms, planificación 0.059 ms
+  - estimación de filas desviada (estimadas->reales): Bitmap Heap Scan on bitacora : 19->251
+  select count(*) as aggregate from "bitacora" where "accion" = 'solicitud_aprobada' and "created_at"::date >= (CURRENT_DATE + -165) and "created_at"::date <= (CURRENT_DATE + -165 + 30);
+
+[bitacora-filtrada m3 #2] ejecución 1.070 ms, planificación 0.081 ms
+  - estimación de filas desviada (estimadas->reales): Bitmap Heap Scan on bitacora : 19->251
+  select * from "bitacora" where "accion" = 'solicitud_aprobada' and "created_at"::date >= (CURRENT_DATE + -165) and "created_at"::date <= (CURRENT_DATE + -165 + 30) order by "created_at" desc, "id" desc limit 25 offset 0;
+
+[bitacora-pagina m1 #1] ejecución 3.370 ms, planificación 0.039 ms
+  - Seq Scan en tabla grande: bitacora(30000 filas)
+  select count(*) as aggregate from "bitacora";
+
+[bitacora-pagina m2 #1] ejecución 3.323 ms, planificación 0.042 ms
+  - Seq Scan en tabla grande: bitacora(30000 filas)
+  select count(*) as aggregate from "bitacora";
+
+[bitacora-pagina m3 #1] ejecución 3.461 ms, planificación 0.049 ms
+  - Seq Scan en tabla grande: bitacora(30000 filas)
+  select count(*) as aggregate from "bitacora";
+
+[resumen-estudiante m1 #9] ejecución 1.521 ms, planificación 0.137 ms
+  - Seq Scan en tabla grande: evaluacion_items(7282 filas)
+  select "evaluacion_items".*, "evaluacion_estudiante_item"."evaluacion_estudiante_id" as "pivot_evaluacion_estudiante_id", "evaluacion_estudiante_item"."evaluacion_item_id" as "pivot_evaluacion_item_id", "evaluacion_estud
+
+[resumen-estudiante m2 #9] ejecución 2.205 ms, planificación 0.192 ms
+  - Seq Scan en tabla grande: evaluacion_items(7282 filas)
+  select "evaluacion_items".*, "evaluacion_estudiante_item"."evaluacion_estudiante_id" as "pivot_evaluacion_estudiante_id", "evaluacion_estudiante_item"."evaluacion_item_id" as "pivot_evaluacion_item_id", "evaluacion_estud
+
+[resumen-estudiante m3 #9] ejecución 1.502 ms, planificación 0.122 ms
+  - Seq Scan en tabla grande: evaluacion_items(7282 filas)
+  select "evaluacion_items".*, "evaluacion_estudiante_item"."evaluacion_estudiante_id" as "pivot_evaluacion_estudiante_id", "evaluacion_estudiante_item"."evaluacion_item_id" as "pivot_evaluacion_item_id", "evaluacion_estud
+

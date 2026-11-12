@@ -1,0 +1,45 @@
+Escenario: descargas  (operaciones pesadas y comprobación de topes; PTb-3-G tiempo de ida y vuelta de una tarea; PRu-3-G uso medio de E/S)
+Fecha: 2026-11-11T17:34:42.282Z  Base: http://localhost  Duración: 240.5 s
+IP por usuario: si
+Peticiones: 133  rps: 0.55  error: 0 %  429: 0  5xx: 0  422: 6  sesión inválida: 0
+Apdex (T=500 ms): 0.806
+Latencia global ms: p50 36.5  p90 497  p95 1442.7  p99 1752.9  máx 1779
+
+Por pantalla (ms)
+nombre                                           n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+descarga.evaluaciones_no_registradas.excel       6    42.7    50.4    50.9    51.3    51.4      1       0     0     0     0
+descarga.evaluaciones_no_registradas.pdf         6   226.6   273.7   288.5   300.3   303.3      1       0     0     0     0
+descarga.resultados_de_evaluacion.excel          6  1417.9    1444  1447.2  1449.8  1450.5    0.5       0     0     0     0
+descarga.resultados_de_evaluacion.pdf            6    96.5   109.8   110.4   110.9     111      1       0     0     0     0
+descarga.uso_de_escenarios.excel                 6   441.8   552.7   574.4   591.7   596.1  0.833       0     0     0     0
+descarga.uso_de_escenarios.pdf                   6  1678.2  1775.2  1777.1  1778.6    1779    0.5       0     0     0     0
+
+Umbrales
+  CUMPLE    respuestas_429 count==0
+  CUMPLE    topes_nginx_429 count>=1
+  CUMPLE    respuestas_5xx count==0
+  CUMPLE    sesiones_invalidas count==0
+  CUMPLE    topes_app_429 count>=1
+  CUMPLE    topes_app_pasaron count<=30
+
+  (8 de 8 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: PASA
+
+Análisis
+{
+  "topes": {
+    "nginx_zona_pesadas": {
+      "rafaga": 60,
+      "pasaron": 22,
+      "cortadas_con_429_de_nginx": 38,
+      "esperado": "unas 21 pasan (1 + ráfaga de 20), el resto 429"
+    },
+    "aplicacion_30_por_minuto": {
+      "peticiones": 36,
+      "pasaron": 30,
+      "cortadas_con_429_de_la_aplicacion": 6,
+      "esperado": "pasan 30, desde la 31 llega 429"
+    }
+  },
+  "bytes_descargados": 14853693
+}

@@ -1,0 +1,263 @@
+{
+  "pagina": "bandeja",
+  "perfil": "movil3g",
+  "descripcionDelPerfil": "Celular 3G gama baja (412x823 @1,75; 3G de WebPageTest; CPU 4x)",
+  "baseUrl": "http://localhost",
+  "visitas": {
+    "fria": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "count": 5,
+          "min": 46.70000000006985,
+          "avg": 64.52000000001863,
+          "med": 65.5,
+          "p(75)": 73.80000000004657,
+          "p(90)": 76.20000000004657,
+          "p(95)": 77.00000000004657,
+          "max": 77.80000000004657
+        },
+        "umbrales": []
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "count": 5,
+          "min": 1156,
+          "avg": 1213.6,
+          "med": 1216,
+          "p(75)": 1216,
+          "p(90)": 1249.6,
+          "p(95)": 1260.8,
+          "max": 1272
+        },
+        "umbrales": []
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "p(90)": 1249.6,
+          "p(95)": 1260.8,
+          "max": 1272,
+          "count": 5,
+          "min": 1156,
+          "avg": 1213.6,
+          "med": 1216,
+          "p(75)": 1216
+        },
+        "umbrales": [
+          "p(75)<=4000: CUMPLE"
+        ]
+      },
+      "wv_cls": {
+        "valores": {
+          "p(95)": 0.00027518588971555275,
+          "max": 0.00027518588971555275,
+          "count": 5,
+          "min": 0,
+          "avg": 0.0001100743558862211,
+          "med": 0,
+          "p(75)": 0.00027518588971555275,
+          "p(90)": 0.00027518588971555275
+        },
+        "umbrales": []
+      },
+      "wv_inp_ms": {
+        "valores": {
+          "med": 40,
+          "p(75)": 40,
+          "p(90)": 40,
+          "p(95)": 40,
+          "max": 40,
+          "count": 5,
+          "min": 40,
+          "avg": 40
+        },
+        "umbrales": []
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "min": 120125,
+          "avg": 120127,
+          "med": 120125,
+          "p(75)": 120127,
+          "p(90)": 120130.6,
+          "p(95)": 120131.8,
+          "max": 120133,
+          "count": 5
+        },
+        "umbrales": [
+          "max<=307200: CUMPLE"
+        ]
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "p(95)": 118331.8,
+          "max": 118333,
+          "count": 5,
+          "min": 118325,
+          "avg": 118327,
+          "med": 118325,
+          "p(75)": 118327,
+          "p(90)": 118330.6
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "med": 376368,
+          "p(75)": 376368,
+          "p(90)": 376368,
+          "p(95)": 376368,
+          "max": 376368,
+          "count": 5,
+          "min": 376368,
+          "avg": 376368
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "count": 5,
+          "min": 6,
+          "avg": 6,
+          "med": 6,
+          "p(75)": 6,
+          "p(90)": 6,
+          "p(95)": 6,
+          "max": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0,
+          "count": 5,
+          "min": 0,
+          "avg": 0,
+          "med": 0
+        },
+        "umbrales": []
+      }
+    },
+    "caliente": {
+      "wv_ttfb_ms": {
+        "valores": {
+          "med": 59.20000000006985,
+          "p(75)": 64.90000000002328,
+          "p(90)": 66.70000000002328,
+          "p(95)": 67.30000000002329,
+          "max": 67.90000000002328,
+          "count": 5,
+          "min": 50.90000000002328,
+          "avg": 59.12000000001863
+        },
+        "umbrales": []
+      },
+      "wv_fcp_ms": {
+        "valores": {
+          "min": 492,
+          "avg": 508.8,
+          "med": 508,
+          "p(75)": 524,
+          "p(90)": 524,
+          "p(95)": 524,
+          "max": 524,
+          "count": 5
+        },
+        "umbrales": []
+      },
+      "wv_lcp_ms": {
+        "valores": {
+          "max": 524,
+          "count": 5,
+          "min": 492,
+          "avg": 508.8,
+          "med": 508,
+          "p(75)": 524,
+          "p(90)": 524,
+          "p(95)": 524
+        },
+        "umbrales": []
+      },
+      "wv_cls": {
+        "valores": {
+          "min": 0,
+          "avg": 0,
+          "med": 0,
+          "p(75)": 0,
+          "p(90)": 0,
+          "p(95)": 0,
+          "max": 0,
+          "count": 5
+        },
+        "umbrales": []
+      },
+      "wv_bytes_transferidos": {
+        "valores": {
+          "count": 5,
+          "min": 9042,
+          "avg": 9045.2,
+          "med": 9045,
+          "p(75)": 9047,
+          "p(90)": 9048.2,
+          "p(95)": 9048.6,
+          "max": 9049
+        },
+        "umbrales": []
+      },
+      "wv_bytes_cuerpo_codificado": {
+        "valores": {
+          "count": 5,
+          "min": 118325,
+          "avg": 118328.2,
+          "med": 118328,
+          "p(75)": 118330,
+          "p(90)": 118331.2,
+          "p(95)": 118331.6,
+          "max": 118332
+        },
+        "umbrales": []
+      },
+      "wv_bytes_descomprimidos": {
+        "valores": {
+          "p(75)": 376368,
+          "p(90)": 376368,
+          "p(95)": 376368,
+          "max": 376368,
+          "count": 5,
+          "min": 376368,
+          "avg": 376368,
+          "med": 376368
+        },
+        "umbrales": []
+      },
+      "wv_peticiones": {
+        "valores": {
+          "p(75)": 6,
+          "p(90)": 6,
+          "p(95)": 6,
+          "max": 6,
+          "count": 5,
+          "min": 6,
+          "avg": 6,
+          "med": 6
+        },
+        "umbrales": []
+      },
+      "wv_peticiones_en_cache": {
+        "valores": {
+          "p(90)": 5,
+          "p(95)": 5,
+          "max": 5,
+          "count": 5,
+          "min": 5,
+          "avg": 5,
+          "med": 5,
+          "p(75)": 5
+        },
+        "umbrales": []
+      }
+    }
+  }
+}

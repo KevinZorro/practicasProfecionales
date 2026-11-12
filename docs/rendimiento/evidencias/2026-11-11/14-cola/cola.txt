@@ -1,0 +1,5 @@
+trabajos: 300
+segundos hasta vaciar la tabla jobs: 3.69
+trabajos por segundo: 81.3
+quedan en jobs: 0
+nuevos en failed_jobs: 0

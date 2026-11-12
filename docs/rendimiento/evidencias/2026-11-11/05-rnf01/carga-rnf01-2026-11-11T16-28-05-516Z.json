@@ -1,0 +1,379 @@
+{
+  "escenario": "carga-rnf01",
+  "tipo_de_prueba": "carga (escenario RNF01)",
+  "medida_iso_25023": "PTb-2-G adecuación del tiempo de respuesta; PCa-2-G capacidad de acceso de usuarios",
+  "fecha": "2026-11-11T16:28:05.516Z",
+  "base_url": "http://localhost",
+  "ip_por_usuario": "no",
+  "duracion_s": 304.9,
+  "totales": {
+    "peticiones": 1200,
+    "rps": 3.9361447203138584,
+    "tasa_de_error": 0,
+    "respuestas_429": 0,
+    "respuestas_5xx": 0,
+    "respuestas_502_504": 0,
+    "rechazos_422": 0,
+    "sesiones_invalidas": 0,
+    "apdex_t_ms": 500,
+    "apdex": 1,
+    "latencia_ms": {
+      "n": null,
+      "promedio": 29.737800601666653,
+      "min": 1.369587,
+      "p50": 32.765048,
+      "p90": 54.13262290000002,
+      "p95": 59.73341799999999,
+      "p99": 77.94193666,
+      "max": 100.663233
+    },
+    "tamano_cuerpo_bytes": {
+      "n": null,
+      "promedio": 32503.845333333335,
+      "min": 2,
+      "p50": 17382,
+      "p90": 96175.2,
+      "p95": 115526.09999999999,
+      "p99": 164747,
+      "max": 176983
+    }
+  },
+  "por_pantalla": {
+    "panel.calendario.eventos.mes": {
+      "n": 150,
+      "promedio": 41.93930048,
+      "min": 23.793556,
+      "p50": 37.5735015,
+      "p90": 61.340310999999964,
+      "p95": 76.699378,
+      "p99": 88.46494323999991,
+      "max": 100.663233,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.mis-solicitudes": {
+      "n": 44,
+      "promedio": 48.52090840909091,
+      "min": 37.389885,
+      "p50": 46.921929500000005,
+      "p90": 59.4576583,
+      "p95": 62.5160976,
+      "p99": 74.05458091,
+      "max": 77.937766,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.mis-resultados": {
+      "n": 90,
+      "promedio": 50.35129292222222,
+      "min": 38.27615,
+      "p50": 49.99811,
+      "p90": 59.7382587,
+      "p95": 63.44282065,
+      "p99": 79.13564781,
+      "max": 79.155469,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.inicio": {
+      "n": 150,
+      "promedio": 51.56021957333333,
+      "min": 34.71689,
+      "p50": 50.145309499999996,
+      "p90": 63.08017269999999,
+      "p95": 67.73877465,
+      "p99": 79.05197233999996,
+      "max": 81.53146,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.calendario.eventos.semana": {
+      "n": 150,
+      "promedio": 39.43474615999997,
+      "min": 26.382648,
+      "p50": 38.707390000000004,
+      "p90": 50.0320038,
+      "p95": 53.1864673,
+      "p99": 59.54957582999996,
+      "max": 67.243718,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.calendario": {
+      "n": 150,
+      "promedio": 32.85435639999999,
+      "min": 21.347518,
+      "p50": 31.699976999999997,
+      "p90": 39.9568683,
+      "p95": 42.12211529999999,
+      "p99": 46.29636884999998,
+      "max": 48.821812,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.solicitudes": {
+      "n": 4,
+      "promedio": 55.4452795,
+      "min": 48.388473,
+      "p50": 55.0896215,
+      "p90": 61.5535707,
+      "p95": 62.38348635,
+      "p99": 63.04741887,
+      "max": 63.213402,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "activo.livewire": {
+      "n": 150,
+      "promedio": 13.367412240000004,
+      "min": 9.466484,
+      "p50": 13.226113999999999,
+      "p90": 15.8841074,
+      "p95": 16.791779249999994,
+      "p99": 18.917419099999982,
+      "max": 27.030901,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": null,
+      "tasa_fallos_http": 0
+    },
+    "activo.js": {
+      "n": 150,
+      "promedio": 6.3810028866666695,
+      "min": 5.149384,
+      "p50": 6.008891,
+      "p90": 7.7890269,
+      "p95": 8.513575399999997,
+      "p99": 10.301768219999992,
+      "max": 12.567236,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": null,
+      "tasa_fallos_http": 0
+    },
+    "panel.usuarios": {
+      "n": 2,
+      "promedio": 66.7371465,
+      "min": 55.119461,
+      "p50": 66.7371465,
+      "p90": 76.0312949,
+      "p95": 77.19306345,
+      "p99": 78.12247829,
+      "max": 78.354832,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "panel.preparaciones": {
+      "n": 10,
+      "promedio": 54.799746400000004,
+      "min": 42.274813,
+      "p50": 54.7770795,
+      "p90": 66.06720609999999,
+      "p95": 67.47419004999999,
+      "p99": 68.59977721,
+      "max": 68.881174,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "activo.css": {
+      "n": 150,
+      "promedio": 1.900105686666665,
+      "min": 1.369587,
+      "p50": 1.7241325,
+      "p90": 2.3730838999999997,
+      "p95": 2.667828799999999,
+      "p99": 4.8463378999999955,
+      "max": 6.047811,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": null,
+      "tasa_fallos_http": 0
+    }
+  },
+  "por_escalon": {},
+  "por_ventana": {},
+  "por_fase": {},
+  "umbrales": [
+          {
+            "metrica": "http_req_duration{name:panel.calendario.eventos.semana}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.calendario}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.solicitudes}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.periodo-academico}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "respuestas_429",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "respuestas_5xx",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.formatos-confidencialidad}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.usuarios}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.reposicion}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.inventario}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.preparaciones}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:admin.dashboard}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.reportes}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.bloqueos}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.plantillas-confidencialidad}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "tasa_error",
+            "umbral": "rate==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.inventario.disponibilidad}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.bitacora}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.depuracion}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.calendario.eventos.mes}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.formatos-confidencialidad.estado}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.evaluaciones}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.mis-solicitudes}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.mi-formato}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.sesiones-apartadas}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.solicitudes.nueva}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "sesiones_invalidas",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.mis-resultados}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.inicio}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:panel.supervision}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          }
+        ],
+  "todos_los_umbrales_cumplidos": true
+}

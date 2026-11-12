@@ -1,0 +1,299 @@
+{
+  "baseUrl": "http://localhost",
+  "generado": "2026-11-11T21:19:37.712Z",
+  "filas": [
+    {
+      "pagina": "tablero",
+      "perfil": "escritorio",
+      "ttfb": 98.40000000037253,
+      "fcp": 252,
+      "lcp": 252,
+      "cls": 0,
+      "inp": 16,
+      "bytesFria": 123073,
+      "peticionesFria": 6,
+      "bytesCaliente": 11988,
+      "lcpCaliente": 200
+    }
+  ],
+  "bytesK6": 4044801,
+  "bytesResourceTiming": 405191,
+  "umbrales": {
+    "wv_fcp_ms{pagina:hoy-docente,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:calendario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:portada,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:hoy-administrativo,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:tablero,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:hoy-estudiante,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_bytes_transferidos{pagina:calendario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "max<=307200",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:hoy-administrativo,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:escenario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:calendario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:hoy-docente,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:escenario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:portada,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:calendario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:hoy-estudiante,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:hoy-estudiante,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:bandeja,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:bandeja,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_bytes_transferidos{pagina:hoy-docente,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "max<=307200",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:escenario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:portada,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:hoy-administrativo,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:escenario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:bandeja,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:tablero,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_bytes_transferidos{pagina:tablero,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "max<=307200",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:hoy-docente,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:hoy-estudiante,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:tablero,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:calendario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:hoy-docente,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:bandeja,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:hoy-estudiante,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:calendario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_bytes_transferidos{pagina:hoy-administrativo,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "max<=307200",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:portada,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:portada,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:hoy-administrativo,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_cls{pagina:hoy-docente,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=0.1",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:escenario,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_ttfb_ms{pagina:tablero,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=800",
+        "ok": true
+      }
+    ],
+    "wv_bytes_transferidos{pagina:hoy-estudiante,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "max<=307200",
+        "ok": true
+      }
+    ],
+    "wv_fcp_ms{pagina:tablero,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=1800",
+        "ok": true
+      }
+    ],
+    "wv_inp_ms{pagina:bandeja,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=200",
+        "ok": true
+      }
+    ],
+    "wv_lcp_ms{pagina:hoy-administrativo,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "p(75)<=2500",
+        "ok": true
+      }
+    ],
+    "wv_bytes_transferidos{pagina:bandeja,perfil:escritorio,visita:fria}": [
+      {
+        "regla": "max<=307200",
+        "ok": true
+      }
+    ]
+  }
+}

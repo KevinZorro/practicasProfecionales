@@ -1,0 +1,159 @@
+{
+  "escenario": "concurrencia",
+  "tipo_de_prueba": "concurrencia de escrituras",
+  "medida_iso_25023": "PTb-3-G tiempo de ida y vuelta de una tarea (bajo contención)",
+  "fecha": "2026-11-11T17:29:37.547Z",
+  "base_url": "http://localhost",
+  "ip_por_usuario": "si",
+  "duracion_s": 161.6,
+  "totales": {
+    "peticiones": 96,
+    "rps": 0.5940885094028919,
+    "tasa_de_error": 0,
+    "respuestas_429": 0,
+    "respuestas_5xx": 0,
+    "respuestas_502_504": 0,
+    "rechazos_422": 0,
+    "sesiones_invalidas": 0,
+    "apdex_t_ms": 500,
+    "apdex": 1,
+    "latencia_ms": {
+      "n": null,
+      "promedio": 88.92108229166666,
+      "min": 27.184935,
+      "p50": 73.48648299999999,
+      "p90": 166.367153,
+      "p95": 195.485794,
+      "p99": 215.24194024999994,
+      "max": 231.465247
+    },
+    "tamano_cuerpo_bytes": {
+      "n": null,
+      "promedio": 23379.433333333334,
+      "min": 49,
+      "p50": 15293,
+      "p90": 60246,
+      "p95": 60246,
+      "p99": 60246,
+      "max": 60246
+    }
+  },
+  "por_pantalla": {
+    "concurrencia.salas.accion": {
+      "n": 10,
+      "promedio": 168.70191540000002,
+      "min": 95.626042,
+      "p50": 181.991995,
+      "p90": 216.0957985,
+      "p95": 223.78052275,
+      "p99": 229.92830215,
+      "max": 231.465247,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "concurrencia.aprobacion.accion": {
+      "n": 10,
+      "promedio": 89.15607229999999,
+      "min": 67.79157,
+      "p50": 74.071056,
+      "p90": 117.7300574,
+      "p95": 120.31192069999999,
+      "p99": 122.37741134,
+      "max": 122.893784,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    },
+    "concurrencia.solicitudes.accion": {
+      "n": 10,
+      "promedio": 151.64729,
+      "min": 85.83088,
+      "p50": 154.2048275,
+      "p90": 194.6476738,
+      "p95": 197.1620344,
+      "p99": 199.17352288,
+      "max": 199.676395,
+      "respuestas_429": 0,
+      "respuestas_5xx": 0,
+      "respuestas_502_504": 0,
+      "apdex": 1,
+      "tasa_fallos_http": 0
+    }
+  },
+  "por_escalon": {},
+  "por_ventana": {},
+  "por_fase": {},
+  "umbrales": [
+          {
+            "metrica": "respuestas_5xx",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "escrituras_ganadas{escenario:solicitudes}",
+            "umbral": "count<=1",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:concurrencia.salas.accion}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:concurrencia.aprobacion.accion}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "http_req_duration{name:concurrencia.solicitudes.accion}",
+            "umbral": "p(95)<2000",
+            "cumplido": true
+          },
+          {
+            "metrica": "escrituras_ganadas{escenario:aprobacion}",
+            "umbral": "count==1",
+            "cumplido": true
+          },
+          {
+            "metrica": "preparaciones_con_la_sala",
+            "umbral": "value<=1",
+            "cumplido": true
+          },
+          {
+            "metrica": "sesiones_invalidas",
+            "umbral": "count==0",
+            "cumplido": true
+          },
+          {
+            "metrica": "tasa_error",
+            "umbral": "rate==0",
+            "cumplido": true
+          }
+        ],
+  "todos_los_umbrales_cumplidos": true,
+  "analisis": {
+          "solicitudes": {
+            "usuarios_simultaneos": 10,
+            "ganaron": 1,
+            "rechazadas_por_regla_de_negocio": 9,
+            "esperado": "a lo sumo 1 ganó"
+          },
+          "salas": {
+            "usuarios_simultaneos": 10,
+            "ganaron": 5,
+            "rechazadas_por_regla_de_negocio": 5,
+            "esperado": "a lo sumo 1 ganó"
+          },
+          "aprobacion": {
+            "usuarios_simultaneos": 10,
+            "ganaron": 1,
+            "rechazadas_por_regla_de_negocio": 9,
+            "esperado": "exactamente 1 ganó"
+          }
+        }
+}

@@ -1,0 +1,5 @@
+== 00-preparar ==
+  inicio 16:01:47, fin 16:02:20
+  resultado: factor 1; 4500 solicitudes 1161 usuarios 
+  cpuset del SUT: 0-2
+  archivos: rendimiento/resultados/campana-20261111-1601/00-preparar/ (conteo de filas por tabla en filas-por-tabla.txt)

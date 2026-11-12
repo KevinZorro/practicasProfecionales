@@ -1,0 +1,8 @@
+== 18-x5-bd-mezcla ==
+  inicio 20:39:16, fin 20:42:25
+  modo de IP: no aplica
+  prueba: medido
+  nginx, todo:    CUMPLE (p95 0.191 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.191 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.5/5.0, db 214.7/308.5, web 0.2/2.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/18-x5-bd-mezcla/

@@ -1,0 +1,8 @@
+== 11-estres-ip-real ==
+  inicio 17:15:49, fin 17:25:54
+  modo de IP: si
+  prueba: NO CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 10.681 s, 429: 0, 5xx: 62)
+  nginx, páginas: NO CUMPLE (p95 10.681 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 133.9/208.4, db 61.5/102.4, web 4.6/9.1, generador 10.9/62.5
+  archivos: rendimiento/resultados/campana-20261111-1601/11-estres-ip-real/

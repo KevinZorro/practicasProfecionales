@@ -1,0 +1,43 @@
+Escenario: concurrencia  (concurrencia de escrituras; PTb-3-G tiempo de ida y vuelta de una tarea (bajo contención))
+Fecha: 2026-11-11T17:29:37.547Z  Base: http://localhost  Duración: 161.6 s
+IP por usuario: si
+Peticiones: 96  rps: 0.59  error: 0 %  429: 0  5xx: 0  422: 0  sesión inválida: 0
+Apdex (T=500 ms): 1
+Latencia global ms: p50 73.5  p90 166.4  p95 195.5  p99 215.2  máx 231.5
+
+Por pantalla (ms)
+nombre                                n     p50     p90     p95     p99     máx  apdex fallos%   429   5xx 502/4
+concurrencia.aprobacion.accion       10    74.1   117.7   120.3   122.4   122.9      1       0     0     0     0
+concurrencia.salas.accion            10     182   216.1   223.8   229.9   231.5      1       0     0     0     0
+concurrencia.solicitudes.accion      10   154.2   194.6   197.2   199.2   199.7      1       0     0     0     0
+
+Umbrales
+  CUMPLE    respuestas_5xx count==0
+  CUMPLE    preparaciones_con_la_sala value<=1
+  CUMPLE    sesiones_invalidas count==0
+  CUMPLE    tasa_error rate==0
+
+  (5 de 5 umbrales por pantalla/escalón/ventana cumplidos)
+Veredicto: PASA
+
+Análisis
+{
+  "solicitudes": {
+    "usuarios_simultaneos": 10,
+    "ganaron": 1,
+    "rechazadas_por_regla_de_negocio": 9,
+    "esperado": "a lo sumo 1 ganó"
+  },
+  "salas": {
+    "usuarios_simultaneos": 10,
+    "ganaron": 5,
+    "rechazadas_por_regla_de_negocio": 5,
+    "esperado": "a lo sumo 1 ganó"
+  },
+  "aprobacion": {
+    "usuarios_simultaneos": 10,
+    "ganaron": 1,
+    "rechazadas_por_regla_de_negocio": 9,
+    "esperado": "exactamente 1 ganó"
+  }
+}

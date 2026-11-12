@@ -1,0 +1,23 @@
+Página hoy-estudiante · perfil escritorio (Escritorio sin limitar (1366x768)) · http://localhost
+
+  Visita fria
+    TTFB (ms)                      med 50  p75 58  min 37  max 67  n=5   [p(75)<=800: CUMPLE]
+    FCP (ms)                       med 140  p75 164  min 108  max 196  n=5   [p(75)<=1800: CUMPLE]
+    LCP (ms)                       med 140  p75 164  min 108  max 196  n=5   [p(75)<=2500: CUMPLE]
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5   [p(75)<=0.1: CUMPLE]
+    INP (ms)                       med 16  p75 16  min 16  max 16  n=5   [p(75)<=200: CUMPLE]
+    Bytes transferidos             med 115654  p75 115667  min 115637  max 115769  n=5   [max<=307200: CUMPLE]
+    Cuerpos comprimidos            med 113854  p75 113867  min 113837  max 113969  n=5
+    Cuerpos descomprimidos         med 284837  p75 284838  min 284827  max 285373  n=5
+    Peticiones                     med 6  p75 6  min 6  max 6  n=5
+    Peticiones servidas de caché   med 0  p75 0  min 0  max 0  n=5
+  Visita caliente
+    TTFB (ms)                      med 49  p75 61  min 45  max 61  n=5
+    FCP (ms)                       med 104  p75 108  min 92  max 124  n=5
+    LCP (ms)                       med 104  p75 108  min 92  max 124  n=5
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5
+    Bytes transferidos             med 4571  p75 4584  min 4554  max 4686  n=5
+    Cuerpos comprimidos            med 113854  p75 113867  min 113837  max 113969  n=5
+    Cuerpos descomprimidos         med 284837  p75 284838  min 284827  max 285373  n=5
+    Peticiones                     med 6  p75 6  min 6  max 6  n=5
+    Peticiones servidas de caché   med 5  p75 5  min 5  max 5  n=5

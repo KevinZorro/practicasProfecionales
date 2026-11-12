@@ -1,0 +1,23 @@
+Página portada · perfil escritorio (Escritorio sin limitar (1366x768)) · http://localhost
+
+  Visita fria
+    TTFB (ms)                      med 43  p75 43  min 34  max 47  n=5   [p(75)<=800: CUMPLE]
+    FCP (ms)                       med 152  p75 152  min 128  max 248  n=5   [p(75)<=1800: CUMPLE]
+    LCP (ms)                       med 152  p75 152  min 128  max 248  n=5   [p(75)<=2500: CUMPLE]
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5   [p(75)<=0.1: CUMPLE]
+    INP (ms)                       med 16  p75 16  min 16  max 16  n=5   [p(75)<=200: CUMPLE]
+    Bytes transferidos             med 59473  p75 59473  min 59473  max 59473  n=5
+    Cuerpos comprimidos            med 57673  p75 57673  min 57673  max 57673  n=5
+    Cuerpos descomprimidos         med 131677  p75 131677  min 131677  max 131677  n=5
+    Peticiones                     med 6  p75 6  min 6  max 6  n=5
+    Peticiones servidas de caché   med 0  p75 0  min 0  max 0  n=5
+  Visita caliente
+    TTFB (ms)                      med 34  p75 35  min 29  max 43  n=5
+    FCP (ms)                       med 96  p75 96  min 76  max 96  n=5
+    LCP (ms)                       med 96  p75 96  min 76  max 96  n=5
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5
+    Bytes transferidos             med 4156  p75 4156  min 4156  max 4156  n=5
+    Cuerpos comprimidos            med 75651  p75 75651  min 75651  max 75651  n=5
+    Cuerpos descomprimidos         med 149655  p75 149655  min 149655  max 149655  n=5
+    Peticiones                     med 7  p75 7  min 7  max 7  n=5
+    Peticiones servidas de caché   med 6  p75 6  min 6  max 6  n=5

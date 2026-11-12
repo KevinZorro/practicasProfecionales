@@ -1,0 +1,8 @@
+== 02-bd-planes ==
+  inicio 16:08:35, fin 16:09:02
+  modo de IP: no aplica
+  prueba: medido (ver problemas.txt)
+  nginx, todo:    CUMPLE (p95 0.008 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.008 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.0/0.0, db 10.9/25.6, web 0.0/0.0, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/02-bd-planes/

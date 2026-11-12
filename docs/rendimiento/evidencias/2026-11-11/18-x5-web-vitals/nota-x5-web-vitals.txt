@@ -1,0 +1,19 @@
+Nota del paso x5-web-vitals (navegador con el volumen x5)
+
+- La campaña corrió hoy-estudiante completa (escritorio y celular 3G, 3 iteraciones).
+- hoy-docente y hoy-administrativo: el proceso de k6 browser se colgó al cerrar la página
+  después de una visita del perfil movil3g (registro.txt: "context is done before all 'IterEnd'
+  events were processed" y "failed to trigger visibilitychange for web vitals: evaluating JS:
+  context deadline exceeded" en Page:Close). El tope de 10 min lo cortó dos veces por página.
+  Lo que alcanzó a medir quedó en sus .json/.txt (hoy-docente: 3 visitas frías en celular 3G;
+  hoy-administrativo: escritorio completo y 1 visita fría en celular 3G).
+- Con la tendencia de 20 min perdidos por página, el paso se cortó a mano a las 21:19 en
+  hoy-administrativo y las tres páginas que faltaban (calendario, bandeja, tablero) se midieron
+  aparte, SOLO en escritorio, 3 iteraciones, con el mismo script y las mismas sesiones:
+    PERFILES=escritorio ITERACIONES=3 PAGINAS=<página> (k6-escritorio.log, registro-escritorio.txt)
+  Los bytes transferidos no dependen del perfil de red (son las mismas respuestas comprimidas).
+- No hubo cuelgues en el paso navegador con el volumen x1 (15-navegador): el problema aparece solo
+  con x5 y solo en el perfil movil3g; las visitas que sí terminaron dan cifras normales, así que
+  es de la herramienta (k6 browser con la CPU limitada), no de la aplicación.
+- Resultado de calendario en escritorio: k6 salió con código 99 porque el INP (240 ms) pasó el
+  umbral de 200 ms; el resto de umbrales se cumplieron.

@@ -1,0 +1,8 @@
+== 01-bd-referencia ==
+  inicio 16:03:20, fin 16:07:35
+  modo de IP: no aplica
+  prueba: medido (sin umbral: es la línea base del hardware)
+  nginx, todo:    CUMPLE (p95 0.047 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.047 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 0.3/6.3, db 132.9/216.6, web 0.2/2.6, generador -/-
+  archivos: rendimiento/resultados/campana-20261111-1601/01-bd-referencia/

@@ -1,0 +1,8 @@
+== 12-concurrencia ==
+  inicio 17:26:54, fin 17:29:40
+  modo de IP: si
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.193 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.15 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 2.7/61.1, db 2.2/22.1, web 0.2/2.0, generador 0.3/2.2
+  archivos: rendimiento/resultados/campana-20261111-1601/12-concurrencia/

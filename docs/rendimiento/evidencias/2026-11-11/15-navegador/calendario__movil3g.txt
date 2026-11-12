@@ -1,0 +1,23 @@
+Página calendario · perfil movil3g (Celular 3G gama baja (412x823 @1,75; 3G de WebPageTest; CPU 4x)) · http://localhost
+
+  Visita fria
+    TTFB (ms)                      med 41  p75 43  min 33  max 44  n=5
+    FCP (ms)                       med 1140  p75 1152  min 1124  max 1160  n=5
+    LCP (ms)                       med 1140  p75 1152  min 1124  max 1160  n=5   [p(75)<=4000: CUMPLE]
+    CLS                            med 0.123  p75 0.123  min 0.123  max 0.123  n=5
+    INP (ms)                       med 264  p75 288  min 256  max 320  n=5
+    Bytes transferidos             med 193854  p75 193854  min 193850  max 193855  n=5   [max<=307200: CUMPLE]
+    Cuerpos comprimidos            med 191454  p75 191454  min 191450  max 191455  n=5
+    Cuerpos descomprimidos         med 675101  p75 675101  min 675101  max 675101  n=5
+    Peticiones                     med 8  p75 8  min 8  max 8  n=5
+    Peticiones servidas de caché   med 0  p75 0  min 0  max 0  n=5
+  Visita caliente
+    TTFB (ms)                      med 40  p75 42  min 33  max 46  n=5
+    FCP (ms)                       med 496  p75 552  min 456  max 636  n=5
+    LCP (ms)                       med 508  p75 552  min 456  max 636  n=5
+    CLS                            med 0.000  p75 0.000  min 0.000  max 0.000  n=5
+    Bytes transferidos             med 15165  p75 15165  min 15161  max 15166  n=5
+    Cuerpos comprimidos            med 191454  p75 191454  min 191450  max 191455  n=5
+    Cuerpos descomprimidos         med 675101  p75 675101  min 675101  max 675101  n=5
+    Peticiones                     med 8  p75 8  min 8  max 8  n=5
+    Peticiones servidas de caché   med 6  p75 6  min 6  max 6  n=5

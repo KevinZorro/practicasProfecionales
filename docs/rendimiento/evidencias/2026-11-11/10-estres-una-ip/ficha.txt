@@ -1,0 +1,8 @@
+== 10-estres-una-ip ==
+  inicio 17:02:54, fin 17:14:49
+  modo de IP: no
+  prueba: NO CUMPLE los umbrales
+  nginx, todo:    NO CUMPLE (p95 1.405 s, 429: 9868, 5xx: 0)
+  nginx, páginas: NO CUMPLE (p95 1.405 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 141.6/208.4, db 64.3/101.6, web 5.0/9.6, generador 10.1/24.9
+  archivos: rendimiento/resultados/campana-20261111-1601/10-estres-una-ip/

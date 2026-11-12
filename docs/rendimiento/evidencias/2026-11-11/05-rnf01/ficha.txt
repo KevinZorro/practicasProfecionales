@@ -1,0 +1,8 @@
+== 05-rnf01 ==
+  inicio 16:22:58, fin 16:28:08
+  modo de IP: no
+  prueba: CUMPLE los umbrales
+  nginx, todo:    CUMPLE (p95 0.061 s, 429: 0, 5xx: 0)
+  nginx, páginas: CUMPLE (p95 0.061 s; el veredicto del RNF01 es el de las páginas)
+  CPU media/máx %: app 8.3/37.3, db 3.9/13.1, web 0.8/3.5, generador 1.5/10.1
+  archivos: rendimiento/resultados/campana-20261111-1601/05-rnf01/
