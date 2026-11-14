@@ -71,7 +71,7 @@ final class Evaluaciones extends Component
         return view('livewire.evaluacion.evaluaciones', [
             'registra' => $registra,
             'porEvaluar' => $porEvaluar,
-            'tiposPorSesion' => $porEvaluar->mapWithKeys(static fn (Solicitud $s): array => [$s->id => $evaluaciones->tiposParaLaSesion($s)]),
+            'tiposPorSesion' => $evaluaciones->tiposPorSesion($porEvaluar),
             'mias' => $registra ? $evaluaciones->historialDelDocente($usuario) : collect(),
             'todas' => $usuario->can('verTodas', Evaluacion::class) ? $evaluaciones->todas() : null,
         ]);

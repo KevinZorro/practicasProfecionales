@@ -126,3 +126,31 @@ it('no se cuenta a sí misma al calcular el intento', function (): void {
     expect($intento)->toBe(1)
         ->and(Evaluacion::count())->toBe(1);
 });
+
+it('al finalizar, cada estudiante recibe el intento que dice calcularIntento, aunque cada uno lleve una historia distinta', function (): void {
+    // fijarIntentos aplica la regla de calcularIntento en un solo UPDATE (H4):
+    // las dos versiones tienen que dar lo mismo.
+    $nuevo = User::factory()->estudiante()->habilitado()->create();
+    $repitente = User::factory()->estudiante()->habilitado()->create();
+    $deOtroTipo = User::factory()->estudiante()->habilitado()->create();
+    $otroTipo = TipoEvaluacion::factory()->create();
+    $otroTipo->materias()->attach($this->materia->id);
+
+    presentar($repitente, $this->tipo, $this->materia, $this->docente, ResultadoEvaluacion::NoAprobado);
+    presentar($repitente, $this->tipo, $this->materia, $this->docente, ResultadoEvaluacion::NoAprobado);
+    presentar($deOtroTipo, $otroTipo, $this->materia, $this->docente, ResultadoEvaluacion::Aprobado);
+
+    $solicitud = Solicitud::factory()->deEvaluacion()->aprobada()->create(['materia_id' => $this->materia->id]);
+    $evaluacion = $this->servicio->crear($solicitud, $this->tipo, $this->docente);
+    $esperado = [];
+    foreach ([$nuevo, $repitente, $deOtroTipo] as $estudiante) {
+        $registro = $this->servicio->agregarEstudiante($evaluacion, $estudiante);
+        $this->servicio->registrarResultado($registro, ResultadoEvaluacion::Aprobado);
+        $esperado[$estudiante->id] = $this->servicio->calcularIntento($estudiante, $this->tipo);
+    }
+
+    $this->servicio->finalizar($evaluacion, $this->docente);
+
+    expect($evaluacion->estudiantes()->pluck('intento', 'estudiante_id')->all())->toEqual($esperado)
+        ->and($esperado)->toEqual([$nuevo->id => 1, $repitente->id => 3, $deOtroTipo->id => 1]);
+});

@@ -102,11 +102,14 @@ it('un doble «Finalizar» que llega a la vez deja una sola entrada en la bitác
     $evaluacion = evaluacionConElEstudiante($this->tipo, $this->estudiante);
 
     $seInterpuso = false;
+    $lecturas = 0;
 
-    // Justo cuando la primera petición ya pasó la comprobación de borrador y
-    // lee los registros para cerrarlos, llega la segunda.
-    EvaluacionEstudiante::retrieved(function (EvaluacionEstudiante $registro) use (&$seInterpuso, $evaluacion): void {
-        if ($seInterpuso || $registro->evaluacion_id !== $evaluacion->id) {
+    // Justo cuando la primera petición relee la evaluación para comprobar que
+    // sigue en borrador (la segunda vez que la carga: la primera es la fila
+    // bloqueada), llega la segunda. Sin el bloqueo de la evaluación, las dos
+    // la verían en borrador y las dos la cerrarían.
+    Evaluacion::retrieved(function (Evaluacion $leida) use (&$seInterpuso, &$lecturas, $evaluacion): void {
+        if ($seInterpuso || $leida->id !== $evaluacion->id || ++$lecturas < 2) {
             return;
         }
 

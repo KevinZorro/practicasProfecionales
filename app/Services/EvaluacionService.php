@@ -21,6 +21,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -216,18 +217,27 @@ final class EvaluacionService
     }
 
     /**
-     * Tipos de evaluación que se pueden usar en esta sesión: activos y
-     * asociados a su materia (RF43).
+     * Tipos de evaluación que se pueden usar en cada sesión: activos y
+     * asociados a su materia (RF43). Una sola consulta para todas, sin
+     * importar cuántas sesiones haya por evaluar (H4).
      *
-     * @return Collection<int, TipoEvaluacion>
+     * @param  SupportCollection<int, Solicitud>  $sesiones
+     * @return array<int, Collection<int, TipoEvaluacion>> id de la sesión => tipos, por nombre
      */
-    public function tiposParaLaSesion(Solicitud $solicitud): Collection
+    public function tiposPorSesion(SupportCollection $sesiones): array
     {
-        return TipoEvaluacion::query()
+        $materias = $sesiones->pluck('materia_id')->unique()->values()->all();
+
+        $tipos = $materias === [] ? new Collection : TipoEvaluacion::query()
             ->activos()
-            ->whereHas('materias', static fn (Builder $materia) => $materia->whereKey($solicitud->materia_id))
+            ->whereHas('materias', static fn (Builder $materia) => $materia->whereKey($materias))
+            ->with(['materias' => static fn ($materia) => $materia->select('materias.id')])
             ->orderBy('nombre')
             ->get();
+
+        return $sesiones->mapWithKeys(static fn (Solicitud $sesion): array => [
+            $sesion->id => $tipos->filter(static fn (TipoEvaluacion $tipo): bool => $tipo->materias->contains('id', $sesion->materia_id))->values(),
+        ])->all();
     }
 
     /**
@@ -415,13 +425,26 @@ final class EvaluacionService
      * Se recalcula al cerrar: entre que se agregó al estudiante y ahora
      * pudo finalizarse otra evaluación del mismo tipo. Corre antes de
      * marcar esta como finalizada, así que no se cuenta a sí misma.
+     *
+     * Es la misma regla de calcularIntento(), escrita como un solo UPDATE
+     * para que finalizar no haga una consulta por estudiante (H4). Si la
+     * regla cambia, cambia en los dos sitios: EvaluacionIntentoTest los
+     * compara.
      */
     private function fijarIntentos(Evaluacion $evaluacion): void
     {
-        $tipo = $evaluacion->tipoEvaluacion;
-
-        foreach ($evaluacion->estudiantes()->with('estudiante')->get() as $registro) {
-            $registro->update(['intento' => $this->calcularIntento($registro->estudiante, $tipo)]);
-        }
+        DB::update(<<<'SQL'
+            UPDATE evaluacion_estudiantes
+            SET intento = 1 + (
+                    SELECT count(*)
+                    FROM evaluacion_estudiantes AS anteriores
+                    JOIN evaluaciones ON evaluaciones.id = anteriores.evaluacion_id
+                    WHERE anteriores.estudiante_id = evaluacion_estudiantes.estudiante_id
+                      AND evaluaciones.tipo_evaluacion_id = ?
+                      AND evaluaciones.estado = ?
+                ),
+                updated_at = ?
+            WHERE evaluacion_id = ?
+            SQL, [$evaluacion->tipo_evaluacion_id, EstadoEvaluacion::Finalizada->value, now(), $evaluacion->id]);
     }
 }

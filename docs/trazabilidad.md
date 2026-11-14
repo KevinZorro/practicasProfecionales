@@ -260,7 +260,7 @@ Hallazgos de la primera campaña ([`informe-2026-11-11.md`](rendimiento/informe-
 | H1 | Alta | Con una sola IP, nginx rechaza con 429 un pico de 300 usuarios | Bloqueado: confirmar con sistemas que el proxy envía `X-Forwarded-For` y poner `PROXIES_DE_CONFIANZA` antes de producción (ver [Bloqueos externos](#bloqueos-externos)) |
 | H2 | Alta | Saturación abrupta a unas 76 peticiones/s | Abierto: baja con H3 y H5; repetir la capacidad en el servidor institucional |
 | H3 | Media | Cuatro consultas que crecen más rápido que los datos | Abierto |
-| H4 | Media | Dos N+1 en evaluaciones | Abierto |
+| H4 | Media | Dos N+1 en evaluaciones | Corregido: `EvaluacionService::tiposPorSesion()` trae los tipos de todas las sesiones en una consulta, y `fijarIntentos()` es un solo `UPDATE` con la regla de `calcularIntento()` (`EvaluacionIntentoTest` compara las dos). Las dos pruebas de `PresupuestoDeConsultasTest` ya no se omiten |
 | H5 | Media | Quien pierde la carrera de aprobar recibe 403 | Corregido: el expediente guarda el estado con el que se abrió (`ExpedienteDeSolicitud::$estadoAlAbrir`); si cambió, avisa cómo quedó sin 403 ni entrada de acceso negado. La regla sigue en el Service, con la fila bloqueada. `DobleToqueTest`, con una petición real a `/livewire/update` |
 | H6 | Baja | El PDF de resultados con 30 días pasa el tope de 500 filas | Abierto: **pregunta Q1** (el tope) |
 | H7, H8, H10 | Baja | Arnés de rendimiento | No son defectos de la aplicación |

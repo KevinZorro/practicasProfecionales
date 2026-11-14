@@ -114,7 +114,7 @@ function consultasMedidasPorPantalla(): array
         'participantes de la sesión del administrativo' => 15,
         'formato intramural de la sesión' => 12,
         'novedades de la sesión' => 25,
-        // Sin el N+1 conocido de esta pantalla (ver su prueba, omitida) y con la consulta de tipos hecha una sola vez.
+        // Con los tipos de todas las sesiones por evaluar en una sola consulta (H4).
         'evaluaciones del docente' => 12,
         'registro de una evaluación' => 22,
     ];
@@ -467,6 +467,7 @@ function pantallasConPresupuestoDeConsultas(): array
         'eventos del calendario del docente' => [Rol::Docente, $ruta('panel.calendario.eventos', $rangoDelCalendario)],
         'tablero de preparaciones' => [Rol::Administrativo, $ruta('panel.preparaciones')],
         'evaluaciones de coordinación' => [Rol::Coordinador, $ruta('panel.evaluaciones')],
+        'evaluaciones del docente' => [Rol::Docente, $ruta('panel.evaluaciones')],
         'mis resultados' => [Rol::Estudiante, $ruta('panel.mis-resultados')],
         'mi formato del estudiante' => [Rol::Estudiante, $ruta('panel.mi-formato')],
         'mi formato del docente' => [Rol::Docente, $ruta('panel.mi-formato')],
@@ -513,26 +514,6 @@ function pantallasConPresupuestoDeConsultas(): array
     return $pantallas;
 }
 
-/**
- * Pantallas con un N+1 que la prueba ya demostró y que todavía no se
- * arregla: la misma comprobación, apartada para que la suite no caiga y
- * quede escrita la regresión que hay que cerrar.
- *
- * @return array<string, array{rol: Rol, url: Closure(array<string, mixed>): string, sembrar: Closure(int, array<string, mixed>): void}>
- */
-function pantallasConN1Conocido(): array
-{
-    return [
-        'evaluaciones del docente' => [
-            'rol' => Rol::Docente,
-            'url' => fn (): string => route('panel.evaluaciones'),
-            'sembrar' => function (int $cuantos, array &$contexto): void {
-                sembrarActividad($cuantos, $contexto);
-            },
-        ],
-    ];
-}
-
 /** @param array{rol: Rol, url: Closure(array<string, mixed>): string, sembrar: Closure(int, array<string, mixed>): void} $caso */
 function comprobarPresupuestoDeConsultas(string $pantalla, array $caso): void
 {
@@ -551,10 +532,6 @@ function comprobarPresupuestoDeConsultas(string $pantalla, array $caso): void
 it('mantiene las mismas consultas en cada pantalla con cuatro veces más datos', function (string $pantalla): void {
     comprobarPresupuestoDeConsultas($pantalla, pantallasConPresupuestoDeConsultas()[$pantalla]);
 })->with(array_combine(array_keys(pantallasConPresupuestoDeConsultas()), array_map(fn (string $nombre): array => [$nombre], array_keys(pantallasConPresupuestoDeConsultas()))));
-
-it('mantiene las mismas consultas en la pantalla de evaluaciones del docente con cuatro veces más sesiones por evaluar', function (): void {
-    comprobarPresupuestoDeConsultas('evaluaciones del docente', pantallasConN1Conocido()['evaluaciones del docente']);
-})->skip('N+1 conocido: Evaluaciones::render llama a EvaluacionService::tiposParaLaSesion una vez por cada sesión por evaluar (8 sesiones por evaluar: 19 consultas; 32: 43)');
 
 /** Evaluación en borrador con este número de estudiantes ya calificados. */
 function evaluacionPorFinalizar(int $estudiantes): Evaluacion
@@ -577,7 +554,7 @@ it('hace las mismas consultas al finalizar una evaluación con 3 estudiantes que
     $consultasCon12 = consultasSqlDeLaPeticion(fn () => $servicio->finalizar($con12, $actor));
 
     expect($consultasCon12)->toBe($consultasCon3);
-})->skip('N+1 conocido: EvaluacionService::fijarIntentos consulta el intento de cada estudiante por separado (3 estudiantes: 14 consultas; 12: 23)');
+});
 
 /*
  * Controles de la herramienta: sin ellos, un «las consultas no crecen» podría
