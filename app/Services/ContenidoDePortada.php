@@ -49,6 +49,7 @@ final readonly class ContenidoDePortada
         public ?string $correo,
         public ?string $telefono,
         public ?string $direccion,
+        public bool $formularioDeInformacion,
     ) {}
 
     public function hayOfertaAcademica(): bool

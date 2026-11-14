@@ -211,7 +211,7 @@
                 {{-- Filas que se llenan solas: cada pieza crece hasta cerrar la suya. --}}
                 <div class="flex flex-wrap gap-4">
                     @foreach ($contenido->talleres as $taller)
-                        <x-portada.taller :taller="$taller" :destacado="$loop->first && $loop->count > 2" :correo="$contenido->correo" :orden="$loop->index" />
+                        <x-portada.taller :taller="$taller" :destacado="$loop->first && $loop->count > 2" :correo="$contenido->correo" :con-formulario="$contenido->formularioDeInformacion" :orden="$loop->index" />
                     @endforeach
                 </div>
             @endif

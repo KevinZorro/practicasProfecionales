@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 73 | 5 |
+| Completo | 74 | 5 |
 | Solo backend | 0 | 0 |
 | Parcial | 0 | 5 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 1 | 0 |
+| No iniciado | 0 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20): ya funciona con datos simulados y solo espera la fuente real de la universidad. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -41,7 +41,7 @@ El único bloqueado es la sincronización con la base institucional (RF20): ya f
 
 `/` es la portada nueva (`PortadaController`, `PortadaService`, `resources/views/portada/`), con el diseño que pidió el usuario el 10-oct-2026: página de producto al estilo de Apple y Xiaomi, el equipamiento como protagonista, rejilla bento, rojo institucional `#d30f23` solo como acento, línea de pulso ECG, tipografía Onest y exactamente seis animaciones acordadas. El diseño, los tokens y las animaciones están en `DESIGN.md`; el contexto de producto, en `PRODUCT.md`.
 
-**Lo que falta para cerrar la portada:** el formulario por taller (RF09). Mientras tanto, «Pedir información» en cada taller abre un correo al laboratorio. **Conviene que el laboratorio vea la portada con sus fotos reales:** hoy no hay ninguna y cada bloque muestra su estado sin foto.
+**La portada está completa (RF01–RF09).** Mientras tanto, «Pedir información» en cada taller abre un correo al laboratorio. **Conviene que el laboratorio vea la portada con sus fotos reales:** hoy no hay ninguna y cada bloque muestra su estado sin foto.
 
 | RF | Pide | Estado | Hecho | Falta |
 |---|---|---|---|---|
@@ -53,7 +53,7 @@ El único bloqueado es la sincronización con la base institucional (RF20): ya f
 | RF06 | Certificaciones como insignias | Completo | Medallones con brillo metálico al entrar y leve inclinación con el cursor; sin imagen, las siglas de la entidad. `PortadaTest` | |
 | RF07 | Docentes con foto, nombre, cargo y títulos | Completo | Credenciales: con cursor, la foto se eleva y aparecen los títulos (también con el teclado); en pantallas táctiles los títulos se ven siempre. Sin foto, las iniciales. `PortadaTest` | |
 | RF08 | Galería de videos institucionales | Completo | Sección «En movimiento.» (`#videos`), `PortadaService` (`ContenidoDePortada::$videos`), `<x-portada.medio>` con `sinDescargar`; `VideosInstitucionalesTest`. Solo los publicados con su archivo en el disco, en el orden del ADMIN, con controles y sin reproducción automática | — |
-| RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | No iniciado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario, su Service, el correo (D8), una protección contra envíos masivos (D16) y el interruptor para ocultar la sección en la configuración de la landing |
+| RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | Completo | `/talleres/{taller}/informacion` (`SolicitudDeInformacionController`, `SolicitudDeInformacionRequest`, `SolicitudDeInformacionService`), evento `SolicitudDeInformacionRecibida`, listener en cola `EnviarSolicitudDeInformacion`, `SolicitudDeInformacionMail`; interruptor en la configuración de la landing y `muestra_formulario` en cada taller; `FormularioDeInformacionTest`. Se guarda en `solicitudes_informacion` y el correo sale de la cuenta del laboratorio al correo de contacto con responder-a del interesado (D8); `enviado_at` marca cuándo salió. Cinco envíos por hora por IP y campo trampa (D16). Pide la autorización del tratamiento de datos, con el enlace a la política cuando haya URL (QA-11). Apagado, sin correo de contacto o en un taller que no lo muestra, «Pedir información» abre un correo como antes y la página da 404 | **Pregunta P-RF09:** cuánto tiempo se conservan los datos de quien pidió información; hoy no se depuran |
 
 ## Contenido público: pantallas del ADMIN (RF10–RF17)
 
@@ -236,7 +236,7 @@ Informe de QA del 17 de octubre de 2026 sobre `main` en `7b21035` (24 hallazgos)
 | QA-08 | Media | Fórmulas en los Excel | Corregido |
 | QA-09 | Media | Dependencias con avisos de seguridad | Corregido; `composer audit --locked` y Dependabot en la repo |
 | QA-10 | Media | Bitácora incompleta | Corregido |
-| QA-11 | Media | Política de datos | Enlace listo; **pregunta Q3** (la URL) y el aviso del RF09 cuando se construya |
+| QA-11 | Media | Política de datos | Enlace listo y aviso del RF09 hecho (autorización obligatoria en el formulario); **pregunta Q3** (la URL) |
 | QA-12 | Media | Accesibilidad WCAG 2.2 AA | Corregido; falta correr axe en la CI |
 | QA-13 | Media | Sin gzip y JavaScript muerto | Corregido |
 | QA-14 | Media | Healthchecks, registros, monitor | Healthchecks y rotación hechos; **falta el monitor externo** |

@@ -12,6 +12,7 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
@@ -93,6 +94,13 @@ final class ConfiguracionDeLaLanding extends Page implements HasForms
                         ->label('Dirección')
                         ->maxLength(255)
                         ->columnSpanFull(),
+                ]),
+                Section::make('Formulario de información por taller')->schema([
+                    Toggle::make(Clave::FormularioInformacion->value)
+                        ->label('Mostrar el formulario en cada taller')
+                        ->helperText('Lo que envían llega al correo de contacto, que tiene que estar lleno; responder ese correo le contesta al interesado. Apagado, «Pedir información» abre un correo al laboratorio.')
+                        ->formatStateUsing(static fn (mixed $state): bool => $state === '1' || $state === true)
+                        ->dehydrateStateUsing(static fn (bool $state): ?string => $state ? '1' : null),
                 ]),
             ]);
     }

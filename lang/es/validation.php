@@ -186,6 +186,10 @@ return [
     'attributes' => [
         'estado' => 'estado',
         'novedad' => 'qué pasa',
+        'acepta_tratamiento' => 'autorización del tratamiento de datos',
+        'email' => 'correo',
+        'telefono' => 'teléfono',
+        'mensaje' => 'mensaje',
         'archivo' => 'archivo',
         'cantidad' => 'cantidad',
         'cantidadEstudiantes' => 'cantidad de estudiantes',

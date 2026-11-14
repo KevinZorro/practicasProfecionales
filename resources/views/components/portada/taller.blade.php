@@ -2,13 +2,15 @@
     'taller',
     'destacado' => false,
     'correo' => null,
+    // RF09: con el formulario habilitado, «Pedir información» lleva a él.
+    'conFormulario' => false,
     'orden' => 0,
 ])
 
 {{--
-    Un taller o curso (RF04): imagen, tema, fecha y modalidad. Mientras no
-    exista el formulario por taller (RF09), "Pedir información" abre un
-    correo al laboratorio con el taller en el asunto.
+    Un taller o curso (RF04): imagen, tema, fecha y modalidad. "Pedir
+    información" lleva al formulario del taller (RF09) si el ADMIN lo
+    habilitó; si no, abre un correo al laboratorio con el taller en el asunto.
 --}}
 <article style="--orden: {{ min($orden, 3) }}"
          @class([
@@ -54,7 +56,7 @@
         </dl>
 
         @if ($correo)
-            <a href="mailto:{{ $correo }}?subject={{ rawurlencode('Información: '.$taller->titulo) }}"
+            <a href="{{ $conFormulario && $taller->muestra_formulario ? route('portada.taller.informacion', $taller->id) : 'mailto:'.$correo.'?subject='.rawurlencode('Información: '.$taller->titulo) }}"
                class="mt-auto inline-flex items-center gap-1.5 self-start pt-8 text-[15px] font-semibold text-portada-rojo underline-offset-4 hover:underline focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-portada-rojo">
                 Pedir información <x-portada.chevron />
             </a>

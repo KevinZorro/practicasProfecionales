@@ -35,6 +35,7 @@ final class PortadaService
     public function __construct(
         private readonly ConfiguracionLandingService $configuracion,
         private readonly VideoPublicoService $videos,
+        private readonly SolicitudDeInformacionService $informacion,
     ) {}
 
     public function contenido(): ContenidoDePortada
@@ -73,6 +74,7 @@ final class PortadaService
             correo: $valores[ClaveConfiguracionLanding::ContactoEmail->value],
             telefono: $valores[ClaveConfiguracionLanding::ContactoTelefono->value],
             direccion: $valores[ClaveConfiguracionLanding::ContactoDireccion->value],
+            formularioDeInformacion: $this->informacion->habilitado(),
         );
     }
 

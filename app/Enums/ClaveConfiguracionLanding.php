@@ -17,4 +17,9 @@ enum ClaveConfiguracionLanding: string
     case ContactoEmail = 'contacto_email';
     case ContactoTelefono = 'contacto_telefono';
     case ContactoDireccion = 'contacto_direccion';
+    /**
+     * El formulario de información por taller (RF09): «1» habilitado, vacío
+     * oculto. Necesita además el correo de contacto, que es adonde llega.
+     */
+    case FormularioInformacion = 'formulario_informacion';
 }

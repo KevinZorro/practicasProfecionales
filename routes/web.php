@@ -25,6 +25,7 @@ use App\Http\Controllers\Panel\SolicitudController;
 use App\Http\Controllers\Panel\SupervisionController;
 use App\Http\Controllers\Panel\UsuarioController;
 use App\Http\Controllers\PortadaController;
+use App\Http\Controllers\SolicitudDeInformacionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,7 +39,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-foreach (['cuenta', 'entrega', 'escenario', 'evaluacion', 'item', 'lista', 'plantilla', 'solicitud', 'supervisor'] as $parametro) {
+foreach (['cuenta', 'entrega', 'escenario', 'evaluacion', 'item', 'lista', 'plantilla', 'solicitud', 'supervisor', 'taller'] as $parametro) {
     Route::pattern($parametro, '[0-9]+');
 }
 
@@ -55,6 +56,14 @@ Route::get('/', [PortadaController::class, 'inicio'])->name('inicio.publico');
 Route::get('escenarios/{escenario}', [PortadaController::class, 'escenario'])
     ->whereNumber('escenario')
     ->name('portada.escenario');
+
+// Formulario de información por taller (RF09). Público, con tope de envíos
+// por IP (D16): es un formulario anónimo, no la entrada con Google.
+Route::get('talleres/{taller}/informacion', [SolicitudDeInformacionController::class, 'formulario'])
+    ->name('portada.taller.informacion');
+Route::post('talleres/{taller}/informacion', [SolicitudDeInformacionController::class, 'enviar'])
+    ->middleware('throttle:formulario-publico')
+    ->name('portada.taller.informacion.enviar');
 
 Route::post('salir', SalirController::class)->name('salir');
 

@@ -7,11 +7,13 @@ namespace App\Providers;
 use App\Enums\Rol;
 use App\Events\SalaAsignada;
 use App\Events\SolicitudAprobada;
+use App\Events\SolicitudDeInformacionRecibida;
 use App\Events\SolicitudRechazada;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Listeners\EnviarCorreoResultadoSolicitud;
 use App\Listeners\EnviarCorreoSalaAsignada;
+use App\Listeners\EnviarSolicitudDeInformacion;
 use App\Models\User;
 use App\Services\FuenteInstitucional;
 use App\Services\FuenteInstitucionalSimulada;
@@ -27,6 +29,9 @@ use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /** D16: envíos del formulario público de información por taller, por IP. */
+    public const ENVIOS_DEL_FORMULARIO_PUBLICO_POR_HORA = 5;
+
     public function register(): void
     {
         // Una instancia por petición: cachea los roles asignados del usuario
@@ -53,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(SolicitudAprobada::class, EnviarCorreoResultadoSolicitud::class);
         Event::listen(SolicitudRechazada::class, EnviarCorreoResultadoSolicitud::class);
         Event::listen(SalaAsignada::class, EnviarCorreoSalaAsignada::class);
+        Event::listen(SolicitudDeInformacionRecibida::class, EnviarSolicitudDeInformacion::class);
 
         $this->registrarPermisoDeReportes();
         $this->registrarPermisoDeDepuracion();
@@ -81,6 +87,12 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registrarLimiteDeDescargas(): void
     {
+        // D16: el formulario público de información por taller. Por IP, porque
+        // quien lo usa no tiene sesión; cinco por hora alcanzan a una persona
+        // que pide información de varios talleres.
+        RateLimiter::for('formulario-publico', static fn (Request $peticion): Limit => Limit::perHour(self::ENVIOS_DEL_FORMULARIO_PUBLICO_POR_HORA)
+            ->by((string) $peticion->ip()));
+
         RateLimiter::for('descargas', static fn (Request $peticion): Limit => Limit::perMinute(30)
             ->by((string) ($peticion->user()?->getAuthIdentifier() ?? $peticion->ip())));
     }
