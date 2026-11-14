@@ -96,6 +96,8 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 - **Los topes viven en cuatro sitios:** `php.ini` (32M de subida, 36M de petición), `client_max_body_size` de nginx (36M) y `config/livewire.php` (1 MB sobre el mayor de los videos). `ConfiguracionLandingTest` falla si alguno se queda corto.
 - **Sin animaciones nuevas:** los videos no se reproducen solos ni en bucle.
 
+**La galería de videos institucionales (RF08, RF17)** es otro recurso, `VideoInstitucionalResource`, con los mismos campos (`CampoDeVideo` y `CampoDeImagen` para la portada) y el mismo tope. Video y portada son obligatorios, y en la portada pública va con `<x-portada.medio :sin-descargar="true">`: con portada, `preload="none"`, porque RF17 exige que la landing no descargue ningún video hasta que se reproduce.
+
 Los archivos los sirve **nginx** por `/storage` (enlace de `php artisan storage:link`), con caché de un mes y `nosniff`: sus nombres se generan al subirlos y nunca se reescriben. `storage/app/public` vive en el volumen `archivos_publicos` del compose, montado en `app`, `queue` y `nginx`; el Dockerfile crea esa carpeta con dueño `www-data` porque Docker inicializa un volumen vacío con el dueño de la imagen, y sin eso la aplicación no podría escribir. El job de Docker de la CI comprueba que GD guarda WebP y que nginx sirve un archivo escrito por la aplicación.
 
 **Entrada con Google (RF18).** `AccesoConGoogleController` habla con Google por Socialite; quién entra lo decide `AccesoService::cuentaDeGoogle()`, que no conoce Socialite y recibe una `IdentidadDeGoogle`. Lo que no es como en el ejemplo de Socialite:

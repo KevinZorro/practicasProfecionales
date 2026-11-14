@@ -604,7 +604,7 @@ La portada respira y el panel se compacta; las dos usan los puntos de quiebre de
 - **Hero:** blanco y centrado. Titular, subtítulo a 24 px, acciones a 40 px (el botón rojo y el enlace, a 32 px entre sí), el pulso a 48 o 64 px y el video a 24 px.
 - **Puntos de quiebre:** 640, 768 y 1024 px, los de Tailwind. Las animaciones distinguen además el cursor fino (`(hover: hover) and (pointer: fine)`) de la pantalla táctil.
 - **Aperturas de sección** (`x-portada.seccion`, propiedad `disposicion`):
-  - **apilada:** el titular arriba y el contenido debajo, a todo el ancho. Cifras, equipamiento, escenarios, oferta y galería.
+  - **apilada:** el titular arriba y el contenido debajo, a todo el ancho. Cifras, equipamiento, escenarios, oferta, galería y videos.
   - **lateral:** desde 1024 px, la cabecera a la izquierda y el contenido a la derecha, mitad y mitad (6 + 6 columnas, 48 px entre ellas). Certificaciones y contacto.
   - **centrada:** titular, subtítulo y contenido centrados. Docentes, y certificaciones cuando no hay docentes.
 - **Rejillas bento**, todas con 16 px de separación:
@@ -613,12 +613,13 @@ La portada respira y el panel se compacta; las dos usan los puntos de quiebre de
   - Escenarios: 1, 2 y 3 columnas. Con más de dos, el primero se destaca (2 columnas, y también 2 filas si tiene foto) y el último se estira para cerrar su fila en 2 y en 3 columnas. Si en escritorio queda solo en su fila, pone el texto a la izquierda y las capacidades a la derecha.
   - Oferta: filas flexibles en las que cada pieza crece hasta cerrar la suya (base de 100 %, 50 % desde 640 y 25 % desde 1024; el primer taller destacado, al 50 % desde 1024).
   - Galería: solo fotos, en 2 columnas también en móvil y 4 desde 1024 px, con filas de 11rem (15rem desde 640). La primera foto ocupa 2 × 2 y la última cierra su fila.
+  - Videos institucionales (RF08): 1, 2 y 3 columnas, cada video en 16:9 con su título debajo. El último se estira para cerrar su fila en 2 y en 3 columnas. Con portada no descarga nada hasta que se reproduce (`preload="none"`).
   - Docentes: credenciales de ancho fijo (100 %, 50 % desde 640 y 25 % desde 1024) en filas centradas.
 - **Medidas de lectura:** subtítulos hasta 36–40rem; descripciones hasta 42–46ch; la frase de un equipo, hasta 30–34ch.
 - **Detalle de escenario:** cabecera blanca alineada a la izquierda con el enlace de vuelta, la foto en su marco, capacidades y equipo en dos columnas desde 1024 px, la invitación a solicitarlo centrada sobre niebla y los otros escenarios en la rejilla de 1, 2 y 3 columnas.
 
 ### Reglas de la portada
-**La regla del ritmo de aperturas.** Cómo abre cada sección lo decide el ritmo de la página, nunca la cantidad de piezas, y la asignación es fija por sección: el hero centrado; las secciones de contenido (cifras, equipamiento, escenarios, oferta, galería) apiladas; y el cierre alterna certificaciones en lateral, docentes centrada y contacto en lateral, para que dos aperturas iguales no se sigan al final. Si no hay docentes, certificaciones abre centrada por el mismo motivo.
+**La regla del ritmo de aperturas.** Cómo abre cada sección lo decide el ritmo de la página, nunca la cantidad de piezas, y la asignación es fija por sección: el hero centrado; las secciones de contenido (cifras, equipamiento, escenarios, oferta, galería, videos) apiladas; y el cierre alterna certificaciones en lateral, docentes centrada y contacto en lateral, para que dos aperturas iguales no se sigan al final. Si no hay docentes, certificaciones abre centrada por el mismo motivo.
 
 **La regla del borde compartido.** En una sección lateral, el contenido de la columna derecha arranca en el borde izquierdo de esa columna: las insignias y la lista de contacto comparten ese borde. Nada se centra dentro de la columna.
 

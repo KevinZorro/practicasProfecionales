@@ -10,6 +10,9 @@
     // Dentro de un enlace no se puede reproducir: ahí el video se ve como su
     // primer cuadro y se reproduce en la página a la que lleva el enlace.
     'controles' => true,
+    // RF17: con portada, el video no descarga nada hasta que se reproduce.
+    // Sin portada hace falta el primer cuadro, y con él, los metadatos.
+    'sinDescargar' => false,
 ])
 
 @if ($video)
@@ -21,7 +24,7 @@
          conexión lenta o un equipo de gama baja no cargan lo que nadie pidió. --}}
     <video @if ($controles) controls @endif
            playsinline
-           preload="metadata"
+           preload="{{ $sinDescargar && $imagen ? 'none' : 'metadata' }}"
            @if ($imagen) poster="{{ $disco->url($imagen) }}" @endif
            @if ($controles) aria-label="{{ $etiqueta !== '' ? $etiqueta : 'Video' }}" @else aria-hidden="true" tabindex="-1" @endif
            {{ $attributes->class('size-full object-cover') }}>

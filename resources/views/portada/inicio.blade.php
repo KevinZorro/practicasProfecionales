@@ -34,6 +34,7 @@
             'escenarios' => $contenido->escenarios->isNotEmpty(),
             'oferta' => $contenido->hayOfertaAcademica(),
             'galeria' => $contenido->fotos->isNotEmpty(),
+            'videos' => $contenido->videos->isNotEmpty(),
             'certificaciones' => $contenido->certificaciones->isNotEmpty(),
             'docentes' => $contenido->docentes->isNotEmpty(),
             'contacto' => $contenido->hayContacto(),
@@ -250,6 +251,31 @@
                             ])>
                         <x-portada.medio :imagen="$foto->imagen_path" :video="$foto->video" :alt="$foto->titulo" :etiqueta="$foto->titulo" />
                         <figcaption class="sr-only">{{ $foto->titulo }}</figcaption>
+                    </figure>
+                @endforeach
+            </div>
+        </x-portada.seccion>
+    @endif
+
+    {{-- Galería de videos institucionales (RF08). Cada uno con su portada y
+         sin descargar nada hasta que el visitante lo reproduce (RF17). --}}
+    @if ($contenido->videos->isNotEmpty())
+        <x-portada.seccion id="videos" :fondo="$fondos['videos']" titulo="En movimiento.">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($contenido->videos as $video)
+                    <figure style="--orden: {{ min($loop->index, 3) }}"
+                            @class([
+                                'revelar',
+                                // El último se estira hasta cerrar su fila en 2 y en 3 columnas (regla de la fila cerrada).
+                                'sm:col-span-2' => $loop->last && $loop->count % 2 === 1,
+                                'lg:col-span-1' => $loop->last && $loop->count % 2 === 1 && $loop->count % 3 === 0,
+                                'lg:col-span-2' => $loop->last && $loop->count % 3 === 2,
+                                'lg:col-span-3' => $loop->last && $loop->count % 3 === 1,
+                            ])>
+                        <div class="aspect-video overflow-hidden rounded-[20px] bg-[var(--pieza)]">
+                            <x-portada.medio :imagen="$video->portada" :video="$video->video" :alt="$video->titulo" :etiqueta="$video->titulo" :sin-descargar="true" />
+                        </div>
+                        <figcaption class="mt-3 text-[15px] font-semibold text-portada-tinta">{{ $video->titulo }}</figcaption>
                     </figure>
                 @endforeach
             </div>

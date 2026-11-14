@@ -12,6 +12,7 @@ use App\Models\Evento;
 use App\Models\GaleriaFoto;
 use App\Models\PerfilDocente;
 use App\Models\Taller;
+use App\Models\VideoInstitucional;
 use Illuminate\Support\Collection;
 
 /**
@@ -27,6 +28,7 @@ final readonly class ContenidoDePortada
      * @param  Collection<int, Taller>  $talleres
      * @param  Collection<int, Evento>  $eventos
      * @param  Collection<int, GaleriaFoto>  $fotos
+     * @param  Collection<int, VideoInstitucional>  $videos  solo los que tienen el archivo del video
      * @param  Collection<int, Certificacion>  $certificaciones
      * @param  Collection<int, PerfilDocente>  $docentes
      */
@@ -41,6 +43,7 @@ final readonly class ContenidoDePortada
         public Collection $talleres,
         public Collection $eventos,
         public Collection $fotos,
+        public Collection $videos,
         public Collection $certificaciones,
         public Collection $docentes,
         public ?string $correo,

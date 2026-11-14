@@ -26,11 +26,11 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 71 | 5 |
+| Completo | 73 | 5 |
 | Solo backend | 0 | 0 |
 | Parcial | 0 | 5 |
 | Bloqueado | 1 | 0 |
-| No iniciado | 3 | 0 |
+| No iniciado | 1 | 0 |
 | **Total** | **75** | **10** |
 
 El único bloqueado es la sincronización con la base institucional (RF20): ya funciona con datos simulados y solo espera la fuente real de la universidad. Todo lo demás se puede construir hoy; los correos necesitan además la contraseña de aplicación del correo del laboratorio (ver [Bloqueos externos](#bloqueos-externos)).
@@ -41,7 +41,7 @@ El único bloqueado es la sincronización con la base institucional (RF20): ya f
 
 `/` es la portada nueva (`PortadaController`, `PortadaService`, `resources/views/portada/`), con el diseño que pidió el usuario el 10-oct-2026: página de producto al estilo de Apple y Xiaomi, el equipamiento como protagonista, rejilla bento, rojo institucional `#d30f23` solo como acento, línea de pulso ECG, tipografía Onest y exactamente seis animaciones acordadas. El diseño, los tokens y las animaciones están en `DESIGN.md`; el contexto de producto, en `PRODUCT.md`.
 
-**Lo que falta para cerrar la portada:** la galería de videos (RF08, espera la subida de videos de RF17) y el formulario por taller (RF09). Mientras tanto, «Pedir información» en cada taller abre un correo al laboratorio. **Conviene que el laboratorio vea la portada con sus fotos reales:** hoy no hay ninguna y cada bloque muestra su estado sin foto.
+**Lo que falta para cerrar la portada:** el formulario por taller (RF09). Mientras tanto, «Pedir información» en cada taller abre un correo al laboratorio. **Conviene que el laboratorio vea la portada con sus fotos reales:** hoy no hay ninguna y cada bloque muestra su estado sin foto.
 
 | RF | Pide | Estado | Hecho | Falta |
 |---|---|---|---|---|
@@ -52,7 +52,7 @@ El único bloqueado es la sincronización con la base institucional (RF20): ya f
 | RF05 | Eventos con fecha, tipo e indicador de abierto al público | Completo | Eventos de hoy en adelante (D18) con el día en cifra de monitor, el tipo y si está abierto al público. `PortadaTest` | |
 | RF06 | Certificaciones como insignias | Completo | Medallones con brillo metálico al entrar y leve inclinación con el cursor; sin imagen, las siglas de la entidad. `PortadaTest` | |
 | RF07 | Docentes con foto, nombre, cargo y títulos | Completo | Credenciales: con cursor, la foto se eleva y aparecen los títulos (también con el teclado); en pantallas táctiles los títulos se ven siempre. Sin foto, las iniciales. `PortadaTest` | |
-| RF08 | Galería de videos institucionales | No iniciado | — | Igual que RF01, y los datos de RF17. Ya no espera la decisión YouTube o Vimeo: el enunciado fija subida al servidor |
+| RF08 | Galería de videos institucionales | Completo | Sección «En movimiento.» (`#videos`), `PortadaService` (`ContenidoDePortada::$videos`), `<x-portada.medio>` con `sinDescargar`; `VideosInstitucionalesTest`. Solo los publicados con su archivo en el disco, en el orden del ADMIN, con controles y sin reproducción automática | — |
 | RF09 | Formulario de información por taller, enviado desde el correo no-reply; la sección se puede ocultar | No iniciado | Tabla `solicitudes_informacion` y modelo `SolicitudInformacion`, sin uso | El formulario, su Service, el correo (D8), una protección contra envíos masivos (D16) y el interruptor para ocultar la sección en la configuración de la landing |
 
 ## Contenido público: pantallas del ADMIN (RF10–RF17)
@@ -68,7 +68,7 @@ Todas las imágenes pasan por `ImagenPublicaService` (validación, orientación 
 | RF14 | Eventos y catálogo de tipos de evento | Completo | `/admin/eventos`, `/admin/tipos-de-evento` | `PantallaEventosTest`, `TiposDeEventoTest` | |
 | RF15 | Certificaciones | Completo | `/admin/certificaciones` | `PantallaCertificacionesTest` | |
 | RF16 | Docentes y títulos | Completo | `/admin/perfiles-docentes` | `PantallaPerfilesDocentesTest` | |
-| RF17 | Galería de videos subidos al servidor: MP4, título, portada, orden, tamaño máximo configurable | No iniciado | Tabla `videos_institucionales` (con `url`, sin archivo ni portada) | Migración nueva (archivo, portada), recurso Filament, tope configurable que quepa en `php.ini`, nginx y `config/livewire.php` (como el video del hero), borrado del archivo reemplazado. Tamaño por defecto: D7 |
+| RF17 | Galería de videos subidos al servidor: MP4, título, portada, orden, tamaño máximo configurable | Completo | `VideoInstitucionalResource` en `/admin` (`CampoDeVideo`, `CampoDeImagen` para la portada), `VideoInstitucionalPolicy`, migración `2026_11_14_110000_los_videos_institucionales_son_archivos` (sale `url`, entran `video` y `portada`) | `VideosInstitucionalesTest` | Video, portada y título obligatorios; MP4 o WebM de hasta 30 MB, sin recodificar (ADR 0005 reemplazó el tope configurable de D7). Con portada el video va con `preload="none"`: la landing no descarga nada de él hasta que se reproduce (comprobado en el registro del servidor con Chromium). Reemplazar o borrar elimina los archivos al confirmar |
 
 ## Acceso, usuarios y estructura académica (RF18–RF26)
 

@@ -13,6 +13,7 @@ use App\Models\Evento;
 use App\Models\GaleriaFoto;
 use App\Models\PerfilDocente;
 use App\Models\Taller;
+use App\Models\VideoInstitucional;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -61,6 +62,11 @@ final class PortadaService
             ),
             fotos: $this->sinImagenesPerdidas(GaleriaFoto::query()->publicadas()->get(), 'imagen_path', 'video')
                 ->filter(fn (GaleriaFoto $foto): bool => $foto->imagen_path !== null || $foto->video !== null)
+                ->values(),
+            // RF08: sin el archivo del video no hay nada que reproducir; sin la
+            // portada sí, con el primer cuadro del video en su lugar.
+            videos: $this->sinImagenesPerdidas(VideoInstitucional::query()->publicados()->get(), 'video', 'portada')
+                ->filter(fn (VideoInstitucional $video): bool => $video->video !== null)
                 ->values(),
             certificaciones: $this->sinImagenesPerdidas(Certificacion::query()->publicadas()->get(), 'imagen_insignia'),
             docentes: $this->sinImagenesPerdidas(PerfilDocente::query()->publicados()->with('titulos')->get(), 'foto'),

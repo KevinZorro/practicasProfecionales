@@ -21,7 +21,8 @@ class VideoInstitucionalFactory extends Factory
     {
         return [
             'titulo' => $this->faker->sentence(4),
-            'url' => 'https://www.youtube.com/watch?v='.$this->faker->lexify('???????????'),
+            'video' => 'videos/'.$this->faker->lexify('??????????').'.mp4',
+            'portada' => 'videos/'.$this->faker->lexify('??????????').'.webp',
             'orden' => $this->faker->numberBetween(0, 10),
             'activo' => true,
         ];

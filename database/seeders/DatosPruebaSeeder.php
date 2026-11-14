@@ -763,9 +763,12 @@ class DatosPruebaSeeder extends Seeder
             ]);
         }
 
+        // Sin archivo en el disco: la portada no lo pinta hasta que el ADMIN
+        // suba el video real (RF17).
         VideoInstitucional::create([
             'titulo' => 'Recorrido por el laboratorio',
-            'url' => 'https://www.youtube.com/watch?v=recorrido-lab',
+            'video' => 'videos/recorrido.mp4',
+            'portada' => 'videos/recorrido.webp',
             'orden' => 1,
             'activo' => true,
         ]);
