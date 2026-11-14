@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\AccionAuditada;
 use App\Enums\EstadoSolicitud;
 use App\Exceptions\SolicitudInvalida;
 use App\Livewire\Evaluacion\RegistroDeEvaluacion;
@@ -9,6 +10,7 @@ use App\Livewire\Solicitud\ExpedienteDeSolicitud;
 use App\Models\Evaluacion;
 use App\Models\ItemChecklist;
 use App\Models\Materia;
+use App\Models\RegistroDeBitacora;
 use App\Models\Solicitud;
 use App\Models\TipoEvaluacion;
 use App\Models\User;
@@ -56,7 +58,7 @@ it('un segundo toque en «Marcar como revisada» no falla ni repite la revisión
         ->and($solicitud->fresh()->revisada_at->equalTo($revisadaAt))->toBeTrue();
 });
 
-it('si otra persona rechazó mientras tanto, aprobar responde 403 y no cambia nada', function (): void {
+it('si otra persona rechazó mientras tanto, aprobar avisa cómo quedó y no cambia nada', function (): void {
     $coordinadora = User::factory()->coordinador()->create();
     $solicitud = Solicitud::factory()->revisada()->create();
     $pantalla = Livewire::actingAs($coordinadora)->test(ExpedienteDeSolicitud::class, ['solicitud' => $solicitud]);
@@ -64,9 +66,44 @@ it('si otra persona rechazó mientras tanto, aprobar responde 403 y no cambia na
     // Otra persona rechaza antes de que llegue el toque de esta pantalla.
     app(SolicitudService::class)->rechazar($solicitud->fresh(), User::factory()->admin()->create());
 
-    // La Policy ya no deja aprobar lo que no está revisado: 403, no 500.
-    $pantalla->call('aprobar')->assertForbidden();
-    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Rechazada);
+    // Perdió la carrera, no pidió algo ajeno: el mensaje de dominio, no un 403 (H5).
+    $pantalla->call('aprobar')
+        ->assertStatus(200)
+        ->assertRedirect(route('panel.solicitudes.ver', $solicitud));
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Rechazada)
+        ->and(session('estado'))->toBe('Esta solicitud ya había cambiado de estado. Así quedó.');
+});
+
+it('quien pierde la carrera de aprobar no deja un acceso negado en la bitácora', function (): void {
+    $coordinadora = User::factory()->coordinador()->create();
+    $otra = User::factory()->coordinador()->create();
+    $solicitud = Solicitud::factory()->revisada()->create();
+
+    $this->actingAs($coordinadora);
+    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes.ver', $solicitud));
+
+    // La otra coordinadora aprueba primero, con la misma bandeja abierta.
+    app(SolicitudService::class)->aprobar($solicitud->fresh(), $otra);
+
+    // Una petición de verdad: es el middleware de /livewire/update el que escribe el 403.
+    accionDeLivewire($instantanea, 'aprobar')->assertOk();
+
+    expect(RegistroDeBitacora::query()->where('accion', AccionAuditada::AccesoNegado)->count())->toBe(0)
+        ->and(RegistroDeBitacora::query()->where('accion', AccionAuditada::SolicitudAprobada)->count())->toBe(1)
+        ->and($solicitud->fresh()->resuelta_por)->toBe($otra->id);
+});
+
+it('quien no puede aprobar sigue recibiendo 403 si la solicitud no ha cambiado', function (): void {
+    $docente = User::factory()->docente()->create();
+    $solicitud = Solicitud::factory()->revisada()->create(['docente_id' => $docente->id]);
+
+    $this->actingAs($docente);
+    $instantanea = instantaneaDeLaPantalla(route('panel.solicitudes.ver', $solicitud));
+
+    accionDeLivewire($instantanea, 'aprobar')->assertForbidden();
+
+    expect($solicitud->fresh()->estado)->toBe(EstadoSolicitud::Revisada)
+        ->and(RegistroDeBitacora::query()->where('accion', AccionAuditada::AccesoNegado)->count())->toBe(1);
 });
 
 /** Una evaluación en borrador con un estudiante de la lista de la sesión. */

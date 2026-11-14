@@ -39,6 +39,13 @@ final class ExpedienteDeSolicitud extends Component
     #[Locked]
     public int $solicitudId;
 
+    /**
+     * El estado con el que se abrió el expediente, que es el que decidió qué
+     * botones se pintaron (H5 del informe de rendimiento).
+     */
+    #[Locked]
+    public string $estadoAlAbrir;
+
     public bool $rechazando = false;
 
     /** Lo que coordinación le dice al docente al aprobar: obligatorio si faltan unidades. */
@@ -49,11 +56,17 @@ final class ExpedienteDeSolicitud extends Component
     public function mount(Solicitud $solicitud): void
     {
         $this->solicitudId = $solicitud->id;
+        $this->estadoAlAbrir = $solicitud->estado->value;
     }
 
     public function revisar(SolicitudService $solicitudes): void
     {
         $solicitud = $this->solicitud();
+
+        if ($this->cambioDesdeQueSeAbrio($solicitud)) {
+            return;
+        }
+
         $this->authorize('revisar', $solicitud);
 
         $this->transicionar(
@@ -65,6 +78,11 @@ final class ExpedienteDeSolicitud extends Component
     public function aprobar(SolicitudService $solicitudes): void
     {
         $solicitud = $this->solicitud();
+
+        if ($this->cambioDesdeQueSeAbrio($solicitud)) {
+            return;
+        }
+
         $this->authorize('aprobar', $solicitud);
         $this->validate(['observacionesAprobacion' => 'nullable|string|max:1000']);
 
@@ -94,6 +112,11 @@ final class ExpedienteDeSolicitud extends Component
     public function rechazar(SolicitudService $solicitudes): void
     {
         $solicitud = $this->solicitud();
+
+        if ($this->cambioDesdeQueSeAbrio($solicitud)) {
+            return;
+        }
+
         $this->authorize('rechazar', $solicitud);
         $this->validate(['motivoRechazo' => 'nullable|string|max:1000']);
 
@@ -182,6 +205,24 @@ final class ExpedienteDeSolicitud extends Component
         }
 
         $this->terminar($mensajeDeExito);
+    }
+
+    /**
+     * Otra persona la movió mientras esta pantalla estaba abierta: quien la
+     * mira perdió la carrera, no pidió algo que no le toca. Se le dice cómo
+     * quedó en vez de responder 403, que además dejaría en la bitácora un
+     * acceso negado que nadie intentó (H5, B4.5). La regla sigue en el
+     * Service: la transición se vuelve a comprobar con la fila bloqueada.
+     */
+    private function cambioDesdeQueSeAbrio(Solicitud $solicitud): bool
+    {
+        if ($solicitud->estado->value === $this->estadoAlAbrir) {
+            return false;
+        }
+
+        $this->terminar('Esta solicitud ya había cambiado de estado. Así quedó.');
+
+        return true;
     }
 
     private function terminar(string $mensaje): void
