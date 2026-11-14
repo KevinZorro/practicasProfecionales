@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\EstadoSala;
 use Database\Factories\SalaFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -17,6 +19,9 @@ class Sala extends Model
     use HasFactory;
 
     /**
+     * El estado del espacio físico (RF30) queda fuera: lo escribe solo
+     * SalaService::cambiarEstado(), con quién y cuándo.
+     *
      * @var list<string>
      */
     protected $fillable = [
@@ -37,6 +42,8 @@ class Sala extends Model
         return [
             'capacidad' => 'integer',
             'activo' => 'boolean',
+            'estado' => EstadoSala::class,
+            'estado_actualizado_at' => 'datetime',
         ];
     }
 
@@ -93,9 +100,36 @@ class Sala extends Model
         return sprintf('Bloque %s · piso %s · sala %s', $bloque, $piso, $numero);
     }
 
+    /** @return BelongsTo<User, $this> */
+    public function estadoActualizadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'estado_actualizado_por');
+    }
+
     /** @param Builder<$this> $consulta */
     public function scopeActivas(Builder $consulta): void
     {
         $consulta->where('activo', true);
+    }
+
+    /**
+     * Las que se pueden asignar a una sesión: en el catálogo y no fuera de
+     * servicio. Una sala con novedad se sigue ofreciendo, con su aviso.
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeAsignables(Builder $consulta): void
+    {
+        $consulta->where('activo', true)->where('estado', '!=', EstadoSala::FueraDeServicio);
+    }
+
+    /**
+     * Activas que hoy no están operativas: lo que la revisión avisa (RF30).
+     *
+     * @param  Builder<$this>  $consulta
+     */
+    public function scopeNoOperativas(Builder $consulta): void
+    {
+        $consulta->where('activo', true)->where('estado', '!=', EstadoSala::Operativa);
     }
 }

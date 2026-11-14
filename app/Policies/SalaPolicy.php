@@ -11,7 +11,8 @@ use App\Models\User;
 /**
  * Salas: el espacio físico donde se monta el escenario. El catálogo lo
  * gestiona solo el ADMIN, sin herencia. Asignar una sala a una preparación
- * es otra cosa, del administrativo, y la decide PreparacionPolicy.
+ * es otra cosa, del administrativo, y la decide PreparacionPolicy; anotar
+ * su estado de hoy (RF30), también.
  *
  * No se borran, se desactivan. Una sala con preparaciones no se puede borrar
  * (la llave es restrict) sin perder dónde se hizo cada práctica. Desactivarla
@@ -45,5 +46,19 @@ final class SalaPolicy
     public function delete(User $usuario, Sala $sala): bool
     {
         return false;
+    }
+
+    /**
+     * El estado del espacio físico (RF30) lo anota quien revisa solicitudes
+     * y prepara escenarios: el administrativo, y coordinación y el ADMIN por
+     * herencia. No es parte del catálogo, así que no va a Filament.
+     */
+    public function cambiarEstado(User $usuario, ?Sala $sala = null): bool
+    {
+        return $usuario->hasAnyRole([
+            Rol::Admin->value,
+            Rol::Coordinador->value,
+            Rol::Administrativo->value,
+        ]);
     }
 }

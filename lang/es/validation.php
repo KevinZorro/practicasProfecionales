@@ -184,6 +184,8 @@ return [
     ],
 
     'attributes' => [
+        'estado' => 'estado',
+        'novedad' => 'qué pasa',
         'archivo' => 'archivo',
         'cantidad' => 'cantidad',
         'cantidadEstudiantes' => 'cantidad de estudiantes',

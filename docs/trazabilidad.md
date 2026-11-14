@@ -26,9 +26,9 @@ Estado de cada requerimiento según lo que existe en el código, no según lo qu
 
 | Estado | RF | RNF |
 |---|---:|---:|
-| Completo | 70 | 5 |
+| Completo | 71 | 5 |
 | Solo backend | 0 | 0 |
-| Parcial | 1 | 5 |
+| Parcial | 0 | 5 |
 | Bloqueado | 1 | 0 |
 | No iniciado | 3 | 0 |
 | **Total** | **75** | **10** |
@@ -93,7 +93,7 @@ Las salas tienen pantalla (`/admin/salas`, `PantallaSalasTest`); su RF es el RF6
 | RF27 | El docente solicita, con tipo práctica o evaluación | Completo | `SolicitudService::crear()`, `/panel/solicitudes/nueva` | `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest` | |
 | RF28 | Caso, fecha y hora, materia, **grupo** y **estudiantes**; sin sala; fecha del registro previo en sesiones apartadas | Completo | `SolicitudService::crear()`, `buscarEstudiantes()`, `estudiantesPorCodigo()`, tabla `estudiante_solicitud`, `/panel/solicitudes/nueva` | `EstudiantesDeLaSesionTest`, `FlujoSolicitudTest`, `PantallaSolicitudDocenteTest`, `CapacidadDeEscenarioTest` | El docente busca por nombre o código, o pega los códigos del grupo. Solo estudiantes activos. La cantidad sale de la lista y es la que limita la capacidad (RF74). La fecha desde el registro previo es parte de RF57 |
 | RF29 | Precarga del inventario del caso | Completo | `SolicitudService::itemsSugeridos()` | `PantallaSolicitudDocenteTest`, `FlujoSolicitudTest` | |
-| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza**; la revisión incluye cruces de horario y estado del espacio físico | Parcial | `SolicitudService::marcarRevisada()`, `rechazar()`, `SolicitudPolicy::rechazar()`, `/panel/solicitudes` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest`, `SolicitudPolicyTest` | Rechazo en dos fases hecho. **Falta** (el enunciado lo incluye en la revisión; la auditoría de QA lo pasó a Parcial): la bandeja avisa de faltantes de inventario, pero no de cruces de horario ni del estado del espacio físico (las salas no tienen campo para eso). Los avisos de cruce ya existen en `RegistroPrevioService::advertencias()` y servirían de base |
+| RF30 | Primera fase: el administrativo acepta (revisa) o **rechaza**; la revisión incluye cruces de horario, inventario y estado del espacio físico | Completo | `SolicitudService::marcarRevisada()`, `rechazar()`, `SolicitudPolicy::rechazar()`, `/panel/solicitudes`; `RevisionDeSolicitudService::advertencias()`; estado de cada sala en `/panel/salas` (`EstadoDeSalas`, `SalaService::cambiarEstado()`, `EstadoSala`) | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest`, `SolicitudPolicyTest`, `EstadoDelEspacioFisicoTest` | Rechazo en dos fases hecho. El expediente de una pendiente o revisada avisa, a quien revisa, de los faltantes de inventario, los cruces de horario de la franja, si no quedaría sala libre, las salas con novedad o fuera de servicio y el escenario deshabilitado. Solo avisa, no impide decidir. El estado de la sala es el de hoy, sin historial (D26). Una sala fuera de servicio no se ofrece ni se acepta al preparar; una con novedad sí, con la nota a la vista |
 | RF31 | Segunda fase: coordinación (o el ADMIN) aprueba o rechaza lo revisado; sin bloqueo de autoaprobación | Completo | `SolicitudService::aprobar()` | `FlujoSolicitudTest`, `SolicitudPolicyTest` | Cierra el pendiente 1 del `CLAUDE.md`. Aprobar, rechazar y revisar releen la fila con bloqueo (`CarreraDeTransicionesTest`, QA-02): dos personas con la misma bandeja no pueden dejarla aprobada y rechazada. El bloque comentado de `SolicitudPolicy::aprobar()` ya no existe |
 | RF32 | Comentario opcional al rechazar | Completo | `SolicitudService::rechazar()` | `FlujoSolicitudTest`, `PantallaBandejaSolicitudesTest` | |
 | RF33 | Correo al docente con el resultado | Completo | Eventos `SolicitudAprobada`/`SolicitudRechazada`, listener en cola | `FlujoSolicitudTest`, `ListenersRegistradosTest` | |
@@ -330,6 +330,7 @@ Hallazgos de la primera campaña ([`informe-2026-11-11.md`](rendimiento/informe-
 | D23 | Una evaluación es de quien la hizo (`evaluaciones.docente_id`): en una sesión con sustitución, quien dictó. El supervisor del reemplazo ve esa evaluación; el del titular, no | RF77, RF73 |
 | D24 | La agrupación supervisor–docentes es **permanente hasta que el ADMIN la cambie**: el periodo académico no tiene fechas fijas (RF75), así que «todo el semestre» es no ponerle fin y retirarla al cambiar de semestre. La fecha de fin, si se quiere, va en el **rol** (RF63), no en la agrupación; si el rol vence o se revoca, las filas quedan pero no dan acceso (`SupervisionService` lo comprueba con la Policy). Asignar y retirar queda en la bitácora | RF77, RF63 |
 | D25 | La pantalla abre con el periodo vigente y deja elegir un periodo anterior o todo el historial. El periodo se aplica por la fecha de la sesión evaluada, dentro de lo que abrió y cerró el laboratorio. El supervisor descarga PDF y Excel del mismo reporte de resultados de evaluación (RF55), limitado a sus docentes con el mismo filtro que ve. «Hoy» le muestra un solo bloque: cuántos docentes tiene y cuántas evaluaciones finalizaron en el periodo vigente | RF77, RF55 |
+| D26 | El estado del espacio físico (RF30) es **el de hoy, sin historial**: operativa, con novedad o fuera de servicio, con una nota obligatoria si no está operativa y quién la anotó por última vez (decisión del usuario del 2026-11-14). Lo anotan administrativos, coordinación y ADMIN en `/panel/salas`, no en Filament, porque es trabajo operativo. **Fuera de servicio no se asigna** a ninguna sesión; con novedad sí, con aviso. Es distinto de `salas.activo`, que dice si la sala sigue en el catálogo y es del ADMIN | RF30 |
 
 ---
 

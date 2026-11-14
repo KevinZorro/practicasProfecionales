@@ -133,8 +133,9 @@ final class RegistroPrevioService
 
         $aprobadas = $cruces->where('estado', EstadoSolicitud::Aprobada)->count();
 
-        if ($aprobadas >= Sala::query()->activas()->count()) {
-            $avisos[] = 'No quedaría ninguna sala libre: las salas activas ya están tomadas por sesiones aprobadas.';
+        // Las fuera de servicio no cuentan: no se asignan (RF30).
+        if ($aprobadas >= Sala::query()->asignables()->count()) {
+            $avisos[] = 'No quedaría ninguna sala libre: las salas en servicio ya están tomadas por sesiones aprobadas.';
         }
 
         return $avisos;

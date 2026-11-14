@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources;
 
+use App\Enums\EstadoSala;
 use App\Filament\RecursoDelAdmin;
 use App\Filament\Resources\SalaResource\Pages;
 use App\Models\Sala;
@@ -126,6 +127,11 @@ final class SalaResource extends RecursoDelAdmin
                 TextColumn::make('numero')->label('Número')->sortable(),
                 TextColumn::make('capacidad')->label('Capacidad (personas)')->sortable(),
                 IconColumn::make('activo')->label('Activa')->boolean(),
+                // Lo anota el administrativo en /panel/salas (RF30): aquí solo se lee.
+                TextColumn::make('estado')
+                    ->label('Estado hoy')
+                    ->formatStateUsing(static fn (EstadoSala $state): string => $state->etiqueta())
+                    ->description(static fn (Sala $record): ?string => $record->novedad),
             ])
             ->defaultSort('nombre')
             ->filters([

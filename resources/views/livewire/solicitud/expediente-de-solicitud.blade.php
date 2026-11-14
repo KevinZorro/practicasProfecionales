@@ -31,6 +31,18 @@
         </x-aviso>
     @endif
 
+    @if ($avisosDeRevision !== [])
+        {{-- RF30: lo que se verifica al revisar. Solo avisa; no impide decidir. --}}
+        <x-aviso tono="atencion">
+            <p class="font-semibold">Antes de decidir, verifica</p>
+            <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                @foreach ($avisosDeRevision as $aviso)
+                    <li>{{ $aviso }}</li>
+                @endforeach
+            </ul>
+        </x-aviso>
+    @endif
+
     @if ($solicitud->estado === $estados::Aprobada && filled($solicitud->observaciones_aprobacion))
         <x-aviso tono="atencion">
             <p class="font-semibold">Observaciones de la aprobación</p>

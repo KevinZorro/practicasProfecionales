@@ -15,6 +15,7 @@ use App\Models\PeriodoAcademico;
 use App\Models\PlantillaConfidencialidad;
 use App\Models\Preparacion;
 use App\Models\RegistroDeBitacora;
+use App\Models\Sala;
 use App\Models\Solicitud;
 use App\Models\User;
 
@@ -113,6 +114,14 @@ final class MenuDelPanel
                 icono: 'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
                 permiso: 'supervisar',
                 sobre: Evaluacion::class,
+            ),
+            new SeccionDelPanel(
+                clave: 'salas',
+                etiqueta: 'Estado de las salas',
+                ruta: 'panel.salas',
+                icono: 'M3 21h18M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16M9 7h2m-2 4h2m4-4h-2m2 4h-2M10 21v-4h4v4',
+                permiso: 'cambiarEstado',
+                sobre: Sala::class,
             ),
             new SeccionDelPanel(
                 clave: 'inventario',

@@ -12,6 +12,7 @@ use App\Http\Controllers\Panel\CalendarioController;
 use App\Http\Controllers\Panel\ConfidencialidadController;
 use App\Http\Controllers\Panel\DepuracionController;
 use App\Http\Controllers\Panel\DescargaConfidencialidadController;
+use App\Http\Controllers\Panel\EstadoDeSalasController;
 use App\Http\Controllers\Panel\EvaluacionController;
 use App\Http\Controllers\Panel\InicioDelPanelController;
 use App\Http\Controllers\Panel\InventarioController;
@@ -125,6 +126,9 @@ Route::middleware(['auth', 'usuario.activo', 'rol.activo'])->prefix('panel')->na
     Route::get('bloqueos', BloqueoController::class)->name('bloqueos');
 
     Route::get('preparaciones', PreparacionController::class)->name('preparaciones');
+
+    /* Estado del espacio físico de cada sala (RF30). Administrativos, coordinación y ADMIN. */
+    Route::get('salas', EstadoDeSalasController::class)->name('salas');
 
     /* Cuentas (RF22) y reparto de roles, con y sin vigencia (RF63, RF64). Solo el ADMIN. */
     Route::get('usuarios', [UsuarioController::class, 'roles'])->name('usuarios');

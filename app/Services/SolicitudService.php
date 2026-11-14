@@ -495,7 +495,7 @@ final class SolicitudService
     public function paraElExpediente(Solicitud $solicitud): Solicitud
     {
         return $solicitud->loadMissing([
-            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre', 'preparacion.salas',
+            'docente:id,nombre', 'docenteQueDicta:id,nombre', 'materia:id,nombre', 'casoClinico:id,nombre,activo', 'preparacion.salas',
         ]);
     }
 

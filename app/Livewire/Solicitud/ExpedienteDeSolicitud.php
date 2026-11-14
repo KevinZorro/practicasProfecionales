@@ -15,6 +15,7 @@ use App\Models\Preparacion;
 use App\Models\Solicitud;
 use App\Models\User;
 use App\Services\InventarioService;
+use App\Services\RevisionDeSolicitudService;
 use App\Services\SolicitudService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Locked;
@@ -150,6 +151,8 @@ final class ExpedienteDeSolicitud extends Component
             'puedeAprobar' => ! $vencida && $actor->can('aprobar', $solicitud),
             'puedeRechazar' => $actor->can('rechazar', $solicitud),
             'faltantes' => $veInventario ? $this->faltantesDeInventario($solicitud) : [],
+            // RF30: cruces de horario, salas con novedad y escenario deshabilitado.
+            'avisosDeRevision' => $veInventario ? app(RevisionDeSolicitudService::class)->advertencias($solicitud) : [],
             'sinCobertura' => $veInventario && $this->quedoSinCobertura($solicitud),
             'veLaPreparacion' => $actor->can('viewAny', Preparacion::class),
         ]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
+use App\Enums\EstadoSala;
 use App\Models\Sala;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -31,6 +32,16 @@ class SalaFactory extends Factory
             'piso' => '1',
             'numero' => (string) $this->faker->unique()->numberBetween(1, 999),
         ];
+    }
+
+    public function conNovedad(string $novedad = 'El aire acondicionado no enfría.'): static
+    {
+        return $this->state(fn (array $atributos): array => ['estado' => EstadoSala::ConNovedad, 'novedad' => $novedad]);
+    }
+
+    public function fueraDeServicio(string $novedad = 'Filtración en el techo.'): static
+    {
+        return $this->state(fn (array $atributos): array => ['estado' => EstadoSala::FueraDeServicio, 'novedad' => $novedad]);
     }
 
     public function inactiva(): static

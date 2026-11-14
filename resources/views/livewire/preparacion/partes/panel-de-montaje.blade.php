@@ -33,6 +33,9 @@
                             @if ($sala->del_escenario)
                                 <span class="text-gray-500">· recomendada para este escenario</span>
                             @endif
+                            @if ($sala->estado === \App\Enums\EstadoSala::ConNovedad)
+                                <span class="block text-[13px] text-amber-800">Con novedad: {{ $sala->novedad }}</span>
+                            @endif
                         </span>
                     </label>
                 @endforeach

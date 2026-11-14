@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Enums\EstadoPreparacion;
+use App\Enums\EstadoSala;
 use App\Enums\NivelFidelidad;
 use App\Enums\TipoItemInventario;
 use App\Events\SalaAsignada;
@@ -107,6 +108,14 @@ final class PreparacionService
 
             if ($salas->count() !== count($salaIds)) {
                 throw AsignacionDeSalasInvalida::salaInexistente();
+            }
+
+            // Con la fila bloqueada: quien la marcó fuera de servicio mientras
+            // tanto gana, y la sesión no se monta en una sala que no sirve (RF30).
+            $fueraDeServicio = $salas->first(static fn (Sala $sala): bool => $sala->estado === EstadoSala::FueraDeServicio);
+
+            if ($fueraDeServicio instanceof Sala) {
+                throw AsignacionDeSalasInvalida::fueraDeServicio($fueraDeServicio);
             }
 
             if ((int) $salas->sum('capacidad') < $sesion->cantidad_estudiantes) {
@@ -224,8 +233,10 @@ final class PreparacionService
 
         // Todas las libres, también las que solas no alcanzan: se pueden unir
         // hasta tres (P16), y la capacidad la comprueba asignarSalas.
+        // Las fuera de servicio no se ofrecen; las que tienen novedad sí, y el
+        // tablero enseña la nota (RF30).
         return Sala::query()
-            ->activas()
+            ->asignables()
             ->withExists(['casosClinicos as del_escenario' => static fn (Builder $caso) => $caso->whereKey($solicitud->caso_clinico_id)])
             ->whereDoesntHave('preparaciones', fn (Builder $consulta) => $consulta
                 ->whereKeyNot($preparacion->getKey())

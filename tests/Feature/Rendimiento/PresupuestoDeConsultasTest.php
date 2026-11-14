@@ -105,6 +105,7 @@ function consultasMedidasPorPantalla(): array
         'lista de reposición' => 13,
         'bitácora' => 4,
         'bloqueos' => 5,
+        'estado de las salas' => 5,
         'roles de los usuarios' => 6,
         'docentes de un supervisor' => 6,
         'expediente de una solicitud del administrativo' => 19,
@@ -432,6 +433,12 @@ function pantallasConPresupuestoDeConsultas(): array
     $inventario = function (int $cuantos, array &$contexto): void {
         sembrarInventario($cuantos, $contexto);
     };
+    // Cada vuelta, una sala con novedad anotada por alguien distinto (RF30).
+    $salas = function (int $cuantos, array &$contexto): void {
+        for ($i = 0; $i < $cuantos; $i++) {
+            Sala::factory()->conNovedad()->create(['estado_actualizado_por' => User::factory()->administrativo()->create()->id, 'estado_actualizado_at' => now()]);
+        }
+    };
     $cuentas = function (int $cuantos, array &$contexto): void {
         sembrarCuentasYBitacora($cuantos, $contexto);
     };
@@ -484,6 +491,7 @@ function pantallasConPresupuestoDeConsultas(): array
     $pantallas['lista de reposición'] = ['rol' => Rol::Coordinador, 'url' => $ruta('panel.reposicion'), 'sembrar' => $inventario];
     $pantallas['bitácora'] = ['rol' => Rol::Coordinador, 'url' => $ruta('panel.bitacora'), 'sembrar' => $cuentas];
     $pantallas['bloqueos'] = ['rol' => Rol::Coordinador, 'url' => $ruta('panel.bloqueos'), 'sembrar' => $cuentas];
+    $pantallas['estado de las salas'] = ['rol' => Rol::Administrativo, 'url' => $ruta('panel.salas'), 'sembrar' => $salas];
     $pantallas['roles de los usuarios'] = ['rol' => Rol::Admin, 'url' => $ruta('panel.usuarios'), 'sembrar' => $cuentas];
     $pantallas['docentes de un supervisor'] = ['rol' => Rol::Admin, 'url' => fn (array $c): string => route('panel.usuarios.supervision', $c['supervisor']), 'sembrar' => $supervisados];
 
