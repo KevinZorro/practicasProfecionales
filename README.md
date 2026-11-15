@@ -22,7 +22,7 @@ en tu máquina.**
 | Vistas | Blade + Livewire 3 |
 | Estilos | Tailwind CSS 3 |
 | Base de datos | PostgreSQL 16 |
-| Permisos | spatie/laravel-permission 7 |
+| Permisos | spatie/laravel-permission 8 |
 | Pantallas del ADMIN | Filament 3 (`/admin`) |
 | Autenticación | Laravel Socialite: solo Google institucional (RF18), sin contraseñas |
 | Calendario | FullCalendar 6 |

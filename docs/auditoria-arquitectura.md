@@ -60,7 +60,7 @@ De los 34 criterios que no cumplen o cumplen a medias: **0 bloqueantes, 12 impor
 | Pruebas y análisis | Pest 3.8.7 (PHPUnit 11), Larastan 3.13.2 nivel 6 con línea base, Pint | `composer.lock`, `phpstan.neon` |
 | Contenedores | Docker Compose: desarrollo (`docker-compose.yml`) y producción (`docker-compose.produccion.yml`) | raíz del repo |
 
-**Discrepancia de documentación:** `CLAUDE.md` (§2) dice `spatie/laravel-permission ^7.1`; `composer.json` pide `^8.3` y el lock tiene 8.3.2 (subida de Dependabot, commit `98cfbff`).
+**Discrepancia de documentación:** `CLAUDE.md` (§2) dice `spatie/laravel-permission ^7.1`; `composer.json` pide `^8.3` y el lock tiene 8.3.2 (subida de Dependabot, commit `98cfbff`). *Corregido el 2026-11-15: `CLAUDE.md` y el README dicen ahora `^8.3`.*
 
 Comandos (de `CLAUDE.md` §9 y `README.md`), todos dentro de Docker:
 
