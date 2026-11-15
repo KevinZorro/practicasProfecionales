@@ -245,34 +245,49 @@ final class InventarioService
      * docente, volver a resolverla, buscar sustituto— es decisión del
      * cliente, así que aquí no se toca nada.
      *
-     * Una sola consulta. El criterio de solapamiento es el mismo que el de
-     * Solicitud::scopeQueSeSolapanCon(), repetido aquí porque la subconsulta
-     * compara contra las columnas de la solicitud de fuera y no contra
-     * literales; si ese criterio cambia, hay que cambiarlo en los dos sitios.
+     * Una sola consulta: por cada sesión aprobada de hoy en adelante y cada
+     * equipo que pidió, suma lo que piden de ese equipo todas las aprobadas
+     * que se cruzan con ella (ella incluida) y lo compara con las unidades
+     * operativas. El criterio de solapamiento es el de
+     * Solicitud::scopeQueSeSolapanCon(), repetido aquí porque compara
+     * columnas de las dos solicitudes y no literales; si ese criterio
+     * cambia, hay que cambiarlo en los dos sitios.
+     *
+     * `otra.fecha >= hoy` sobra para el resultado (ya es la misma fecha que
+     * la de fuera), pero sin ella PostgreSQL recorre todas las aprobadas de
+     * la historia: con ella, la consulta es tres veces más rápida con el
+     * volumen de cinco años (H3).
+     *
+     * Con $solo, la pregunta es por una sola sesión (el expediente).
      *
      * @return list<int> ids de solicitud
      */
-    public function solicitudesAprobadasSinCobertura(): array
+    public function solicitudesAprobadasSinCobertura(?Solicitud $solo = null): array
     {
-        return Solicitud::query()
-            ->aprobadas()
-            ->whereDate('solicitudes.fecha', '>=', now()->toDateString())
-            ->whereExists(fn ($consulta) => $consulta
-                ->from('solicitud_item')
-                ->join('items_inventario', 'items_inventario.id', '=', 'solicitud_item.item_inventario_id')
-                ->whereColumn('solicitud_item.solicitud_id', 'solicitudes.id')
-                ->whereRaw('items_inventario.cantidad_operativa < (
-                    SELECT COALESCE(SUM(otras.cantidad), 0)
-                    FROM solicitud_item AS otras
-                    JOIN solicitudes AS s2 ON s2.id = otras.solicitud_id
-                    WHERE otras.item_inventario_id = solicitud_item.item_inventario_id
-                      AND s2.estado = ?
-                      AND s2.fecha = solicitudes.fecha
-                      AND s2.hora_inicio < solicitudes.hora_fin
-                      AND s2.hora_fin > solicitudes.hora_inicio
-                )', [EstadoSolicitud::Aprobada->value]))
+        $hoy = now()->toDateString();
+
+        return DB::table('solicitudes')
+            ->join('solicitud_item', 'solicitud_item.solicitud_id', '=', 'solicitudes.id')
+            ->join('items_inventario', 'items_inventario.id', '=', 'solicitud_item.item_inventario_id')
+            ->join('solicitudes as otra', static fn ($cruce) => $cruce
+                ->where('otra.estado', EstadoSolicitud::Aprobada->value)
+                ->where('otra.fecha', '>=', $hoy)
+                ->whereColumn('otra.fecha', 'solicitudes.fecha')
+                ->whereColumn('otra.hora_inicio', '<', 'solicitudes.hora_fin')
+                ->whereColumn('otra.hora_fin', '>', 'solicitudes.hora_inicio'))
+            ->join('solicitud_item as lo_de_la_otra', static fn ($pedido) => $pedido
+                ->whereColumn('lo_de_la_otra.solicitud_id', 'otra.id')
+                ->whereColumn('lo_de_la_otra.item_inventario_id', 'solicitud_item.item_inventario_id'))
+            ->where('solicitudes.estado', EstadoSolicitud::Aprobada->value)
+            ->where('solicitudes.fecha', '>=', $hoy)
+            ->when($solo !== null, static fn ($consulta) => $consulta->where('solicitudes.id', $solo?->id))
+            ->groupBy('solicitudes.id', 'solicitud_item.item_inventario_id', 'items_inventario.cantidad_operativa')
+            ->havingRaw('SUM(lo_de_la_otra.cantidad) > items_inventario.cantidad_operativa')
+            ->distinct()
             ->pluck('solicitudes.id')
             ->map(static fn (int|string $id): int => (int) $id)
+            ->unique()
+            ->values()
             ->all();
     }
 

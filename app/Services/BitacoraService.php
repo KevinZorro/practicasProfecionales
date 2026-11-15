@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * Bitácora de auditoría (RF62).
@@ -88,8 +89,12 @@ final class BitacoraService
                 static fn (Builder $c) => $c->whereHas('usuario', static fn (Builder $u) => $u
                     ->whereRaw('LOWER(nombre) LIKE ?', ['%'.mb_strtolower(trim((string) $persona)).'%'])),
             )
-            ->when($desde !== null && $desde !== '', static fn (Builder $c) => $c->whereDate('created_at', '>=', $desde))
-            ->when($hasta !== null && $hasta !== '', static fn (Builder $c) => $c->whereDate('created_at', '<=', $hasta))
+            // Por rango y no con whereDate: created_at::date no puede usar el
+            // índice (accion, created_at), y con la bitácora de dos semestres
+            // el filtro acababa recorriendo la tabla entera (H3). «Hasta»
+            // incluye el día completo: menor que el inicio del día siguiente.
+            ->when($desde !== null && $desde !== '', static fn (Builder $c) => $c->where('created_at', '>=', Carbon::parse($desde)->startOfDay()))
+            ->when($hasta !== null && $hasta !== '', static fn (Builder $c) => $c->where('created_at', '<', Carbon::parse($hasta)->addDay()->startOfDay()))
             ->with('usuario:id,nombre')
             ->orderByDesc('created_at')
             ->orderByDesc('id')

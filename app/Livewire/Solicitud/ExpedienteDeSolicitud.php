@@ -186,7 +186,7 @@ final class ExpedienteDeSolicitud extends Component
     private function quedoSinCobertura(Solicitud $solicitud): bool
     {
         return $solicitud->estado === EstadoSolicitud::Aprobada
-            && in_array($solicitud->id, app(InventarioService::class)->solicitudesAprobadasSinCobertura(), true);
+            && app(InventarioService::class)->solicitudesAprobadasSinCobertura($solicitud) !== [];
     }
 
     /**
