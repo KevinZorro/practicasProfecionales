@@ -264,7 +264,7 @@ Hallazgos de la primera campaña ([`informe-2026-11-11.md`](rendimiento/informe-
 | H5 | Media | Quien pierde la carrera de aprobar recibe 403 | Corregido: el expediente guarda el estado con el que se abrió (`ExpedienteDeSolicitud::$estadoAlAbrir`); si cambió, avisa cómo quedó sin 403 ni entrada de acceso negado. La regla sigue en el Service, con la fila bloqueada. `DobleToqueTest`, con una petición real a `/livewire/update` |
 | H6 | Baja | El PDF de resultados con 30 días pasa el tope de 500 filas | Abierto: **pregunta Q1** (el tope) |
 | H7, H8, H10 | Baja | Arnés de rendimiento | No son defectos de la aplicación |
-| H9 | Media | CLS e INP del calendario | Abierto |
+| H9 | Media | CLS e INP del calendario | **CLS corregido:** la causa era que cada semana del mes crecía al llegar los eventos por `fetch` (de 71 a 129 px); ahora cada día reserva desde el principio el alto de lo más que enseña (`.fc-daygrid-day-frame`, 8 rem, en `app.css`). Medido con Chromium en celular 390 px, red 3G y CPU ×4, cinco cargas: de 0,121 a 0,000, con ×1 y con ×5. **INP:** con ×1 (la carga que caben en 8 salas) 104 ms en escritorio y unos 150–185 ms de mediana en celular con CPU ×4, sin cambio por este arreglo. Con ×5 sigue en unos 260 ms en escritorio al volver a la vista de mes, porque FullCalendar mete en el DOM los 1.600 eventos del mes aunque solo enseñe tres por día; pero ×5 son 53 sesiones aprobadas por día, más de lo que caben físicamente en 8 salas (el generador deja 201 sin sala). Abierto solo si el laboratorio crece en salas |
 
 ### Preguntas de producto abiertas por la auditoría
 

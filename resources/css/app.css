@@ -165,6 +165,15 @@
     text-transform: capitalize;
 }
 
+/* H9: los eventos llegan después de pintar el mes (fetch), y cada semana
+   crecía al recibirlos: la página saltaba (CLS 0,12 en celular 3G). Cada
+   día reserva desde el principio el alto de lo más que enseña —el número,
+   tres sesiones (dayMaxEvents en calendario.js) y el «+N más»—, así que
+   llenarse ya no mueve nada. Si cambia dayMaxEvents, cambia este alto. */
+.calendario.fc .fc-daygrid-day-frame {
+    min-height: 8rem;
+}
+
 .calendario.fc .fc-daygrid-day-number {
     font-size: 13px;
     color: theme('colors.gray.700');

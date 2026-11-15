@@ -33,6 +33,7 @@ if (contenedor) {
         // recortan con «+N más» en vez de empujar el resto de la semana.
         scrollTime: '06:00:00',
         slotEventOverlap: false,
+        // Con el alto que reserva .fc-daygrid-day-frame en app.css (H9).
         dayMaxEvents: 3,
         moreLinkClick: 'timeGridDay',
         events: (info, exito, fallo) => {
