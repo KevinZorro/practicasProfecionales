@@ -306,10 +306,40 @@ Content-Security-Policy rompiera alguna pantalla, se apaga con
 `app` y `web` tienen *healthcheck*: `docker compose -f docker-compose.produccion.yml ps`
 marca `unhealthy` al que se cuelga (`restart: always` solo levanta al que se
 cae). Los registros de Docker rotan solos (cinco archivos de 10 MB por
-contenedor). **Falta un monitor externo de disponibilidad:** nadie avisa si la
-plataforma cae. Lo recomendable es un Uptime Kuma en el mismo servidor, o el
-monitor de la universidad, apuntando a `https://<dominio>/up` y avisando por
-correo.
+contenedor).
+
+#### Monitor de disponibilidad (RNF02)
+
+El RNF02 pide que la plataforma esté disponible en el horario académico, y
+`restart: always` no avisa a nadie si el servidor entero se apaga o pierde la
+red. Hace falta un monitor **fuera de este servidor**: uno instalado aquí cae
+junto con la plataforma y no puede avisar de nada. Tres opciones, de la más a
+la menos recomendable:
+
+1. **El monitor que ya tenga sistemas de la universidad** (Zabbix, Nagios,
+   PRTG…). Pedirles que agreguen la comprobación de abajo.
+2. **Uptime Kuma en otro equipo de la universidad**, uno que no dependa de este
+   servidor: `docker run -d --restart=always -p 3001:3001 -v uptime-kuma:/app/data louislam/uptime-kuma:1`.
+   Se configura desde su página (puerto 3001) y avisa por correo con el SMTP
+   del laboratorio.
+3. **Un servicio gratuito en internet** (UptimeRobot, Better Stack), solo si
+   la plataforma se publica fuera de la red de la universidad.
+
+La comprobación, sea cual sea el monitor:
+
+| Qué | Valor |
+|---|---|
+| URL | `https://<dominio>/up` |
+| Respuesta esperada | 200 |
+| Cada cuánto | 5 minutos, de lunes a sábado de 6:00 a 22:00 |
+| Avisar después de | 2 fallos seguidos (10 minutos), para no avisar por un reinicio |
+| A quién | El administrador del servidor y el correo del laboratorio |
+
+**Lo que `/up` comprueba y lo que no:** responde 200 si nginx y PHP atienden y
+Laravel arranca. **No consulta la base de datos**: con PostgreSQL caído, `/up`
+sigue en 200 y el panel da error. Para cubrirlo, agregar en el mismo monitor
+una segunda comprobación contra la portada, `https://<dominio>/`, que sí lee
+la base, esperando 200.
 
 ### Valores que cambian el comportamiento
 
@@ -384,3 +414,6 @@ arriba con `docker compose logs -f node`.
 
 `CLAUDE.md`, en la raíz, contiene el contexto del dominio, los roles, las reglas
 de negocio y las convenciones de código. **Léelo antes de escribir código.**
+
+`docs/pruebas-en-navegadores.md` es la prueba manual en Firefox y Edge (RNF08):
+recorridos por rol y una tabla para anotar los resultados.
