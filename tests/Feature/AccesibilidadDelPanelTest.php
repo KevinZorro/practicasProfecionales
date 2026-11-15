@@ -78,6 +78,24 @@ it('el calendario pone texto a los botones de anterior y siguiente', function ()
         ->toContain("next: 'Siguiente'");
 });
 
+it('en el celular el mes del calendario cabe en la pantalla y solo la semana se desplaza', function (): void {
+    $css = (string) file_get_contents(base_path('resources/css/app.css'));
+
+    // El ancho mínimo es solo de la semana por horas; el mes y el día caben.
+    expect($css)->toMatch('/\.fc-view-harness\s*>\s*\.fc-timeGridWeek-view\s*\{[^}]*min-width/')
+        ->not->toMatch('/\.fc-view-harness\s*>\s*\.fc-view\s*\{[^}]*min-width/');
+});
+
+it('en el celular el nombre de la sesión se oculta a la vista pero no al lector de pantalla', function (): void {
+    $css = (string) file_get_contents(base_path('resources/css/app.css'));
+    preg_match('/\.fc-daygrid-event \.fc-event-title\s*\{([^}]*)\}/', $css, $regla);
+
+    // display:none o visibility:hidden lo quitarían también del lector de pantalla.
+    expect($regla[1] ?? '')->toContain('clip:')
+        ->not->toContain('display: none')
+        ->not->toContain('visibility: hidden');
+});
+
 it('las casillas miden al menos 24 por 24 píxeles', function (): void {
     $css = (string) file_get_contents(base_path('resources/css/app.css'));
 

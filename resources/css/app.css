@@ -225,15 +225,32 @@
         text-align: center;
     }
 
-    /* La rejilla sí necesita más ancho del que hay: se desplaza en
-       horizontal, igual que las tablas del sistema, en vez de recortar el
-       texto de los eventos. La barra se queda fuera del desplazamiento para
-       que el título siga legible. */
-    .calendario.fc .fc-view-harness {
+    /* El mes cabe en la pantalla: los siete días a lo ancho, sin desplazarse.
+       En una celda de 46 px el nombre del escenario no se lee, así que cada
+       sesión enseña su punto y su hora; el nombre lo sigue leyendo el lector
+       de pantalla, y al tocarla sale el detalle completo. «+N más» lleva al
+       día, donde se lee todo. */
+    .calendario.fc .fc-daygrid-event .fc-event-title {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .calendario.fc .fc-daygrid-event .fc-event-time {
+        margin-right: 0;
+    }
+
+    /* La semana por horas sí necesita más ancho del que hay: siete columnas
+       con su texto. Se desplaza en horizontal, igual que las tablas del
+       sistema, y la barra se queda fuera para que el título siga legible. */
+    .calendario.fc .fc-view-harness:has(> .fc-timeGridWeek-view) {
         overflow-x: auto;
     }
 
-    .calendario.fc .fc-view-harness > .fc-view {
+    .calendario.fc .fc-view-harness > .fc-timeGridWeek-view {
         min-width: 36rem;
     }
 }

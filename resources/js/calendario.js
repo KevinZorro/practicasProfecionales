@@ -14,6 +14,7 @@ const contenedor = document.getElementById('calendario');
 
 if (contenedor) {
     const detalle = document.getElementById('detalle-evento');
+    const pantallaAngosta = window.matchMedia('(max-width: 640px)');
 
     const calendario = new Calendar(contenedor, {
         plugins: [dayGridPlugin, timeGridPlugin],
@@ -36,6 +37,9 @@ if (contenedor) {
         // Con el alto que reserva .fc-daygrid-day-frame en app.css (H9).
         dayMaxEvents: 3,
         moreLinkClick: 'timeGridDay',
+        // En el celular la celda del mes mide unos 46 px: «+18 más» se corta,
+        // así que ahí va solo «+18». Lo mismo que el corte de app.css.
+        moreLinkContent: (arg) => (pantallaAngosta.matches ? arg.shortText : arg.text),
         events: (info, exito, fallo) => {
             const url = new URL(contenedor.dataset.eventos, window.location.origin);
             url.searchParams.set('desde', info.startStr.slice(0, 10));
