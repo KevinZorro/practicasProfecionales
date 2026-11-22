@@ -31,6 +31,8 @@ yarn-error.log
 .claude/settings.local.json
 CLAUDE.local.md
 /copias
+# Imágenes y código que deja "produccion.sh empaquetar" para llevar al servidor.
+/imagenes-docker
 
 # Capturas y artefactos locales de la revisión de diseño. El brief de cada
 # superficie (.impeccable/surfaces) sí se versiona.
