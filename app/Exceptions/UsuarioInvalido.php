@@ -32,4 +32,9 @@ final class UsuarioInvalido extends DomainException
     {
         return new self('Escriba el motivo.');
     }
+
+    public static function faltaElNombre(string $email): self
+    {
+        return new self(sprintf('No hay ninguna cuenta con el correo %s: para crearla hace falta el nombre de la persona.', $email));
+    }
 }
