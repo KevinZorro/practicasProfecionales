@@ -17,3 +17,4 @@ Una decisión no se edita: si cambia, se escribe una nueva que la reemplaza, y l
 | [0007](0007-las-copias-se-quedan-en-el-servidor.md) | Las copias de seguridad se quedan en el servidor | Aceptada |
 | [0008](0008-pruebas-de-rendimiento-fuera-de-la-suite.md) | Las pruebas de rendimiento corren fuera de la suite, con k6 y pgbench en contenedores | Aceptada |
 | [0009](0009-instalacion-con-un-comando.md) | La instalación es un comando, y el primer ADMIN se nombra desde la consola | Aceptada |
+| [0010](0010-la-base-de-datos-puede-ser-ajena.md) | La base de datos puede ser una que ya existe | Aceptada |

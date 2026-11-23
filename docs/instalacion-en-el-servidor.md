@@ -59,6 +59,8 @@ En el servidor, por SSH:
 sudo mkdir -p /srv/laboratorio && sudo chown "$USER": /srv/laboratorio
 ```
 
+Sin `sudo`, clona en tu carpeta personal (`git clone ... ~/laboratorio`): el instalador guarda las copias dentro del clon.
+
 ```bash
 git clone https://github.com/KevinZorro/practicasProfecionales.git /srv/laboratorio
 ```
@@ -75,6 +77,7 @@ La primera vez tarda entre 10 y 20 minutos, casi todo en construir las imágenes
 | IP del proxy | Solo si la dirección es `https://` y el HTTPS lo pone un proxy. Vacío si no se sabe todavía. |
 | `GOOGLE_CLIENT_ID` y lo demás de Google | Vacío si todavía no hay credenciales. |
 | Correo del laboratorio | Vacío si todavía no hay contraseña de aplicación. |
+| ¿Usar una base PostgreSQL que ya existe? | `s` si el ingeniero preparó una (sección «La base de datos»). Con `N`, la instalación trae la suya. |
 | Correo y nombre del ADMIN | El correo institucional de quien va a administrar la plataforma. |
 
 Y lo que hace, en orden:
@@ -87,6 +90,23 @@ Y lo que hace, en orden:
 6. Levanta los servicios y espera a que `/up` responda.
 7. Crea el primer ADMIN con `usuarios:crear-administrador`: la entrada con Google no crea cuentas, así que sin este paso nadie podría entrar.
 8. Dice qué falta para usarla de verdad: HTTPS, Google, correo.
+
+### La base de datos: la propia o una que ya existe
+
+Por defecto la instalación levanta su propia PostgreSQL en Docker (el servicio `db`) y no hace falta nada más. Si la universidad ya preparó una base, el instalador la usa y **no levanta la suya** (ADR 0010). Necesita cinco datos: dirección, puerto, nombre de la base, usuario y contraseña.
+
+- **La dirección no puede ser `localhost`:** dentro de Docker eso es el propio contenedor. Si PostgreSQL está en el mismo servidor, usa su IP (`hostname -I`).
+- **El instalador entra a la base desde un contenedor, como lo hará la aplicación,** y revisa: la versión (las copias de seguridad usan el cliente de la misma versión), si el usuario puede crear tablas y roles, y si la base está vacía. **Nunca borra nada de ella:** si ya tiene tablas y el `.env` es nuevo, se detiene.
+- **Si no puede entrar,** dice por qué y borra el `.env` que acababa de crear para volver a preguntar.
+- **Lo que tiene que dejar listo quien administra PostgreSQL:**
+  - que escuche en esa IP (`listen_addresses` en `postgresql.conf`);
+  - que `pg_hba.conf` deje entrar a la red de Docker, por ejemplo `host  laboratorio  testlab  172.16.0.0/12  scram-sha-256`, y recargar PostgreSQL;
+  - que el usuario sea el dueño de la base (o pueda crear tablas en ella).
+- **Seguridad (S.1).** Lo ideal es que la aplicación entre con un usuario que solo lee y escribe filas, distinto del que crea las tablas. Para crearlo, el usuario de la base necesita `CREATEROLE` (`ALTER ROLE usuario CREATEROLE`), y tiene que conservarlo, porque cada actualización lo vuelve a usar. **Sin ese permiso el instalador sigue**, pero la aplicación entra con el mismo usuario que migra (`DB_USUARIO_UNICO=true`) y lo avisa: sirve para un sandbox, es peor para producción.
+- **Las copias de seguridad** siguen siendo del servicio `copias`: hacen `pg_dump` por la red y se restauran con las tablas dentro de la misma base, sin borrarla.
+- **La contraseña** no puede llevar espacios, `$`, `#`, `\` ni comillas, porque el `.env` los confunde: pídele al ingeniero otra sin ellos.
+
+Sin preguntas: `BASE_EXTERNA_HOST`, `BASE_EXTERNA_PUERTO`, `BASE_EXTERNA_NOMBRE`, `BASE_EXTERNA_USUARIO` y `BASE_EXTERNA_CONTRASENA` (sección 9).
 
 ### Después de instalar
 
@@ -241,6 +261,7 @@ Sin una terminal, o con `NO_INTERACTIVO=1`, el script no pregunta nada y toma la
 | `PROXIES_DE_CONFIANZA` | La IP del proxy que pone el HTTPS. |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_DOMINIO_INSTITUCIONAL` | La entrada con Google. |
 | `CORREO_LABORATORIO`, `CORREO_CONTRASENA_DE_APLICACION` | El correo de los avisos. |
+| `BASE_EXTERNA_HOST`, `BASE_EXTERNA_PUERTO`, `BASE_EXTERNA_NOMBRE`, `BASE_EXTERNA_USUARIO`, `BASE_EXTERNA_CONTRASENA` | Una base PostgreSQL que ya existe. Sin `BASE_EXTERNA_HOST`, la de la instalación. |
 | `ADMIN_CORREO`, `ADMIN_NOMBRE` | El primer ADMIN. |
 
 ```bash
@@ -259,6 +280,7 @@ Las contraseñas en la línea de órdenes quedan en el historial de la terminal:
 | «El puerto 80 ya lo usa otro programa» | Con preguntas, el script pide otro. Sin ellas: `APP_PORT=8080 ./produccion.sh instalar`. |
 | La construcción falla con `timeout`, `could not resolve` o `TLS` | El servidor no sale a internet o lo hace por un proxy: secciones 6 y 7. |
 | «Ya hay una base de datos de una instalación anterior» | Hay datos sin su `.env`. Recupera ese `.env`; si es un sandbox y quieres empezar de cero, la última fila. |
+| «No pude entrar a la base» | El mensaje dice la causa: contraseña, `pg_hba.conf` (la red de Docker), puerto o dirección. Ver «La base de datos». |
 | `password authentication failed` al migrar | El `.env` no es el de la base que hay en el servidor. Mismo remedio. |
 | La plataforma no responde después de levantar | `docker compose -f docker-compose.produccion.yml logs --tail=50 app web`. |
 | «419 Page Expired» al entrar | La cookie segura sin HTTPS. Vuelve a correr `./produccion.sh instalar`, que la ajusta a `APP_URL`. |

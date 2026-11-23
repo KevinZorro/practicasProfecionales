@@ -278,6 +278,10 @@ Si el `.env` dice `APP_URL=http://...` (sin HTTPS, para probar), pon también
 `SESSION_SECURE_COOKIE=false`: la cookie segura no viaja por `http://` y nadie
 podría iniciar sesión. El script lo hace solo.
 
+**Con una base PostgreSQL que ya existe** (la de la universidad), `./produccion.sh instalar`
+la pregunta y no levanta la propia (ADR 0010; la guía explica qué debe dejar listo quien
+la administra).
+
 La aplicación entra a PostgreSQL con `DB_USERNAME`, que **no es superusuario**:
 solo lee y escribe filas. Las tablas las crea el dueño de la base
 (`DB_DUENO_USUARIO`, el superusuario que crea la imagen de PostgreSQL), en el
