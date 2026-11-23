@@ -16,6 +16,14 @@ set -eu
 # las copias.
 umask 077
 
+# Dos copias del mismo minuto tendrían el mismo nombre, y el "mv" del final
+# metería la segunda dentro de la primera en vez de fallar: se espera al
+# minuto siguiente. Pasa con "produccion.sh actualizar", que hace una copia
+# antes de migrar, si alguien acaba de hacer otra.
+while [ -e "/copias/$(date +%Y-%m-%d_%H%M)" ]; do
+    sleep 5
+done
+
 marca=$(date +%Y-%m-%d_%H%M)
 destino="/copias/${marca}"
 en_curso="/copias/.en-curso-${marca}"

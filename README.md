@@ -9,7 +9,8 @@ en tu máquina.**
 
 > El `docker-compose.yml` de este repositorio es el **entorno de desarrollo**:
 > monta el código desde el host y deja Vite en modo recargado en caliente. El
-> despliegue en el servidor institucional se define aparte.
+> servidor institucional se instala con `./produccion.sh instalar` (sección
+> «Producción»).
 
 ---
 
@@ -219,6 +220,7 @@ docker/
         └── 01-base-de-datos-de-pruebas.sql
 docker-compose.yml                       desarrollo
 docker-compose.produccion.yml            producción
+produccion.sh                            instalación y mantenimiento en el servidor
 ```
 
 ---
@@ -231,9 +233,27 @@ imágenes**: en el servidor no hace falta PHP, Composer ni Node, solo Docker.
 
 ### Primera instalación
 
+Con un solo comando, en el servidor. **La guía completa, con lo que hay que
+pedirle al ingeniero antes de ir y el plan B para un servidor sin internet,
+está en `docs/instalacion-en-el-servidor.md`.**
+
+```bash
+git clone https://github.com/KevinZorro/practicasProfecionales.git /srv/laboratorio
+cd /srv/laboratorio && ./produccion.sh instalar
+```
+
+`produccion.sh` arma el `.env` (genera la `APP_KEY` y las contraseñas de la
+base y pregunta la dirección, Google y el correo), crea la carpeta de las
+copias, construye las imágenes, migra, levanta y crea el primer ADMIN. Se
+puede repetir: no cambia los secretos de un `.env` que ya existe. Las otras
+órdenes: `actualizar`, `verificar`, `administrador`, `configurar` y
+`empaquetar` (`./produccion.sh ayuda`).
+
+Lo mismo, a mano:
+
 ```bash
 # 1. El código, en la versión que se va a desplegar
-git clone <repositorio> /srv/laboratorio && cd /srv/laboratorio
+git clone https://github.com/KevinZorro/practicasProfecionales.git /srv/laboratorio && cd /srv/laboratorio
 
 # 2. La configuración: copiar el ejemplo y llenar las marcas <...>
 cp .env.produccion.example .env
@@ -246,10 +266,17 @@ docker compose -f docker-compose.produccion.yml run --rm --entrypoint php app ar
 # 4. La carpeta de las copias, solo para root
 sudo install -d -m 700 /srv/laboratorio/copias
 
-# 5. Crear las tablas y el usuario de la aplicación, y levantar
+# 5. Crear las tablas, los roles y el usuario de la aplicación, y levantar
 docker compose -f docker-compose.produccion.yml run --rm migraciones
 docker compose -f docker-compose.produccion.yml up -d
+
+# 6. El primer ADMIN: la entrada con Google no crea cuentas
+docker compose -f docker-compose.produccion.yml exec app php artisan usuarios:crear-administrador correo@ufps.edu.co "Nombre Apellido"
 ```
+
+Si el `.env` dice `APP_URL=http://...` (sin HTTPS, para probar), pon también
+`SESSION_SECURE_COOKIE=false`: la cookie segura no viaja por `http://` y nadie
+podría iniciar sesión. El script lo hace solo.
 
 La aplicación entra a PostgreSQL con `DB_USERNAME`, que **no es superusuario**:
 solo lee y escribe filas. Las tablas las crea el dueño de la base
@@ -270,6 +297,13 @@ mismo; solo cambia con quién entra la aplicación.
 ### Desplegar una versión nueva
 
 ```bash
+./produccion.sh actualizar
+```
+
+Trae el código, hace una copia de seguridad, reconstruye, migra y levanta. A
+mano, sin la copia:
+
+```bash
 git pull
 docker compose -f docker-compose.produccion.yml build
 docker compose -f docker-compose.produccion.yml run --rm migraciones
@@ -277,7 +311,8 @@ docker compose -f docker-compose.produccion.yml up -d
 ```
 
 Después de cambiar el `.env`, los contenedores tienen que volver a leerlo:
-`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue programador web`.
+`./produccion.sh instalar` los recrea (o, a mano,
+`docker compose -f docker-compose.produccion.yml up -d --force-recreate app queue programador web`).
 
 ### HTTPS
 

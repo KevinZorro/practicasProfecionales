@@ -64,6 +64,8 @@ it('trae en el ejemplo de producción los valores seguros', function (): void {
     expect($variables['APP_ENV'])->toBe('production')
         ->and($variables['APP_DEBUG'])->toBe('false')
         ->and($variables['SESSION_SECURE_COOKIE'])->toBe('true')
+        // Un "false" en el ejemplo anula el valor por defecto de config/session.php.
+        ->and($variables['SESSION_ENCRYPT'])->toBe('true')
         ->and($variables['LOG_CHANNEL'])->toBe('stderr')
         ->and($variables['POLITICA_DE_CONTENIDO'])->toBe('true');
 });
@@ -277,6 +279,14 @@ it('separa en el ejemplo el usuario de la aplicación del dueño de la base', fu
     expect($variables)->toHaveKeys(['DB_DUENO_USUARIO', 'DB_DUENO_CONTRASENA'])
         ->and($variables['DB_USERNAME'])->not->toBe($variables['DB_DUENO_USUARIO'])
         ->and($variables['DB_DUENO_CONTRASENA'])->toStartWith('<');
+});
+
+it('crea los seis roles en cada despliegue: sin ellos no se puede nombrar al primer ADMIN', function (): void {
+    // RolSeeder solo lo llama db:seed, y en producción nadie lo corre a mano:
+    // sin esta orden, una instalación nueva queda sin roles.
+    preg_match('/\n  migraciones:\n((?:    .*\n|\n)+)/', archivoDeProduccion('docker-compose.produccion.yml'), $bloque);
+
+    expect($bloque[1] ?? '')->toContain('php artisan migrate --force && php artisan db:seed --class=RolSeeder --force');
 });
 
 it('crea la base con el dueño y deja a la aplicación entrar con su propio usuario', function (): void {

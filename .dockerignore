@@ -30,6 +30,10 @@ public/js/filament
 public/fonts/filament
 # Copias de seguridad, si alguien las deja en la carpeta del proyecto.
 copias
+# produccion.sh corre en el servidor, fuera de las imágenes, y lo que
+# empaqueta pesa cientos de megas: dentro de la imagen la duplicaría.
+produccion.sh
+imagenes-docker
 tests
 # El arnés de pruebas de rendimiento corre desde fuera de la imagen.
 rendimiento

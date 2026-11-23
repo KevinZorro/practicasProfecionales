@@ -26,22 +26,49 @@ use Illuminate\Support\Facades\DB;
  */
 final class UsuarioService
 {
-    public function __construct(private readonly BitacoraService $bitacora) {}
+    public function __construct(
+        private readonly BitacoraService $bitacora,
+        private readonly AsignacionDeRolService $roles,
+    ) {}
 
     public function crear(DatosUsuario $datos, User $actor): User
     {
         $this->garantizarPermiso($actor, 'create', User::class);
-        $email = $this->garantizarCorreoLibre($datos->email);
 
-        return User::create([
-            'nombre' => trim($datos->nombre),
-            'email' => $email,
-            'documento' => $this->opcional($datos->documento),
-            'codigo_institucional' => $this->opcional($datos->codigoInstitucional),
-            'programa' => $this->opcional($datos->programa),
-            'estado' => EstadoUsuario::Activo,
-            'origen' => OrigenUsuario::Manual,
-        ]);
+        return $this->crearCuentaManual($datos);
+    }
+
+    /**
+     * El ADMIN que nombra quien tiene la consola del servidor, con
+     * usuarios:crear-administrador: el primero de una instalación, que nace
+     * sin cuentas, o uno nuevo si el último dejó la universidad.
+     *
+     * Si el correo ya tiene cuenta —la trajo la sincronización, o es de una
+     * docente—, la usa tal como está: no la habilita ni le cambia los datos,
+     * que son del ADMIN y de la sincronización. Si no, la crea con origen
+     * "manual". Repetirlo no cambia nada, porque el instalador lo corre en
+     * cada pasada.
+     *
+     * @throws UsuarioInvalido si hay que crear la cuenta y falta el nombre
+     */
+    public function nombrarAdministradorDesdeLaConsola(string $email, ?string $nombre): AdministradorNombrado
+    {
+        return DB::transaction(function () use ($email, $nombre): AdministradorNombrado {
+            $cuenta = $this->cuentaConElCorreo($email);
+            $creada = $cuenta === null;
+
+            if ($cuenta === null) {
+                if ($this->opcional($nombre) === null) {
+                    throw UsuarioInvalido::faltaElNombre($email);
+                }
+
+                $cuenta = $this->crearCuentaManual(new DatosUsuario((string) $nombre, $email));
+            }
+
+            $asignacion = $this->roles->asignarAdministradorDesdeLaConsola($cuenta);
+
+            return new AdministradorNombrado($cuenta, $creada, $asignacion !== null);
+        });
     }
 
     /**
@@ -110,6 +137,21 @@ final class UsuarioService
         });
     }
 
+    private function crearCuentaManual(DatosUsuario $datos): User
+    {
+        $email = $this->garantizarCorreoLibre($datos->email);
+
+        return User::create([
+            'nombre' => trim($datos->nombre),
+            'email' => $email,
+            'documento' => $this->opcional($datos->documento),
+            'codigo_institucional' => $this->opcional($datos->codigoInstitucional),
+            'programa' => $this->opcional($datos->programa),
+            'estado' => EstadoUsuario::Activo,
+            'origen' => OrigenUsuario::Manual,
+        ]);
+    }
+
     /** El correo es la llave con la que entra por Google: no se repite, sin distinguir mayúsculas. */
     private function garantizarCorreoLibre(string $email, ?User $salvo = null): string
     {
@@ -125,6 +167,11 @@ final class UsuarioService
         }
 
         return $email;
+    }
+
+    private function cuentaConElCorreo(string $email): ?User
+    {
+        return User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first();
     }
 
     private function garantizarMotivo(string $motivo): string

@@ -45,6 +45,11 @@ final class AsignacionDeRolService
 
     public const POR_PAGINA = 15;
 
+    /** Lo que dice asignaciones_de_rol cuando el rol no lo puso una persona. */
+    public const MOTIVO_SINCRONIZACION = 'Vinculación institucional (sincronización).';
+
+    public const MOTIVO_CONSOLA = 'Desde la consola del servidor (usuarios:crear-administrador).';
+
     public function __construct(private readonly BitacoraService $bitacora) {}
 
     /**
@@ -99,14 +104,36 @@ final class AsignacionDeRolService
 
     /**
      * Rol permanente que pone la sincronización institucional (RF20), según
-     * la vinculación. No pasa por la Policy porque no la ejerce una persona:
-     * en asignaciones_de_rol queda con "asignado_por" nulo, que es como se
-     * lee "lo puso la sincronización".
+     * la vinculación.
      *
      * Si ya lo tiene vigente, no hace nada. Nunca revoca ni acorta: las
      * filas con fecha de fin son del ADMIN.
      */
     public function asignarPorSincronizacion(User $usuario, Rol $rol): ?AsignacionDeRol
+    {
+        return $this->asignarSinPersonaQueLoEjerza($usuario, $rol, self::MOTIVO_SINCRONIZACION);
+    }
+
+    /**
+     * El ADMIN que nombra quien tiene la consola del servidor: el primero de
+     * una instalación, que nace sin cuentas, o uno nuevo si el último se fue
+     * y nadie puede entrar a /panel/usuarios (QA-07). Quien llega a esa
+     * consola ya puede todo —lee el .env y entra a la base con su dueño—, así
+     * que no hay Policy que añadir: no habría con quién comprobarla.
+     *
+     * Permanente, y sin hacer nada si ya lo tiene vigente.
+     */
+    public function asignarAdministradorDesdeLaConsola(User $usuario): ?AsignacionDeRol
+    {
+        return $this->asignarSinPersonaQueLoEjerza($usuario, Rol::Admin, self::MOTIVO_CONSOLA);
+    }
+
+    /**
+     * Sin una persona que lo ejerza no hay Policy que consultar ni entrada en
+     * la bitácora, que exige quién actuó: en asignaciones_de_rol queda con
+     * "asignado_por" nulo, y el motivo dice de dónde vino.
+     */
+    private function asignarSinPersonaQueLoEjerza(User $usuario, Rol $rol, string $motivo): ?AsignacionDeRol
     {
         if ($usuario->hasRole($rol->value)) {
             return null;
@@ -115,7 +142,7 @@ final class AsignacionDeRolService
         $role = $this->role($rol);
         $desde = CarbonImmutable::now()->toDateString();
 
-        return DB::transaction(function () use ($usuario, $role, $desde): AsignacionDeRol {
+        return DB::transaction(function () use ($usuario, $role, $desde, $motivo): AsignacionDeRol {
             $this->escribirPivote($usuario, $role, $desde, null);
 
             $asignacion = AsignacionDeRol::create([
@@ -123,7 +150,7 @@ final class AsignacionDeRolService
                 'role_id' => $role->id,
                 'desde' => $desde,
                 'hasta' => null,
-                'motivo' => 'Vinculación institucional (sincronización).',
+                'motivo' => $motivo,
                 'asignado_por' => null,
             ]);
 

@@ -173,9 +173,12 @@ services:
     networks:
       - laboratorio
 
-  # Crea y actualiza las tablas con el dueño de la base, y después el usuario
-  # con el que entra la aplicación: sin superusuario, solo filas (S.1). No
-  # arranca con "up"; se corre en cada despliegue:
+  # Crea y actualiza las tablas con el dueño de la base, los seis roles y
+  # después el usuario con el que entra la aplicación: sin superusuario, solo
+  # filas (S.1). Los roles van aquí y no en una migración porque los saca
+  # RolSeeder del enum Rol: un rol nuevo llega en el siguiente despliegue sin
+  # escribir nada más, y el seeder no duplica los que ya están. No arranca con
+  # "up"; se corre en cada despliegue:
   #   docker compose -f docker-compose.produccion.yml run --rm migraciones
   migraciones:
     image: laboratorio-simulacion/app:produccion
@@ -186,7 +189,7 @@ services:
       DB_PASSWORD: ${DB_DUENO_CONTRASENA:?Falta DB_DUENO_CONTRASENA en .env}
       DB_APLICACION_USUARIO: ${DB_USERNAME:?Falta DB_USERNAME en .env}
       DB_APLICACION_CONTRASENA: ${DB_PASSWORD:?Falta DB_PASSWORD en .env}
-    command: ["sh", "-c", "php artisan migrate --force && php artisan base:usuario-de-la-aplicacion"]
+    command: ["sh", "-c", "php artisan migrate --force && php artisan db:seed --class=RolSeeder --force && php artisan base:usuario-de-la-aplicacion"]
     depends_on:
       db:
         condition: service_healthy

@@ -1,12 +1,17 @@
 <?php
 
 use App\Exceptions\UsuarioDeLaBaseInvalido;
+use App\Exceptions\UsuarioInvalido;
+use App\Services\AccesoService;
 use App\Services\RegistroPrevioService;
 use App\Services\UsuarioDeLaAplicacionService;
+use App\Services\UsuarioService;
 use App\Services\UsuarioSyncService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Facades\Validator;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -68,6 +73,59 @@ Artisan::command('base:usuario-de-la-aplicacion', function (UsuarioDeLaAplicacio
 
     return 0;
 })->purpose('Crea o actualiza el usuario de PostgreSQL de la aplicación, sin superusuario (S.1)');
+
+/*
+ * El primer ADMIN de una instalación: la base nace sin cuentas y la entrada
+ * con Google no crea ninguna (RF18), así que sin esto nadie podría entrar.
+ * Sirve también si el último ADMIN se fue. Lo corre "produccion.sh instalar";
+ * a mano, en el servidor:
+ *   docker compose -f docker-compose.produccion.yml exec app php artisan usuarios:crear-administrador correo@dominio.edu.co "Nombre Apellido"
+ */
+Artisan::command(
+    'usuarios:crear-administrador {email : Correo con el que entrará por Google} {nombre? : Nombre completo, si la cuenta no existe}',
+    function (UsuarioService $usuarios, AccesoService $acceso): int {
+        $email = mb_strtolower(trim((string) $this->argument('email')));
+        $nombre = $this->argument('nombre');
+
+        if (Validator::make(['email' => $email], ['email' => ['required', 'email']])->fails()) {
+            $this->error(sprintf('«%s» no es un correo válido.', $email));
+
+            return 1;
+        }
+
+        try {
+            $nombrado = $usuarios->nombrarAdministradorDesdeLaConsola($email, is_string($nombre) ? $nombre : null);
+        } catch (UsuarioInvalido $invalido) {
+            $this->error($invalido->getMessage());
+
+            return 1;
+        } catch (RoleDoesNotExist) {
+            $this->error('La base todavía no tiene los roles: primero corre las migraciones (docker compose -f docker-compose.produccion.yml run --rm migraciones).');
+
+            return 1;
+        }
+
+        $this->info($nombrado->resumen());
+
+        if (! $acceso->puedeEntrar($nombrado->cuenta)) {
+            $this->warn($nombrado->cuenta->estaDeshabilitado()
+                ? 'Ojo: la cuenta está deshabilitada y así no puede entrar. La vuelve a habilitar otro ADMIN en /panel/usuarios.'
+                : 'Ojo: la vinculación institucional de la cuenta no está vigente y así no puede entrar. La actualiza la sincronización.');
+        }
+
+        $dominio = $acceso->dominioInstitucional();
+
+        if ($dominio !== null && ! str_ends_with($email, '@'.$dominio)) {
+            $this->warn(sprintf('Ojo: la entrada con Google solo admite cuentas de %s, y este correo es de otro dominio.', $dominio));
+        }
+
+        if (! $acceso->entradaConGoogleDisponible()) {
+            $this->warn('La entrada con Google todavía no está configurada (GOOGLE_CLIENT_ID en el .env): la cuenta queda lista para cuando lo esté.');
+        }
+
+        return 0;
+    },
+)->purpose('Crea la cuenta del ADMIN, o le da el rol a una que ya existe, desde la consola del servidor');
 
 Schedule::command('usuarios:sincronizar')
     ->cron((string) config('laboratorio.sincronizacion.frecuencia'))
