@@ -53,6 +53,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false
     networks:
       - laboratorio
 
@@ -73,6 +74,7 @@ services:
         condition: service_started
       db:
         condition: service_healthy
+        required: false
     networks:
       - laboratorio
 
@@ -90,6 +92,7 @@ services:
         condition: service_started
       db:
         condition: service_healthy
+        required: false
     networks:
       - laboratorio
 
@@ -123,11 +126,15 @@ services:
     networks:
       - laboratorio
 
+  # Solo con COMPOSE_PROFILES=base-propia (el .env): si la base es una que ya
+  # existe (la de la universidad), DB_HOST apunta a ella, este servicio no
+  # arranca y los demás lo esperan con required: false (ADR 0010).
   # Sin "ports": a la base solo llegan los contenedores de este compose.
   # La imagen crea al dueño de la base como superusuario; la aplicación entra
   # con DB_USERNAME, que no lo es (S.1, servicio "migraciones").
   db:
     image: postgres:16
+    profiles: ["base-propia"]
     restart: always
     logging: *registros
     environment:
@@ -148,12 +155,13 @@ services:
   # documentos privados, en DIRECTORIO_COPIAS del servidor. La misma versión
   # de PostgreSQL que la base, para que pg_dump la entienda.
   copias:
-    image: postgres:16-alpine
+    image: ${IMAGEN_CLIENTE_POSTGRES:-postgres:16-alpine}
     restart: always
     logging: *registros
     entrypoint: ["/scripts/programar.sh"]
     environment: &entorno_copias
-      PGHOST: db
+      PGHOST: ${DB_HOST:-db}
+      PGPORT: ${DB_PORT:-5432}
       PGDATABASE: ${DB_DATABASE}
       # El dueño: la copia lee todo y la restauración recrea las tablas.
       PGUSER: ${DB_DUENO_USUARIO}
@@ -170,6 +178,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false
     networks:
       - laboratorio
 
@@ -193,6 +202,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false
     networks:
       - laboratorio
 
@@ -200,7 +210,7 @@ services:
   # volúmenes con escritura, a diferencia de "copias".
   #   docker compose -f docker-compose.produccion.yml run --rm restauracion <carpeta>
   restauracion:
-    image: postgres:16-alpine
+    image: ${IMAGEN_CLIENTE_POSTGRES:-postgres:16-alpine}
     profiles: ["restauracion"]
     entrypoint: ["/scripts/restaurar-copia.sh"]
     environment: *entorno_copias
@@ -212,6 +222,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+        required: false
     networks:
       - laboratorio
 

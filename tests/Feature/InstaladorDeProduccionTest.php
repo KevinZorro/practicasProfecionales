@@ -40,6 +40,7 @@ function configurarConElInstalador(string $archivo, array $respuestas = []): Pro
         'APP_URL', 'APP_PORT', 'DIRECTORIO_COPIAS', 'PROXIES_DE_CONFIANZA',
         'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_DOMINIO_INSTITUCIONAL',
         'CORREO_LABORATORIO', 'CORREO_CONTRASENA_DE_APLICACION',
+        'BASE_EXTERNA_HOST', 'BASE_EXTERNA_PUERTO', 'BASE_EXTERNA_NOMBRE', 'BASE_EXTERNA_USUARIO', 'BASE_EXTERNA_CONTRASENA',
     ], '');
 
     return Process::env(['ARCHIVO_ENV' => $archivo, 'NO_INTERACTIVO' => '1'] + $respuestas + $sinResponder)
@@ -227,7 +228,9 @@ it('usa el mismo proyecto y las mismas imágenes que el compose de producción',
     preg_match_all('/^(PROYECTO|IMAGEN_[A-Z]+)="([^"]+)"$/m', $script, $declaradas);
     $delScript = array_combine($declaradas[1], $declaradas[2]);
 
+    // Las de copias y restauración llevan su valor por defecto: ${VARIABLE:-imagen}.
     preg_match_all('/^\s+image: (\S+)$/m', $compose, $imagenes);
+    $imagenes[1] = array_map(static fn (string $imagen): string => preg_replace('/^\$\{[A-Z_]+:-(.+)\}$/', '$1', $imagen), $imagenes[1]);
 
     expect($compose)->toContain("name: {$delScript['PROYECTO']}\n")
         ->and(array_values(array_unique($imagenes[1])))->toEqualCanonicalizing([
@@ -239,4 +242,99 @@ it('deja fuera de las imágenes y de git lo que empaqueta', function (): void {
     expect((string) file_get_contents(base_path('.dockerignore')))->toMatch('/^produccion\.sh$/m')
         ->toMatch('/^imagenes-docker$/m')
         ->and((string) file_get_contents(base_path('.gitignore')))->toMatch('#^/imagenes-docker$#m');
+});
+
+// ---------------------------------------------------------------------
+// Base de datos ajena (ADR 0010)
+// ---------------------------------------------------------------------
+
+const BASE_AJENA = [
+    'BASE_EXTERNA_HOST' => '10.20.30.40',
+    'BASE_EXTERNA_PUERTO' => '5432',
+    'BASE_EXTERNA_NOMBRE' => 'laboratorio',
+    'BASE_EXTERNA_USUARIO' => 'testlab',
+    'BASE_EXTERNA_CONTRASENA' => 'clave-de-prueba',
+];
+
+it('por defecto usa la base del compose: perfil base-propia, DB_HOST=db y el cliente de la 16', function (): void {
+    configurarConElInstalador($this->env, ['APP_URL' => DIRECCION_CON_HTTPS]);
+    $variables = variablesDe($this->env);
+
+    expect($variables['COMPOSE_PROFILES'])->toBe('base-propia')
+        ->and($variables['DB_HOST'])->toBe('db')
+        ->and($variables['IMAGEN_CLIENTE_POSTGRES'])->toBe('postgres:16-alpine')
+        ->and($variables['DB_USUARIO_UNICO'])->toBe('false');
+});
+
+it('con una base ajena apunta a ella y apaga el perfil del servicio db', function (): void {
+    $resultado = configurarConElInstalador($this->env, ['APP_URL' => DIRECCION_CON_HTTPS] + BASE_AJENA);
+    $variables = variablesDe($this->env);
+
+    expect($resultado->successful())->toBeTrue($resultado->output().$resultado->errorOutput())
+        ->and($variables)->toMatchArray([
+            'COMPOSE_PROFILES' => '',
+            'DB_HOST' => '10.20.30.40',
+            'DB_PORT' => '5432',
+            'DB_DATABASE' => 'laboratorio',
+            'DB_DUENO_USUARIO' => 'testlab',
+            'DB_DUENO_CONTRASENA' => 'clave-de-prueba',
+        ])
+        // La aplicación entra con su propio usuario y su propia contraseña.
+        ->and($variables['DB_USERNAME'])->toBe('laboratorio_app')
+        ->and($variables['DB_PASSWORD'])->toMatch('/^[0-9a-f]{48}$/')
+        ->and((string) file_get_contents($this->env))->not->toContain('=<');
+});
+
+it('no acepta una base ajena mal descrita', function (array $cambio, string $menciona): void {
+    $resultado = configurarConElInstalador($this->env, $cambio + BASE_AJENA + ['APP_URL' => DIRECCION_CON_HTTPS]);
+
+    expect($resultado->failed())->toBeTrue()
+        ->and($resultado->errorOutput())->toContain($menciona)
+        ->and(file_exists($this->env))->toBeFalse();
+})->with([
+    'localhost, que dentro de Docker es el contenedor' => [['BASE_EXTERNA_HOST' => 'localhost'], 'propio contenedor'],
+    '127.0.0.1' => [['BASE_EXTERNA_HOST' => '127.0.0.1'], 'propio contenedor'],
+    'una dirección con http' => [['BASE_EXTERNA_HOST' => 'http://10.0.0.1'], 'no es una dirección'],
+    'un puerto que no es un número' => [['BASE_EXTERNA_PUERTO' => 'cinco'], 'puerto'],
+    'sin el nombre de la base' => [['BASE_EXTERNA_NOMBRE' => ''], 'nombre de la base'],
+    'sin usuario' => [['BASE_EXTERNA_USUARIO' => ''], 'usuario'],
+    'sin contraseña' => [['BASE_EXTERNA_CONTRASENA' => ''], 'contraseña'],
+    'una contraseña que el .env no maneja' => [['BASE_EXTERNA_CONTRASENA' => 'tiene un espacio y $'], 'contraseña'],
+]);
+
+it('no cambia la base de un .env que ya existe aunque se le den otros datos', function (): void {
+    configurarConElInstalador($this->env, ['APP_URL' => DIRECCION_CON_HTTPS] + BASE_AJENA);
+
+    configurarConElInstalador($this->env, ['BASE_EXTERNA_HOST' => '10.99.99.99', 'BASE_EXTERNA_NOMBRE' => 'otra']);
+
+    expect(variablesDe($this->env))->toMatchArray(['DB_HOST' => '10.20.30.40', 'DB_DATABASE' => 'laboratorio', 'COMPOSE_PROFILES' => '']);
+});
+
+it('completa un .env sin perfil que usa la base del compose, para que db siga levantándose', function (): void {
+    // Un .env de antes de que db fuera opcional: sin COMPOSE_PROFILES el
+    // compose dejaría de levantar la base. Lo corrige la orden "configurar".
+    file_put_contents($this->env, "DB_HOST=db\nAPP_URL=".DIRECCION_CON_HTTPS."\n");
+
+    configurarConElInstalador($this->env);
+
+    expect(variablesDe($this->env)['COMPOSE_PROFILES'])->toBe('base-propia');
+});
+
+it('deja la carpeta de las copias dentro del clon si no se dice otra, sin pedir sudo', function (): void {
+    configurarConElInstalador($this->env, ['APP_URL' => DIRECCION_CON_HTTPS]);
+
+    expect(variablesDe($this->env)['DIRECTORIO_COPIAS'])->toBe(base_path('copias'));
+});
+
+it('hace opcional el servicio db en el compose: perfil base-propia y dependencias con required: false', function (): void {
+    $compose = (string) file_get_contents(base_path('docker-compose.produccion.yml'));
+
+    preg_match('/\n  db:\n((?:    .*\n|\n)+)/', $compose, $bloque);
+
+    expect($bloque[1] ?? '')->toContain('profiles: ["base-propia"]')
+        // Sin required: false, Compose rechaza el proyecto cuando db no está activo.
+        ->and(substr_count($compose, "condition: service_healthy\n        required: false"))
+        ->toBe(substr_count($compose, 'condition: service_healthy'))
+        ->and($compose)->toContain('PGHOST: ${DB_HOST:-db}')
+        ->toContain('PGPORT: ${DB_PORT:-5432}');
 });

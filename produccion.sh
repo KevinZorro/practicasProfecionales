@@ -12,6 +12,9 @@
 # docs/instalacion-en-el-servidor.md. Cada orden de Docker que corre la
 # imprime antes con «$»: así se ve qué hace y se puede repetir a mano.
 #
+# La base de datos puede ser la que trae el compose o una que ya existe
+# (ADR 0010): instalar lo pregunta. Con una existente, nunca borra nada de ella.
+#
 # Se puede correr otra vez sin miedo: no cambia las claves ni las contraseñas
 # de un .env que ya existe, y lo que ya está hecho lo deja como está.
 
@@ -49,6 +52,9 @@ DISCO_MINIMO_GB=6
 DISCO_RECOMENDADO_GB=20
 MEMORIA_MINIMA_MB=2000
 
+COMPOSE_MINIMO="2.20.2"   # required: false en depends_on, para el servicio db apagado por su perfil
+VERSION_MINIMA_POSTGRES=12
+ENV_NUEVO=""
 IMAGENES=""
 SIN_GIT=""
 
@@ -154,6 +160,24 @@ generar_si_falta() {  # generar_si_falta CLAVE VALOR_NUEVO "qué es": solo si si
 validar() {  # validar VALOR REGEX "mensaje si no cumple"
     [[ "$1" =~ $2 ]] || fallar "$3"
 }
+
+# La base es la del compose cuando DB_HOST es el nombre de su servicio.
+base_propia() { [ "$(valor DB_HOST)" = db ]; }
+
+# Un .env de antes del perfil no lo trae, y sin él el compose no levantaría db.
+ajustar_perfil_de_la_base() {
+    base_propia || return 0
+    case ",$(valor COMPOSE_PROFILES)," in
+        *,base-propia,*) ;;
+        *) poner COMPOSE_PROFILES base-propia ;;
+    esac
+}
+
+imagen_cliente() { local i; i="$(valor IMAGEN_CLIENTE_POSTGRES)"; printf '%s' "${i:-$IMAGEN_COPIAS}"; }
+
+# psql sobre la base de la plataforma, con las credenciales del dueño, desde el
+# contenedor de copias (que ya las trae): sirve con la base propia y con la ajena.
+psql_del_dueno() { compose_callado exec -T copias psql -tA -c "$1" 2>/dev/null | tr -d '\r'; }
 
 es_https() { case "$(valor APP_URL)" in https://*) return 0 ;; *) return 1 ;; esac; }
 
@@ -265,8 +289,11 @@ requisitos_basicos() {
     [ -n "$version" ] ||
         fallar "Falta Docker Compose v2. Mira «Lo que necesita el servidor» en docs/instalacion-en-el-servidor.md."
     case "${version#v}" in
-        1.*) fallar "Docker Compose $version es muy viejo: hace falta la versión 2 o superior." ;;
+        1.*) fallar "Docker Compose $version es muy viejo: hace falta la versión $COMPOSE_MINIMO o superior." ;;
     esac
+    if [ "$(printf '%s\n%s\n' "$COMPOSE_MINIMO" "${version#v}" | sort -V | head -n 1)" != "$COMPOSE_MINIMO" ]; then
+        fallar "Docker Compose $version es muy viejo: hace falta la versión $COMPOSE_MINIMO o superior (el servicio db es opcional según la base)."
+    fi
     bien "Docker $(docker version --format '{{.Server.Version}}' 2>/dev/null) y Compose ${version#v}"
 }
 
@@ -342,6 +369,7 @@ comprobar_puerto() {
 # nuevas, y con otra APP_KEY los documentos cifrados se pierden: mejor parar.
 comprobar_que_no_hay_una_base_sin_su_env() {
     [ "$ARCHIVO_ENV" = "$RAIZ/.env" ] || return 0
+    [ -z "${EXT_HOST:-}" ] || return 0   # con una base ajena la revisa revisar_la_base
     command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 || return 0
     docker volume inspect "${PROYECTO}_datos_postgres" >/dev/null 2>&1 || return 0
 
@@ -363,22 +391,29 @@ configurar() {
         bien "Usa el .env que ya existe: sus claves y contraseñas no se tocan"
         completar_con_el_ejemplo
     else
+        pedir_la_base
         comprobar_que_no_hay_una_base_sin_su_env
         (umask 077 && cp "$EJEMPLO" "$ARCHIVO_ENV")
         nuevo=1
+        ENV_NUEVO=1
         bien "Creó el .env a partir de .env.produccion.example"
     fi
     chmod 600 "$ARCHIVO_ENV"
 
     if [ -n "$nuevo" ]; then
+        apuntar_a_la_base
         if [ -n "${APP_PORT:-}" ]; then
             validar "$APP_PORT" '^[0-9]{2,5}$' "APP_PORT tiene que ser un número de puerto, no «$APP_PORT»."
             poner APP_PORT "$APP_PORT"
         fi
-        [ -z "${DIRECTORIO_COPIAS:-}" ] || poner DIRECTORIO_COPIAS "$DIRECTORIO_COPIAS"
+        # Por defecto dentro del clon: .gitignore y .dockerignore ya la excluyen,
+        # y no hace falta sudo para crearla. Con el clon en /srv/laboratorio es
+        # la misma carpeta del ejemplo.
+        poner DIRECTORIO_COPIAS "${DIRECTORIO_COPIAS:-$RAIZ/copias}"
     fi
+    ajustar_perfil_de_la_base
 
-    if [ -z "$nuevo" ] && { es_marca "$(valor APP_KEY)" || es_marca "$(valor DB_DUENO_CONTRASENA)"; }; then
+    if [ -z "$nuevo" ] && base_propia && { es_marca "$(valor APP_KEY)" || es_marca "$(valor DB_DUENO_CONTRASENA)"; }; then
         comprobar_que_no_hay_una_base_sin_su_env
     fi
     generar_si_falta APP_KEY "$(clave_de_la_aplicacion)" "la clave de la aplicación"
@@ -393,6 +428,54 @@ configurar() {
         fallar "Quedaron marcas <...> sin llenar en el .env: $(grep '=<' "$ARCHIVO_ENV" | cut -d= -f1 | tr '\n' ' ')"
     fi
     bien "El .env está completo y solo lo lee su dueño (permisos 600)"
+}
+
+# Si la base es una que ya existe, junta sus datos (EXT_*) sin escribir nada
+# todavía: el .env se crea después. Sin terminal salen de BASE_EXTERNA_*.
+pedir_la_base() {
+    EXT_HOST="${BASE_EXTERNA_HOST:-}"; EXT_PUERTO="${BASE_EXTERNA_PUERTO:-}"
+    EXT_BASE="${BASE_EXTERNA_NOMBRE:-}"; EXT_USUARIO="${BASE_EXTERNA_USUARIO:-}"
+    EXT_CLAVE="${BASE_EXTERNA_CONTRASENA:-}"
+
+    if [ -z "$EXT_HOST" ] && interactivo; then
+        nota "La instalación trae su propia base PostgreSQL. Si ya tienes una (la que preparó el"
+        nota "ingeniero de la universidad), se usa esa y la propia no se levanta."
+        confirmar "¿Usar una base PostgreSQL que ya existe?" || return 0
+        preguntar EXT_HOST "Dirección de PostgreSQL (IP o nombre, no localhost)" ""
+    fi
+    [ -n "$EXT_HOST" ] || return 0
+
+    if interactivo; then
+        [ -n "$EXT_PUERTO" ] || preguntar EXT_PUERTO "Puerto" "5432"
+        [ -n "$EXT_BASE" ] || preguntar EXT_BASE "Nombre de la base" ""
+        [ -n "$EXT_USUARIO" ] || preguntar EXT_USUARIO "Usuario" ""
+        [ -n "$EXT_CLAVE" ] || preguntar_oculto EXT_CLAVE "Contraseña de ese usuario"
+    fi
+    EXT_PUERTO="${EXT_PUERTO:-5432}"
+
+    case "$EXT_HOST" in
+        localhost | 127.* | ::1)
+            fallar "«$EXT_HOST» no sirve: dentro de Docker es el propio contenedor, no este servidor. Usa la IP del servidor (hostname -I) o su nombre." ;;
+    esac
+    validar "$EXT_HOST" '^[A-Za-z0-9._-]+$' "«$EXT_HOST» no es una dirección: una IP o un nombre, sin http:// ni puerto."
+    validar "$EXT_PUERTO" '^[0-9]{2,5}$' "El puerto de la base tiene que ser un número, no «$EXT_PUERTO»."
+    validar "$EXT_BASE" '^[A-Za-z0-9_.-]+$' "Falta el nombre de la base (BASE_EXTERNA_NOMBRE), o tiene caracteres raros."
+    validar "$EXT_USUARIO" '^[A-Za-z0-9_.-]+$' "Falta el usuario de la base (BASE_EXTERNA_USUARIO), o tiene caracteres raros."
+    # Esta contraseña va al .env, que leen Laravel y Docker Compose: un $, #,
+    # comilla, espacio o barra invertida los confunde.
+    validar "$EXT_CLAVE" '^[A-Za-z0-9._~@%+=:,/!^*-]+$' \
+        "Falta la contraseña de la base (BASE_EXTERNA_CONTRASENA), o tiene caracteres que el .env no maneja bien (espacios, \$ # \\ y comillas). Pídele al ingeniero otra sin ellos."
+}
+
+apuntar_a_la_base() {
+    [ -n "${EXT_HOST:-}" ] || return 0
+    poner DB_HOST "$EXT_HOST"
+    poner DB_PORT "$EXT_PUERTO"
+    poner DB_DATABASE "$EXT_BASE"
+    poner DB_DUENO_USUARIO "$EXT_USUARIO"
+    poner DB_DUENO_CONTRASENA "$EXT_CLAVE"
+    poner COMPOSE_PROFILES ""
+    bien "Base ajena: $EXT_USUARIO en $EXT_HOST:$EXT_PUERTO, base $EXT_BASE (el servicio db no se levanta)"
 }
 
 # Un .env de una versión anterior no trae las variables que el ejemplo ganó
@@ -554,7 +637,9 @@ obtener_imagenes() {
     paso "Imágenes (la primera vez tarda entre 5 y 15 minutos)"
     compose build ||
         fallar "No se pudieron construir las imágenes. Si el error habla de la red (timeout, could not resolve, TLS), el servidor no sale a internet o lo hace por un proxy: mira «Sin internet» en docs/instalacion-en-el-servidor.md."
-    compose pull --quiet db copias ||
+    local servicios=(copias)
+    base_propia && servicios=(db copias)
+    compose pull --quiet "${servicios[@]}" ||
         fallar "No se pudo descargar la imagen de PostgreSQL. Mira «Sin internet» en docs/instalacion-en-el-servidor.md."
     bien "Imágenes listas"
 }
@@ -576,6 +661,88 @@ cargar_imagenes() {  # cargar_imagenes ARCHIVO: las que dejó "empaquetar"
     [ "$de_la_imagen" = "$del_servidor" ] ||
         fallar "Las imágenes son para $de_la_imagen y este servidor es $del_servidor: empaquétalas con PLATAFORMA=linux/$del_servidor."
     bien "Imágenes cargadas"
+}
+
+explicar_el_error_de_la_base() {  # explicar_el_error_de_la_base "lo que dijo psql"
+    local texto=$1
+    printf '    %s\n' "$texto" >&2
+    case "$texto" in
+        *"password authentication failed"*)
+            nota "El usuario o la contraseña no son los de esa base (DB_DUENO_USUARIO y DB_DUENO_CONTRASENA en el .env)." ;;
+        *"no pg_hba.conf entry"*)
+            nota "PostgreSQL no deja entrar a los contenedores de Docker. El ingeniero tiene que permitir su red en pg_hba.conf, por ejemplo:"
+            nota "  host  $(valor DB_DATABASE)  $(valor DB_DUENO_USUARIO)  172.16.0.0/12  scram-sha-256"
+            nota "y recargar PostgreSQL (la guía lo explica: docs/instalacion-en-el-servidor.md)." ;;
+        *"does not exist"*)
+            nota "La base o el usuario no existen: revisa el nombre (DB_DATABASE en el .env)." ;;
+        *"could not translate"* | *"Name or service not known"*)
+            nota "No se encuentra esa dirección (DB_HOST=$(valor DB_HOST))." ;;
+        *)
+            nota "No llegué a PostgreSQL en $(valor DB_HOST):$(valor DB_PORT). Revisa la dirección y el puerto, que escuche en esa IP (listen_addresses) y que ningún cortafuegos lo cierre." ;;
+    esac
+    # Un .env recién creado no tiene nada que guardar todavía (la base no se
+    # tocó): se borra para que la próxima pasada vuelva a preguntar.
+    if [ -n "$ENV_NUEVO" ]; then
+        rm -f "$ARCHIVO_ENV"
+        fallar "No pude entrar a la base. Borré el .env que acababa de crear: vuelve a correr ./produccion.sh instalar y corrige los datos."
+    fi
+    fallar "No pude entrar a la base. Corrige el .env y vuelve a correr ./produccion.sh instalar."
+}
+
+# Con una base ajena: entra con el dueño desde un contenedor, como lo hará la
+# aplicación, y mira lo que decide cómo seguir. No cambia nada en la base.
+revisar_la_base() {
+    base_propia && return 0
+    paso "Base de datos ajena ($(valor DB_HOST):$(valor DB_PORT))"
+
+    local imagen salida fila version superusuario crea_roles es_dueno tablas crea_tablas cliente
+    imagen="$(imagen_cliente)"
+    if ! salida="$(PGPASSWORD="$(valor DB_DUENO_CONTRASENA)" docker run --rm -e PGPASSWORD \
+        -e PGHOST="$(valor DB_HOST)" -e PGPORT="$(valor DB_PORT)" -e PGDATABASE="$(valor DB_DATABASE)" \
+        -e PGUSER="$(valor DB_DUENO_USUARIO)" -e PGCONNECT_TIMEOUT=8 "$imagen" \
+        psql -X -q -At -F '|' -c "select current_setting('server_version_num')::int / 10000, r.rolsuper, r.rolcreaterole, coalesce((select pg_get_userbyid(d.datdba) = current_user from pg_database d where d.datname = current_database()), false), (select count(*) from pg_tables where schemaname = 'public'), has_schema_privilege(current_user, 'public', 'CREATE') from pg_roles r where r.rolname = current_user" 2>&1)"; then
+        explicar_el_error_de_la_base "$salida"
+    fi
+    fila="$(printf '%s\n' "$salida" | tail -n 1)"
+    [[ "$fila" =~ ^[0-9]+\|[tf]\|[tf]\|[tf]\|[0-9]+\|[tf]$ ]] ||
+        fallar "PostgreSQL respondió algo que no entiendo: $fila"
+    IFS='|' read -r version superusuario crea_roles es_dueno tablas crea_tablas <<< "$fila"
+
+    bien "Entró como $(valor DB_DUENO_USUARIO): PostgreSQL $version"
+    [ "$version" -ge "$VERSION_MINIMA_POSTGRES" ] ||
+        fallar "PostgreSQL $version es muy viejo: hace falta la $VERSION_MINIMA_POSTGRES o superior."
+
+    if [ "$tablas" -gt 0 ] && [ -n "$ENV_NUEVO" ]; then
+        fallar "La base ya tiene $tablas tabla(s), pero este .env es nuevo: si es de una instalación anterior, recupera su .env (con otra APP_KEY se pierden los documentos cifrados). Este instalador no borra nada de una base ajena: si es de pruebas y quieres vaciarla, hazlo tú o pídeselo a quien la administra."
+    fi
+    if [ "$tablas" -eq 0 ]; then bien "La base está vacía"; else bien "La base ya tiene las tablas de esta plataforma ($tablas)"; fi
+    [ "$crea_tablas" = t ] ||
+        fallar "El usuario no puede crear tablas en la base. Quien la administra tiene que darle permiso (por ejemplo, hacerlo dueño de la base, o GRANT CREATE ON SCHEMA public TO $(valor DB_DUENO_USUARIO))."
+    [ "$es_dueno" = t ] || aviso "El usuario no es el dueño de la base: si algo falla al migrar o al restaurar una copia, es por eso."
+
+    if [ "$superusuario" = t ] || [ "$crea_roles" = t ]; then
+        [ "$(valor DB_USUARIO_UNICO)" != true ] || aviso "El usuario ya puede crear roles, pero el .env tiene DB_USUARIO_UNICO=true: la aplicación sigue entrando con el mismo usuario que migra."
+        bien "Puede crear roles: la aplicación entrará con su propio usuario, sin permiso sobre la estructura (S.1)"
+    elif [ "$(valor DB_USUARIO_UNICO)" = true ]; then
+        aviso "El usuario no puede crear roles: la aplicación entra con el mismo usuario que migra (DB_USUARIO_UNICO)."
+    elif [ -n "$ENV_NUEVO" ]; then
+        poner DB_USERNAME "$(valor DB_DUENO_USUARIO)"
+        poner DB_PASSWORD "$(valor DB_DUENO_CONTRASENA)"
+        poner DB_USUARIO_UNICO true
+        aviso "El usuario no puede crear roles: la aplicación entrará con el mismo usuario que migra, sin los límites de S.1."
+        nota "Para separarlos, pídele al ingeniero CREATEROLE para ese usuario (ALTER ROLE $(valor DB_DUENO_USUARIO) CREATEROLE) y repite la instalación con un .env nuevo."
+    else
+        fallar "El usuario perdió el permiso de crear roles, y el .env espera uno aparte para la aplicación (S.1). Pídele a quien administra la base que se lo devuelva (ALTER ROLE $(valor DB_DUENO_USUARIO) CREATEROLE)."
+    fi
+
+    # pg_dump tiene que ser de la misma versión mayor que la base.
+    cliente="postgres:${version}-alpine"
+    if [ "$imagen" != "$cliente" ]; then
+        poner IMAGEN_CLIENTE_POSTGRES "$cliente"
+        bien "Copias de seguridad con $cliente (la misma versión que la base)"
+        ejecutar docker pull --quiet "$cliente" >/dev/null ||
+            fallar "No pude descargar $cliente, el cliente de PostgreSQL que necesitan las copias. Sin internet: empaqueta con IMAGEN_CLIENTE_POSTGRES=$cliente ./produccion.sh empaquetar."
+    fi
 }
 
 migrar() {
@@ -611,8 +778,7 @@ esperar_a_la_plataforma() {
 
 cuantos_administradores() {
     # "admin" es el valor de Rol::Admin.
-    compose_callado exec -T db psql -U "$(valor DB_DUENO_USUARIO)" -d "$(valor DB_DATABASE)" -tAc \
-        "select count(*) from model_has_roles m join roles r on r.id = m.role_id where r.name = 'admin'" 2>/dev/null |
+    psql_del_dueno "select count(*) from model_has_roles m join roles r on r.id = m.role_id where r.name = 'admin'" |
         tr -dc '0-9' || true
 }
 
@@ -694,6 +860,7 @@ instalar() {
     solo_el_env_manda
     preparar_carpeta_de_copias
     obtener_imagenes
+    revisar_la_base
     migrar
     levantar
     primer_administrador
@@ -703,6 +870,7 @@ instalar() {
 actualizar() {
     requisitos
     [ -f "$RAIZ/.env" ] || fallar "No hay .env: esto es una instalación nueva. Corre ./produccion.sh instalar"
+    ajustar_perfil_de_la_base
     solo_el_env_manda
 
     if [ -z "$SIN_GIT" ]; then
@@ -728,11 +896,12 @@ verificar() {
     paso "Requisitos"
     requisitos_basicos
     [ -f "$RAIZ/.env" ] || fallar "No hay .env: la plataforma no está instalada en esta carpeta. Corre ./produccion.sh instalar"
+    ajustar_perfil_de_la_base
     solo_el_env_manda
 
     local problemas=0 servicio contenedor salud ruta codigo roles administradores ultima
     paso "Servicios"
-    for servicio in app queue programador web db copias; do
+    for servicio in app queue programador web $(base_propia && printf 'db ')copias; do
         contenedor="$(compose_callado ps -q --status running "$servicio" 2>/dev/null || true)"
         if [ -z "$contenedor" ]; then
             mal "$servicio no está corriendo"
@@ -760,7 +929,7 @@ verificar() {
     done
 
     paso "Datos"
-    roles="$(compose_callado exec -T db psql -U "$(valor DB_DUENO_USUARIO)" -d "$(valor DB_DATABASE)" -tAc 'select count(*) from roles' 2>/dev/null | tr -dc '0-9' || true)"
+roles="$(psql_del_dueno 'select count(*) from roles' | tr -dc '0-9' || true)"
     if [ "${roles:-0}" -ge 6 ]; then
         bien "Los $roles roles están creados"
     else
@@ -791,6 +960,7 @@ verificar() {
 administrador() {  # administrador [CORREO] [NOMBRE]
     requisitos_basicos
     [ -f "$RAIZ/.env" ] || fallar "No hay .env: la plataforma no está instalada en esta carpeta. Corre ./produccion.sh instalar"
+    ajustar_perfil_de_la_base
     solo_el_env_manda
     servicio_corriendo app || fallar "La plataforma no está corriendo aquí. Corre primero ./produccion.sh instalar"
 
@@ -806,7 +976,7 @@ empaquetar() {  # empaquetar [CARPETA]: en un equipo con internet
     paso "Requisitos"
     requisitos_basicos
 
-    local destino="${1:-$RAIZ/imagenes-docker}" version archivo rama referencias=(HEAD)
+    local destino="${1:-$RAIZ/imagenes-docker}" version archivo rama referencias=(HEAD) extras=()
     version="$(git -C "$RAIZ" rev-parse --short HEAD)"
     if [ -n "$(git -C "$RAIZ" status --porcelain --untracked-files=no)" ]; then
         aviso "Hay cambios sin commitear: entrarían en las imágenes pero no en el código empaquetado."
@@ -822,9 +992,15 @@ empaquetar() {  # empaquetar [CARPETA]: en un equipo con internet
     ejecutar docker build --platform "$PLATAFORMA" --target web -t "$IMAGEN_WEB" -f docker/php/Dockerfile .
     ejecutar docker pull --platform "$PLATAFORMA" "$IMAGEN_BASE"
     ejecutar docker pull --platform "$PLATAFORMA" "$IMAGEN_COPIAS"
+    # La base ajena puede ser de otra versión mayor que la 16: sus copias
+    # necesitan el cliente de esa (IMAGEN_CLIENTE_POSTGRES=postgres:17-alpine).
+    if [ -n "${IMAGEN_CLIENTE_POSTGRES:-}" ]; then
+        ejecutar docker pull --platform "$PLATAFORMA" "$IMAGEN_CLIENTE_POSTGRES"
+        extras+=("$IMAGEN_CLIENTE_POSTGRES")
+    fi
 
     paso "Archivo de imágenes (unos minutos)"
-    docker save "$IMAGEN_APP" "$IMAGEN_WEB" "$IMAGEN_BASE" "$IMAGEN_COPIAS" | gzip -1 > "$archivo"
+    docker save "$IMAGEN_APP" "$IMAGEN_WEB" "$IMAGEN_BASE" "$IMAGEN_COPIAS" ${extras[@]+"${extras[@]}"} | gzip -1 > "$archivo"
     (cd "$destino" && suma_sha256 "$(basename "$archivo")" > "$(basename "$archivo").sha256")
     bien "$archivo ($(du -h "$archivo" | cut -f1))"
 
