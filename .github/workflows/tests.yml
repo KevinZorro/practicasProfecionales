@@ -254,27 +254,33 @@ jobs:
       - name: Descargar el código
         uses: actions/checkout@v7
 
-      # El ejemplo con sus marcas <...> llenas. Si al ejemplo le falta algo
-      # que el compose exige, falla aquí y no en el servidor.
-      - name: Preparar el .env de producción
+      # El mismo instalador que se corre en el servidor, sin preguntas: arma
+      # el .env desde el ejemplo, construye, migra con el dueño de la base,
+      # levanta y crea el primer ADMIN. Si algo lo rompe, falla aquí y no el
+      # día de la instalación.
+      - name: Instalar con produccion.sh
+        env:
+          NO_INTERACTIVO: "1"
+          APP_URL: http://localhost
+          DIRECTORIO_COPIAS: ${{ runner.temp }}/copias
+          ADMIN_CORREO: admin@ejemplo.edu.co
+          ADMIN_NOMBRE: Administración de la CI
+        run: ./produccion.sh instalar
+
+      - name: Comprobar el .env que dejó el instalador
         run: |
-          cp .env.produccion.example .env
-          sed -i \
-            -e "s|^APP_KEY=.*|APP_KEY=base64:$(openssl rand -base64 32)|" \
-            -e "s|^APP_URL=.*|APP_URL=http://localhost|" \
-            -e "s|^DB_PASSWORD=.*|DB_PASSWORD=ci-$(openssl rand -hex 12)|" \
-            -e "s|^DB_DUENO_CONTRASENA=.*|DB_DUENO_CONTRASENA=ci-$(openssl rand -hex 12)|" \
-            -e "s|^MAIL_MAILER=.*|MAIL_MAILER=log|" \
-            -e "s|^MAIL_HOST=.*|MAIL_HOST=localhost|" \
-            -e "s|^MAIL_USERNAME=.*|MAIL_USERNAME=null|" \
-            -e "s|^MAIL_PASSWORD=.*|MAIL_PASSWORD=null|" \
-            -e "s|^MAIL_FROM_ADDRESS=.*|MAIL_FROM_ADDRESS=ci@ejemplo.edu.co|" \
-            -e "s|^DIRECTORIO_COPIAS=.*|DIRECTORIO_COPIAS=${RUNNER_TEMP}/copias|" \
-            .env
           if grep -n '=<' .env; then
             echo "::error::quedaron marcas <...> sin llenar en el .env"
             exit 1
           fi
+          [ "$(stat -c '%a' .env)" = "600" ] || { echo "::error::el .env no quedó solo para su dueño"; exit 1; }
+
+      # Una instalación nueva tiene que poder usarse: con todos los roles del
+      # enum y alguien que pueda entrar a repartirlos.
+      - name: Comprobar que quedaron los roles y el primer ADMIN
+        run: |
+          $COMPOSE exec -T app php artisan tinker --execute="echo 'ROLES:'.(Spatie\Permission\Models\Role::count() === count(App\Enums\Rol::cases()) ? 'completos' : 'faltan').' ADMIN:'.App\Models\User::role('admin')->count();" | tee instalacion.txt
+          grep -q 'ROLES:completos ADMIN:1' instalacion.txt || { echo "::error::la instalación no dejó los roles y el primer ADMIN"; exit 1; }
 
       - name: Comprobar el compose de producción
         run: |
@@ -289,19 +295,6 @@ jobs:
             jq -e --arg s "$servicio" '.services[$s].volumes[] | select(.source == "archivos_privados")' compose.json > /dev/null \
               || { echo "::error::$servicio no monta el volumen archivos_privados"; exit 1; }
           done
-
-      - name: Construir las imágenes
-        run: $COMPOSE build
-
-      # Con el dueño de la base, que después crea el usuario de la aplicación.
-      # Antes de levantar: app, queue y programador entran con ese usuario.
-      - name: Migrar
-        run: $COMPOSE run --rm migraciones
-
-      - name: Levantar los servicios
-        run: |
-          $COMPOSE up -d
-          $COMPOSE exec -T app php artisan migrate:status > /dev/null
 
       # S.1: la aplicación lee y escribe filas, pero no es superusuario ni
       # puede tocar la estructura de la base.
@@ -381,6 +374,16 @@ jobs:
             sleep 5
           done
           [ "$pendientes" = "0" ] || { echo "::error::quedan $pendientes jobs: queue no trabaja"; $COMPOSE logs queue --tail=50; exit 1; }
+
+      - name: Verificar con produccion.sh
+        run: ./produccion.sh verificar
+
+      # Como una versión nueva, sin git pull (la CI ya tiene el código): hace
+      # la copia previa, reconstruye, migra y levanta.
+      - name: Actualizar con produccion.sh
+        env:
+          NO_INTERACTIVO: "1"
+        run: ./produccion.sh actualizar --sin-git
 
       # La copia no vale si no se restaura: se hace una, se dañan los datos y
       # se comprueba que la restauración los devuelve tal como estaban.
