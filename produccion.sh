@@ -166,14 +166,35 @@ es_https() { case "$(valor APP_URL)" in https://*) return 0 ;; *) return 1 ;; es
 COMPOSE_ORDEN=(docker compose)
 
 compose() {
-    printf '    $ %s -f %s %s\n' "${COMPOSE_ORDEN[*]}" "$COMPOSE_ARCHIVO" "$*"
+    printf '    $ %s\n' "$(citar "${COMPOSE_ORDEN[@]}" -f "$COMPOSE_ARCHIVO" "$@")"
     "${COMPOSE_ORDEN[@]}" -f "$COMPOSE_ARCHIVO" "$@"
+}
+
+citar() {  # la orden tal como se escribiría: lo que lleva espacios, entre comillas
+    local argumento texto=""
+    for argumento in "$@"; do
+        case "$argumento" in
+            *[[:space:]]*) texto+=" \"$argumento\"" ;;
+            *) texto+=" $argumento" ;;
+        esac
+    done
+    printf '%s' "${texto# }"
 }
 
 compose_callado() { "${COMPOSE_ORDEN[@]}" -f "$COMPOSE_ARCHIVO" "$@"; }
 
+# Al armar el compose, docker compose prefiere las variables de la terminal a
+# las del .env: una DB_USERNAME exportada para usar psql cambiaría con qué
+# usuario entra la aplicación a la base. De aquí en adelante solo manda el .env.
+solo_el_env_manda() {
+    local clave
+    while IFS= read -r clave; do
+        unset "$clave" 2>/dev/null || true
+    done < <(sed -n 's/^\([A-Z_][A-Z0-9_]*\)=.*/\1/p' "$RAIZ/.env")
+}
+
 ejecutar() {
-    printf '    $ %s\n' "$*"
+    printf '    $ %s\n' "$(citar "$@")"
     "$@"
 }
 
@@ -208,11 +229,13 @@ codigo_http() {  # codigo_http RUTA: el código con que responde el nginx del co
     printf '%s' "${linea%% *}"
 }
 
-desde_donde_se_corrio() {  # desde_donde_se_corrio RUTA: la vuelve absoluta
-    case "$1" in
-        /*) printf '%s' "$1" ;;
-        *) printf '%s/%s' "$DESDE" "$1" ;;
-    esac
+desde_donde_se_corrio() {  # desde_donde_se_corrio RUTA: absoluta y sin «..»
+    local ruta=$1
+    case "$ruta" in /*) ;; *) ruta="$DESDE/$ruta" ;; esac
+    if [ -d "$(dirname "$ruta")" ]; then
+        ruta="$(cd "$(dirname "$ruta")" && pwd)/$(basename "$ruta")"
+    fi
+    printf '%s' "$ruta"
 }
 
 suma_sha256() {
@@ -668,7 +691,7 @@ instalar() {
     requisitos
     comprobar_puerto
     configurar
-    unset APP_PORT DIRECTORIO_COPIAS PROXIES_DE_CONFIANZA  # de aquí en adelante manda el .env
+    solo_el_env_manda
     preparar_carpeta_de_copias
     obtener_imagenes
     migrar
@@ -680,6 +703,7 @@ instalar() {
 actualizar() {
     requisitos
     [ -f "$RAIZ/.env" ] || fallar "No hay .env: esto es una instalación nueva. Corre ./produccion.sh instalar"
+    solo_el_env_manda
 
     if [ -z "$SIN_GIT" ]; then
         paso "Código"
@@ -704,6 +728,7 @@ verificar() {
     paso "Requisitos"
     requisitos_basicos
     [ -f "$RAIZ/.env" ] || fallar "No hay .env: la plataforma no está instalada en esta carpeta. Corre ./produccion.sh instalar"
+    solo_el_env_manda
 
     local problemas=0 servicio contenedor salud ruta codigo roles administradores ultima
     paso "Servicios"
@@ -765,6 +790,8 @@ verificar() {
 
 administrador() {  # administrador [CORREO] [NOMBRE]
     requisitos_basicos
+    [ -f "$RAIZ/.env" ] || fallar "No hay .env: la plataforma no está instalada en esta carpeta. Corre ./produccion.sh instalar"
+    solo_el_env_manda
     servicio_corriendo app || fallar "La plataforma no está corriendo aquí. Corre primero ./produccion.sh instalar"
 
     local correo="${1:-}" nombre="${2:-}"
@@ -803,7 +830,13 @@ empaquetar() {  # empaquetar [CARPETA]: en un equipo con internet
 
     paso "Código"
     # Solo lo commiteado: una copia de la carpeta se llevaría el .env de
-    # desarrollo y los documentos de prueba de storage/.
+    # desarrollo y los documentos de prueba de storage/. Y con toda la
+    # historia: de un clon superficial (--depth) no sale un bundle que se
+    # pueda clonar.
+    if [ "$(git -C "$RAIZ" rev-parse --is-shallow-repository)" = true ]; then
+        ejecutar git -C "$RAIZ" fetch --unshallow ||
+            fallar "Este clon no tiene la historia completa y no se pudo traer (git fetch --unshallow)."
+    fi
     rama="$(git -C "$RAIZ" symbolic-ref -q --short HEAD || true)"
     [ -z "$rama" ] || referencias+=("$rama")
     ejecutar git -C "$RAIZ" bundle create "$destino/laboratorio-codigo-$version.bundle" "${referencias[@]}"
