@@ -39,3 +39,6 @@ CLAUDE.local.md
 /.impeccable/review
 /.impeccable/mocks
 /.impeccable/build
+!.env.nativo.example
+# Lo escribe nativo.sh en el servidor.
+/public/.user.ini
