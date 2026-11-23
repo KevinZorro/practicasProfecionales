@@ -53,6 +53,21 @@ final class UsuarioDeLaAplicacionService
         });
     }
 
+    /**
+     * La base no deja al dueño crear roles —la de la universidad, por ejemplo—,
+     * así que la aplicación entra con el mismo usuario que migra y no hay nada
+     * que crear. Es menos seguro (S.1 pide otro usuario, sin permiso sobre la
+     * estructura), por eso solo ocurre si el .env lo pide con
+     * DB_USUARIO_UNICO=true y no por un descuido: sin eso, el mismo usuario
+     * sigue siendo un error (esElDueno).
+     */
+    public function usarAlDuenoComoUsuario(string $usuario): void
+    {
+        if ($usuario !== DB::connection()->getConfig('username')) {
+            throw UsuarioDeLaBaseInvalido::noEsElDueno($usuario);
+        }
+    }
+
     private function garantizar(string $usuario, string $contrasena): void
     {
         if (preg_match(self::NOMBRE_VALIDO, $usuario) !== 1) {

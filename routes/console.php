@@ -62,6 +62,13 @@ Artisan::command('base:usuario-de-la-aplicacion', function (UsuarioDeLaAplicacio
     $usuario = (string) config('database.usuario_de_la_aplicacion.usuario');
 
     try {
+        if (config('database.usuario_de_la_aplicacion.unico')) {
+            $usuarios->usarAlDuenoComoUsuario($usuario);
+            $this->warn(sprintf('La aplicación entra a la base como «%s», el mismo usuario que migra (DB_USUARIO_UNICO): no hay usuario aparte, sin los límites de S.1.', $usuario));
+
+            return 0;
+        }
+
         $usuarios->crearOActualizar($usuario, (string) config('database.usuario_de_la_aplicacion.contrasena'));
     } catch (UsuarioDeLaBaseInvalido $invalido) {
         $this->error($invalido->getMessage());

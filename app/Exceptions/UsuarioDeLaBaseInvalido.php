@@ -22,6 +22,14 @@ final class UsuarioDeLaBaseInvalido extends DomainException
         return new self('El usuario de la aplicación no tiene contraseña. Revisa DB_PASSWORD en el .env.');
     }
 
+    public static function noEsElDueno(string $usuario): self
+    {
+        return new self(sprintf(
+            'DB_USUARIO_UNICO=true pide que la aplicación entre como el dueño de la base, pero DB_USERNAME es «%s». Pon el mismo usuario de DB_DUENO_USUARIO, o quita DB_USUARIO_UNICO.',
+            $usuario,
+        ));
+    }
+
     public static function esElDueno(string $usuario): self
     {
         return new self(sprintf(

@@ -136,6 +136,9 @@ return [
     'usuario_de_la_aplicacion' => [
         'usuario' => (string) env('DB_APLICACION_USUARIO', ''),
         'contrasena' => (string) env('DB_APLICACION_CONTRASENA', ''),
+        // La base es de otro (la de la universidad) y su usuario no puede crear
+        // roles: la aplicación entra con el mismo usuario que migra (ADR 0010).
+        'unico' => (bool) env('DB_USUARIO_UNICO', false),
     ],
 
     'migrations' => [

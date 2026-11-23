@@ -89,3 +89,42 @@ it('no corre sin contraseña, con un nombre raro ni con el mismo usuario del due
     'nombre con comillas' => ['app"; DROP TABLE users; --', 'clave'],
     'el mismo dueño' => [fn (): string => (string) DB::connection()->getConfig('username'), 'clave'],
 ]);
+
+// ---------------------------------------------------------------------
+// Base de otro (ADR 0010): el dueño no puede crear roles
+// ---------------------------------------------------------------------
+
+it('con DB_USUARIO_UNICO la aplicación entra como el dueño y no se crea ningún usuario', function (): void {
+    $dueno = (string) DB::connection()->getConfig('username');
+    config([
+        'database.usuario_de_la_aplicacion' => ['usuario' => $dueno, 'contrasena' => 'otra', 'unico' => true],
+    ]);
+
+    $this->artisan('base:usuario-de-la-aplicacion')
+        ->expectsOutputToContain('el mismo usuario que migra')
+        ->assertSuccessful();
+
+    expect(DB::table('pg_roles')->where('rolname', USUARIO_DE_PRUEBA)->count())->toBe(0);
+});
+
+it('con DB_USUARIO_UNICO falla si DB_USERNAME no es el dueño: la aplicación no podría entrar', function (): void {
+    config([
+        'database.usuario_de_la_aplicacion' => ['usuario' => USUARIO_DE_PRUEBA, 'contrasena' => 'clave', 'unico' => true],
+    ]);
+
+    $this->artisan('base:usuario-de-la-aplicacion')
+        ->expectsOutputToContain('DB_USUARIO_UNICO')
+        ->assertFailed();
+});
+
+it('sin DB_USUARIO_UNICO el mismo usuario del dueño sigue siendo un error', function (): void {
+    config([
+        'database.usuario_de_la_aplicacion' => [
+            'usuario' => (string) DB::connection()->getConfig('username'),
+            'contrasena' => 'clave',
+            'unico' => false,
+        ],
+    ]);
+
+    $this->artisan('base:usuario-de-la-aplicacion')->assertFailed();
+});
