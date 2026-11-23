@@ -112,6 +112,7 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 
 **Producción (`docker-compose.produccion.yml`).** El código va dentro de las imágenes (etapas `produccion` y `web` de `docker/php/Dockerfile`); la sección "Producción" del README tiene la instalación, el despliegue y la restauración. Lo que no se puede perder:
 
+- **La instalación es `./produccion.sh instalar`** (guía en `docs/instalacion-en-el-servidor.md`, ADR 0009). Arma el `.env`, migra, crea los roles y el primer ADMIN, y se puede repetir: nunca cambia los secretos de un `.env` que ya existe ni inventa unos si hay una base sin su `.env`. Los roles los crea `migraciones` con `RolSeeder` en cada despliegue; el primer ADMIN, `usuarios:crear-administrador`, porque la entrada con Google no crea cuentas. La CI instala con el mismo script y `InstaladorDeProduccionTest` exige que comparta con el compose el proyecto y las imágenes: si cambias uno, cambia el otro.
 - **La aplicación entra a PostgreSQL sin superusuario** (S.1): `DB_USERNAME` solo lee y escribe filas. Las tablas las crea el dueño (`DB_DUENO_USUARIO`) en el servicio `migraciones`, que después corre `base:usuario-de-la-aplicacion` y renueva sus permisos; las copias y la restauración también usan al dueño. Una migración nueva no necesita nada más: los permisos por defecto alcanzan a las tablas que cree.
 - **Los documentos privados son un volumen**, `archivos_privados` (`storage/app/private`), montado en `app`, `queue`, `copias` y `restauracion`. Sin él, el formato de confidencialidad firmado se perdería en cada despliegue.
 - **Nada de lo que suben los usuarios entra en una imagen:** `.dockerignore` excluye `storage/app/public` y `storage/app/private`. Una imagen construida en un equipo de desarrollo se llevaría dentro los documentos de prueba.
@@ -181,7 +182,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `BloqueoService` | Bloquear y levantar el bloqueo de estudiantes y docentes, siempre con motivo (RF68). Se levanta, no se borra |
 | `ParticipacionService` | Quién puede entrar al laboratorio y por qué no: formato al día y sin bloqueo (RF70). Lo consultan la evaluación (RF45) y la lista de cada sesión |
 | `AccesoService` | Quién puede entrar según la vigencia institucional (regla 8) y a qué cuenta corresponde quien vuelve de Google (RF18). Lo consultan la entrada y el middleware `VerificarUsuarioActivo` |
-| `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()` |
+| `AsignacionDeRolService` | Asignar y revocar roles, con o sin vigencia, y dejar el rastro. **Única puerta de escritura de roles:** nunca llames a `assignRole()`. Sin persona que actúe —la sincronización y el ADMIN que se nombra desde la consola— no pasa por Policy ni bitácora: el rastro queda en `asignaciones_de_rol` con `asignado_por` nulo |
 | `RegistroPrevioService` | Sesiones apartadas antes del semestre (RF57): las registra un administrativo y nacen aprobadas; avisos de cruce (RF58), formato intramural (RF59) y aviso diario de las que no lo tienen (RF60) |
 | `AjustesService` | Valores que el ADMIN cambia sin desplegar (`ajustes_laboratorio`, claves fijas en `AjusteDelLaboratorio`), como la antelación del aviso del RF60 |
 | `CrucesDeSesionService` | Nadie en dos sesiones a la vez (P9): ni un estudiante en dos que se cruzan ni un docente con dos solicitudes que se cruzan. Cuentan pendientes, revisadas y aprobadas; no las rechazadas ni los retirados (RF69). Lo llaman solicitar, completar la lista, registrar una sesión apartada, reprogramar y sustituir, dentro de su transacción y después de `bloquearPersonas()`, que bloquea a esas personas en orden de id |
@@ -195,7 +196,7 @@ Request → Route → Middleware → Form Request → Controller/Livewire
 | `ReposicionService` | Lista de insumos por pedir, necesidades anotadas a mano, cierre del documento (`cerrarElRango`: crea y cierra en una transacción, con candado de PostgreSQL) |
 | `PortadaService` | Lo que muestra la portada pública (RF01–RF07): solo lo publicado, talleres y eventos de hoy en adelante (D18), sin imágenes cuyo archivo falta; el detalle de un escenario publicado (RF03) |
 | `ResumenDelDiaService` | La pantalla «Hoy» del panel (`/panel`): lo que espera a cada persona con su rol activo. Solo lee; cada bloque aparece si la Policy de su módulo lo permite, nunca por rol |
-| `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (RF22), con origen `manual`; deshabilitar y volver a habilitar, siempre con motivo y en la bitácora |
+| `UsuarioService` | Cuentas que el ADMIN crea y edita a mano (RF22), con origen `manual`; deshabilitar y volver a habilitar, siempre con motivo y en la bitácora; el primer ADMIN desde la consola (`usuarios:crear-administrador`) |
 | `SupervisionService` | Docentes a cargo de cada docente supervisor y lo que este consulta (RF77). Asignar y retirar es solo del ADMIN y queda en la bitácora; la lectura es una sola consulta —la del reporte de resultados de evaluación, RF55— limitada a sus docentes, que sale siempre de la base y nunca de la petición. Una evaluación es de quien la hizo, que en una sustitución es quien dictó (D23). Las filas de `docente_supervisor` sobreviven a la revocación del rol y no dan acceso sin él |
 | `UsuarioSyncService` | Sincronización con la base institucional (RF19, RF20), comando `usuarios:sincronizar`. Lee de una `FuenteInstitucional`; **hoy solo existe la simulada** (`database/datos/institucional-simulada.json`), porque la real depende del pendiente 2. La pasada programada está apagada salvo con `SINCRONIZACION_PROGRAMADA=true` |
 
@@ -282,7 +283,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
     **Toda escritura de roles pasa por `AsignacionDeRolService`. Nunca llames a `assignRole()`**, ni en código nuevo ni en un comando: calcula lo que el usuario ya tiene leyendo la relación **filtrada**, así que con una fila vencida en el pivote intenta insertar una que ya existe y revienta contra la llave primaria. Los `assignRole()` que quedan en seeders y factories son seguros porque solo reparten roles que el usuario no tiene.
 
-    Elevar a **coordinador** exige motivo escrito; los demás roles, no. Asignar y revocar es **solo del ADMIN**, sin herencia: si el coordinador pudiera, se ampliaría a sí mismo el rol que el RF63 reserva al administrador de la plataforma.
+    Elevar a **coordinador** exige motivo escrito; los demás roles, no. Asignar y revocar es **solo del ADMIN**, sin herencia: si el coordinador pudiera, se ampliaría a sí mismo el rol que el RF63 reserva al administrador de la plataforma. La otra puerta es la consola del servidor (`usuarios:crear-administrador`), para el primer ADMIN o si el último se fue: quien llega ahí ya puede todo.
 
     **Al entrar se ve el rol permanente, no el temporal**, aunque el enum lo ponga después: la elevación es excepcional y la persona sigue haciendo su trabajo de siempre. Quien está usando un rol prestado lo ve dicho en la cabecera, con la fecha.
 
@@ -408,9 +409,14 @@ docker compose exec app php artisan make:model Nombre -mf
 docker compose exec node npm run dev
 docker compose logs -f app
 
-# Producción (en el servidor; ver la sección "Producción" del README)
+# Servidor (docs/instalacion-en-el-servidor.md). Cada orden imprime los docker compose que corre
+./produccion.sh instalar                               # de cero a funcionando; se puede repetir
+./produccion.sh actualizar                             # git pull, copia de seguridad, imágenes y migraciones
+./produccion.sh verificar
+
+# Producción a mano (sección "Producción" del README)
 docker compose -f docker-compose.produccion.yml build
-docker compose -f docker-compose.produccion.yml run --rm migraciones    # migra con el dueño y crea el usuario de la aplicación
+docker compose -f docker-compose.produccion.yml run --rm migraciones    # migra con el dueño, crea los roles y el usuario de la aplicación
 docker compose -f docker-compose.produccion.yml up -d
 docker compose -f docker-compose.produccion.yml exec copias /scripts/hacer-copia.sh
 ```

@@ -342,7 +342,7 @@ Para ponerlo a andar hace falta:
 2. **Verificación en dos pasos activada en esa cuenta y una contraseña de aplicación**, que va en `MAIL_PASSWORD`. Si alguien cambia la contraseña de la cuenta, Google anula la de aplicación y hay que generar otra.
 3. **Si la universidad tiene desactivadas las contraseñas de aplicación**, el plan alterno es que sistemas autorice la IP del servidor en el relay de Google Workspace (`smtp-relay.gmail.com`, hasta 10.000 destinatarios al día). Último recurso: Brevo, 300 al día gratis, con verificación de dominio.
 
-**Despliegue.**
+**Despliegue.** La instalación ya es un comando, `./produccion.sh instalar` (ADR 0009), y lo que hay que pedirle al ingeniero antes de ir está en `docs/instalacion-en-el-servidor.md`. La plataforma se instala sin lo que sigue; falta para usarla de verdad:
 
 1. Dominio o subdominio definitivo, para la dirección de retorno en Google.
 2. Quién crea las credenciales de Google.
