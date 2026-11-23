@@ -415,10 +415,61 @@ jobs:
           $COMPOSE exec -T app php -r 'file_put_contents("storage/app/private/despues.txt", "ok");'
           echo "Copia restaurada"
 
+      # El mismo instalador con una base que ya existe (ADR 0010): una
+      # PostgreSQL 17 aparte, con un dueño que no es superusuario ni puede
+      # crear roles, como la que prepara la universidad. Comprueba que db no
+      # se levanta, que la aplicación entra con el mismo usuario, que las
+      # copias usan pg_dump 17 y que una copia se restaura.
+      - name: Cambiar a una base ajena
+        run: |
+          $COMPOSE down -v --remove-orphans
+          rm .env
+          docker run -d --name base-ajena -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=ci-admin -p 5433:5432 postgres:17
+          until docker exec base-ajena pg_isready -U admin; do sleep 1; done
+          sleep 2
+          docker exec base-ajena psql -U admin -c "CREATE ROLE testlab LOGIN PASSWORD 'ci-clave-testlab'" -c "CREATE DATABASE laboratorio OWNER testlab"
+
+      - name: Instalar con una base ajena
+        env:
+          NO_INTERACTIVO: "1"
+          APP_URL: http://localhost
+          DIRECTORIO_COPIAS: ${{ runner.temp }}/copias-ajena
+          BASE_EXTERNA_PUERTO: "5433"
+          BASE_EXTERNA_NOMBRE: laboratorio
+          BASE_EXTERNA_USUARIO: testlab
+          BASE_EXTERNA_CONTRASENA: ci-clave-testlab
+          ADMIN_CORREO: admin@ejemplo.edu.co
+          ADMIN_NOMBRE: Administración de la CI
+        run: |
+          # La puerta de los contenedores hacia el servidor: localhost no sirve.
+          export BASE_EXTERNA_HOST=$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')
+          ./produccion.sh instalar
+
+      - name: Comprobar la instalación con la base ajena
+        run: |
+          ./produccion.sh verificar
+          if $COMPOSE ps --services | grep -qx db; then
+            echo "::error::el servicio db se levantó con una base ajena"; exit 1
+          fi
+          grep -q '^IMAGEN_CLIENTE_POSTGRES=postgres:17-alpine$' .env || { echo "::error::las copias no usan el cliente de la versión de la base"; exit 1; }
+          $COMPOSE exec -T app php artisan tinker --execute="echo 'USUARIO:'.DB::selectOne('select current_user u')->u;" | tee usuario.txt
+          grep -q 'USUARIO:testlab' usuario.txt || { echo "::error::la aplicación no entró con el usuario único"; exit 1; }
+          $COMPOSE exec -T copias /scripts/hacer-copia.sh
+          copia=$(sudo ls "$RUNNER_TEMP/copias-ajena" | grep -E '^20..-..-.._....$' | tail -1)
+          [ -n "$copia" ] || { echo "::error::no quedó ninguna copia"; exit 1; }
+          $COMPOSE exec -T app php artisan tinker --execute="DB::table('users')->delete();"
+          $COMPOSE stop app queue programador web
+          $COMPOSE run --rm restauracion "$copia"
+          $COMPOSE start app queue programador web
+          $COMPOSE exec -T app php artisan tinker --execute="echo 'ADMIN:'.App\Models\User::role('admin')->count();" | tee admin.txt
+          grep -q 'ADMIN:1' admin.txt || { echo "::error::la restauración no devolvió el ADMIN"; exit 1; }
+
       - name: Registros de los contenedores si algo falló
         if: failure()
         run: $COMPOSE logs --tail=100
 
       - name: Apagar el entorno
         if: always()
-        run: $COMPOSE down -v --remove-orphans
+        run: |
+          $COMPOSE down -v --remove-orphans
+          docker rm -f base-ajena || true

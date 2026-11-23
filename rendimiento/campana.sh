@@ -68,7 +68,7 @@ set -euo pipefail
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RENDIMIENTO="$RAIZ/rendimiento"
 
-COMPOSE="${COMPOSE:-docker compose -f docker-compose.produccion.yml -f rendimiento/docker-compose.rendimiento.yml}"
+COMPOSE="${COMPOSE:-docker compose --profile base-propia -f docker-compose.produccion.yml -f rendimiento/docker-compose.rendimiento.yml}"
 BASE_URL="${BASE_URL:-http://localhost}"
 FACTOR="${FACTOR:-1}"
 RAPIDO="${RAPIDO:-no}"
