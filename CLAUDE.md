@@ -66,7 +66,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Interactividad | Livewire 3 + Alpine.js (el que trae Livewire) |
 | Estilos | Tailwind CSS 3 |
 | Base de datos | PostgreSQL 16 |
-| Permisos | spatie/laravel-permission ^7.1 |
+| Permisos | spatie/laravel-permission ^8.3 |
 | Calendario | FullCalendar 6 |
 | Exportación | barryvdh/laravel-dompdf, maatwebsite/excel |
 | Tests | Pest |
