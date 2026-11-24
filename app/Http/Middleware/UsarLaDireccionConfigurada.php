@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Support\DireccionFija;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -29,12 +30,9 @@ final class UsarLaDireccionConfigurada
      */
     public function handle(Request $peticion, Closure $next): Response
     {
-        $direccion = rtrim((string) config('app.url'), '/');
-
-        if (config('app.url_fija') && $direccion !== '') {
-            URL::forceRootUrl($direccion);
-            URL::forceScheme(str_starts_with($direccion, 'https://') ? 'https' : 'http');
-            $this->tomarLaDireccionEnLaPeticion($peticion, $direccion);
+        if (DireccionFija::activa()) {
+            DireccionFija::aplicarA(URL::getFacadeRoot());
+            $this->tomarLaDireccionEnLaPeticion($peticion, DireccionFija::direccion());
         }
 
         return $next($peticion);

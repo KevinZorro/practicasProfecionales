@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Providers\Filament;
 
 use App\Filament\AvatarConIniciales;
+use App\Filament\FuenteDelPropioServidor;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\VerificarUsuarioActivo;
-use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -60,11 +60,14 @@ final class AdminPanelProvider extends PanelProvider
             // La marca del panel (DESIGN.md): Onest servida desde el propio
             // servidor, sin fonts.bunny.net; los botones en tinta, el rojo
             // para lo que no se deshace y los grises fríos. Sin modo oscuro:
-            // el resto de la plataforma no lo tiene.
-            ->font('Onest', url: asset('fonts/onest/onest.css'), provider: LocalFontProvider::class)
+            // el resto de la plataforma no lo tiene. La fuente y el favicon
+            // arman su dirección al pintar la página, no aquí: este método
+            // corre antes que UsarLaDireccionConfigurada, y asset() saldría
+            // con el Host de la petición, sin el puerto del túnel.
+            ->font('Onest', url: 'fonts/onest/onest.css', provider: FuenteDelPropioServidor::class)
             ->brandLogo(static fn (): View => view('filament.marca'))
             ->brandLogoHeight('2rem')
-            ->favicon(asset('favicon.ico'))
+            ->favicon(static fn (): string => asset('favicon.ico'))
             ->darkMode(false)
             ->colors([
                 'primary' => [
