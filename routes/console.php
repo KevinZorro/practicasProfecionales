@@ -2,13 +2,16 @@
 
 use App\Exceptions\UsuarioDeLaBaseInvalido;
 use App\Exceptions\UsuarioInvalido;
+use App\Models\User;
 use App\Services\AccesoService;
 use App\Services\RegistroPrevioService;
 use App\Services\UsuarioDeLaAplicacionService;
 use App\Services\UsuarioService;
 use App\Services\UsuarioSyncService;
+use App\Support\MuestrasDeCorreo;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -189,3 +192,46 @@ Schedule::command('usuarios:sincronizar')
     ->timezone(config('app.timezone'))
     ->when(static fn (): bool => (bool) config('laboratorio.sincronizacion.programada'))
     ->withoutOverlapping();
+
+/*
+ * Una muestra de cada correo de la aplicación, para ver en un buzón real
+ * cómo llegan sin montar solicitudes, salas ni docentes de prueba. Los
+ * datos son inventados y no se guarda nada en la base. Sale en el acto,
+ * sin pasar por la cola: sirve también para probar el SMTP sin el cron.
+ *   php artisan correos:muestra correo@dominio.edu.co
+ */
+Artisan::command(
+    'correos:muestra {email : A quién le llegan las muestras}',
+    function (MuestrasDeCorreo $muestras): int {
+        $email = mb_strtolower(trim((string) $this->argument('email')));
+
+        if (Validator::make(['email' => $email], ['email' => ['required', 'email']])->fails()) {
+            $this->error('Ese correo no es válido.');
+
+            return 1;
+        }
+
+        $nombre = User::query()->whereRaw('LOWER(email) = ?', [$email])->value('nombre') ?? 'Persona de prueba';
+        $fallidos = 0;
+
+        foreach ($muestras->para($nombre) as $clase => $correo) {
+            try {
+                Mail::to($email)->send($correo);
+                $this->line('Enviado: '.$clase);
+            } catch (Throwable $error) {
+                $this->error(sprintf('No salió %s: %s', $clase, $error->getMessage()));
+                $fallidos++;
+            }
+        }
+
+        if ($fallidos > 0) {
+            $this->warn('Revisa las variables MAIL_* del .env.');
+
+            return 1;
+        }
+
+        $this->info(sprintf('Listo: revisa la bandeja de %s.', $email));
+
+        return 0;
+    },
+)->purpose('Envía a un correo una muestra de cada correo de la aplicación, con datos inventados');
