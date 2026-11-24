@@ -15,9 +15,11 @@ use App\Listeners\EnviarCorreoSalaAsignada;
 use App\Models\User;
 use App\Services\FuenteInstitucional;
 use App\Services\FuenteInstitucionalSimulada;
+use App\Support\DireccionFija;
 use App\Support\RolActivo;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Routing\UrlGenerator;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -32,6 +34,16 @@ class AppServiceProvider extends ServiceProvider
         // Una instancia por petición: cachea los roles asignados del usuario
         // para no repetir la consulta en cada comprobación.
         $this->app->scoped(RolActivo::class);
+
+        // APP_URL como raíz de los enlaces desde que existe el generador, no
+        // solo desde el middleware: ver DireccionFija.
+        $this->app->afterResolving('url', static function (UrlGenerator $generador): void {
+            DireccionFija::aplicarA($generador);
+        });
+
+        if ($this->app->resolved('url')) {
+            DireccionFija::aplicarA($this->app->make('url'));
+        }
 
         $this->app->bind(FuenteInstitucional::class, static function (): FuenteInstitucional {
             $fuente = config('laboratorio.sincronizacion.fuente');
