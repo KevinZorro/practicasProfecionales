@@ -50,6 +50,8 @@ final class AsignacionDeRolService
 
     public const MOTIVO_CONSOLA = 'Desde la consola del servidor (usuarios:crear-administrador).';
 
+    public const MOTIVO_DEMOSTRACION = 'Cuenta de demostración (demo:preparar).';
+
     public function __construct(private readonly BitacoraService $bitacora) {}
 
     /**
@@ -126,6 +128,17 @@ final class AsignacionDeRolService
     public function asignarAdministradorDesdeLaConsola(User $usuario): ?AsignacionDeRol
     {
         return $this->asignarSinPersonaQueLoEjerza($usuario, Rol::Admin, self::MOTIVO_CONSOLA);
+    }
+
+    /**
+     * Los roles de las cuentas de demostración, que reparte quien tiene la
+     * consola del servidor con demo:preparar. Como el ADMIN de la consola:
+     * no hay persona con quien comprobar la Policy, y el motivo dice de
+     * dónde vino.
+     */
+    public function asignarParaLaDemostracion(User $usuario, Rol $rol): ?AsignacionDeRol
+    {
+        return $this->asignarSinPersonaQueLoEjerza($usuario, $rol, self::MOTIVO_DEMOSTRACION);
     }
 
     /**
