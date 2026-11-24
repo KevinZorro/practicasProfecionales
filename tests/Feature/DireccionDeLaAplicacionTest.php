@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+use App\Models\User;
+use Database\Seeders\RolSeeder;
 
 /*
  * Los enlaces y los assets salen de APP_URL cuando APP_URL_FIJA está
@@ -32,4 +34,26 @@ it('sin la dirección fija, los enlaces siguen el Host de la petición', functio
     $this->get('http://otro-nombre/')
         ->assertOk()
         ->assertSee('href="http://otro-nombre/favicon.ico"', escape: false);
+});
+
+it('con la dirección fija, volver a la página pedida tras entrar conserva el puerto de APP_URL', function (): void {
+    $this->seed(RolSeeder::class);
+    config(['app.url' => 'http://localhost:8080', 'app.url_fija' => true, 'laboratorio.acceso.con_contrasena' => true]);
+    $docente = User::factory()->docente()->create();
+    $docente->forceFill(['password' => 'una-contrasena-larga'])->save();
+
+    // El invitado pide el panel por el túnel: el Host llega sin el puerto.
+    $this->get('http://localhost/panel')->assertRedirect('http://localhost:8080/acceso');
+
+    $this->post('http://localhost/acceso', ['email' => $docente->email, 'contrasena' => 'una-contrasena-larga'])
+        ->assertRedirect('http://localhost:8080/panel');
+});
+
+it('con la dirección fija, «volver atrás» también usa APP_URL', function (): void {
+    config(['app.url' => 'http://localhost:8080', 'app.url_fija' => true, 'laboratorio.acceso.con_contrasena' => true]);
+
+    $this->get('http://localhost/acceso');
+
+    $this->post('http://localhost/acceso', ['email' => 'no-es-un-correo', 'contrasena' => 'x'])
+        ->assertRedirect('http://localhost:8080/acceso');
 });
