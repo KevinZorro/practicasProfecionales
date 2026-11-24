@@ -71,6 +71,11 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            // Sin Docker (ADR 0010) escriben aquí dos usuarios del sistema:
+            // PHP-FPM (www-data) y la cola y el programador del cron del
+            // usuario que despliega. Sin un permiso común, el primero que
+            // crea el archivo del día deja al otro sin poder escribir.
+            'permission' => env('LOG_PERMISOS') ? octdec((string) env('LOG_PERMISOS')) : null,
         ],
 
         'slack' => [
