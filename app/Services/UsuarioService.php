@@ -8,9 +8,11 @@ use App\Enums\AccionAuditada;
 use App\Enums\EstadoUsuario;
 use App\Enums\OrigenUsuario;
 use App\Exceptions\UsuarioInvalido;
+use App\Mail\ContrasenaCambiadaMail;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Cuentas que gestiona el ADMIN a mano (RF22).
@@ -90,9 +92,14 @@ final class UsuarioService
 
     /**
      * La única escritura de users.password: la consola y la recuperación
-     * por correo pasan por aquí. Cierra las sesiones con «recordarme».
+     * por correo pasan por aquí.
      *
-     * @throws UsuarioInvalido si la contraseña es corta
+     * Cierra las demás sesiones de la cuenta: las de «recordarme» al borrar
+     * remember_token, y las abiertas porque AuthenticateSession (grupo web)
+     * compara el hash guardado en cada sesión con el nuevo. Y le avisa a la
+     * persona por correo, después de confirmar: si no fue ella, se entera.
+     *
+     * @throws UsuarioInvalido si la contraseña es corta o larga
      */
     public function fijarContrasena(User $cuenta, string $contrasena): void
     {
@@ -102,14 +109,22 @@ final class UsuarioService
             'password' => $contrasena,
             'remember_token' => null,
         ])->save();
+
+        DB::afterCommit(static fn () => Mail::to($cuenta->email)->queue(new ContrasenaCambiadaMail($cuenta)));
     }
 
     private function garantizarLongitud(string $contrasena): void
     {
         $minimo = (int) config('laboratorio.acceso.longitud_minima_contrasena');
+        $maximoDeBytes = (int) config('laboratorio.acceso.longitud_maxima_contrasena');
 
         if (mb_strlen($contrasena) < $minimo) {
             throw UsuarioInvalido::contrasenaCorta($minimo);
+        }
+
+        // strlen y no mb_strlen: el tope de bcrypt es en bytes.
+        if (strlen($contrasena) > $maximoDeBytes) {
+            throw UsuarioInvalido::contrasenaLarga($maximoDeBytes);
         }
     }
 

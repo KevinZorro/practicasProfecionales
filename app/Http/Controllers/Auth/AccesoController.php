@@ -7,10 +7,10 @@ namespace App\Http\Controllers\Auth;
 use App\Exceptions\AccesoRechazado;
 use App\Http\Controllers\Controller;
 use App\Services\AccesoService;
+use App\Support\IntentosDeEntrada;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
 /**
@@ -49,24 +49,22 @@ final class AccesoController extends Controller
             'contrasena' => ['required', 'string', 'max:255'],
         ]);
 
-        // Por correo e IP juntos: una IP compartida por toda la universidad
-        // no deja sin entrar a quien no hizo nada (ver config/laboratorio.php).
-        $clave = 'acceso:'.mb_strtolower(trim($datos['email'])).'|'.$peticion->ip();
-        $maximo = (int) config('laboratorio.acceso.intentos_por_minuto');
+        $intentos = new IntentosDeEntrada($datos['email'], (string) $peticion->ip());
+        $espera = $intentos->segundosDeEspera();
 
-        if (RateLimiter::tooManyAttempts($clave, $maximo)) {
-            return $this->rechazar(AccesoRechazado::demasiadosIntentos(RateLimiter::availableIn($clave)), $datos['email']);
+        if ($espera !== null) {
+            return $this->rechazar(AccesoRechazado::demasiadosIntentos($espera), $datos['email']);
         }
 
         try {
             $usuario = $this->acceso->cuentaConContrasena($datos['email'], $datos['contrasena']);
         } catch (AccesoRechazado $rechazo) {
-            RateLimiter::hit($clave);
+            $intentos->fallo();
 
             return $this->rechazar($rechazo, $datos['email']);
         }
 
-        RateLimiter::clear($clave);
+        $intentos->exito();
 
         // Se guarda antes de invalidar la sesión, que se lo llevaría.
         $destino = $peticion->session()->pull('url.intended', route('panel.inicio'));

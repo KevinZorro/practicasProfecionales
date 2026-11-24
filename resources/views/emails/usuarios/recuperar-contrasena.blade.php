@@ -12,6 +12,9 @@
 
     <p><a href="{{ $enlace }}" style="color: #d30f23; font-weight: 600;">Elegir una contraseña nueva</a></p>
 
+    <p style="font-size: 13px; color: #6b7280;">Si el botón no abre, copia esta dirección en el navegador:<br>
+       <span style="word-break: break-all;">{{ $enlace }}</span></p>
+
     <p>Vale {{ $minutosDeVigencia }} minutos y sirve una sola vez. Si no fuiste tú, ignora este correo:
        tu contraseña sigue igual.</p>
 

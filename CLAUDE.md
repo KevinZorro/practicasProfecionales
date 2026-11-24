@@ -137,7 +137,7 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 
 - `config.platform.php` está fijado en `8.3.0`. Producción corre PHP 8.3, así que ninguna dependencia puede exigir 8.4. Después de cualquier cambio en `composer.json`, verifica que el lock siga siendo instalable en 8.3.
 - Los roles y permisos los gestiona `spatie/laravel-permission` con sus propias tablas. **No crees tablas de roles propias** ni compruebes roles con condicionales sueltos.
-- Se entra con Google (RF18) o con correo y contraseña en `/acceso` (ADR 0011, `AccesoController`). La contraseña se elige con el enlace del correo (`/acceso/recuperar`, `RecuperacionDeContrasenaService`) o la fija la consola (`usuarios:contrasena`); `users.password` es nullable y una cuenta sin ella solo entra con Google. Cinco intentos por minuto por correo e IP, nunca solo por IP. Se apaga con `ENTRADA_CON_CONTRASENA=false`. No hay Breeze ni registro: `AutenticacionTest` falla si aparecen sus rutas en inglés.
+- Se entra con Google (RF18) o con correo y contraseña en `/acceso` (ADR 0011, `AccesoController`). La contraseña se elige con el enlace del correo (`/acceso/recuperar`, `RecuperacionDeContrasenaService`) o la fija la consola (`usuarios:contrasena`); `users.password` es nullable y una cuenta sin ella solo entra con Google. Cinco intentos por minuto por correo e IP (nunca solo por IP) y veinte en 15 minutos por correo (`IntentosDeEntrada`). Cambiar la contraseña cierra las demás sesiones (`AuthenticateSession`, grupo web) y avisa por correo; no la quites de ahí. Se apaga con `ENTRADA_CON_CONTRASENA=false`. No hay Breeze ni registro: `AutenticacionTest` falla si aparecen sus rutas en inglés.
 
 ---
 

@@ -60,10 +60,14 @@ final class RecuperarContrasenaController extends Controller
     {
         $this->garantizarDisponible();
 
+        $email = (string) $peticion->query('email', '');
+
         return view('auth.restablecer-contrasena', [
             'token' => $token,
-            'email' => (string) $peticion->query('email', ''),
+            'email' => $email,
+            'enlaceVigente' => $this->recuperacion->enlaceVigente($email, $token),
             'longitudMinima' => (int) config('laboratorio.acceso.longitud_minima_contrasena'),
+            'longitudMaxima' => (int) config('laboratorio.acceso.longitud_maxima_contrasena'),
         ]);
     }
 
@@ -79,8 +83,10 @@ final class RecuperarContrasenaController extends Controller
 
         try {
             $this->recuperacion->restablecer($datos['email'], $datos['token'], $datos['contrasena']);
-        } catch (RecuperacionInvalida|UsuarioInvalido $rechazo) {
-            return back()->withInput($peticion->only('email'))->withErrors(['acceso' => $rechazo->getMessage()]);
+        } catch (RecuperacionInvalida $vencido) {
+            return back()->withInput($peticion->only('email'))->withErrors(['acceso' => $vencido->getMessage()]);
+        } catch (UsuarioInvalido $invalida) {
+            return back()->withInput($peticion->only('email'))->withErrors(['contrasena' => $invalida->getMessage()]);
         }
 
         return redirect()->route('acceso')

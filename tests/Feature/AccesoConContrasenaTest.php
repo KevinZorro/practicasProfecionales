@@ -2,11 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Exceptions\UsuarioInvalido;
+use App\Mail\ContrasenaCambiadaMail;
 use App\Mail\RecuperarContrasenaMail;
 use App\Models\User;
+use App\Services\UsuarioService;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Testing\TestResponse;
 
@@ -140,6 +144,111 @@ it('frena a quien prueba contraseñas y deja entrar a otro correo desde la misma
 
     entrarCon('luis.gomez@ufps.edu.co', CONTRASENA_DE_PRUEBA)->assertRedirect(route('panel.inicio'));
     expect(Auth::id())->toBe($otra->id);
+});
+
+it('frena a quien prueba contra una cuenta cambiando de IP, y lo deja en el registro una vez', function (): void {
+    docenteConContrasena();
+    Log::spy();
+
+    foreach (range(1, 20) as $intento) {
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.'.$intento]);
+        entrarCon('ana.perez@ufps.edu.co', 'equivocada-'.$intento.'-larga');
+    }
+
+    $this->withServerVariables(['REMOTE_ADDR' => '10.0.1.1']);
+    entrarCon('ana.perez@ufps.edu.co', CONTRASENA_DE_PRUEBA)
+        ->assertSessionHasErrors('acceso');
+    expect(session('errors')->first('acceso'))->toContain('Demasiados intentos');
+    expect(Auth::check())->toBeFalse();
+
+    Log::shouldHaveReceived('warning')->once()->withArgs(
+        static fn (string $mensaje, array $contexto): bool => str_contains($mensaje, 'demasiados intentos')
+            && $contexto['correo'] === 'ana.perez@ufps.edu.co'
+            && ! array_key_exists('contrasena', $contexto),
+    );
+});
+
+it('entrar bien vuelve a cero los intentos fallidos de la cuenta', function (): void {
+    docenteConContrasena();
+
+    foreach (range(1, 4) as $intento) {
+        entrarCon('ana.perez@ufps.edu.co', 'equivocada-'.$intento.'-larga');
+    }
+    entrarCon('ana.perez@ufps.edu.co', CONTRASENA_DE_PRUEBA)->assertRedirect(route('panel.inicio'));
+    $this->post(route('salir'));
+
+    foreach (range(1, 4) as $intento) {
+        entrarCon('ana.perez@ufps.edu.co', 'equivocada-'.$intento.'-larga');
+    }
+    entrarCon('ana.perez@ufps.edu.co', CONTRASENA_DE_PRUEBA)->assertRedirect(route('panel.inicio'));
+});
+
+describe('cambiar la contraseña cierra las demás sesiones', function (): void {
+    it('la sesión abierta en otro equipo sale en su siguiente petición', function (): void {
+        $docente = docenteConContrasena();
+        entrarCon('ana.perez@ufps.edu.co', CONTRASENA_DE_PRUEBA);
+        $this->get(route('panel.inicio'))->assertOk();
+
+        app(UsuarioService::class)->fijarContrasena($docente->fresh(), 'una-contrasena-nueva-y-larga');
+        // Cada petición real es un proceso nuevo: no conserva el usuario en memoria.
+        Auth::forgetGuards();
+
+        $this->get(route('panel.inicio'))->assertRedirect(route('acceso'));
+        $this->assertGuest();
+    });
+
+    it('de control: sin cambiarla, la sesión sigue abierta', function (): void {
+        docenteConContrasena();
+        entrarCon('ana.perez@ufps.edu.co', CONTRASENA_DE_PRUEBA);
+        Auth::forgetGuards();
+
+        $this->get(route('panel.inicio'))->assertOk();
+    });
+
+    it('a una cuenta que solo entra con Google no la saca', function (): void {
+        $this->actingAs(User::factory()->docente()->create());
+
+        $this->get(route('panel.inicio'))->assertOk();
+        $this->get(route('panel.inicio'))->assertOk();
+    });
+});
+
+it('avisa por correo cada vez que la contraseña cambia', function (): void {
+    Mail::fake();
+    $docente = User::factory()->docente()->create();
+
+    $this->artisan('usuarios:contrasena', ['email' => $docente->email, '--generar' => true])->assertSuccessful();
+
+    Mail::assertQueued(ContrasenaCambiadaMail::class, 1);
+    Mail::assertQueued(ContrasenaCambiadaMail::class, fn (ContrasenaCambiadaMail $correo): bool => $correo->hasTo($docente->email));
+});
+
+it('no avisa si la contraseña no se pudo cambiar', function (): void {
+    Mail::fake();
+    $docente = User::factory()->docente()->create();
+
+    expect(fn () => app(UsuarioService::class)->fijarContrasena($docente, 'corta'))->toThrow(UsuarioInvalido::class);
+
+    Mail::assertNothingQueued();
+});
+
+it('rechaza una contraseña de más de 72 bytes, que bcrypt cortaría en silencio', function (string $contrasena): void {
+    $docente = User::factory()->docente()->create();
+
+    expect(fn () => app(UsuarioService::class)->fijarContrasena($docente, $contrasena))
+        ->toThrow(UsuarioInvalido::class, 'demasiado larga');
+    expect($docente->fresh()->password)->toBeNull();
+})->with([
+    '73 letras' => [str_repeat('a', 73)],
+    '37 eñes son 74 bytes' => [str_repeat('ñ', 37)],
+]);
+
+it('acepta una de 72 bytes justos', function (): void {
+    $docente = User::factory()->docente()->create();
+
+    app(UsuarioService::class)->fijarContrasena($docente, str_repeat('a', 72));
+
+    expect(Hash::check(str_repeat('a', 72), (string) $docente->fresh()->password))->toBeTrue();
 });
 
 it('cambia la sesión al entrar: nada de la anterior sobrevive', function (): void {
@@ -350,6 +459,45 @@ describe('recuperar la contraseña por correo', function (): void {
         'no coinciden' => [['contrasena' => CONTRASENA_DE_PRUEBA, 'contrasena_confirmation' => 'otra-contrasena-larga']],
         'corta' => [['contrasena' => 'corta', 'contrasena_confirmation' => 'corta']],
     ]);
+
+    it('un enlace vencido lo dice antes de pedir la contraseña', function (): void {
+        $docente = User::factory()->docente()->create();
+
+        $this->get(route('acceso.restablecer', ['token' => str_repeat('a', 64), 'email' => $docente->email]))
+            ->assertOk()
+            ->assertSee('venció o ya se usó')
+            ->assertSee(route('acceso.recuperar'), escape: false)
+            ->assertDontSee('name="contrasena"', escape: false);
+    });
+
+    it('al elegir la contraseña con el enlace llega el aviso de que cambió', function (): void {
+        $docente = User::factory()->docente()->create();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+
+        $this->post(route('acceso.restablecer.guardar'), [
+            'token' => tokenDelEnlace(enlaceDelCorreo()),
+            'email' => $docente->email,
+            'contrasena' => CONTRASENA_DE_PRUEBA,
+            'contrasena_confirmation' => CONTRASENA_DE_PRUEBA,
+        ])->assertRedirect(route('acceso'));
+
+        Mail::assertQueued(ContrasenaCambiadaMail::class, 1);
+    });
+
+    it('una contraseña demasiado larga se marca en su campo, no como enlace vencido', function (): void {
+        $docente = User::factory()->docente()->create();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+        $larga = str_repeat('ñ', 40);
+
+        $this->post(route('acceso.restablecer.guardar'), [
+            'token' => tokenDelEnlace(enlaceDelCorreo()),
+            'email' => $docente->email,
+            'contrasena' => $larga,
+            'contrasena_confirmation' => $larga,
+        ])->assertSessionHasErrors('contrasena')->assertSessionDoesntHaveErrors('acceso');
+
+        expect($docente->fresh()->password)->toBeNull();
+    });
 
     it('no existe con la entrada con contraseña apagada', function (): void {
         config(['laboratorio.acceso.con_contrasena' => false]);

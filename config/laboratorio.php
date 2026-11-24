@@ -109,12 +109,25 @@ return [
     | correo e IP juntos: en la universidad cientos de personas salen por la
     | misma dirección, y un tope solo por IP dejaría sin entrar a todas.
     |
+    | "intentos_por_cuenta" es el segundo tope, solo por correo, en una
+    | ventana de "ventana_por_cuenta_minutos": frena a quien prueba
+    | contraseñas contra una cuenta cambiando de IP. Es holgado a propósito
+    | (nadie falla 20 veces en 15 minutos) y no bloquea a la persona: sigue
+    | pudiendo entrar con Google o recuperar la contraseña por correo.
+    |
+    | "longitud_maxima_contrasena" son bytes, no caracteres: bcrypt ignora
+    | todo lo que pase de 72, así que dos contraseñas que solo difieren
+    | después del byte 72 serían la misma.
+    |
     */
 
     'acceso' => [
         'con_contrasena' => (bool) env('ENTRADA_CON_CONTRASENA', true),
         'longitud_minima_contrasena' => 12,
+        'longitud_maxima_contrasena' => 72,
         'intentos_por_minuto' => 5,
+        'intentos_por_cuenta' => 20,
+        'ventana_por_cuenta_minutos' => 15,
     ],
 
 ];

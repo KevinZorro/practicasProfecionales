@@ -18,6 +18,11 @@ final class UsuarioInvalido extends DomainException
         return new self(sprintf('La contraseña debe tener al menos %d caracteres.', $minimo));
     }
 
+    public static function contrasenaLarga(int $maximoDeBytes): self
+    {
+        return new self(sprintf('La contraseña es demasiado larga: usa hasta %d caracteres (las letras con tilde y la ñ cuentan doble).', $maximoDeBytes));
+    }
+
     public static function correoRepetido(string $email): self
     {
         return new self(sprintf('Ya hay una cuenta con el correo %s.', $email));

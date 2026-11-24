@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -34,6 +35,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(CabecerasDeSeguridad::class);
         // Global para ver todos los 403, salgan de donde salgan (B4.5).
         $middleware->append(RegistrarAccesosNegados::class);
+
+        // Cambiar la contraseña cierra las demás sesiones de esa cuenta
+        // (ASVS V3.3.3): cada sesión guarda el hash con el que entró y, si ya
+        // no coincide, sale. En el grupo web para que alcance también a
+        // /livewire/update, a /admin y a la entrada. Una cuenta sin
+        // contraseña (solo Google) no se ve afectada.
+        $middleware->web(append: AuthenticateSession::class);
 
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,
