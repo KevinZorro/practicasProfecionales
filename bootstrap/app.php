@@ -4,6 +4,7 @@ use App\Http\Middleware\CabecerasDeSeguridad;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\RegistrarAccesosNegados;
 use App\Http\Middleware\SoloEnDesarrollo;
+use App\Http\Middleware\UsarLaDireccionConfigurada;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Services\AccesoService;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -27,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
     // veces y el docente recibía dos correos por cada aprobación (RF33).
     ->withEvents(discover: false)
     ->withMiddleware(function (Middleware $middleware) {
+        // Antes que nada genere un enlace: los arma con APP_URL (ver la clase).
+        $middleware->prepend(UsarLaDireccionConfigurada::class);
         // En todas las respuestas, también las de error y las de Filament.
         $middleware->append(CabecerasDeSeguridad::class);
         // Global para ver todos los 403, salgan de donde salgan (B4.5).

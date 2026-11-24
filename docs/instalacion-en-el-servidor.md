@@ -152,6 +152,8 @@ MAIL_FROM_ADDRESS=laboratorio@ufps.edu.co
 
 Si alguien cambia la contraseña de la cuenta, Google anula la de aplicación y los correos dejan de salir hasta generar otra. Mientras no haya correo, los avisos se ven con `docker compose -f docker-compose.produccion.yml logs queue`.
 
+**Con `APP_URL=http://localhost:8080` la plataforma solo se ve bien por el túnel.** En producción (`APP_ENV=production`) todos los enlaces, estilos e imágenes salen de `APP_URL`, no de la dirección con la que llegó la petición (`APP_URL_FIJA`, middleware `UsarLaDireccionConfigurada`): así una cabecera `Host` recortada por un proxy no deja la página sin estilos. Si entras por `http://IP-del-servidor` mientras `APP_URL` apunta al túnel, la página pedirá sus archivos a `localhost:8080`. Al terminar la prueba, devuelve `APP_URL` a la dirección real y corre `php artisan optimize` (o `./produccion.sh instalar`).
+
 ---
 
 ## 6. Plan B: el servidor no sale a internet
