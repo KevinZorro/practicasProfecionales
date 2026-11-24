@@ -12,7 +12,12 @@
     @endif
 
     @error('acceso')
-        <x-aviso tono="peligro" role="alert" class="mt-5">{{ $message }}</x-aviso>
+        <x-aviso tono="peligro" role="alert" class="mt-5">
+            {{ $message }}
+            @if ($conContrasena)
+                <a href="{{ route('acceso.recuperar') }}" class="font-semibold underline underline-offset-4">Recupera tu contraseña</a>
+            @endif
+        </x-aviso>
     @enderror
 
     @if ($conContrasena)
@@ -33,7 +38,7 @@
             <div>
                 <div class="flex items-baseline justify-between gap-3">
                     <label for="contrasena" class="campo-etiqueta">Contraseña</label>
-                    <a href="{{ route('acceso.recuperar') }}" class="-my-2 mb-0 inline-flex min-h-11 items-center px-1 text-[14px] font-semibold text-portada-rojo underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-portada-rojo">¿La olvidaste?</a>
+                    <a href="{{ route('acceso.recuperar') }}" class="-my-2 mb-0 inline-flex min-h-11 items-center px-1 text-[14px] font-semibold text-portada-rojo underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-portada-rojo">¿Olvidaste tu contraseña?</a>
                 </div>
                 <x-campo-de-contrasena id="contrasena" autocomplete="current-password" required
                     :autofocus="(bool) old('email')"

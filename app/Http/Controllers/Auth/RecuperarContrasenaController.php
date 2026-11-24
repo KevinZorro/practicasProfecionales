@@ -9,9 +9,9 @@ use App\Exceptions\UsuarioInvalido;
 use App\Http\Controllers\Controller;
 use App\Services\AccesoService;
 use App\Services\RecuperacionDeContrasenaService;
+use App\Support\EsperaDeReenvio;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 
 /**
@@ -21,9 +21,6 @@ use Illuminate\View\View;
  */
 final class RecuperarContrasenaController extends Controller
 {
-    /** Un mensaje para todos: no se le dice a nadie qué correos tienen cuenta. */
-    private const ENLACE_ENVIADO = 'Si ese correo tiene cuenta en la plataforma, te enviamos un enlace para elegir una contraseña nueva. Revisa tu bandeja y la carpeta de spam.';
-
     public function __construct(
         private readonly AccesoService $acceso,
         private readonly RecuperacionDeContrasenaService $recuperacion,
@@ -42,18 +39,18 @@ final class RecuperarContrasenaController extends Controller
 
         $datos = $peticion->validate(['email' => ['required', 'string', 'email', 'max:255']]);
 
-        // Por correo e IP, como la entrada: frena a quien llena buzones ajenos
-        // sin cerrarle la puerta a toda la universidad.
-        $clave = 'recuperar:'.mb_strtolower(trim($datos['email'])).'|'.$peticion->ip();
+        $espera = new EsperaDeReenvio($datos['email']);
 
-        if (RateLimiter::tooManyAttempts($clave, (int) config('laboratorio.acceso.intentos_por_minuto'))) {
-            return back()->withErrors(['email' => 'Demasiados intentos. Vuelve a intentarlo en '.RateLimiter::availableIn($clave).' segundos.']);
+        if ($espera->segundosRestantes() > 0) {
+            return redirect()->route('acceso.recuperar')
+                ->with(['enviadoA' => $datos['email'], 'antesDeTiempo' => true]);
         }
 
-        RateLimiter::hit($clave);
         $this->recuperacion->enviarEnlace($datos['email']);
+        $espera->registrarEnvio();
 
-        return back()->with('estado', self::ENLACE_ENVIADO);
+        // La pantalla responde igual exista o no la cuenta: no delata cuáles hay.
+        return redirect()->route('acceso.recuperar')->with('enviadoA', $datos['email']);
     }
 
     public function formularioDeRestablecer(Request $peticion, string $token): View

@@ -352,7 +352,7 @@ describe('recuperar la contraseña por correo', function (): void {
         $docente = User::factory()->docente()->create(['email' => 'ana.perez@ufps.edu.co']);
 
         $this->post(route('acceso.recuperar.enviar'), ['email' => 'Ana.Perez@ufps.edu.co'])
-            ->assertSessionHas('estado');
+            ->assertSessionHas('enviadoA');
 
         Mail::assertQueued(RecuperarContrasenaMail::class, 1);
         Mail::assertQueued(RecuperarContrasenaMail::class, fn (RecuperarContrasenaMail $correo): bool => $correo->hasTo('ana.perez@ufps.edu.co'));
@@ -373,7 +373,7 @@ describe('recuperar la contraseña por correo', function (): void {
 
     it('responde lo mismo con un correo sin cuenta, y no manda nada', function (): void {
         $this->post(route('acceso.recuperar.enviar'), ['email' => 'nadie@ufps.edu.co'])
-            ->assertSessionHas('estado');
+            ->assertSessionHas('enviadoA');
 
         Mail::assertNothingQueued();
     });
@@ -381,7 +381,7 @@ describe('recuperar la contraseña por correo', function (): void {
     it('no manda el enlace a una cuenta inactiva ni a una deshabilitada (regla 8)', function (string $estado): void {
         $cuenta = User::factory()->docente()->{$estado}()->create();
 
-        $this->post(route('acceso.recuperar.enviar'), ['email' => $cuenta->email])->assertSessionHas('estado');
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $cuenta->email])->assertSessionHas('enviadoA');
 
         Mail::assertNothingQueued();
     })->with(['inactivo', 'deshabilitado']);
@@ -497,6 +497,72 @@ describe('recuperar la contraseña por correo', function (): void {
         ])->assertSessionHasErrors('contrasena')->assertSessionDoesntHaveErrors('acceso');
 
         expect($docente->fresh()->password)->toBeNull();
+    });
+
+    it('después de pedirlo dice a qué correo salió y dónde buscarlo, sin cuenta regresiva', function (): void {
+        $docente = User::factory()->docente()->create(['email' => 'ana.perez@ufps.edu.co']);
+
+        $this->followingRedirects()
+            ->post(route('acceso.recuperar.enviar'), ['email' => $docente->email])
+            ->assertOk()
+            ->assertSee('Revisa tu correo')
+            ->assertSee('ana.perez@ufps.edu.co')
+            ->assertSee('spam')
+            ->assertSee('Reenviar el enlace')
+            ->assertDontSee('Podrás pedir otro');
+    });
+
+    it('un correo sin cuenta ve la misma confirmación', function (): void {
+        $this->followingRedirects()
+            ->post(route('acceso.recuperar.enviar'), ['email' => 'nadie@ufps.edu.co'])
+            ->assertSee('Revisa tu correo')
+            ->assertSee('nadie@ufps.edu.co');
+
+        Mail::assertNothingQueued();
+    });
+
+    it('el reenvío espera cada vez más: 1, 3 y 5 minutos', function (): void {
+        $docente = User::factory()->docente()->create();
+        $pedir = fn () => $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+
+        $pedir();
+        Mail::assertQueued(RecuperarContrasenaMail::class, 1);
+
+        foreach ([1, 3, 5] as $vez => $minutos) {
+            $this->travel($minutos * 60 - 1)->seconds();
+            $pedir()->assertSessionHas('antesDeTiempo', true);
+            Mail::assertQueued(RecuperarContrasenaMail::class, $vez + 1);
+
+            $this->travel(1)->seconds();
+            $pedir()->assertSessionMissing('antesDeTiempo');
+            Mail::assertQueued(RecuperarContrasenaMail::class, $vez + 2);
+        }
+    });
+
+    it('la espera se cuenta por correo, aunque cambie la IP', function (): void {
+        $docente = User::factory()->docente()->create();
+
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+        $this->withServerVariables(['REMOTE_ADDR' => '10.9.9.9'])
+            ->post(route('acceso.recuperar.enviar'), ['email' => strtoupper($docente->email)])
+            ->assertSessionHas('antesDeTiempo', true);
+
+        Mail::assertQueued(RecuperarContrasenaMail::class, 1);
+    });
+
+    it('la espera vuelve a empezar al día siguiente', function (): void {
+        $docente = User::factory()->docente()->create();
+        $pedir = fn () => $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+
+        $pedir();
+        $this->travel(1)->minutes();
+        $pedir();
+        $this->travel(24)->hours();
+        $pedir();
+        $this->travel(1)->minutes();
+        $pedir()->assertSessionMissing('antesDeTiempo');
+
+        Mail::assertQueued(RecuperarContrasenaMail::class, 4);
     });
 
     it('no existe con la entrada con contraseña apagada', function (): void {

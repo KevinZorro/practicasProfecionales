@@ -34,8 +34,37 @@ final class UsarLaDireccionConfigurada
         if (config('app.url_fija') && $direccion !== '') {
             URL::forceRootUrl($direccion);
             URL::forceScheme(str_starts_with($direccion, 'https://') ? 'https' : 'http');
+            $this->tomarLaDireccionEnLaPeticion($peticion, $direccion);
         }
 
         return $next($peticion);
+    }
+
+    /**
+     * forceRootUrl alcanza a route() y asset(), pero no a lo que Laravel
+     * arma con la URL de la propia petición: la página a la que se vuelve
+     * después de entrar (url.intended) y la de «volver atrás» (back()).
+     * Esas salían con el Host recortado —http://localhost/panel, sin el
+     * :8080 del túnel— y el navegador no encontraba el servidor. Se le
+     * pone a la petición el esquema, el nombre y el puerto de APP_URL.
+     */
+    private function tomarLaDireccionEnLaPeticion(Request $peticion, string $direccion): void
+    {
+        $partes = parse_url($direccion);
+        $host = $partes['host'] ?? null;
+
+        if ($host === null) {
+            return;
+        }
+
+        $esHttps = ($partes['scheme'] ?? 'http') === 'https';
+        $puerto = $partes['port'] ?? ($esHttps ? 443 : 80);
+        $hostConPuerto = isset($partes['port']) ? $host.':'.$puerto : $host;
+
+        $peticion->headers->set('HOST', $hostConPuerto);
+        $peticion->server->set('HTTP_HOST', $hostConPuerto);
+        $peticion->server->set('SERVER_NAME', $host);
+        $peticion->server->set('SERVER_PORT', (string) $puerto);
+        $peticion->server->set('HTTPS', $esHttps ? 'on' : 'off');
     }
 }
