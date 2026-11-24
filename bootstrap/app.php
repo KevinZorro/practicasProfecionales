@@ -4,6 +4,7 @@ use App\Http\Middleware\CabecerasDeSeguridad;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\RegistrarAccesosNegados;
 use App\Http\Middleware\SoloEnDesarrollo;
+use App\Http\Middleware\UsarLaDireccionConfigurada;
 use App\Http\Middleware\VerificarUsuarioActivo;
 use App\Services\AccesoService;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
@@ -11,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -27,10 +29,19 @@ return Application::configure(basePath: dirname(__DIR__))
     // veces y el docente recibía dos correos por cada aprobación (RF33).
     ->withEvents(discover: false)
     ->withMiddleware(function (Middleware $middleware) {
+        // Antes que nada genere un enlace: los arma con APP_URL (ver la clase).
+        $middleware->prepend(UsarLaDireccionConfigurada::class);
         // En todas las respuestas, también las de error y las de Filament.
         $middleware->append(CabecerasDeSeguridad::class);
         // Global para ver todos los 403, salgan de donde salgan (B4.5).
         $middleware->append(RegistrarAccesosNegados::class);
+
+        // Cambiar la contraseña cierra las demás sesiones de esa cuenta
+        // (ASVS V3.3.3): cada sesión guarda el hash con el que entró y, si ya
+        // no coincide, sale. En el grupo web para que alcance también a
+        // /livewire/update, a /admin y a la entrada. Una cuenta sin
+        // contraseña (solo Google) no se ve afectada.
+        $middleware->web(append: AuthenticateSession::class);
 
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,
@@ -49,11 +60,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(AuthenticatesRequests::class, VerificarUsuarioActivo::class);
         $middleware->prependToPriorityList(AuthenticatesRequests::class, EstablecerRolActivo::class);
 
-        // El invitado va a la entrada con Google (RF18) si hay credenciales;
-        // si no, al acceso de desarrollo, que solo existe en local, y en
-        // cualquier otro caso a la portada.
+        // El invitado va a la pantalla de entrada si hay alguna forma de
+        // entrar (Google o contraseña); si no, al acceso de desarrollo, que
+        // solo existe en local, y en cualquier otro caso a la portada.
+        // Quien ya entró y abre «recuperar la contraseña» vuelve a su panel.
+        $middleware->redirectUsersTo(static fn (): string => route('panel.inicio'));
+
         $middleware->redirectGuestsTo(static function (): string {
-            if (app(AccesoService::class)->entradaConGoogleDisponible()) {
+            if (app(AccesoService::class)->entradaDisponible()) {
                 return route('acceso');
             }
 

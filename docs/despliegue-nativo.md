@@ -69,6 +69,8 @@ En `.env`, `DB_HOST=172.18.222.232`, `DB_DATABASE=laboratorio` y `DB_USERNAME=te
 ### Correo, Google y HTTPS
 
 - `MAIL_MAILER=log` deja los correos en el registro mientras no haya cuenta SMTP.
+- **Para entrar sin Google** (ADR 0011): `php artisan usuarios:contrasena correo` le pone contraseña a una cuenta, y con ella se entra en `/acceso`. Los demás la eligen con «¿La olvidaste?», que necesita el correo configurado (con `MAIL_MAILER=log` el enlace queda en el registro).
+- **La plataforma solo se ve bien por la dirección de `APP_URL`:** en producción los enlaces y los estilos salen de ahí (`APP_URL_FIJA`). Si entras por la IP con `APP_URL=http://localhost:8080`, la página sale sin estilos. Después de cambiarla, `php artisan optimize`.
 - La entrada con Google exige `https` y un dominio (no acepta una IP). Mientras se entre por `http://IP`, la cookie no puede ser `secure` (`SESSION_SECURE_COOKIE=false`), y nadie podrá iniciar sesión con Google. Con HTTPS en el proxy de la universidad (ADR 0006): `APP_URL=https://…`, `SESSION_SECURE_COOKIE=true` y `PROXIES_DE_CONFIANZA`.
 
 ## Actualizar

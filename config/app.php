@@ -55,6 +55,15 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Con true, los enlaces, los assets y las imágenes salen siempre de
+    | APP_URL y no del Host de cada petición (UsarLaDireccionConfigurada).
+    | En producción es lo que se quiere: una sola dirección. En desarrollo
+    | se apaga para entrar por cualquier puerto.
+    */
+
+    'url_fija' => (bool) env('APP_URL_FIJA', env('APP_ENV') === 'production'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

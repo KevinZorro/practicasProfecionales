@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\EstadoUsuario;
 use App\Exceptions\AccesoRechazado;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -17,8 +18,8 @@ use Illuminate\Support\Facades\Log;
  * basta. La vigencia la lleva users.estado, que actualizará la
  * sincronización institucional y nunca se toca a mano.
  *
- * Es el único sitio donde se decide. Lo consultan la entrada —Google, y en
- * local el acceso de desarrollo— y el middleware VerificarUsuarioActivo, que
+ * Es el único sitio donde se decide. Lo consultan la entrada —Google, la
+ * contraseña (ADR 0011) y en local el acceso de desarrollo— y el middleware VerificarUsuarioActivo, que
  * corta a quien se desactiva con la sesión abierta. Si la regla crece (por
  * ejemplo, exigir además algún rol vigente), crece aquí y las dos puertas la
  * heredan.
@@ -48,6 +49,51 @@ final class AccesoService
 
         return 'Tu vinculación con la institución no está vigente, así que no puedes entrar a la plataforma. '
             .'Si crees que es un error, comunícate con el laboratorio.';
+    }
+
+    /** Hay al menos una forma de entrar: sin ninguna, la pantalla no existe. */
+    public function entradaDisponible(): bool
+    {
+        return $this->entradaConGoogleDisponible() || $this->entradaConContrasenaDisponible();
+    }
+
+    /** Se apaga con ENTRADA_CON_CONTRASENA=false (ADR 0011). */
+    public function entradaConContrasenaDisponible(): bool
+    {
+        return (bool) config('laboratorio.acceso.con_contrasena');
+    }
+
+    /**
+     * La cuenta de quien entra con correo y contraseña (ADR 0011).
+     *
+     * Una cuenta sin contraseña —las que trae la sincronización— no entra
+     * por aquí. Después de la contraseña se aplica la misma regla 8 que a
+     * Google: con la contraseña correcta, sí se le dice por qué no entra.
+     *
+     * @throws AccesoRechazado
+     */
+    public function cuentaConContrasena(string $email, string $contrasena): User
+    {
+        $cuenta = User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower(trim($email))])->first();
+        $hash = $cuenta?->password;
+
+        if (! is_string($hash)) {
+            // Lo que tardaría comprobarla: que el tiempo de respuesta no
+            // delate qué correos tienen cuenta.
+            Hash::make($contrasena);
+
+            throw AccesoRechazado::credencialesIncorrectas();
+        }
+
+        if (! Hash::check($contrasena, $hash)) {
+            throw AccesoRechazado::credencialesIncorrectas();
+        }
+
+        if (! $this->puedeEntrar($cuenta)) {
+            throw AccesoRechazado::inactivo($this->motivoDelRechazo($cuenta));
+        }
+
+        return $cuenta;
     }
 
     /** Sin credenciales de Google no hay entrada con Google (RF18). */

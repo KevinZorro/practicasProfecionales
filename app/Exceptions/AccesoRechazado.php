@@ -38,6 +38,20 @@ final class AccesoRechazado extends DomainException
         return new self('Ese correo ya está vinculado a otra cuenta de Google. Comunícate con el laboratorio.');
     }
 
+    /**
+     * El mismo mensaje si el correo no existe, no tiene contraseña o la
+     * contraseña no coincide: no se le dice a nadie qué correos tienen cuenta.
+     */
+    public static function credencialesIncorrectas(): self
+    {
+        return new self('El correo o la contraseña no son correctos.');
+    }
+
+    public static function demasiadosIntentos(int $segundos): self
+    {
+        return new self("Demasiados intentos. Vuelve a intentarlo en {$segundos} segundos.");
+    }
+
     public static function inactivo(string $motivo): self
     {
         return new self($motivo);

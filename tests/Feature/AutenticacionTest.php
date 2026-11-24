@@ -5,11 +5,10 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\Route;
 
 /**
- * El RF18 establece que el inicio de sesión es únicamente por cuenta de
- * Google institucional. No debe existir ninguna vía de autenticación por
- * contraseña. Breeze ya se retiró del proyecto y la columna users.password
- * se eliminó, pero estos tests se quedan como red de regresión: cualquier
- * paquete de scaffolding publica estas rutas de golpe.
+ * Se entra con Google (RF18) o con correo y contraseña en /acceso, y la
+ * contraseña se recupera en /acceso/recuperar (ADR 0011). No hay registro
+ * ni las rutas en inglés de Breeze. Estos tests son la red de regresión:
+ * cualquier paquete de scaffolding publica estas rutas de golpe.
  */
 
 /** Rutas típicas de autenticación por contraseña que no deben responder. */

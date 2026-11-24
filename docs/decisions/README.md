@@ -8,7 +8,7 @@ Una decisión no se edita: si cambia, se escribe una nueva que la reemplaza, y l
 
 | # | Decisión | Estado |
 |---|---|---|
-| [0001](0001-entrada-solo-con-google.md) | Entrar solo con la cuenta institucional de Google | Aceptada |
+| [0001](0001-entrada-solo-con-google.md) | Entrar solo con la cuenta institucional de Google | Reemplazada en parte por la 0011 |
 | [0002](0002-usuarios-desde-la-vista-institucional.md) | Copiar los usuarios de una vista de la base institucional | Aceptada; falta la vista |
 | [0003](0003-postgresql-para-todo-en-un-solo-servidor.md) | PostgreSQL para todo, en un solo servidor | Aceptada |
 | [0004](0004-dos-paneles-livewire-y-filament.md) | Dos paneles: Livewire para la operación, Filament para el ADMIN | Aceptada |
@@ -18,3 +18,4 @@ Una decisión no se edita: si cambia, se escribe una nueva que la reemplaza, y l
 | [0008](0008-pruebas-de-rendimiento-fuera-de-la-suite.md) | Las pruebas de rendimiento corren fuera de la suite, con k6 y pgbench en contenedores | Aceptada |
 | [0009](0009-instalacion-con-un-comando.md) | La instalación es un comando, y el primer ADMIN se nombra desde la consola | Aceptada |
 | [0010](0010-despliegue-nativo-sin-docker.md) | Despliegue nativo sin Docker, con la base en otra máquina | Aceptada |
+| [0011](0011-entrada-con-correo-y-contrasena.md) | Entrar también con correo y contraseña | Aceptada |

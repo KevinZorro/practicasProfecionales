@@ -55,6 +55,7 @@ class User extends Authenticatable implements FilamentUser, HasName
      * @var list<string>
      */
     protected $hidden = [
+        'password',
         'remember_token',
     ];
 
@@ -65,6 +66,8 @@ class User extends Authenticatable implements FilamentUser, HasName
     {
         return [
             'email_verified_at' => 'datetime',
+            // Fuera de $fillable: solo la fija UsuarioService::fijarContrasena().
+            'password' => 'hashed',
             'ultima_sincronizacion' => 'datetime',
             // Cifrado con APP_KEY (S-03): no se puede buscar por SQL.
             'documento' => 'encrypted',
