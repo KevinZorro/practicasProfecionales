@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CabecerasDeSeguridad;
+use App\Http\Middleware\CerrarSesionesLargas;
 use App\Http\Middleware\EstablecerRolActivo;
 use App\Http\Middleware\RegistrarAccesosNegados;
 use App\Http\Middleware\SoloEnDesarrollo;
@@ -42,6 +43,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // /livewire/update, a /admin y a la entrada. Una cuenta sin
         // contraseña (solo Google) no se ve afectada.
         $middleware->web(append: AuthenticateSession::class);
+        // Y a las 24 horas de haber entrado hay que volver a entrar, aunque
+        // se use sin parar (la inactividad la corta SESSION_LIFETIME).
+        $middleware->web(append: CerrarSesionesLargas::class);
 
         $middleware->alias([
             'rol.activo' => EstablecerRolActivo::class,

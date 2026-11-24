@@ -136,4 +136,19 @@ return [
         'reenvio_reinicio_horas' => 24,
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Duración máxima de una sesión
+    |--------------------------------------------------------------------------
+    |
+    | Aunque se use sin parar, una sesión se cierra a las tantas horas de
+    | haber entrado y hay que volver a entrar (CerrarSesionesLargas, NIST SP
+    | 800-63B). La inactividad la corta antes SESSION_LIFETIME (60 minutos).
+    |
+    */
+
+    'sesion' => [
+        'duracion_maxima_horas' => (int) env('SESION_DURACION_MAXIMA_HORAS', 24),
+    ],
+
 ];
