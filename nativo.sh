@@ -101,21 +101,32 @@ hay_dueno() { [ -n "$(valor DB_DUENO_USUARIO)" ]; }
 
 en_grupo_web() { [[ " $(id -nG) " == *" www-data "* ]]; }
 
+# Solo los archivos propios: los que creó PHP-FPM (un log rotado, una vista
+# compilada) son de www-data, y chmod o chgrp sobre ellos fallan sin sudo.
+# Con set -e ese fallo cortaba actualizar antes de «artisan up» y la
+# plataforma se quedaba en mantenimiento. PHP-FPM ya puede escribir los suyos.
+propios() { find storage bootstrap/cache -user "$(id -un)" "$@"; }
+
 ajustar_permisos() {
     paso "Permisos de storage y bootstrap/cache"
+    local ajenos
+    ajenos="$(find storage bootstrap/cache ! -user "$(id -un)" | wc -l)"
     if en_grupo_web; then
-        ejecutar chgrp -R www-data storage bootstrap/cache
-        ejecutar chmod -R g+rwX storage bootstrap/cache
-        ejecutar find storage bootstrap/cache -type d -exec chmod g+s {} +
+        ejecutar propios -exec chgrp www-data {} +
+        ejecutar propios -exec chmod g+rwX {} +
+        ejecutar propios -type d -exec chmod g+s {} +
         # El .env y la configuración en caché tienen las contraseñas: solo el
         # dueño y PHP-FPM los leen.
         ejecutar chgrp www-data "$ARCHIVO_ENV"
         ejecutar chmod 640 "$ARCHIVO_ENV"
         bien "Compartidos con el grupo www-data"
     else
-        ejecutar chmod -R o+rwX storage bootstrap/cache
+        ejecutar propios -exec chmod o+rwX {} +
         aviso "$(id -un) no está en el grupo www-data: storage y bootstrap/cache quedan escribibles por todos"
         aviso "y la configuración en caché (con las contraseñas) legible por todos. Ver docs/despliegue-nativo.md."
+    fi
+    if [ "$ajenos" -gt 0 ]; then
+        aviso "$ajenos archivos de storage o bootstrap/cache son de otro usuario (PHP-FPM) y se dejaron como están"
     fi
 }
 
