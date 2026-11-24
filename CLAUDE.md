@@ -72,7 +72,7 @@ Lo que está en `composer.json` y `package.json` y se usa hoy.
 | Tests | Pest |
 | Análisis estático | Larastan, nivel 6, con línea base (ver §7) |
 | Pantallas del ADMIN | Filament 3.3, en `/admin` |
-| Autenticación | Laravel Socialite 5 (Google OAuth, RF18) |
+| Autenticación | Laravel Socialite 5 (Google OAuth, RF18) y correo con contraseña (ADR 0011) |
 | Contenedores | Docker + Docker Compose |
 
 **Dos paneles, con una frontera fija.** Los flujos operativos —solicitudes, preparación, inventario, formato de confidencialidad, evaluaciones— son Livewire y Blade, en `/panel`. Las pantallas de alta, baja y edición del ADMIN sin reglas de negocio —estructura académica (RF23–RF26) y contenido público (RF10–RF17)— son recursos de Filament, en `/admin`. Nada operativo va a Filament. Las cuentas de usuario (RF22) tampoco: deshabilitar y repartir roles tienen reglas (motivo, bitácora, vigencia), así que viven en `/panel/usuarios`.
@@ -137,7 +137,7 @@ Los tests simulan a Google con un doble del proveedor de Socialite; la ida a Goo
 
 - `config.platform.php` está fijado en `8.3.0`. Producción corre PHP 8.3, así que ninguna dependencia puede exigir 8.4. Después de cualquier cambio en `composer.json`, verifica que el lock siga siendo instalable en 8.3.
 - Los roles y permisos los gestiona `spatie/laravel-permission` con sus propias tablas. **No crees tablas de roles propias** ni compruebes roles con condicionales sueltos.
-- La autenticación es únicamente por Google (RF18). No existe `users.password` ni el paquete Breeze: se retiraron por innecesarios. No añadas rutas de login, registro ni recuperación de contraseña; hay tests que fallan si reaparecen.
+- Se entra con Google (RF18) o con correo y contraseña en `/acceso` (ADR 0011, `AccesoController`). La contraseña la fija la consola (`usuarios:contrasena`); `users.password` es nullable y una cuenta sin ella solo entra con Google. Cinco intentos por minuto por correo e IP, nunca solo por IP. Se apaga con `ENTRADA_CON_CONTRASENA=false`. No hay Breeze, registro ni recuperación por enlace: `AutenticacionTest` falla si aparecen sus rutas.
 
 ---
 
@@ -242,7 +242,7 @@ Estas salieron de reuniones con el cliente. Si el código las contradice, el có
 
 8. **El acceso depende de la vigencia institucional.** `users.estado` lo actualiza la sincronización programada, nunca a mano. Los egresados conservan el correo institucional, así que el correo por sí solo no autoriza el ingreso. Lo que el ADMIN sí hace a mano es **deshabilitar** una cuenta (RF22): es otra columna, `deshabilitado_at`, que la sincronización no revierte.
 
-   **Se decide en un solo sitio, `AccesoService::puedeEntrar()`, y se comprueba en dos puertas.** La entrada —el controlador de Google, y en `local` el acceso de desarrollo— no deja pasar a un inactivo. Y el middleware `VerificarUsuarioActivo` corta en cada petición a quien se desactiva con la sesión abierta: cierra la sesión y después responde 403.
+   **Se decide en un solo sitio, `AccesoService::puedeEntrar()`, y se comprueba en dos puertas.** La entrada —el controlador de Google, la contraseña (`AccesoController`) y en `local` el acceso de desarrollo— no deja pasar a un inactivo. Y el middleware `VerificarUsuarioActivo` corta en cada petición a quien se desactiva con la sesión abierta: cierra la sesión y después responde 403.
 
    **Ese middleware también es persistente en Livewire** (`AppServiceProvider`). Las acciones de un componente ya abierto van a `/livewire/update`, que no pasa por las rutas del panel, y Livewire solo vuelve a aplicar ahí los middleware de su lista. Sin eso, quien se desactivara con una pantalla abierta seguiría pulsando botones. Hay un test que lo comprueba con una petición HTTP de verdad: `Livewire::test()` se salta los middleware y no lo vería. **Cualquier middleware nuevo que decida quién puede actuar tiene que ir también en esa lista.**
 

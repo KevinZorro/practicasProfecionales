@@ -1,7 +1,7 @@
 # 0001. Entrar solo con la cuenta institucional de Google
 
 - Fecha: 2026-11-07 (registrada después de implementarse)
-- Estado: Aceptada
+- Estado: Reemplazada en parte por la [0011](0011-entrada-con-correo-y-contrasena.md): Google sigue, pero ya no es la única entrada
 
 ## Contexto
 

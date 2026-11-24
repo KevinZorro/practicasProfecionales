@@ -185,6 +185,8 @@ return [
 
     'attributes' => [
         'archivo' => 'archivo',
+        'contrasena' => 'contraseña',
+        'email' => 'correo',
         'cantidad' => 'cantidad',
         'cantidadEstudiantes' => 'cantidad de estudiantes',
         'grupo' => 'grupo',

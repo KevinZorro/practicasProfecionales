@@ -10,9 +10,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | Define el "guard" de autenticación por defecto. No se declara "broker"
-    | de restablecimiento de contraseña: el RF18 fija el ingreso únicamente
-    | por cuenta de Google institucional, no existe users.password ni la
-    | tabla password_reset_tokens.
+    | de restablecimiento de contraseña: se entra con Google (RF18) o con
+    | correo y contraseña (ADR 0011), pero la contraseña la fija la consola
+    | (usuarios:contrasena) y no hay tabla password_reset_tokens.
     |
     | Ojo: Laravel mezcla su propio config/auth.php como base, así que las
     | claves passwords y password_timeout siguen resolviéndose con el valor

@@ -52,11 +52,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(AuthenticatesRequests::class, VerificarUsuarioActivo::class);
         $middleware->prependToPriorityList(AuthenticatesRequests::class, EstablecerRolActivo::class);
 
-        // El invitado va a la entrada con Google (RF18) si hay credenciales;
-        // si no, al acceso de desarrollo, que solo existe en local, y en
-        // cualquier otro caso a la portada.
+        // El invitado va a la pantalla de entrada si hay alguna forma de
+        // entrar (Google o contraseña); si no, al acceso de desarrollo, que
+        // solo existe en local, y en cualquier otro caso a la portada.
         $middleware->redirectGuestsTo(static function (): string {
-            if (app(AccesoService::class)->entradaConGoogleDisponible()) {
+            if (app(AccesoService::class)->entradaDisponible()) {
                 return route('acceso');
             }
 

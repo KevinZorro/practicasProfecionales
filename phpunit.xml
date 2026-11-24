@@ -26,6 +26,8 @@
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
+        <!-- Apagada como Google sin credenciales; la encienden sus pruebas. -->
+        <env name="ENTRADA_CON_CONTRASENA" value="false"/>
         <!-- Base independiente de la de desarrollo; la crea docker/postgres/init. -->
         <env name="DB_DATABASE" value="laboratorio_simulacion_testing"/>
         <env name="MAIL_MAILER" value="array"/>

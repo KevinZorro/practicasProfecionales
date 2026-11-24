@@ -20,7 +20,7 @@ Lo imprescindible para instalar:
 Lo que se puede dejar para después: la plataforma se instala sin ello. Google y el correo, el script los vuelve a preguntar en cada pasada mientras falten; la dirección y el proxy se cambian en el `.env`.
 
 - [ ] **Nombre y HTTPS.** El subdominio (por ejemplo `laboratorio.ufps.edu.co`) y quién pone el HTTPS. Si lo pone el proxy de la universidad (ADR 0006), **la IP de ese proxy**, que va en `PROXIES_DE_CONFIANZA`.
-- [ ] **Credenciales de Google** para la entrada (sección 4). Sin ellas nadie puede iniciar sesión, pero la portada pública funciona.
+- [ ] **Credenciales de Google** para la entrada con Google (sección 4.1). Sin ellas se entra con correo y contraseña (sección 4).
 - [ ] **El correo del laboratorio y su contraseña de aplicación** (sección 5). Sin ellos los avisos quedan escritos en el registro en vez de enviarse.
 - [ ] **Salida desde el servidor a `www.googleapis.com` (443) y a `smtp.gmail.com` (587)**, ya con la plataforma andando: la primera la usa la entrada con Google y la segunda, el correo.
 
@@ -104,7 +104,21 @@ La portada se verá vacía, con cada bloque en su estado sin foto, hasta que el 
 
 ---
 
-## 4. Entrada con Google
+## 4. Entrada con correo y contraseña
+
+No necesita HTTPS ni Google, así que es la forma de entrar mientras el servidor se usa por IP (ADR 0011). Después de crear el ADMIN, fíjale una contraseña:
+
+```bash
+docker compose -f docker-compose.produccion.yml exec app php artisan usuarios:contrasena correo@ufps.edu.co
+# sin Docker (despliegue nativo), en la carpeta de la plataforma:
+php artisan usuarios:contrasena correo@ufps.edu.co
+```
+
+La pregunta dos veces sin mostrarla (mínimo 12 caracteres); con `--generar` inventa una y la muestra una sola vez. Con eso se entra en `/acceso`. Para otra persona es lo mismo con su correo; si la olvida, se le fija otra igual. `ENTRADA_CON_CONTRASENA=false` en el `.env` la apaga y deja solo Google.
+
+Sin HTTPS la contraseña viaja sin cifrar por la red: sirve para probar, no para el uso diario.
+
+## 4.1. Entrada con Google
 
 Google pone dos condiciones a la dirección de retorno: **tiene que ser `https://` y un nombre, no una IP**. La única excepción es `localhost`. Por eso, con el servidor solo por IP y sin HTTPS, nadie puede entrar todavía; para probarla antes de tener HTTPS está el túnel del final de esta sección.
 
@@ -135,6 +149,8 @@ ssh -L 8080:localhost:80 usuario@ip-del-servidor
 
 Con el túnel abierto, `http://localhost:8080` en tu navegador es la plataforma del servidor, y Google sí acepta esa dirección. En el `.env` del servidor pon `APP_URL=http://localhost:8080`, registra en Google `http://localhost:8080/acceso/google/volver` y vuelve a correr `./produccion.sh instalar`. Sirve para que una persona pruebe; para que entren todos hace falta el nombre y el HTTPS.
 
+**Con `APP_URL=http://localhost:8080` la plataforma solo se ve bien por el túnel.** En producción (`APP_ENV=production`) todos los enlaces, estilos e imágenes salen de `APP_URL`, no de la dirección con la que llegó la petición (`APP_URL_FIJA`, middleware `UsarLaDireccionConfigurada`): así una cabecera `Host` recortada por un proxy no deja la página sin estilos. Si entras por `http://IP-del-servidor` mientras `APP_URL` apunta al túnel, la página pedirá sus archivos a `localhost:8080`. Al terminar la prueba, devuelve `APP_URL` a la dirección real y corre `php artisan optimize` (o `./produccion.sh instalar`).
+
 ---
 
 ## 5. Correo
@@ -151,8 +167,6 @@ MAIL_FROM_ADDRESS=laboratorio@ufps.edu.co
 ```
 
 Si alguien cambia la contraseña de la cuenta, Google anula la de aplicación y los correos dejan de salir hasta generar otra. Mientras no haya correo, los avisos se ven con `docker compose -f docker-compose.produccion.yml logs queue`.
-
-**Con `APP_URL=http://localhost:8080` la plataforma solo se ve bien por el túnel.** En producción (`APP_ENV=production`) todos los enlaces, estilos e imágenes salen de `APP_URL`, no de la dirección con la que llegó la petición (`APP_URL_FIJA`, middleware `UsarLaDireccionConfigurada`): así una cabecera `Host` recortada por un proxy no deja la página sin estilos. Si entras por `http://IP-del-servidor` mientras `APP_URL` apunta al túnel, la página pedirá sus archivos a `localhost:8080`. Al terminar la prueba, devuelve `APP_URL` a la dirección real y corre `php artisan optimize` (o `./produccion.sh instalar`).
 
 ---
 
@@ -264,7 +278,8 @@ Las contraseñas en la línea de órdenes quedan en el historial de la terminal:
 | `password authentication failed` al migrar | El `.env` no es el de la base que hay en el servidor. Mismo remedio. |
 | La plataforma no responde después de levantar | `docker compose -f docker-compose.produccion.yml logs --tail=50 app web`. |
 | «419 Page Expired» al entrar | La cookie segura sin HTTPS. Vuelve a correr `./produccion.sh instalar`, que la ajusta a `APP_URL`. |
-| Google dice `redirect_uri_mismatch` | Sección 4: la dirección registrada, `APP_URL` y `PROXIES_DE_CONFIANZA`. |
+| La página sale sin estilos ni imágenes y la consola del navegador dice «Content Security Policy» | Entraste por una dirección distinta de `APP_URL`. Usa la de `APP_URL`, o cámbiala y corre `php artisan optimize` (sección 4.1). |
+| Google dice `redirect_uri_mismatch` | Sección 4.1: la dirección registrada, `APP_URL` y `PROXIES_DE_CONFIANZA`. |
 | Entra a Google pero la plataforma dice que no puede entrar | No tiene cuenta, o no es del dominio. Créala con `./produccion.sh administrador` o desde `/panel/usuarios`. |
 
 **Empezar de cero en el sandbox.** Borra la base, las fotos y los documentos subidos, y con ellos todo lo que se probó. Nunca en un servidor con datos reales:

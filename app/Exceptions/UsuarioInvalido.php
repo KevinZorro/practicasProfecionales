@@ -8,6 +8,16 @@ use DomainException;
 
 final class UsuarioInvalido extends DomainException
 {
+    public static function sinCuentaParaElCorreo(string $email): self
+    {
+        return new self(sprintf('No hay una cuenta con el correo %s.', $email));
+    }
+
+    public static function contrasenaCorta(int $minimo): self
+    {
+        return new self(sprintf('La contraseña debe tener al menos %d caracteres.', $minimo));
+    }
+
     public static function correoRepetido(string $email): self
     {
         return new self(sprintf('Ya hay una cuenta con el correo %s.', $email));

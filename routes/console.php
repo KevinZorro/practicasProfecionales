@@ -11,6 +11,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
 
 Artisan::command('inspire', function () {
@@ -123,9 +124,65 @@ Artisan::command(
             $this->warn('La entrada con Google todavía no está configurada (GOOGLE_CLIENT_ID en el .env): la cuenta queda lista para cuando lo esté.');
         }
 
+        if ($acceso->entradaConContrasenaDisponible() && $nombrado->cuenta->password === null) {
+            $this->line(sprintf('Para entrar con contraseña: php artisan usuarios:contrasena %s', $email));
+        }
+
         return 0;
     },
 )->purpose('Crea la cuenta del ADMIN, o le da el rol a una que ya existe, desde la consola del servidor');
+
+/*
+ * La contraseña de una cuenta, para entrar con correo y contraseña
+ * (ADR 0011). Mientras no haya recuperación por correo, la fija o la
+ * cambia quien tiene la consola del servidor:
+ *   php artisan usuarios:contrasena correo@dominio.edu.co             (la pregunta, sin mostrarla)
+ *   php artisan usuarios:contrasena correo@dominio.edu.co --generar   (inventa una y la muestra una vez)
+ */
+Artisan::command(
+    'usuarios:contrasena {email : Correo de la cuenta} {--generar : Inventa una contraseña segura y la muestra una sola vez}',
+    function (UsuarioService $usuarios, AccesoService $acceso): int {
+        $email = mb_strtolower(trim((string) $this->argument('email')));
+        $generada = (bool) $this->option('generar');
+
+        if ($generada) {
+            $contrasena = Str::password(16, symbols: false);
+        } else {
+            $contrasena = (string) $this->secret('Contraseña nueva');
+
+            if ($contrasena !== (string) $this->secret('Repítela')) {
+                $this->error('Las dos contraseñas no coinciden. No se cambió nada.');
+
+                return 1;
+            }
+        }
+
+        try {
+            $cuenta = $usuarios->fijarContrasenaDesdeLaConsola($email, $contrasena);
+        } catch (UsuarioInvalido $invalido) {
+            $this->error($invalido->getMessage());
+
+            return 1;
+        }
+
+        $this->info(sprintf('Quedó la contraseña de %s (%s).', $cuenta->nombre, $cuenta->email));
+
+        if ($generada) {
+            $this->line('Contraseña: '.$contrasena);
+            $this->line('Entrégasela a la persona por un medio privado: no se vuelve a mostrar.');
+        }
+
+        if (! $acceso->entradaConContrasenaDisponible()) {
+            $this->warn('Ojo: la entrada con contraseña está apagada (ENTRADA_CON_CONTRASENA=false en el .env).');
+        }
+
+        if (! $acceso->puedeEntrar($cuenta)) {
+            $this->warn($acceso->motivoDelRechazo($cuenta));
+        }
+
+        return 0;
+    },
+)->purpose('Fija o cambia la contraseña de una cuenta para entrar con correo y contraseña');
 
 Schedule::command('usuarios:sincronizar')
     ->cron((string) config('laboratorio.sincronizacion.frecuencia'))

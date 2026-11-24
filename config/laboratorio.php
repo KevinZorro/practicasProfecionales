@@ -96,4 +96,25 @@ return [
 
     'politica_de_datos_url' => env('POLITICA_DE_DATOS_URL'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Entrada con correo y contraseña (ADR 0011)
+    |--------------------------------------------------------------------------
+    |
+    | Convive con la de Google (RF18). Con false desaparece: la pantalla solo
+    | ofrece Google y el formulario responde 404. Entra solo quien tiene
+    | contraseña, y la fija quien tiene la consola (usuarios:contrasena).
+    |
+    | "intentos_por_minuto" frena a quien prueba contraseñas. Se cuenta por
+    | correo e IP juntos: en la universidad cientos de personas salen por la
+    | misma dirección, y un tope solo por IP dejaría sin entrar a todas.
+    |
+    */
+
+    'acceso' => [
+        'con_contrasena' => (bool) env('ENTRADA_CON_CONTRASENA', true),
+        'longitud_minima_contrasena' => 12,
+        'intentos_por_minuto' => 5,
+    ],
+
 ];

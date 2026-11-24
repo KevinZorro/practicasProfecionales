@@ -13,7 +13,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\View\View;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\GoogleProvider;
 use Laravel\Socialite\Two\InvalidStateException;
@@ -24,23 +23,13 @@ use Symfony\Component\HttpFoundation\RedirectResponse as RedireccionExterna;
  * Entrada a la plataforma con la cuenta institucional de Google (RF18).
  *
  * Quién entra lo decide AccesoService; aquí solo se habla con Google y se
- * abre la sesión. Sin credenciales configuradas, las tres rutas responden
- * 404: la entrada no existe a medias.
+ * abre la sesión. Sin credenciales configuradas, sus dos rutas responden
+ * 404: la entrada no existe a medias. La pantalla de entrada, que también
+ * ofrece la contraseña, es de AccesoController.
  */
 final class AccesoConGoogleController extends Controller
 {
     public function __construct(private readonly AccesoService $acceso) {}
-
-    public function pantalla(): View|RedirectResponse
-    {
-        $this->garantizarDisponible();
-
-        if (Auth::check()) {
-            return redirect()->route('panel.inicio');
-        }
-
-        return view('auth.acceso', ['dominio' => $this->acceso->dominioInstitucional()]);
-    }
 
     public function redirigir(): RedireccionExterna
     {

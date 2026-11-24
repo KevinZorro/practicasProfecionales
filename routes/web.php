@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\Reporte;
 use App\Http\Controllers\Auth\AccesoConGoogleController;
+use App\Http\Controllers\Auth\AccesoController;
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\BitacoraController;
@@ -73,7 +74,8 @@ Route::post('salir', SalirController::class)->name('salir');
 |
 */
 
-Route::get('acceso', [AccesoConGoogleController::class, 'pantalla'])->name('acceso');
+Route::get('acceso', [AccesoController::class, 'pantalla'])->name('acceso');
+Route::post('acceso', [AccesoController::class, 'entrar'])->name('acceso.entrar');
 Route::get('acceso/google', [AccesoConGoogleController::class, 'redirigir'])->name('acceso.google');
 Route::get('acceso/google/volver', [AccesoConGoogleController::class, 'volver'])->name('acceso.google.volver');
 
