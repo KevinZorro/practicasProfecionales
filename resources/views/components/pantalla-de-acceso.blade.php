@@ -59,5 +59,19 @@
     </footer>
 </div>
 
+{{-- Los botones «Mostrar» de x-campo-de-contrasena: un solo escuchador. --}}
+<script>
+    document.querySelectorAll('[data-mostrar-contrasena]').forEach(function (boton) {
+        var campo = document.getElementById(boton.dataset.mostrarContrasena);
+        boton.hidden = false;
+        boton.addEventListener('click', function () {
+            var mostrar = campo.type === 'password';
+            campo.type = mostrar ? 'text' : 'password';
+            boton.textContent = mostrar ? 'Ocultar' : 'Mostrar';
+            boton.setAttribute('aria-pressed', mostrar ? 'true' : 'false');
+            campo.focus();
+        });
+    });
+</script>
 </body>
 </html>

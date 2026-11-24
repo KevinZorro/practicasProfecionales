@@ -21,7 +21,8 @@
 
             <div>
                 <label for="email" class="campo-etiqueta">Correo</label>
-                <input type="email" name="email" id="email" value="{{ old('email') }}" required autofocus autocomplete="username" inputmode="email"
+                {{-- Con el correo ya escrito (volvió con un error), el foco va a la contraseña. --}}
+                <input type="email" name="email" id="email" value="{{ old('email') }}" required @if (! old('email')) autofocus @endif autocomplete="username" inputmode="email"
                        @error('email') aria-invalid="true" aria-describedby="email-error" @enderror
                        class="campo rounded-xl py-3 sm:py-3 sm:text-base">
                 @error('email')
@@ -32,11 +33,12 @@
             <div>
                 <div class="flex items-baseline justify-between gap-3">
                     <label for="contrasena" class="campo-etiqueta">Contraseña</label>
-                    <a href="{{ route('acceso.recuperar') }}" class="mb-1.5 text-[13px] font-semibold text-portada-rojo underline-offset-4 hover:underline">¿La olvidaste?</a>
+                    <a href="{{ route('acceso.recuperar') }}" class="-my-2 mb-0 inline-flex min-h-11 items-center px-1 text-[14px] font-semibold text-portada-rojo underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-portada-rojo">¿La olvidaste?</a>
                 </div>
-                <input type="password" name="contrasena" id="contrasena" required autocomplete="current-password"
-                       @error('contrasena') aria-invalid="true" aria-describedby="contrasena-error" @enderror
-                       class="campo rounded-xl py-3 sm:py-3 sm:text-base">
+                <x-campo-de-contrasena id="contrasena" autocomplete="current-password" required
+                    :autofocus="(bool) old('email')"
+                    :describedby="$errors->has('contrasena') ? 'contrasena-error' : null"
+                    :aria-invalid="$errors->has('contrasena') ? 'true' : null" />
                 @error('contrasena')
                     <p id="contrasena-error" class="campo-error">{{ $message }}</p>
                 @enderror
