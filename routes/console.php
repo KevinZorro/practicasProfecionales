@@ -4,6 +4,8 @@ use App\Exceptions\UsuarioDeLaBaseInvalido;
 use App\Exceptions\UsuarioInvalido;
 use App\Models\User;
 use App\Services\AccesoService;
+use App\Services\CuentaDeDemostracion;
+use App\Services\DemostracionService;
 use App\Services\RegistroPrevioService;
 use App\Services\UsuarioDeLaAplicacionService;
 use App\Services\UsuarioService;
@@ -235,3 +237,89 @@ Artisan::command(
         return 0;
     },
 )->purpose('Envía a un correo una muestra de cada correo de la aplicación, con datos inventados');
+
+/*
+ * Datos de demostración para probar a mano el flujo de una solicitud y cada
+ * correo que dispara, sin montarlo todo desde la pantalla. Crea cuatro
+ * cuentas que son alias del correo dado (tu+docente@…), dos materias, cuatro
+ * casos clínicos, dos salas y una solicitud por cada camino del flujo, e
+ * imprime qué hacer con cada cuenta. Repetirlo lo deja como recién hecho, con
+ * contraseñas nuevas. --limpiar borra solo lo de la demostración.
+ *   php artisan demo:preparar tu@correo.com
+ *   php artisan demo:preparar --limpiar
+ * En producción (el sandbox lo es) exige --en-produccion: ahí conviven con
+ * datos reales.
+ */
+Artisan::command(
+    'demo:preparar {email? : Tu correo: las cuentas de la demostración son alias suyos}
+        {--limpiar : Borra solo los datos de demostración}
+        {--en-produccion : Permite correrlo con APP_ENV=production}',
+    function (DemostracionService $demo): int {
+        if (app()->isProduction() && ! $this->option('en-produccion')) {
+            $this->error('Esta instalación es de producción. Si es el sandbox y quieres los datos de demostración, repite con --en-produccion.');
+
+            return 1;
+        }
+
+        if ($this->option('limpiar')) {
+            $limpia = $demo->limpiar();
+            $this->info(sprintf('Borradas: %d solicitudes y %d cuentas de demostración, con sus materias, casos clínicos y salas.', $limpia->solicitudes, $limpia->cuentasBorradas));
+
+            foreach ($limpia->cuentasDeshabilitadas as $email) {
+                $this->warn(sprintf('%s actuó sobre datos reales: no se borró, quedó deshabilitada.', $email));
+            }
+
+            foreach ($limpia->salasDesactivadas as $codigo) {
+                $this->warn(sprintf('La sala %s la usa una sesión real: no se borró, quedó inactiva.', $codigo));
+            }
+
+            return 0;
+        }
+
+        $email = mb_strtolower(trim((string) $this->argument('email')));
+
+        if (Validator::make(['email' => $email], ['email' => ['required', 'email']])->fails()) {
+            $this->error('Falta tu correo, o no es válido: php artisan demo:preparar tu@correo.com');
+
+            return 1;
+        }
+
+        $hecha = $demo->preparar($email);
+        $c = $hecha->cuentas;
+        $s = $hecha->solicitudes;
+        $de = static fn (string $clave): string => sprintf(
+            '«%s» del %s',
+            Str::after($s[$clave]->casoClinico->nombre, DemostracionService::ETIQUETA.' '),
+            $s[$clave]->fecha->format('d/m/Y'),
+        );
+
+        $this->info('Datos de demostración listos. Las contraseñas no se vuelven a mostrar.');
+        $this->table(
+            ['Rol', 'Correo', 'Contraseña'],
+            array_map(static fn (CuentaDeDemostracion $cuenta): array => [$cuenta->rol->etiqueta(), $cuenta->email, $cuenta->contrasena], array_values($c)),
+        );
+
+        $this->line(sprintf('Entra en %s con cada cuenta (una ventana de incógnito por cuenta). Los correos salen por la cola: sin el cron no llegan.', route('acceso')));
+        $this->newLine();
+        $this->line('1. Aprobar y asignar sala, '.$de('para_aprobar').':');
+        $this->line('   Administrativo la acepta. Coordinación la aprueba → al docente: solicitud aprobada.');
+        $this->line('   Administrativo le asigna sala en Preparación → al docente: sala asignada.');
+        $this->line('2. Rechazar, '.$de('para_rechazar').':');
+        $this->line('   Administrativo la rechaza con un motivo → al docente: solicitud rechazada.');
+        $this->line('3. Ya revisada, '.$de('revisada').':');
+        $this->line('   Coordinación la aprueba o la rechaza → al docente: el correo que toque.');
+        $this->line('4. Ya aprobada, sin sala, '.$de('aprobada').':');
+        $this->line('   Administrativo le asigna sala → al docente: sala asignada.');
+        $this->line('   La reprograma (otra fecha o «Atención de parto») → al docente: sesión reprogramada.');
+        $this->line('   Cambia el docente por «'.$c['docente2']->nombre.'» → al reemplazo: sustitución de docente.');
+        $this->line('5. Sin formato intramural, '.$de('sin_formato_intramural').':');
+        $this->line('   Sale solo a las 6:00, o ya con: php artisan sesiones:avisar-formato-intramural');
+        $this->line('   → al docente y a cada administrativo activo: aviso de formato intramural.');
+        $this->line('6. Contraseña: «¿Olvidaste tu contraseña?» con cualquier cuenta → enlace para elegirla;');
+        $this->line('   al cambiarla → aviso de contraseña cambiada.');
+        $this->newLine();
+        $this->line('Para borrarlo todo: php artisan demo:preparar --limpiar'.($this->option('en-produccion') ? ' --en-produccion' : ''));
+
+        return 0;
+    },
+)->purpose('Crea cuentas y solicitudes de demostración para probar el flujo y sus correos');
