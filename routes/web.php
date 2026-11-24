@@ -6,6 +6,7 @@ use App\Enums\Reporte;
 use App\Http\Controllers\Auth\AccesoConGoogleController;
 use App\Http\Controllers\Auth\AccesoController;
 use App\Http\Controllers\Auth\AccesoDeDesarrolloController;
+use App\Http\Controllers\Auth\RecuperarContrasenaController;
 use App\Http\Controllers\Auth\SalirController;
 use App\Http\Controllers\Panel\BitacoraController;
 use App\Http\Controllers\Panel\BloqueoController;
@@ -76,6 +77,12 @@ Route::post('salir', SalirController::class)->name('salir');
 
 Route::get('acceso', [AccesoController::class, 'pantalla'])->name('acceso');
 Route::post('acceso', [AccesoController::class, 'entrar'])->name('acceso.entrar');
+Route::middleware('guest')->group(function (): void {
+    Route::get('acceso/recuperar', [RecuperarContrasenaController::class, 'formulario'])->name('acceso.recuperar');
+    Route::post('acceso/recuperar', [RecuperarContrasenaController::class, 'enviar'])->name('acceso.recuperar.enviar');
+    Route::get('acceso/restablecer/{token}', [RecuperarContrasenaController::class, 'formularioDeRestablecer'])->name('acceso.restablecer');
+    Route::post('acceso/restablecer', [RecuperarContrasenaController::class, 'restablecer'])->name('acceso.restablecer.guardar');
+});
 Route::get('acceso/google', [AccesoConGoogleController::class, 'redirigir'])->name('acceso.google');
 Route::get('acceso/google/volver', [AccesoConGoogleController::class, 'volver'])->name('acceso.google.volver');
 

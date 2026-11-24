@@ -114,7 +114,9 @@ docker compose -f docker-compose.produccion.yml exec app php artisan usuarios:co
 php artisan usuarios:contrasena correo@ufps.edu.co
 ```
 
-La pregunta dos veces sin mostrarla (mínimo 12 caracteres); con `--generar` inventa una y la muestra una sola vez. Con eso se entra en `/acceso`. Para otra persona es lo mismo con su correo; si la olvida, se le fija otra igual. `ENTRADA_CON_CONTRASENA=false` en el `.env` la apaga y deja solo Google.
+La pregunta dos veces sin mostrarla (mínimo 12 caracteres); con `--generar` inventa una y la muestra una sola vez. Con eso se entra en `/acceso`.
+
+Los demás eligen la suya con «¿La olvidaste?» en `/acceso`, que manda un enlace a su correo; sirve también para la primera. Necesita el correo configurado (sección 5): con `MAIL_MAILER=log` el enlace queda en `storage/logs/laravel-*.log` y no le llega a nadie, así que mientras tanto se fija con el comando de arriba. `ENTRADA_CON_CONTRASENA=false` en el `.env` la apaga y deja solo Google.
 
 Sin HTTPS la contraseña viaja sin cifrar por la red: sirve para probar, no para el uso diario.
 

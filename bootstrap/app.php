@@ -55,6 +55,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // El invitado va a la pantalla de entrada si hay alguna forma de
         // entrar (Google o contraseña); si no, al acceso de desarrollo, que
         // solo existe en local, y en cualquier otro caso a la portada.
+        // Quien ya entró y abre «recuperar la contraseña» vuelve a su panel.
+        $middleware->redirectUsersTo(static fn (): string => route('panel.inicio'));
+
         $middleware->redirectGuestsTo(static function (): string {
             if (app(AccesoService::class)->entradaDisponible()) {
                 return route('acceso');

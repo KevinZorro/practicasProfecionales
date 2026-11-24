@@ -9,20 +9,15 @@ return [
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |
-    | Define el "guard" de autenticación por defecto. No se declara "broker"
-    | de restablecimiento de contraseña: se entra con Google (RF18) o con
-    | correo y contraseña (ADR 0011), pero la contraseña la fija la consola
-    | (usuarios:contrasena) y no hay tabla password_reset_tokens.
-    |
-    | Ojo: Laravel mezcla su propio config/auth.php como base, así que las
-    | claves passwords y password_timeout siguen resolviéndose con el valor
-    | por defecto del framework aunque no estén aquí. Son inertes: nada en
-    | el proyecto las lee, y no hay rutas de contraseña.
+    | Define el "guard" de autenticación por defecto. Se entra con Google
+    | (RF18) o con correo y contraseña (ADR 0011); el broker "users" de más
+    | abajo da los enlaces para recuperarla por correo.
     |
     */
 
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
+        'passwords' => 'users',
     ],
 
     /*
@@ -76,6 +71,26 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Recuperar la contraseña (ADR 0011)
+    |--------------------------------------------------------------------------
+    |
+    | El enlace del correo vale 60 minutos y sirve una sola vez. "throttle"
+    | son los segundos que tienen que pasar antes de mandar otro a la misma
+    | cuenta: pedirlo diez veces seguidas no manda diez correos.
+    |
+    */
+
+    'passwords' => [
+        'users' => [
+            'provider' => 'users',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
     ],
 
 ];

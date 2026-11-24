@@ -75,26 +75,42 @@ final class UsuarioService
      * Fija o cambia la contraseña de una cuenta desde la consola del
      * servidor (usuarios:contrasena, ADR 0011). Sin persona que actúe, igual
      * que nombrar al ADMIN desde la consola: no pasa por Policy ni bitácora.
-     * Cierra las sesiones con "recordarme" que tuviera abiertas.
      *
      * @throws UsuarioInvalido si no hay cuenta o la contraseña es corta
      */
     public function fijarContrasenaDesdeLaConsola(string $email, string $contrasena): User
+    {
+        $this->garantizarLongitud($contrasena);
+
+        $cuenta = $this->cuentaConElCorreo($email) ?? throw UsuarioInvalido::sinCuentaParaElCorreo($email);
+        $this->fijarContrasena($cuenta, $contrasena);
+
+        return $cuenta;
+    }
+
+    /**
+     * La única escritura de users.password: la consola y la recuperación
+     * por correo pasan por aquí. Cierra las sesiones con «recordarme».
+     *
+     * @throws UsuarioInvalido si la contraseña es corta
+     */
+    public function fijarContrasena(User $cuenta, string $contrasena): void
+    {
+        $this->garantizarLongitud($contrasena);
+
+        $cuenta->forceFill([
+            'password' => $contrasena,
+            'remember_token' => null,
+        ])->save();
+    }
+
+    private function garantizarLongitud(string $contrasena): void
     {
         $minimo = (int) config('laboratorio.acceso.longitud_minima_contrasena');
 
         if (mb_strlen($contrasena) < $minimo) {
             throw UsuarioInvalido::contrasenaCorta($minimo);
         }
-
-        $cuenta = $this->cuentaConElCorreo($email) ?? throw UsuarioInvalido::sinCuentaParaElCorreo($email);
-
-        $cuenta->forceFill([
-            'password' => $contrasena,
-            'remember_token' => null,
-        ])->save();
-
-        return $cuenta;
     }
 
     /**

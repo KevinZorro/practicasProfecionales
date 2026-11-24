@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
+use App\Mail\RecuperarContrasenaMail;
 use App\Models\User;
 use Database\Seeders\RolSeeder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Testing\TestResponse;
 
 /*
  * Entrada con correo y contraseña (ADR 0011), que convive con la de Google.
@@ -30,9 +33,27 @@ function docenteConContrasena(): User
     return $docente;
 }
 
-function entrarCon(string $email, string $contrasena): Illuminate\Testing\TestResponse
+function entrarCon(string $email, string $contrasena): TestResponse
 {
     return test()->post(route('acceso.entrar'), ['email' => $email, 'contrasena' => $contrasena]);
+}
+
+/** El enlace del único correo que se mandó, para abrirlo como lo haría la persona. */
+function enlaceDelCorreo(): string
+{
+    $enlace = null;
+    Mail::assertQueued(RecuperarContrasenaMail::class, function (RecuperarContrasenaMail $correo) use (&$enlace): bool {
+        $enlace = $correo->enlace;
+
+        return true;
+    });
+
+    return (string) $enlace;
+}
+
+function tokenDelEnlace(string $enlace): string
+{
+    return basename((string) parse_url($enlace, PHP_URL_PATH));
 }
 
 it('muestra el formulario de contraseña sin el botón de Google cuando Google no está configurado', function (): void {
@@ -210,5 +231,137 @@ describe('usuarios:contrasena', function (): void {
         $this->artisan('usuarios:contrasena', ['email' => $docente->email, '--generar' => true])->assertSuccessful();
 
         expect($docente->fresh()->remember_token)->toBeNull();
+    });
+});
+
+describe('recuperar la contraseña por correo', function (): void {
+    beforeEach(function (): void {
+        Mail::fake();
+    });
+
+    it('manda un solo correo con el enlace y con él se elige una contraseña para entrar', function (): void {
+        $docente = User::factory()->docente()->create(['email' => 'ana.perez@ufps.edu.co']);
+
+        $this->post(route('acceso.recuperar.enviar'), ['email' => 'Ana.Perez@ufps.edu.co'])
+            ->assertSessionHas('estado');
+
+        Mail::assertQueued(RecuperarContrasenaMail::class, 1);
+        Mail::assertQueued(RecuperarContrasenaMail::class, fn (RecuperarContrasenaMail $correo): bool => $correo->hasTo('ana.perez@ufps.edu.co'));
+
+        $enlace = enlaceDelCorreo();
+        $this->get($enlace)->assertOk()->assertSee('Contraseña nueva');
+
+        $this->post(route('acceso.restablecer.guardar'), [
+            'token' => tokenDelEnlace($enlace),
+            'email' => 'ana.perez@ufps.edu.co',
+            'contrasena' => CONTRASENA_DE_PRUEBA,
+            'contrasena_confirmation' => CONTRASENA_DE_PRUEBA,
+        ])->assertRedirect(route('acceso'))->assertSessionHas('estado');
+
+        entrarCon('ana.perez@ufps.edu.co', CONTRASENA_DE_PRUEBA)->assertRedirect(route('panel.inicio'));
+        expect(Auth::id())->toBe($docente->id);
+    });
+
+    it('responde lo mismo con un correo sin cuenta, y no manda nada', function (): void {
+        $this->post(route('acceso.recuperar.enviar'), ['email' => 'nadie@ufps.edu.co'])
+            ->assertSessionHas('estado');
+
+        Mail::assertNothingQueued();
+    });
+
+    it('no manda el enlace a una cuenta inactiva ni a una deshabilitada (regla 8)', function (string $estado): void {
+        $cuenta = User::factory()->docente()->{$estado}()->create();
+
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $cuenta->email])->assertSessionHas('estado');
+
+        Mail::assertNothingQueued();
+    })->with(['inactivo', 'deshabilitado']);
+
+    it('pedirlo dos veces seguidas manda un solo correo', function (): void {
+        $docente = User::factory()->docente()->create();
+
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+
+        Mail::assertQueued(RecuperarContrasenaMail::class, 1);
+    });
+
+    it('el enlace sirve una sola vez', function (): void {
+        $docente = User::factory()->docente()->create();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+        $datos = [
+            'token' => tokenDelEnlace(enlaceDelCorreo()),
+            'email' => $docente->email,
+            'contrasena' => CONTRASENA_DE_PRUEBA,
+            'contrasena_confirmation' => CONTRASENA_DE_PRUEBA,
+        ];
+
+        $this->post(route('acceso.restablecer.guardar'), $datos)->assertRedirect(route('acceso'));
+        $this->post(route('acceso.restablecer.guardar'), [...$datos, 'contrasena' => 'otra-contrasena-larga', 'contrasena_confirmation' => 'otra-contrasena-larga'])
+            ->assertSessionHasErrors('acceso');
+
+        expect(Hash::check(CONTRASENA_DE_PRUEBA, (string) $docente->fresh()->password))->toBeTrue();
+    });
+
+    it('el enlace vence a los 60 minutos', function (): void {
+        $docente = User::factory()->docente()->create();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+        $token = tokenDelEnlace(enlaceDelCorreo());
+
+        $this->travel(61)->minutes();
+
+        $this->post(route('acceso.restablecer.guardar'), [
+            'token' => $token,
+            'email' => $docente->email,
+            'contrasena' => CONTRASENA_DE_PRUEBA,
+            'contrasena_confirmation' => CONTRASENA_DE_PRUEBA,
+        ])->assertSessionHasErrors('acceso');
+
+        expect($docente->fresh()->password)->toBeNull();
+    });
+
+    it('un token inventado o de otra cuenta no sirve', function (): void {
+        $ana = User::factory()->docente()->create();
+        $luis = User::factory()->docente()->create();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $ana->email]);
+
+        $this->post(route('acceso.restablecer.guardar'), [
+            'token' => tokenDelEnlace(enlaceDelCorreo()),
+            'email' => $luis->email,
+            'contrasena' => CONTRASENA_DE_PRUEBA,
+            'contrasena_confirmation' => CONTRASENA_DE_PRUEBA,
+        ])->assertSessionHasErrors('acceso');
+
+        expect($luis->fresh()->password)->toBeNull();
+    });
+
+    it('exige la contraseña nueva dos veces y con el largo mínimo', function (array $contrasenas): void {
+        $docente = User::factory()->docente()->create();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => $docente->email]);
+
+        $this->post(route('acceso.restablecer.guardar'), [
+            'token' => tokenDelEnlace(enlaceDelCorreo()),
+            'email' => $docente->email,
+            ...$contrasenas,
+        ])->assertSessionHasErrors('contrasena');
+
+        expect($docente->fresh()->password)->toBeNull();
+    })->with([
+        'no coinciden' => [['contrasena' => CONTRASENA_DE_PRUEBA, 'contrasena_confirmation' => 'otra-contrasena-larga']],
+        'corta' => [['contrasena' => 'corta', 'contrasena_confirmation' => 'corta']],
+    ]);
+
+    it('no existe con la entrada con contraseña apagada', function (): void {
+        config(['laboratorio.acceso.con_contrasena' => false]);
+
+        $this->get(route('acceso.recuperar'))->assertNotFound();
+        $this->post(route('acceso.recuperar.enviar'), ['email' => 'ana.perez@ufps.edu.co'])->assertNotFound();
+        Mail::assertNothingQueued();
+    });
+
+    it('quien ya entró vuelve a su panel', function (): void {
+        $this->actingAs(User::factory()->docente()->create())
+            ->get(route('acceso.recuperar'))
+            ->assertRedirect(route('panel.inicio'));
     });
 });
