@@ -299,7 +299,9 @@ Artisan::command(
             array_map(static fn (CuentaDeDemostracion $cuenta): array => [$cuenta->rol->etiqueta(), $cuenta->email, $cuenta->contrasena], array_values($c)),
         );
 
-        $this->line(sprintf('Entra en %s con cada cuenta (una ventana de incógnito por cuenta). Los correos salen por la cola: sin el cron no llegan.', route('acceso')));
+        $this->line(sprintf('Entra en %s con cada cuenta. Las ventanas privadas de un navegador comparten la sesión: para tener', route('acceso')));
+        $this->line('varias cuentas abiertas a la vez usa navegadores o perfiles distintos, o una cuenta a la vez (si no, error 419).');
+        $this->line('Los correos salen por la cola: sin el cron no llegan.');
         $this->newLine();
         $this->line('1. Aprobar y asignar sala, '.$de('para_aprobar').':');
         $this->line('   Administrativo la acepta. Coordinación la aprueba → al docente: solicitud aprobada.');
