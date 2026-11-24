@@ -115,6 +115,10 @@ return [
     | (nadie falla 20 veces en 15 minutos) y no bloquea a la persona: sigue
     | pudiendo entrar con Google o recuperar la contraseña por correo.
     |
+    | "reenvio_minutos" es la espera para pedir otro enlace de recuperación
+    | al mismo correo, que crece con cada envío y se queda en el último
+    | escalón. Vuelve a empezar tras "reenvio_reinicio_horas" sin pedirlo.
+    |
     | "longitud_maxima_contrasena" son bytes, no caracteres: bcrypt ignora
     | todo lo que pase de 72, así que dos contraseñas que solo difieren
     | después del byte 72 serían la misma.
@@ -128,6 +132,8 @@ return [
         'intentos_por_minuto' => 5,
         'intentos_por_cuenta' => 20,
         'ventana_por_cuenta_minutos' => 15,
+        'reenvio_minutos' => [1, 3, 5, 10, 15, 30, 60],
+        'reenvio_reinicio_horas' => 24,
     ],
 
 ];
