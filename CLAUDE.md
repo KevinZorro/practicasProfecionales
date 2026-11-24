@@ -14,7 +14,7 @@ Las decisiones de arquitectura, con su porqué, están en `docs/decisions/` (ADR
 
 **Usuarios:** ~700 estudiantes y ~150 docentes, más personal administrativo, coordinación y un administrador de la plataforma (RNF01, cifra confirmada con el cliente).
 
-**Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago.
+**Entorno de producción:** servidor institucional propio con Debian 13 Trixie, desplegado en contenedores Docker. Sin servicios en la nube de pago. **Donde Docker no se permite** (el sandbox), el despliegue es nativo con `./nativo.sh` y la base en otra máquina: `docs/despliegue-nativo.md`, ADR 0010.
 
 **Contexto del desarrollo:** proyecto de práctica empresarial, un solo desarrollador, plazo cerrado. El sistema lo mantendrá después el administrador del servidor, que conoce PHP pero no participó del desarrollo. **Prioriza claridad sobre ingenio.** Código que un tercero pueda leer y modificar sin explicación previa.
 
@@ -413,6 +413,11 @@ docker compose logs -f app
 ./produccion.sh instalar                               # de cero a funcionando; se puede repetir
 ./produccion.sh actualizar                             # git pull, copia de seguridad, imágenes y migraciones
 ./produccion.sh verificar
+
+# Sin Docker (docs/despliegue-nativo.md): PHP-FPM, nginx y PostgreSQL del sistema, sin sudo
+./nativo.sh instalar                                   # .env, composer, assets, migraciones, caché y cron
+./nativo.sh actualizar                                 # git pull, copia, dependencias, migraciones y caché
+./nativo.sh verificar
 
 # Producción a mano (sección "Producción" del README)
 docker compose -f docker-compose.produccion.yml build
