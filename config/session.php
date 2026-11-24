@@ -25,14 +25,15 @@ return [
     | Session Lifetime
     |--------------------------------------------------------------------------
     |
-    | Here you may specify the number of minutes that you wish the session
-    | to be allowed to remain idle before it expires. If you want them
-    | to expire immediately when the browser is closed then you may
-    | indicate that via the expire_on_close configuration option.
+    | Minutos sin actividad antes de que la sesión venza: 60, el máximo que
+    | NIST SP 800-63B recomienda para una aplicación con datos personales
+    | (hay equipos compartidos en el laboratorio). Cada petición reinicia
+    | el reloj. Además, CerrarSesionesLargas obliga a entrar de nuevo una
+    | vez al día aunque haya actividad (laboratorio.sesion).
     |
     */
 
-    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+    'lifetime' => (int) env('SESSION_LIFETIME', 60),
 
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
