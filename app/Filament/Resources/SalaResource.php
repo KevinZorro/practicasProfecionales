@@ -59,7 +59,10 @@ final class SalaResource extends RecursoDelAdmin
         return $form->schema([
             TextInput::make('codigo')
                 ->label('Código')
-                ->required()
+                ->helperText('Opcional. Si lo pone, no puede repetirse.')
+                ->nullable()
+                // Un campo vacío o con solo espacios se guarda como sin código.
+                ->dehydrateStateUsing(static fn (?string $state): ?string => filled($state) ? trim($state) : null)
                 ->maxLength(255)
                 ->unique(ignoreRecord: true),
             TextInput::make('nombre')
@@ -119,7 +122,7 @@ final class SalaResource extends RecursoDelAdmin
     {
         return $table
             ->columns([
-                TextColumn::make('codigo')->label('Código')->searchable()->sortable(),
+                TextColumn::make('codigo')->label('Código')->placeholder('Sin código')->searchable()->sortable(),
                 TextColumn::make('nombre')->searchable()->sortable(),
                 TextColumn::make('bloque')->searchable()->sortable(),
                 TextColumn::make('piso')->sortable(),

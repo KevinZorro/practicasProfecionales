@@ -96,9 +96,44 @@ it('no crea una sala sin sus datos obligatorios', function (): void {
         ->test(CreateSala::class)
         ->fillForm(['codigo' => '', 'nombre' => '', 'capacidad' => null])
         ->call('create')
-        ->assertHasFormErrors(['codigo' => 'required', 'nombre' => 'required', 'capacidad' => 'required']);
+        ->assertHasFormErrors(['nombre' => 'required', 'capacidad' => 'required'])
+        ->assertHasNoFormErrors(['codigo']);
 
     expect(Sala::count())->toBe(0);
+});
+
+it('crea salas sin código, porque el laboratorio no las identifica así', function (string $codigoVacio): void {
+    Sala::factory()->create(['codigo' => null]);
+
+    Livewire::actingAs($this->admin)
+        ->test(CreateSala::class)
+        ->fillForm(['codigo' => $codigoVacio, 'nombre' => 'Sala de partos', 'capacidad' => 12, 'activo' => true, 'bloque' => 'A', 'piso' => '1', 'numero' => '1'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Sala::where('nombre', 'Sala de partos')->first())->codigo->toBeNull()
+        ->and(Sala::whereNull('codigo')->count())->toBe(2);
+})->with(['vacío' => '', 'solo espacios' => '   ']);
+
+it('muestra «Sin código» en la lista cuando la sala no tiene', function (): void {
+    Sala::factory()->create(['codigo' => null, 'nombre' => 'Sala de partos']);
+
+    Livewire::actingAs($this->admin)
+        ->test(ListSalas::class)
+        ->assertSee('Sala de partos')
+        ->assertSee('Sin código');
+});
+
+it('quita el código de una sala que lo tenía', function (): void {
+    $sala = Sala::factory()->create(['codigo' => 'SIM-01']);
+
+    Livewire::actingAs($this->admin)
+        ->test(EditSala::class, ['record' => $sala->getRouteKey()])
+        ->fillForm(['codigo' => ''])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($sala->fresh()->codigo)->toBeNull();
 });
 
 it('no repite un código de sala', function (): void {

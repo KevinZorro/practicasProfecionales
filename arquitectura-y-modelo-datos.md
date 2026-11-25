@@ -302,7 +302,7 @@ Las cantidades y `nivel_fidelidad` están fuera de `$fillable`: solo las mueve `
 
 **`cambios_estado_item`** — `item_inventario_id`, `estado_anterior` (nulo = entrada), `estado_nuevo` (`operativo`, `en_revision`, `defectuoso`, `dado_de_baja`), `cantidad`, `motivo`, `registrado_por`. Historial de solo añadir: reconstruye los contadores por sí solo.
 
-**`salas`** — `id`, `nombre`, `codigo`, `capacidad` (cuánta gente cabe), `bloque`, `piso`, `numero`, `activo` (RF65)
+**`salas`** — `id`, `nombre`, `codigo` (opcional y único cuando viene: el laboratorio identifica las salas por nombre y ubicación), `capacidad` (cuánta gente cabe), `bloque`, `piso`, `numero`, `activo` (RF65)
 
 **`ubicaciones_sala`** — `sala_id`, `bloque`, `piso`, `numero`, `registrada_por`, `created_at`. Una fila cada vez que cambia la ubicación (`SalaService`).
 
