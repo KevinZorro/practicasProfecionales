@@ -36,19 +36,16 @@ async function shot(page, url, name, { full = false, wait = 800 } = {}) {
 }
 
 let s = await session(null);
-await shot(s.page, '/', '01-portada');
-await shot(s.page, '/', '01b-portada-completa', { full: true });
+await shot(s.page, '/', '01-portada-publica');
 await s.ctx.close();
 
 s = await session('coordinador');
 await shot(s.page, '/panel', '02-hoy-coordinacion');
-await shot(s.page, '/panel/solicitudes', '03-bandeja-de-solicitudes');
-await shot(s.page, '/panel/reportes', '07-reportes');
-for (const id of [1, 2, 3, 4, 5, 6]) await shot(s.page, `/panel/solicitudes/${id}`, `15-expediente-${id}`, { full: true });
+await shot(s.page, '/panel/solicitudes/2', '04-solicitud-por-aprobar');
 await s.ctx.close();
 
 s = await session('administrativo');
-await shot(s.page, '/panel/calendario', '04-calendario', { wait: 2000 });
+await shot(s.page, '/panel/calendario', '03-calendario', { wait: 2000 });
 const diaConMontaje = await (async () => {
   for (let d = -10; d <= 10; d++) {
     const f = new Date(Date.now() + d * 86400000 - 5 * 3600000).toISOString().slice(0, 10);
@@ -57,26 +54,17 @@ const diaConMontaje = await (async () => {
   }
   return '';
 })();
-console.log('dia con montaje', diaConMontaje);
-await shot(s.page, `/panel/preparaciones?fecha=${diaConMontaje}`, '05-preparaciones');
+await shot(s.page, `/panel/preparaciones?fecha=${diaConMontaje}`, '05-preparacion-de-escenarios');
 await shot(s.page, '/panel/inventario', '06-inventario');
-await shot(s.page, '/panel/formatos-confidencialidad', '10-formatos-de-confidencialidad');
 await s.ctx.close();
 
 s = await session('admin');
-await shot(s.page, '/panel/usuarios', '08-usuarios-y-roles');
-await shot(s.page, '/admin/salas', '09-administracion-salas', { wait: 1500 });
-await shot(s.page, '/admin/casos-clinicos', '09b-administracion-casos', { wait: 1500 });
-await shot(s.page, '/panel/bitacora', '11-bitacora');
-await s.ctx.close();
-
-s = await session('docente');
-await shot(s.page, '/panel/solicitudes/nueva', '12-nueva-solicitud', { full: true });
-await shot(s.page, '/panel/evaluaciones', '13-evaluaciones');
+await shot(s.page, '/panel/usuarios', '07-usuarios-y-roles');
+await shot(s.page, '/admin/casos-clinicos', '08-administracion-casos-clinicos', { wait: 1500 });
 await s.ctx.close();
 
 s = await session('administrativo', { width: 390, height: 844 });
-await shot(s.page, `/panel/preparaciones?fecha=${diaConMontaje}`, '14-celular-preparaciones', { full: true });
+await shot(s.page, `/panel/preparaciones?fecha=${diaConMontaje}`, '09-celular-preparacion');
 await s.ctx.close();
 
 await browser.close();
