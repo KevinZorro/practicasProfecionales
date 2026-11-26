@@ -1,0 +1,62 @@
+name: Capturas (temporal)
+
+on:
+  push:
+    branches: [docs/capturas-de-la-app]
+    paths: ['.github/capturas/**', '.github/workflows/capturas.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  capturas:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: laboratorio_simulacion
+          POSTGRES_USER: laboratorio
+          POSTGRES_PASSWORD: secret
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U laboratorio -d laboratorio_simulacion"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql, intl, zip, bcmath, gd, dom, xmlreader, xmlwriter, simplexml, fileinfo, iconv, exif
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: npm ci && npm run build
+      - name: Preparar la aplicación
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/; s#^APP_URL=.*#APP_URL=http://127.0.0.1:8000#; s/^APP_DEBUG=.*/APP_DEBUG=false/' .env
+          php artisan key:generate
+          php artisan migrate:fresh --seed --force
+          php artisan storage:link
+      - name: Levantar el servidor
+        run: |
+          nohup php artisan serve --host=127.0.0.1 --port=8000 > serve.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8000/ >/dev/null && break; sleep 1; done
+      - name: Capturar
+        run: |
+          npm i --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+          node .github/capturas/capturar.mjs
+      - run: tail -50 serve.log; tail -50 storage/logs/laravel.log || true
+        if: always()
+      - name: Subir las capturas a la rama
+        run: |
+          git config user.name "Kevin David Zorro Hernández"
+          git config user.email "kevindavidzorro@gmail.com"
+          git add docs/capturas
+          git commit -m "docs: capturas de la aplicación"
+          git push
